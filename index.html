@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pomodoro">
+<title>Plano de Estudos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --bg2: #18181b;
+    --bg3: #232328;
+    --border: #2e2e35;
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #a3e635;
+    --accent2: #65a30d;
+    --blue: #60a5fa;
+    --blue-bg: #1e2d40;
+    --green-bg: #1a2e1a;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(14,14,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-left h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .topbar-left .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+    font-family: 'DM Mono', monospace;
+  }
+  .xp-badge {
+    background: var(--green-bg);
+    border: 1px solid var(--accent2);
+    border-radius: 99px;
+    padding: 5px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .xp-badge .level-tag {
+    font-size: 10px;
+    color: var(--accent2);
+    border-left: 1px solid var(--accent2);
+    padding-left: 6px;
+  }
+
+  /* MAIN */
+  .main { max-width: 480px; margin: 0 auto; padding: 20px 16px 100px; }
+
+  /* XP CARD */
+  .xp-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .xp-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+  .xp-num { font-size: 32px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--accent); line-height: 1; }
+  .xp-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .xp-right { text-align: right; }
+  .xp-right .week-xp { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--muted); }
+  .xp-right .today-xp { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .bar-track {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+  .stat-box .s-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-box .s-val { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+
+  /* WEEK SELECT */
+  .week-row { margin-bottom: 12px; }
+  .week-row select {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 9px 12px;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+  }
+  .week-row select:focus { border-color: var(--accent2); }
+
+  /* DAY TABS */
+  .day-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .day-tab:hover { border-color: #444; color: var(--text); }
+  .day-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0e0e0f;
+    font-weight: 600;
+  }
+  .day-tab .dot {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: none;
+  }
+  .day-tab.has-progress:not(.active) .dot { display: block; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 14px 0 6px;
+  }
+
+  /* BLOCK ROWS */
+  .blocks-list { display: flex; flex-direction: column; gap: 3px; }
+  .block-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .block-row:active { transform: scale(0.99); }
+  .block-row:hover { background: var(--bg3); }
+  .block-row.done { opacity: 0.5; }
+  .block-row.done .block-name { text-decoration: line-through; text-decoration-color: var(--muted); }
+  .block-row.pausa-row {
+    background: transparent;
+    border-color: transparent;
+    padding: 7px 12px;
+  }
+  .block-row.pausa-row:hover { background: var(--bg3); border-color: var(--border); }
+  .check {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    color: transparent;
+    font-size: 11px;
+  }
+  .check.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0e0e0f;
+  }
+  .check svg { width: 10px; height: 10px; display: none; }
+  .check.checked svg { display: block; }
+  .block-time {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    min-width: 88px;
+  }
+  .block-name { font-size: 13px; color: var(--text); flex: 1; }
+  .block-xp {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 99px;
+  }
+  .block-xp.estudo-xp { color: var(--accent); background: var(--green-bg); }
+  .block-xp.pausa-xp { color: var(--blue); background: var(--blue-bg); }
+
+  /* BOTTOM NAV PLACEHOLDER */
+  .bottom-pad { height: 40px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Plano de Estudos</h1>
+    <div class="sub" id="today-label"></div>
+  </div>
+  <div class="xp-badge">
+    <span id="top-xp">0 XP</span>
+    <span class="level-tag" id="top-level">Zero</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="xp-card">
+    <div class="xp-row">
+      <div>
+        <div class="xp-sub">XP Total</div>
+        <div class="xp-num" id="xp-total">0</div>
+      </div>
+      <div class="xp-right">
+        <div class="week-xp" id="week-xp-val">Semana: 0 XP</div>
+        <div class="today-xp" id="today-xp-val">Hoje: 0 XP</div>
+      </div>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="s-label">Estudos</div><div class="s-val" id="stat-e">0/16</div></div>
+    <div class="stat-box"><div class="s-label">Pausas</div><div class="s-val" id="stat-p">0/17</div></div>
+    <div class="stat-box"><div class="s-label">Semana</div><div class="s-val" id="stat-w">0 ✓</div></div>
+  </div>
+
+  <div class="week-row">
+    <select id="week-select" onchange="onWeekChange()"></select>
+  </div>
+
+  <div class="day-tabs" id="day-tabs"></div>
+  <div class="blocks-list" id="blocks-list"></div>
+  <div class="bottom-pad"></div>
+</div>
+
+<script>
+const WEEKS = [];
+const START = new Date(2026, 4, 4);
+for (let w = 0; w < 18; w++) {
+  const s = new Date(START); s.setDate(s.getDate() + w * 7);
+  const e = new Date(s); e.setDate(e.getDate() + 6);
+  WEEKS.push({ n: w + 1, start: s, end: e });
+}
+
+const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const BLOCKS = [
+  {time:'09:00–09:25',name:'Estudo 1',type:'estudo'},
+  {time:'09:25–09:30',name:'Pausa',type:'pausa'},
+  {time:'09:30–09:55',name:'Estudo 2',type:'estudo'},
+  {time:'09:55–10:00',name:'Pausa',type:'pausa'},
+  {time:'10:00–10:25',name:'Estudo 3',type:'estudo'},
+  {time:'10:25–10:30',name:'Pausa',type:'pausa'},
+  {time:'10:30–10:55',name:'Estudo 4',type:'estudo'},
+  {time:'10:55–11:00',name:'Pausa',type:'pausa'},
+  {time:'11:00–11:25',name:'Estudo 5',type:'estudo'},
+  {time:'11:25–11:30',name:'Pausa',type:'pausa'},
+  {time:'11:30–11:55',name:'Estudo 6',type:'estudo'},
+  {time:'11:55–12:00',name:'Pausa',type:'pausa'},
+  {time:'12:00–12:25',name:'Estudo 7',type:'estudo'},
+  {time:'12:25–12:30',name:'Pausa',type:'pausa'},
+  {time:'12:30–12:55',name:'Estudo 8',type:'estudo'},
+  {time:'12:55–13:00',name:'Pausa',type:'pausa'},
+  {time:'13:00–14:00',name:'Almoço',type:'pausa'},
+  {time:'14:00–14:25',name:'Estudo 9',type:'estudo'},
+  {time:'14:25–14:30',name:'Pausa',type:'pausa'},
+  {time:'14:30–14:55',name:'Estudo 10',type:'estudo'},
+  {time:'14:55–15:00',name:'Pausa',type:'pausa'},
+  {time:'15:00–15:25',name:'Estudo 11',type:'estudo'},
+  {time:'15:25–15:30',name:'Pausa',type:'pausa'},
+  {time:'15:30–15:55',name:'Estudo 12',type:'estudo'},
+  {time:'15:55–16:00',name:'Pausa',type:'pausa'},
+  {time:'16:00–16:25',name:'Estudo 13',type:'estudo'},
+  {time:'16:25–16:30',name:'Pausa',type:'pausa'},
+  {time:'16:30–16:55',name:'Estudo 14',type:'estudo'},
+  {time:'16:55–17:00',name:'Pausa',type:'pausa'},
+  {time:'17:00–17:25',name:'Estudo 15',type:'estudo'},
+  {time:'17:25–17:30',name:'Pausa',type:'pausa'},
+  {time:'17:30–17:55',name:'Estudo 16',type:'estudo'},
+  {time:'17:55–18:00',name:'Pausa',type:'pausa'},
+];
+
+const XP_E = 10, XP_P = 2;
+const LEVELS = [
+  [0,'Zero'],[50,'Iniciante'],[150,'Focado'],[300,'Dedicado'],
+  [500,'Consistente'],[800,'Avançado'],[1200,'Expert'],[2000,'Mestre']
+];
+function getLevel(xp) {
+  let lv = LEVELS[0][1];
+  for (const [t,n] of LEVELS) { if (xp >= t) lv = n; }
+  return lv;
+}
+function getLevelPct(xp) {
+  let lo = 0, hi = null;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (xp >= LEVELS[i][0]) { lo = LEVELS[i][0]; hi = LEVELS[i+1] ? LEVELS[i+1][0] : null; }
+  }
+  if (!hi) return 100;
+  return Math.round(((xp - lo) / (hi - lo)) * 100);
+}
+
+function dk(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getChecks(key) {
+  try { return JSON.parse(localStorage.getItem('pom_'+key)||'{}'); } catch { return {}; }
+}
+function saveChecks(key, c) { localStorage.setItem('pom_'+key, JSON.stringify(c)); }
+
+function today() { return new Date(); }
+function findWeek(d) {
+  for (const w of WEEKS) { if (d >= w.start && d <= w.end) return w.n; }
+  return 1;
+}
+function dayOfWeek(date) {
+  const d = date.getDay();
+  return d === 0 ? 6 : d - 1;
+}
+
+let curWeek = 1, curDay = 0;
+
+function init() {
+  const t = today();
+  document.getElementById('today-label').textContent =
+    t.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  curWeek = findWeek(t);
+
+  const sel = document.getElementById('week-select');
+  WEEKS.forEach(w => {
+    const o = document.createElement('option');
+    const s = w.start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const e = w.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    o.value = w.n;
+    o.textContent = `Semana ${w.n}  ·  ${s} – ${e}`;
+    if (w.n === curWeek) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  curDay = Math.min(6, Math.max(0, Math.round((t - WEEKS[curWeek-1].start)/86400000)));
+  renderAll();
+}
+
+function onWeekChange() {
+  curWeek = parseInt(document.getElementById('week-select').value);
+  curDay = 0;
+  renderAll();
+}
+
+function renderAll() { renderTabs(); renderBlocks(); renderXP(); }
+
+function renderTabs() {
+  const c = document.getElementById('day-tabs');
+  c.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const date = new Date(WEEKS[curWeek-1].start);
+    date.setDate(date.getDate() + i);
+    const checks = getChecks(dk(date));
+    const done = Object.values(checks).filter(Boolean).length;
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (i===curDay?' active':'') + (done>0?' has-progress':'');
+    btn.innerHTML = d + '<span class="dot"></span>';
+    btn.onclick = () => { curDay = i; renderAll(); };
+    c.appendChild(btn);
+  });
+}
+
+function renderBlocks() {
+  const date = new Date(WEEKS[curWeek-1].start);
+  date.setDate(date.getDate() + curDay);
+  const key = dk(date);
+  const checks = getChecks(key);
+  const c = document.getElementById('blocks-list');
+  c.innerHTML = '';
+
+  let eD=0,eT=0,pD=0,pT=0;
+  BLOCKS.forEach((b,i) => {
+    const isE = b.type==='estudo';
+    if(isE) eT++; else pT++;
+    const done = !!checks[i];
+    if(done) { if(isE) eD++; else pD++; }
+
+    const row = document.createElement('div');
+    row.className = 'block-row'+(b.type==='pausa'?' pausa-row':'')+(done?' done':'');
+
+    const checkSVG = `<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
+
+    row.innerHTML = `
+      <div class="check ${done?'checked':''}">${checkSVG}</div>
+      <span class="block-time">${b.time}</span>
+      <span class="block-name">${b.name}</span>
+      <span class="block-xp ${isE?'estudo-xp':'pausa-xp'}">${isE?'+10':'+2'} XP</span>
+    `;
+    row.onclick = () => {
+      checks[i] = !checks[i];
+      saveChecks(key, checks);
+      renderAll();
+    };
+    c.appendChild(row);
+  });
+
+  document.getElementById('stat-e').textContent = eD+'/'+eT;
+  document.getElementById('stat-p').textContent = pD+'/'+pT;
+}
+
+function renderXP() {
+  let total=0, weekXP=0, todayXP=0, weekChecks=0;
+  const todayKey = dk(today());
+
+  for (let wi=0; wi<18; wi++) {
+    for (let di=0; di<7; di++) {
+      const d = new Date(WEEKS[wi].start);
+      d.setDate(d.getDate()+di);
+      const checks = getChecks(dk(d));
+      BLOCKS.forEach((b,i) => {
+        if(checks[i]) {
+          const xp = b.type==='estudo'?XP_E:XP_P;
+          total += xp;
+          if(wi===curWeek-1) { weekXP+=xp; weekChecks++; }
+          if(dk(d)===todayKey) todayXP+=xp;
+        }
+      });
+    }
+  }
+
+  document.getElementById('xp-total').textContent = total;
+  document.getElementById('top-xp').textContent = total+' XP';
+  document.getElementById('top-level').textContent = getLevel(total);
+  document.getElementById('xp-bar').style.width = getLevelPct(total)+'%';
+  document.getElementById('week-xp-val').textContent = 'Semana: '+weekXP+' XP';
+  document.getElementById('today-xp-val').textContent = 'Hoje: '+todayXP+' XP';
+  document.getElementById('stat-w').textContent = weekChecks+' ✓';
+}
+
+init();
+</script>
+</body>
+</html>
