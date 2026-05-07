@@ -132,6 +132,75 @@
   .checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
   .checkbox-row label{font-size:13px;color:var(--muted);cursor:pointer;}
 
+  /* NAV TABS */
+  .nav-tabs { display:flex; gap:4px; margin-bottom:2px; }
+  .nav-tab { background:transparent; border:none; color:var(--muted); font-size:13px; font-weight:500; padding:4px 10px; border-radius:var(--radius-sm); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+  .nav-tab:hover { color:var(--text); }
+  .nav-tab.active { background:var(--bg3); color:var(--text); }
+
+  /* ANALYTICS */
+  .analytics-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
+  .analytics-page.visible { display:block; }
+  .profile-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+  .profile-top { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+  .profile-avatar { width:52px; height:52px; border-radius:50%; background:var(--green-bg); border:2px solid var(--accent2); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .profile-info h2 { font-size:17px; font-weight:600; }
+  .profile-info .profile-level { font-size:12px; color:var(--accent); margin-top:2px; }
+  .profile-xp-row { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .an-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
+  .an-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; text-align:center; }
+  .an-stat .as-val { font-size:20px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); }
+  .an-stat .as-label { font-size:10px; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.05em; }
+  .section-title { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+  .chart-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+  .bar-chart { display:flex; align-items:flex-end; gap:3px; height:80px; margin-bottom:6px; }
+  .bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
+  .bar-fill-an { border-radius:3px 3px 0 0; width:100%; background:var(--accent); transition:height .4s ease; min-height:2px; opacity:.85; }
+  .bar-fill-an.empty { background:var(--bg3); opacity:1; min-height:3px; }
+  .bar-label { font-size:9px; color:var(--muted); font-family:'DM Mono',monospace; }
+  .heatmap-grid { display:grid; grid-template-columns:repeat(18,1fr); gap:2px; margin-bottom:6px; }
+  .heatmap-cell { aspect-ratio:1; border-radius:2px; }
+  .heatmap-legend { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); justify-content:flex-end; }
+  .heatmap-legend .lc { width:10px; height:10px; border-radius:2px; }
+  .streak-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+  .streak-row:last-child { border-bottom:none; }
+  .streak-label { font-size:13px; color:var(--text); }
+  .streak-val { font-size:15px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); }
+
+  /* TIMER */
+  .timer-bar { position:sticky; top:57px; z-index:99; background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 20px; display:none; align-items:center; gap:12px; }
+  .timer-bar.active { display:flex; }
+  .timer-block-name { font-size:12px; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .timer-time { font-size:22px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); min-width:60px; text-align:right; }
+  .timer-time.ending { color:#f87171; }
+  .timer-stop { background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--muted); font-size:11px; padding:4px 8px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .timer-stop:hover { border-color:#555; color:var(--text); }
+  .volume-wrap { display:flex; align-items:center; gap:6px; }
+  .vol-btn { background:transparent; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0; }
+  .vol-slider { -webkit-appearance:none; appearance:none; width:60px; height:3px; border-radius:99px; background:var(--border); outline:none; cursor:pointer; }
+  .vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:var(--accent); cursor:pointer; }
+  .block-row.timer-active { border-color:var(--accent) !important; box-shadow:0 0 0 1px var(--accent2); }
+  .block-row.timer-active .block-name { color:var(--accent); }
+
+  /* CURRENT BLOCK HIGHLIGHT */
+  .block-row.now-block { filter: brightness(1.35); position:relative; }
+  .block-row.now-block::before {
+    content:'▶';
+    position:absolute;
+    left:-14px;
+    font-size:8px;
+    color:var(--sc, var(--accent));
+    top:50%;
+    transform:translateY(-50%);
+    opacity:0.8;
+  }
+  .session-divider.now-session .sd-label { opacity:1 !important; }
+
+  /* BIGGER CHECKBOX */
+  .check { width:22px !important; height:22px !important; border-radius:5px !important; border:2px solid #555 !important; flex-shrink:0; }
+  .check.checked { background:var(--accent) !important; border-color:var(--accent) !important; }
+  .check svg { width:12px !important; height:12px !important; }
+
   /* SESSION COLORS */
   .s0 { --sc:#a3e635; --sc-bg:#1a2e1a; --sc-border:#65a30d; }
   .s1 { --sc:#60a5fa; --sc-bg:#1e2d40; --sc-border:#2563eb; }
@@ -169,7 +238,10 @@
 <div id="app" style="display:none;">
 <div class="topbar">
   <div class="topbar-left">
-    <h1>Plano de Estudos</h1>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-plano" onclick="switchTab('plano')">📚 Plano</button>
+      <button class="nav-tab" id="tab-analise" onclick="switchTab('analise')">📊 Análise</button>
+    </div>
     <div class="sub" id="today-label"></div>
   </div>
   <div class="topbar-right">
@@ -177,6 +249,19 @@
     <button class="icon-btn" onclick="openSettings()">⚙️ Config</button>
       <button class="icon-btn" onclick="logoutUser()">Sair</button>
   </div>
+</div>
+
+<div class="timer-bar" id="timer-bar">
+  <div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Em andamento</div>
+    <div class="timer-block-name" id="timer-block-name">—</div>
+  </div>
+  <div class="timer-time" id="timer-display">00:00</div>
+  <div class="volume-wrap">
+    <button class="vol-btn" id="vol-btn" onclick="toggleMute()">🔔</button>
+    <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVolume(this.value)">
+  </div>
+  <button class="timer-stop" onclick="stopTimer()">✕ Parar</button>
 </div>
 
 <div class="main">
@@ -306,6 +391,69 @@
 </div>
 
 </div><!-- end #app -->
+<div class="analytics-page" id="analytics-page">
+
+  <!-- PROFILE CARD -->
+  <div class="profile-card">
+    <div class="profile-top">
+      <div class="profile-avatar">🎓</div>
+      <div class="profile-info">
+        <h2 id="an-level-name">Zero</h2>
+        <div class="profile-level" id="an-level-sub">Nível 0 · Continua assim!</div>
+      </div>
+    </div>
+    <div class="profile-xp-row">
+      <span id="an-xp-label">0 XP</span>
+      <span id="an-xp-next"></span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="an-xp-bar" style="width:0%"></div></div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="an-stats">
+    <div class="an-stat"><div class="as-val" id="an-total-checks">0</div><div class="as-label">Blocos feitos</div></div>
+    <div class="an-stat"><div class="as-val" id="an-streak">0</div><div class="as-label">Dias seguidos</div></div>
+    <div class="an-stat"><div class="as-val" id="an-best-week">0</div><div class="as-label">Melhor semana</div></div>
+  </div>
+
+  <!-- HEATMAP -->
+  <div class="chart-card">
+    <div class="section-title">Atividade — 18 semanas</div>
+    <div class="heatmap-grid" id="heatmap-grid"></div>
+    <div class="heatmap-legend">
+      <span>Menos</span>
+      <div class="lc" style="background:var(--bg3)"></div>
+      <div class="lc" style="background:#1a3a20"></div>
+      <div class="lc" style="background:#2d6b35"></div>
+      <div class="lc" style="background:#65a30d"></div>
+      <div class="lc" style="background:#a3e635"></div>
+      <span>Mais</span>
+    </div>
+  </div>
+
+  <!-- BAR CHART BY HOUR -->
+  <div class="chart-card">
+    <div class="section-title">Horários onde mais estuda</div>
+    <div class="bar-chart" id="hour-bar-chart"></div>
+    <div style="display:flex;justify-content:space-between;padding:0 2px;">
+      <span style="font-size:9px;color:var(--muted);">09h</span>
+      <span style="font-size:9px;color:var(--muted);">12h</span>
+      <span style="font-size:9px;color:var(--muted);">15h</span>
+      <span style="font-size:9px;color:var(--muted);">18h</span>
+    </div>
+  </div>
+
+  <!-- STREAKS -->
+  <div class="chart-card">
+    <div class="section-title">Recordes</div>
+    <div class="streak-row"><span class="streak-label">🔥 Sequência atual</span><span class="streak-val" id="an-cur-streak">0 dias</span></div>
+    <div class="streak-row"><span class="streak-label">🏆 Maior sequência</span><span class="streak-val" id="an-best-streak">0 dias</span></div>
+    <div class="streak-row"><span class="streak-label">📖 Melhor dia (blocos)</span><span class="streak-val" id="an-best-day">—</span></div>
+    <div class="streak-row"><span class="streak-label">⚡ XP num único dia</span><span class="streak-val" id="an-best-xp">0 XP</span></div>
+  </div>
+
+</div>
+
 <div id="save-indicator">Salvando...</div>
 
 <script type="module">
@@ -623,6 +771,327 @@ window.deleteEvent=(key,idx)=>{
 window.closeIfOutside=(e,id)=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('open');};
 
 // ---- APP ----
+// ---- TOAST ----
+let toastTimeout=null;
+function showToast(msg){
+  let toast=document.getElementById('toast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='toast';
+    toast.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent=msg;
+  toast.style.opacity='1';
+  clearTimeout(toastTimeout);
+  toastTimeout=setTimeout(()=>toast.style.opacity='0',2500);
+}
+
+// ---- TIMER ----
+let timerInterval=null, timerBlock=null, timerMuted=false;
+let audioCtx=null;
+
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type='estudo'){
+  try {
+    const ctx=getAudioCtx();
+    const vol=parseFloat(document.getElementById('vol-slider').value);
+    if(timerMuted||vol===0) return;
+    const t=ctx.currentTime;
+
+    if(type==='check'){
+      // Tom eletrônico clean — dois pulsos rápidos ascendentes
+      [880,1100].forEach((freq,i)=>{
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        osc.type='square'; osc.frequency.value=freq;
+        g.gain.setValueAtTime(0,t+i*0.1);
+        g.gain.linearRampToValueAtTime(vol*0.3,t+i*0.1+0.01);
+        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.1+0.12);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t+i*0.1); osc.stop(t+i*0.1+0.13);
+      });
+
+    } else if(type==='estudo'){
+      // Mais agressivo — buzz + impacto
+      const freqs=[110,220,330];
+      freqs.forEach((freq,i)=>{
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        osc.type='sawtooth'; osc.frequency.value=freq;
+        g.gain.setValueAtTime(vol*0.5,t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t+0.4);
+      });
+      // Impacto final
+      setTimeout(()=>{
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        osc.type='sawtooth'; osc.frequency.value=80;
+        g.gain.setValueAtTime(vol*0.8,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.5);
+      },350);
+
+    } else if(type==='pausa_curta'){
+      // Sino suave — senoidal com decay longo
+      [523,659].forEach((freq,i)=>{
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        osc.type='sine'; osc.frequency.value=freq;
+        g.gain.setValueAtTime(vol*0.4,t+i*0.25);
+        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.25+1.2);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t+i*0.25); osc.stop(t+i*0.25+1.2);
+      });
+
+    } else if(type==='pausa_longa'){
+      // Campainha simples — três toques curtos
+      [784,784,784].forEach((freq,i)=>{
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        osc.type='sine'; osc.frequency.value=freq;
+        g.gain.setValueAtTime(0,t+i*0.28);
+        g.gain.linearRampToValueAtTime(vol*0.5,t+i*0.28+0.01);
+        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.28+0.25);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t+i*0.28); osc.stop(t+i*0.28+0.26);
+      });
+    }
+  } catch(e){}
+}
+
+function toggleMute(){
+  timerMuted=!timerMuted;
+  document.getElementById('vol-btn').textContent=timerMuted?'🔕':'🔔';
+}
+window.toggleMute=toggleMute;
+
+function setVolume(v){
+  if(parseFloat(v)===0){ timerMuted=true; document.getElementById('vol-btn').textContent='🔕'; }
+  else { timerMuted=false; document.getElementById('vol-btn').textContent='🔔'; }
+}
+window.setVolume=setVolume;
+
+function startTimer(block){
+  if(timerInterval) clearInterval(timerInterval);
+  timerBlock=block;
+  document.getElementById('timer-bar').classList.add('active');
+  document.getElementById('timer-block-name').textContent=block.name.replace(/📖|🧘|☕/g,'').trim();
+  // Request notification permission
+  if(Notification && Notification.permission==='default') Notification.requestPermission();
+  updateTimerDisplay();
+  timerInterval=setInterval(()=>{
+    const done=updateTimerDisplay();
+    if(done){
+      clearInterval(timerInterval);
+      timerInterval=null;
+      onTimerEnd();
+    }
+  },1000);
+}
+
+function updateTimerDisplay(){
+  if(!timerBlock) return true;
+  const now=new Date();
+  const endParts=timerBlock.endTime.split(':').map(Number);
+  const end=new Date(); end.setHours(endParts[0],endParts[1],0,0);
+  const diffMs=end-now;
+  const diffSec=Math.floor(diffMs/1000);
+  if(diffSec<=0){
+    document.getElementById('timer-display').textContent='00:00';
+    return true;
+  }
+  const m=Math.floor(diffSec/60), s=diffSec%60;
+  const str=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const disp=document.getElementById('timer-display');
+  disp.textContent=str;
+  disp.className='timer-time'+(diffSec<=60?' ending':'');
+  return false;
+}
+
+function onTimerEnd(){
+  const soundType = timerBlock
+    ? (timerBlock.type==='estudo' ? 'estudo'
+      : timerBlock.name.includes('longa') ? 'pausa_longa' : 'pausa_curta')
+    : 'estudo';
+  playSound(soundType);
+  if(Notification && Notification.permission==='granted' && timerBlock){
+    const emoji = timerBlock.type==='estudo'?'📖':timerBlock.name.includes('longa')?'☕':'🧘';
+    const label = timerBlock.type==='estudo'?'Estudo concluído! Hora da pausa.':'Pausa concluída! Hora de estudar.';
+    new Notification(`${emoji} ${label}`,{
+      body: timerBlock.name.replace(/📖|🧘|☕/g,'').trim(),
+      icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📚</text></svg>'
+    });
+  }
+  document.getElementById('timer-bar').classList.remove('active');
+  timerBlock=null;
+  renderAll();
+}
+
+function stopTimer(){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval=null; timerBlock=null;
+  document.getElementById('timer-bar').classList.remove('active');
+  renderAll();
+}
+window.stopTimer=stopTimer;
+
+// ---- TAB SWITCHING ----
+window.switchTab = (tab) => {
+  const isPlano = tab === 'plano';
+  document.getElementById('tab-plano').classList.toggle('active', isPlano);
+  document.getElementById('tab-analise').classList.toggle('active', !isPlano);
+  // Hide/show main content
+  document.querySelector('.main') && (document.querySelector('.main').style.display = isPlano ? '' : 'none');
+  document.getElementById('timer-bar').style.display = isPlano && timerBlock ? 'flex' : 'none';
+  document.getElementById('analytics-page').classList.toggle('visible', !isPlano);
+  if (!isPlano) renderAnalytics();
+};
+
+// ---- ANALYTICS ----
+function renderAnalytics() {
+  const totalXP = calcTotalXP();
+  const level = getLevel(totalXP);
+  const pct = getLevelPct(totalXP);
+
+  // Find next level threshold
+  const nextLvl = LEVELS.find(([t]) => t > totalXP);
+  document.getElementById('an-level-name').textContent = level;
+  document.getElementById('an-level-sub').textContent = nextLvl
+    ? `Faltam ${nextLvl[0] - totalXP} XP para ${nextLvl[1]}`
+    : 'Nível máximo atingido! 🏆';
+  document.getElementById('an-xp-label').textContent = totalXP + ' XP';
+  document.getElementById('an-xp-next').textContent = nextLvl ? nextLvl[0] + ' XP' : '';
+  document.getElementById('an-xp-bar').style.width = pct + '%';
+
+  // Collect per-day data
+  let totalChecks = 0, bestWeekChecks = 0, bestDayChecks = 0, bestDayLabel = '—', bestDayXP = 0;
+  const weekChecks = Array(18).fill(0);
+  const hourChecks = {}; // hour (9-18) -> count
+  const dayChecks = {}; // dk -> count
+
+  for (let wi = 0; wi < 18; wi++) {
+    for (let di = 0; di < 7; di++) {
+      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
+      const key = dk(d);
+      const checks = getChecks(key);
+      const events = getDayEvents(key);
+      const ov = getLunchForDay(key);
+      const blocks = generateBlocks({...userCfg,...ov}, events);
+      let dayCount = 0, dayXP = 0;
+      blocks.forEach((b, i) => {
+        if (checks[i] && b.xp > 0) {
+          totalChecks++;
+          weekChecks[wi]++;
+          dayCount++;
+          dayXP += b.xp;
+          // Extract hour from block time
+          const hour = parseInt(b.time.split(':')[0]);
+          hourChecks[hour] = (hourChecks[hour] || 0) + 1;
+        }
+      });
+      dayChecks[key] = dayCount;
+      if (dayCount > bestDayChecks) {
+        bestDayChecks = dayCount;
+        bestDayLabel = d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+      }
+      if (dayXP > bestDayXP) bestDayXP = dayXP;
+    }
+    if (weekChecks[wi] > bestWeekChecks) bestWeekChecks = weekChecks[wi];
+  }
+
+  document.getElementById('an-total-checks').textContent = totalChecks;
+  document.getElementById('an-best-week').textContent = bestWeekChecks;
+  document.getElementById('an-best-day').textContent = bestDayChecks > 0 ? `${bestDayLabel} (${bestDayChecks})` : '—';
+  document.getElementById('an-best-xp').textContent = bestDayXP + ' XP';
+
+  // Streaks
+  const { cur, best } = calcStreaks(dayChecks);
+  document.getElementById('an-streak').textContent = cur;
+  document.getElementById('an-cur-streak').textContent = cur + ' dias';
+  document.getElementById('an-best-streak').textContent = best + ' dias';
+
+  // Heatmap
+  const maxWeek = Math.max(...weekChecks, 1);
+  const heatColors = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e635'];
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = '';
+  weekChecks.forEach((count, wi) => {
+    const intensity = Math.min(4, Math.floor((count / maxWeek) * 4));
+    const cell = document.createElement('div');
+    cell.className = 'heatmap-cell';
+    cell.style.background = heatColors[intensity];
+    cell.title = `Semana ${wi+1}: ${count} blocos`;
+    grid.appendChild(cell);
+  });
+
+  // Hour bar chart
+  const hours = Array.from({length:10}, (_,i) => i + 9); // 9-18
+  const maxHour = Math.max(...hours.map(h => hourChecks[h] || 0), 1);
+  const barChart = document.getElementById('hour-bar-chart');
+  barChart.innerHTML = '';
+  hours.forEach(h => {
+    const count = hourChecks[h] || 0;
+    const pctH = Math.round((count / maxHour) * 100);
+    const wrap = document.createElement('div');
+    wrap.className = 'bar-wrap';
+    wrap.innerHTML = `
+      <div class="bar-fill-an${count===0?' empty':''}" style="height:${Math.max(pctH,3)}%"></div>
+      <span class="bar-label">${h}h</span>
+    `;
+    wrap.title = `${h}h: ${count} blocos concluídos`;
+    barChart.appendChild(wrap);
+  });
+}
+
+function calcTotalXP() {
+  let total = 0;
+  for (let wi = 0; wi < 18; wi++) {
+    for (let di = 0; di < 7; di++) {
+      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
+      const key = dk(d);
+      const checks = getChecks(key);
+      const events = getDayEvents(key);
+      const ov = getLunchForDay(key);
+      const blocks = generateBlocks({...userCfg,...ov}, events);
+      blocks.forEach((b, i) => { if (checks[i] && b.xp > 0) total += b.xp; });
+    }
+  }
+  return total;
+}
+
+function calcStreaks(dayChecks) {
+  let cur = 0, best = 0, temp = 0;
+  const today = dk(new Date());
+  const keys = [];
+  for (let wi = 0; wi < 18; wi++) {
+    for (let di = 0; di < 7; di++) {
+      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
+      keys.push(dk(d));
+    }
+  }
+  keys.forEach(k => {
+    if ((dayChecks[k] || 0) > 0) { temp++; if (temp > best) best = temp; }
+    else temp = 0;
+  });
+  // Current streak (counting backwards from today)
+  const todayIdx = keys.indexOf(today);
+  if (todayIdx >= 0) {
+    for (let i = todayIdx; i >= 0; i--) {
+      if ((dayChecks[keys[i]] || 0) > 0) cur++;
+      else break;
+    }
+  }
+  return { cur, best };
+}
+
 function initApp(){
   const t=today();
   document.getElementById('today-label').textContent=t.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
@@ -733,17 +1202,34 @@ function renderBlocks(){
 
     const sIdx=(b.session!==undefined)?b.session%NUM_SESSIONS:0;
 
+    // Check if this block is happening right now
+    const nowMs=new Date();
+    const bStartParts=b.time.split(':').map(Number);
+    const bEndParts=b.endTime.split(':').map(Number);
+    const bStart=new Date(); bStart.setHours(bStartParts[0],bStartParts[1],0,0);
+    const bEnd=new Date(); bEnd.setHours(bEndParts[0],bEndParts[1],0,0);
+    const isNowBlock=(isE||isP||isA)&&nowMs>=bStart&&nowMs<bEnd;
+
     if((isE||isP)&&b.session!==undefined&&b.session!==lastSession){
       lastSession=b.session;
       const div=document.createElement('div');
-      div.className=`session-divider s${sIdx}`;
+      // Check if any block in this session is happening now
+      const sessionHasNow=blocks.some(bl=>{
+        if(bl.session!==b.session||(bl.type!=='estudo'&&bl.type!=='pausa')) return false;
+        const sp=bl.time.split(':').map(Number),ep=bl.endTime.split(':').map(Number);
+        const bs=new Date();bs.setHours(sp[0],sp[1],0,0);
+        const be=new Date();be.setHours(ep[0],ep[1],0,0);
+        return new Date()>=bs&&new Date()<be;
+      });
+      div.className=`session-divider s${sIdx}${sessionHasNow?' now-session':''}`;
       div.innerHTML=`<div class="sd-line"></div><span class="sd-label">${SESSION_NAMES[sIdx]||'Sessão'}</span><div class="sd-line"></div>`;
       c.appendChild(div);
     }
 
     const row=document.createElement('div');
     const sessionClass=(isE||isP)?` session-block s${sIdx}`:'';
-    row.className='block-row'+(isP?' pausa-row':'')+(isA?' almoco-row':'')+(isEv?' event-row':'')+(done&&(isE||isP)?' done':'')+sessionClass;
+    const nowClass=isNowBlock?' now-block':'';
+    row.className='block-row'+(isP?' pausa-row':'')+(isA?' almoco-row':'')+(isEv?' event-row':'')+(done&&(isE||isP)?' done':'')+sessionClass+nowClass;
 
     let xpLabel='';
     if(isE||isP)xpLabel=`<span class="block-xp session-xp">+${b.xp} XP</span>`;
@@ -754,7 +1240,43 @@ function renderBlocks(){
     row.innerHTML=`${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
 
     if(isE||isP){
-      row.onclick=()=>{checks[i]=!checks[i];setCheck(key,i,checks[i]);renderAll();};
+      // Clicking the row starts the timer
+      row.onclick=(e)=>{
+        if(e.target.closest('.check')) return; // handled by checkbox
+        const now=new Date();
+        const startParts=b.time.split(':').map(Number);
+        const endParts=b.endTime.split(':').map(Number);
+        const blockStart=new Date(); blockStart.setHours(startParts[0],startParts[1],0,0);
+        const blockEnd=new Date(); blockEnd.setHours(endParts[0],endParts[1],0,0);
+        if(now>=blockEnd){
+          // Block already finished — show brief toast
+          showToast('Este bloco já terminou ⏎');
+          return;
+        }
+        if(now<blockStart){
+          // Block hasn't started yet
+          const diffMin=Math.round((blockStart-now)/60000);
+          showToast(`Este bloco começa em ${diffMin} min ⏳`);
+          return;
+        }
+        startTimer(b);
+        renderAll();
+      };
+      // Checkbox marks done
+      const checkEl=row.querySelector('.check');
+      if(checkEl){
+        checkEl.onclick=(e)=>{
+          e.stopPropagation();
+          checks[i]=!checks[i];
+          if(checks[i]) playSound('check');
+          setCheck(key,i,checks[i]);
+          renderAll();
+        };
+      }
+      // Highlight if active timer
+      if(timerBlock&&timerBlock.time===b.time&&timerBlock.endTime===b.endTime){
+        row.classList.add('timer-active');
+      }
     }
     if(isA){
       row.style.cursor='pointer';
