@@ -10,202 +10,302 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0e0e0f;
-    --bg2: #18181b;
-    --bg3: #232328;
-    --border: #2e2e35;
-    --text: #f0f0f0;
-    --muted: #888;
-    --accent: #a3e635;
-    --accent2: #65a30d;
-    --blue: #60a5fa;
-    --blue-bg: #1e2d40;
-    --green-bg: #1a2e1a;
-    --radius: 10px;
-    --radius-sm: 6px;
+    --bg:#0e0e0f; --bg2:#18181b; --bg3:#232328; --border:#2e2e35;
+    --text:#f0f0f0; --muted:#888; --accent:#a3e635; --accent2:#65a30d;
+    --blue:#60a5fa; --blue-bg:#1e2d40; --green-bg:#1a2e1a;
+    --orange:#fb923c; --orange-bg:#2d1e0f;
+    --radius:10px; --radius-sm:6px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-  #login-screen {
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 40px 20px;
-  }
-  #login-screen h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
-  #login-screen p { color: var(--muted); font-size: 14px; margin-bottom: 40px; text-align: center; }
-  .google-btn {
-    display: flex; align-items: center; gap: 12px;
-    background: white; color: #333; border: none; border-radius: var(--radius);
-    padding: 13px 24px; font-size: 15px; font-weight: 500; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
-  }
-  .google-btn:hover { opacity: 0.9; }
-  .google-btn svg { width: 20px; height: 20px; }
+  /* TOPBAR */
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(14,14,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar-left h1{font-size:15px;font-weight:600;}
+  .topbar-left .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:'DM Mono',monospace;}
+  .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .xp-badge{background:var(--green-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;}
+  .xp-badge .level-tag{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;}
+  .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .icon-btn:hover{border-color:#555;color:var(--text);}
+  /* MAIN */
+  .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
 
-  #app { display: none; }
+  /* XP CARD */
+  .xp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+  .xp-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;}
+  .xp-num{font-size:32px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);line-height:1;}
+  .xp-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .xp-right{text-align:right;}
+  .xp-right .week-xp{font-size:13px;font-family:'DM Mono',monospace;color:var(--muted);}
+  .xp-right .today-xp{font-size:11px;color:var(--muted);margin-top:2px;}
+  .bar-track{height:4px;background:var(--bg3);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);}
 
-  .topbar {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(14,14,15,0.92); backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .topbar-left h1 { font-size: 15px; font-weight: 600; }
-  .topbar-left .sub { font-size: 11px; color: var(--muted); margin-top: 1px; font-family: 'DM Mono', monospace; }
-  .topbar-right { display: flex; align-items: center; gap: 10px; }
-  .xp-badge {
-    background: var(--green-bg); border: 1px solid var(--accent2);
-    border-radius: 99px; padding: 5px 14px;
-    font-size: 13px; font-weight: 500; color: var(--accent);
-    font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 6px;
-  }
-  .xp-badge .level-tag { font-size: 10px; color: var(--accent2); border-left: 1px solid var(--accent2); padding-left: 6px; }
-  .logout-btn {
-    background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
-    color: var(--muted); font-size: 12px; padding: 5px 10px; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
-  }
-  .logout-btn:hover { border-color: #555; color: var(--text); }
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+  .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;}
+  .stat-box .s-label{font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+  .stat-box .s-val{font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
 
-  .main { max-width: 480px; margin: 0 auto; padding: 20px 16px 100px; }
+  /* WEEK SELECT */
+  .week-row{margin-bottom:12px;}
+  .week-row select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;padding:9px 12px;appearance:none;cursor:pointer;outline:none;}
 
-  .xp-card {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
-  }
-  .xp-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
-  .xp-num { font-size: 32px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--accent); line-height: 1; }
-  .xp-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .xp-right { text-align: right; }
-  .xp-right .week-xp { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--muted); }
-  .xp-right .today-xp { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .bar-track { height: 4px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
-  .bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  /* DAY TABS */
+  .day-tabs{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;}
+  .day-tabs::-webkit-scrollbar{display:none;}
+  .day-tab{flex-shrink:0;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;position:relative;transition:all .15s;}
+  .day-tab:hover{border-color:#444;color:var(--text);}
+  .day-tab.active{background:var(--accent);border-color:var(--accent);color:#0e0e0f;font-weight:600;}
+  .day-tab .dot{position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--accent);display:none;}
+  .day-tab.has-progress:not(.active) .dot{display:block;}
 
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-  .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
-  .stat-box .s-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-box .s-val { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+  /* DAY EVENTS BAR */
+  .day-events-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .day-events-bar .events-label{font-size:11px;color:var(--muted);}
+  .add-event-btn{font-size:12px;color:var(--accent);background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .add-event-btn:hover{background:var(--green-bg);}
 
-  .week-row { margin-bottom: 12px; }
-  .week-row select {
-    width: 100%; background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text); font-size: 13px;
-    font-family: 'DM Sans', sans-serif; padding: 9px 12px; appearance: none; cursor: pointer; outline: none;
-  }
+  /* EVENT CHIPS */
+  .events-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .event-chip{display:flex;align-items:center;gap:8px;background:var(--orange-bg);border:1px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;}
+  .event-chip .ev-icon{font-size:14px;}
+  .event-chip .ev-info{flex:1;}
+  .event-chip .ev-name{font-weight:500;color:var(--text);}
+  .event-chip .ev-time{color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;}
+  .event-chip .ev-lunch{color:var(--blue);font-size:10px;margin-top:2px;}
+  .event-chip .ev-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;}
+  .event-chip .ev-del:hover{color:var(--text);}
 
-  .day-tabs { display: flex; gap: 4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
-  .day-tabs::-webkit-scrollbar { display: none; }
-  .day-tab {
-    flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-sm);
-    border: 1px solid var(--border); background: transparent; color: var(--muted);
-    font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; position: relative; transition: all 0.15s;
-  }
-  .day-tab:hover { border-color: #444; color: var(--text); }
-  .day-tab.active { background: var(--accent); border-color: var(--accent); color: #0e0e0f; font-weight: 600; }
-  .day-tab .dot { position: absolute; top: 3px; right: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); display: none; }
-  .day-tab.has-progress:not(.active) .dot { display: block; }
+  /* BLOCKS */
+  .blocks-list{display:flex;flex-direction:column;gap:3px;}
+  .block-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);cursor:pointer;transition:background .12s;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .block-row:active{transform:scale(.99);}
+  .block-row:hover{background:var(--bg3);}
+  .block-row.done{opacity:.5;}
+  .block-row.done .block-name{text-decoration:line-through;text-decoration-color:var(--muted);}
+  .block-row.pausa-row{background:transparent;border-color:transparent;padding:7px 12px;}
+  .block-row.pausa-row:hover{background:var(--bg3);border-color:var(--border);}
+  .block-row.almoco-row{background:var(--bg3);border-color:var(--border);border-style:dashed;cursor:default;}
+  .block-row.event-row{background:var(--orange-bg);border-color:var(--orange);cursor:default;opacity:.85;}
+  .check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+  .check.checked{background:var(--accent);border-color:var(--accent);}
+  .check svg{width:10px;height:10px;display:none;}
+  .check.checked svg{display:block;}
+  .block-time{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;min-width:95px;}
+  .block-name{font-size:13px;color:var(--text);flex:1;}
+  .block-xp{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:99px;white-space:nowrap;}
+  .block-xp.estudo-xp{color:var(--accent);background:var(--green-bg);}
+  .block-xp.pausa-xp{color:var(--blue);background:var(--blue-bg);}
+  .block-xp.almoco-xp{color:var(--muted);background:var(--bg3);}
+  .block-xp.event-xp{color:var(--orange);background:var(--orange-bg);}
 
-  .blocks-list { display: flex; flex-direction: column; gap: 3px; }
-  .block-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 11px 12px; border-radius: var(--radius-sm);
-    border: 1px solid var(--border); background: var(--bg2);
-    cursor: pointer; transition: background 0.12s;
-    user-select: none; -webkit-tap-highlight-color: transparent;
-  }
-  .block-row:active { transform: scale(0.99); }
-  .block-row:hover { background: var(--bg3); }
-  .block-row.done { opacity: 0.5; }
-  .block-row.done .block-name { text-decoration: line-through; text-decoration-color: var(--muted); }
-  .block-row.pausa-row { background: transparent; border-color: transparent; padding: 7px 12px; }
-  .block-row.pausa-row:hover { background: var(--bg3); border-color: var(--border); }
-  .check {
-    width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--border);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s;
-  }
-  .check.checked { background: var(--accent); border-color: var(--accent); }
-  .check svg { width: 10px; height: 10px; display: none; }
-  .check.checked svg { display: block; }
-  .block-time { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; min-width: 88px; }
-  .block-name { font-size: 13px; color: var(--text); flex: 1; }
-  .block-xp { font-size: 10px; font-family: 'DM Mono', monospace; padding: 2px 7px; border-radius: 99px; }
-  .block-xp.estudo-xp { color: var(--accent); background: var(--green-bg); }
-  .block-xp.pausa-xp { color: var(--blue); background: var(--blue-bg); }
+  /* SETTINGS PANEL */
+  .panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;}
+  .panel-overlay.open{display:flex;}
+  .panel-sheet{background:var(--bg2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border);border-bottom:none;width:100%;max-width:480px;padding:24px 20px 40px;max-height:85vh;overflow-y:auto;}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .panel-header h2{font-size:16px;font-weight:600;}
+  .panel-close{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
+  .field-group{margin-bottom:18px;}
+  .field-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .field-row.three{grid-template-columns:1fr 1fr 1fr;}
+  .field-sublabel{font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .field-group input[type=time],
+  .field-group input[type=number],
+  .field-group input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;padding:9px 12px;outline:none;}
+  .field-group input:focus{border-color:var(--accent2);}
+  .config-preview{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:18px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.9;}
+  .config-preview span{color:var(--text);}
+  .config-preview .warn{color:var(--orange);}
+  .config-preview .ok{color:var(--accent);}
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .save-btn{width:100%;background:var(--accent);color:#0e0e0f;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .save-btn:hover{opacity:.9;}
+  .reset-btn{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .reset-btn:hover{border-color:#555;color:var(--text);}
 
-  #loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; }
-  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* EVENT PANEL */
+  .checkbox-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+  .checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .checkbox-row label{font-size:13px;color:var(--muted);cursor:pointer;}
 
-  #save-indicator {
-    position: fixed; bottom: 20px; right: 20px;
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 8px 14px;
-    font-size: 12px; color: var(--muted); opacity: 0;
-    transition: opacity 0.3s; pointer-events: none;
-  }
-  #save-indicator.show { opacity: 1; }
+  /* SESSION COLORS */
+  .s0 { --sc:#a3e635; --sc-bg:#1a2e1a; --sc-border:#65a30d; }
+  .s1 { --sc:#60a5fa; --sc-bg:#1e2d40; --sc-border:#2563eb; }
+  .s2 { --sc:#f472b6; --sc-bg:#2d1a2a; --sc-border:#db2777; }
+  .s3 { --sc:#fb923c; --sc-bg:#2d1e0f; --sc-border:#ea580c; }
+  .s4 { --sc:#34d399; --sc-bg:#0f2922; --sc-border:#059669; }
+  .s5 { --sc:#a78bfa; --sc-bg:#1e1a2e; --sc-border:#7c3aed; }
+  .block-row.session-block { border-color: var(--sc-border) !important; background: var(--sc-bg) !important; }
+  .block-row.session-block:hover { filter: brightness(1.1); }
+  .block-row.session-block.done { opacity: .45; }
+  .block-row.session-block .block-name { color: var(--sc); }
+  .block-row.session-block .block-time { color: var(--sc-border); }
+  .block-xp.session-xp { color: var(--sc) !important; background: var(--sc-bg) !important; }
+  .session-divider { display:flex; align-items:center; gap:8px; margin: 10px 0 4px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
+  .session-divider .sd-line { flex:1; height:1px; background: var(--sc-border); opacity:.4; }
+  .session-divider .sd-label { color: var(--sc); }
+
+  /* SAVE INDICATOR */
+  #save-indicator{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
+  #save-indicator.show{opacity:1;}
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="spinner"></div></div>
-
-<div id="login-screen">
-  <h1>📚 Plano de Estudos</h1>
-  <p>Entre com sua conta Google para acessar<br>seu plano e salvar seu progresso.</p>
-  <button class="google-btn" onclick="loginGoogle()">
-    <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;">
+  <h1 style="font-size:24px;font-weight:600;margin-bottom:8px;">📚 Plano de Estudos</h1>
+  <p style="color:var(--muted);font-size:14px;margin-bottom:40px;text-align:center;">Entre com sua conta Google para acessar<br>seu plano e salvar seu progresso.</p>
+  <button onclick="loginGoogle()" style="display:flex;align-items:center;gap:12px;background:white;color:#333;border:none;border-radius:10px;padding:13px 24px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
     Entrar com Google
   </button>
 </div>
 
-<div id="app">
-  <div class="topbar">
-    <div class="topbar-left">
-      <h1>Plano de Estudos</h1>
-      <div class="sub" id="today-label"></div>
-    </div>
-    <div class="topbar-right">
-      <div class="xp-badge">
-        <span id="top-xp">0 XP</span>
-        <span class="level-tag" id="top-level">Zero</span>
-      </div>
-      <button class="logout-btn" onclick="logoutUser()">Sair</button>
-    </div>
+<div id="app" style="display:none;">
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Plano de Estudos</h1>
+    <div class="sub" id="today-label"></div>
   </div>
-
-  <div class="main">
-    <div class="xp-card">
-      <div class="xp-row">
-        <div>
-          <div class="xp-sub">XP Total</div>
-          <div class="xp-num" id="xp-total">0</div>
-        </div>
-        <div class="xp-right">
-          <div class="week-xp" id="week-xp-val">Semana: 0 XP</div>
-          <div class="today-xp" id="today-xp-val">Hoje: 0 XP</div>
-        </div>
-      </div>
-      <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-box"><div class="s-label">Estudos</div><div class="s-val" id="stat-e">0/16</div></div>
-      <div class="stat-box"><div class="s-label">Pausas</div><div class="s-val" id="stat-p">0/17</div></div>
-      <div class="stat-box"><div class="s-label">Semana</div><div class="s-val" id="stat-w">0 ✓</div></div>
-    </div>
-
-    <div class="week-row">
-      <select id="week-select" onchange="onWeekChange()"></select>
-    </div>
-
-    <div class="day-tabs" id="day-tabs"></div>
-    <div class="blocks-list" id="blocks-list"></div>
+  <div class="topbar-right">
+    <div class="xp-badge"><span id="top-xp">0 XP</span><span class="level-tag" id="top-level">Zero</span></div>
+    <button class="icon-btn" onclick="openSettings()">⚙️ Config</button>
+      <button class="icon-btn" onclick="logoutUser()">Sair</button>
   </div>
 </div>
 
+<div class="main">
+  <div class="xp-card">
+    <div class="xp-row">
+      <div><div class="xp-sub">XP Total</div><div class="xp-num" id="xp-total">0</div></div>
+      <div class="xp-right">
+        <div class="week-xp" id="week-xp-val">Semana: 0 XP</div>
+        <div class="today-xp" id="today-xp-val">Hoje: 0 XP</div>
+      </div>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="s-label">Estudos</div><div class="s-val" id="stat-e">0/0</div></div>
+    <div class="stat-box"><div class="s-label">Pausas</div><div class="s-val" id="stat-p">0/0</div></div>
+    <div class="stat-box"><div class="s-label">Semana</div><div class="s-val" id="stat-w">0 ✓</div></div>
+  </div>
+
+  <div class="week-row"><select id="week-select" onchange="onWeekChange()"></select></div>
+  <div class="day-tabs" id="day-tabs"></div>
+
+  <div class="day-events-bar">
+    <span class="events-label" id="events-label">Sem eventos especiais</span>
+    <button class="add-event-btn" onclick="openEventPanel()">+ Evento</button>
+  </div>
+  <div class="events-list" id="events-list"></div>
+  <div class="blocks-list" id="blocks-list"></div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="panel-overlay" id="settings-panel" onclick="closeIfOutside(event,'settings-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>⚙️ Configurações</h2>
+      <button class="panel-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="config-preview" id="config-preview">Calculando...</div>
+    <div class="field-group">
+      <label>Horários</label>
+      <div class="field-row">
+        <div><div class="field-sublabel">Início</div><input type="time" id="cfg-start" value="09:00" oninput="updatePreview()"></div>
+        <div><div class="field-sublabel">Término</div><input type="time" id="cfg-end" value="18:00" oninput="updatePreview()"></div>
+      </div>
+    </div>
+
+    <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+      <div class="checkbox-row" style="margin-bottom:10px;">
+        <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
+        <label for="cfg-has-lunch" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Almoço</label>
+      </div>
+      <div id="lunch-fields">
+        <div class="field-row" style="margin-bottom:8px;">
+          <div><div class="field-sublabel">Horário</div><input type="time" id="cfg-lunch" value="13:00" oninput="updatePreview()"></div>
+          <div><div class="field-sublabel">Duração (min)</div><input type="number" id="cfg-lunch-dur" value="60" min="15" max="180" step="5" oninput="updatePreview()"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Pomodoro</label>
+      <div class="field-row">
+        <div><div class="field-sublabel">Estudo (min)</div><input type="number" id="cfg-pomo" value="25" min="10" max="90" step="5" oninput="updatePreview()"></div>
+        <div><div class="field-sublabel">Pausa curta (min)</div><input type="number" id="cfg-short" value="5" min="1" max="30" step="1" oninput="updatePreview()"></div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Pausa longa — a cada 4 pomodoros (min)</label>
+      <input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()">
+    </div>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="resetSettings()">↺ Padrão</button>
+      <button class="save-btn" onclick="saveSettings()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LUNCH EDIT PANEL -->
+<div class="panel-overlay" id="lunch-panel" onclick="closeIfOutside(event,'lunch-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🍽️ Editar Almoço</h2>
+      <button class="panel-close" onclick="closeLunchPanel()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Alteração válida só para este dia.</p>
+    <div class="field-group">
+      <label>Horário e duração</label>
+      <div class="field-row">
+        <div><div class="field-sublabel">Início</div><input type="time" id="lunch-edit-start" value="13:00"></div>
+        <div><div class="field-sublabel">Duração (min)</div><input type="number" id="lunch-edit-dur" value="60" min="15" max="180" step="5"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="resetLunchEdit()">↺ Padrão</button>
+      <button class="save-btn" onclick="saveLunchEdit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT PANEL -->
+<div class="panel-overlay" id="event-panel" onclick="closeIfOutside(event,'event-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>📅 Novo Evento</h2>
+      <button class="panel-close" onclick="closeEventPanel()">✕</button>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
+      💡 <strong style="color:var(--text);">Considere o deslocamento.</strong> Se sua aula começa às 11:30 mas você sai de casa às 11:00, defina o evento a partir das 11:00 — assim os pomodoros param na hora certa e você não fica no meio de um bloco quando precisar sair.
+    </div>
+    <div class="field-group">
+      <label>Nome do evento</label>
+      <input type="text" id="ev-name" placeholder="Ex: Aula de Álgebra, Consulta...">
+    </div>
+    <div class="field-group">
+      <label>Horário</label>
+      <div class="field-row">
+        <div><div class="field-sublabel">Início</div><input type="time" id="ev-start" value="11:30"></div>
+        <div><div class="field-sublabel">Fim</div><input type="time" id="ev-end" value="13:00"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="reset-btn" onclick="closeEventPanel()">Cancelar</button>
+      <button class="save-btn" onclick="saveEvent()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #app -->
 <div id="save-indicator">Salvando...</div>
 
 <script type="module">
@@ -223,125 +323,359 @@ const firebaseConfig = {
   messagingSenderId: "807419074503",
   appId: "1:807419074503:web:905534d0f0ef64edf26be2"
 };
-
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
 
+// ---- CONSTANTS ----
+const DEFAULT_CFG = { start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00', pomo:25, shortBreak:5, longBreak:20, hasLunch:true };
 const WEEKS = [];
-const START = new Date(2026, 4, 4);
-for (let w = 0; w < 18; w++) {
-  const s = new Date(START); s.setDate(s.getDate() + w * 7);
-  const e = new Date(s); e.setDate(e.getDate() + 6);
-  WEEKS.push({ n: w+1, start: s, end: e });
+const START_DATE = new Date(2026,4,4);
+for(let w=0;w<18;w++){
+  const s=new Date(START_DATE); s.setDate(s.getDate()+w*7);
+  const e=new Date(s); e.setDate(e.getDate()+6);
+  WEEKS.push({n:w+1,start:s,end:e});
 }
-const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-const BLOCKS = [
-  {time:'09:00–09:25',name:'Estudo 1',type:'estudo'},
-  {time:'09:25–09:30',name:'Pausa',type:'pausa'},
-  {time:'09:30–09:55',name:'Estudo 2',type:'estudo'},
-  {time:'09:55–10:00',name:'Pausa',type:'pausa'},
-  {time:'10:00–10:25',name:'Estudo 3',type:'estudo'},
-  {time:'10:25–10:30',name:'Pausa',type:'pausa'},
-  {time:'10:30–10:55',name:'Estudo 4',type:'estudo'},
-  {time:'10:55–11:00',name:'Pausa',type:'pausa'},
-  {time:'11:00–11:25',name:'Estudo 5',type:'estudo'},
-  {time:'11:25–11:30',name:'Pausa',type:'pausa'},
-  {time:'11:30–11:55',name:'Estudo 6',type:'estudo'},
-  {time:'11:55–12:00',name:'Pausa',type:'pausa'},
-  {time:'12:00–12:25',name:'Estudo 7',type:'estudo'},
-  {time:'12:25–12:30',name:'Pausa',type:'pausa'},
-  {time:'12:30–12:55',name:'Estudo 8',type:'estudo'},
-  {time:'12:55–13:00',name:'Pausa',type:'pausa'},
-  {time:'13:00–14:00',name:'Almoço',type:'pausa'},
-  {time:'14:00–14:25',name:'Estudo 9',type:'estudo'},
-  {time:'14:25–14:30',name:'Pausa',type:'pausa'},
-  {time:'14:30–14:55',name:'Estudo 10',type:'estudo'},
-  {time:'14:55–15:00',name:'Pausa',type:'pausa'},
-  {time:'15:00–15:25',name:'Estudo 11',type:'estudo'},
-  {time:'15:25–15:30',name:'Pausa',type:'pausa'},
-  {time:'15:30–15:55',name:'Estudo 12',type:'estudo'},
-  {time:'15:55–16:00',name:'Pausa',type:'pausa'},
-  {time:'16:00–16:25',name:'Estudo 13',type:'estudo'},
-  {time:'16:25–16:30',name:'Pausa',type:'pausa'},
-  {time:'16:30–16:55',name:'Estudo 14',type:'estudo'},
-  {time:'16:55–17:00',name:'Pausa',type:'pausa'},
-  {time:'17:00–17:25',name:'Estudo 15',type:'estudo'},
-  {time:'17:25–17:30',name:'Pausa',type:'pausa'},
-  {time:'17:30–17:55',name:'Estudo 16',type:'estudo'},
-  {time:'17:55–18:00',name:'Pausa',type:'pausa'},
-];
-const XP_E=10, XP_P=2;
+const DAYS=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const LEVELS=[[0,'Zero'],[50,'Iniciante'],[150,'Focado'],[300,'Dedicado'],[500,'Consistente'],[800,'Avançado'],[1200,'Expert'],[2000,'Mestre']];
-const getLevel = xp => { let lv=LEVELS[0][1]; for(const [t,n] of LEVELS){if(xp>=t)lv=n;} return lv; };
-const getLevelPct = xp => { let lo=0,hi=null; for(let i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i][0]){lo=LEVELS[i][0];hi=LEVELS[i+1]?LEVELS[i+1][0]:null;}} return hi?Math.round(((xp-lo)/(hi-lo))*100):100; };
-const dk = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const today = () => new Date();
-const findWeek = d => { for(const w of WEEKS){if(d>=w.start&&d<=w.end)return w.n;} return 1; };
+const getLevel=xp=>{let lv=LEVELS[0][1];for(const[t,n]of LEVELS){if(xp>=t)lv=n;}return lv;};
+const getLevelPct=xp=>{let lo=0,hi=null;for(let i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i][0]){lo=LEVELS[i][0];hi=LEVELS[i+1]?LEVELS[i+1][0]:null;}}return hi?Math.round(((xp-lo)/(hi-lo))*100):100;};
+const dk=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>new Date();
+const findWeek=d=>{for(const w of WEEKS){if(d>=w.start&&d<=w.end)return w.n;}return 1;};
+const timeToMins=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
+const minsToTime=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 
-let curWeek=1, curDay=0, currentUser=null, allData={}, saveTimeout=null;
+// ---- BLOCK GENERATOR ----
+function generateBlocks(cfg, events=[]) {
+  const blocks = [];
+  let cur = timeToMins(cfg.start);
+  const endMins = timeToMins(cfg.end);
 
-async function loadData(uid) {
-  const snap = await getDoc(doc(db,'users',uid));
-  allData = snap.exists() ? (snap.data().checks||{}) : {};
+  // Build sorted blocked intervals
+  const blocked = [...events.map(ev=>({
+    start: timeToMins(ev.start), end: timeToMins(ev.end),
+    name: ev.name, type:'event'
+  }))];
+
+  // Add lunch unless disabled
+  const lunchStart = timeToMins(cfg.lunch);
+  const lunchEnd = lunchStart + cfg.lunchDur;
+  if(cfg.hasLunch !== false) {
+    blocked.push({ start:lunchStart, end:lunchEnd, name:'🍽️ Almoço', type:'almoco' });
+  }
+  blocked.sort((a,b)=>a.start-b.start);
+
+  let pomoCount=0, session=0;
+  const MAX=300; let iter=0;
+
+  while(cur < endMins && iter++ < MAX) {
+    // Inside a blocked interval — emit it and skip
+    const inBlock = blocked.find(b => cur >= b.start && cur < b.end);
+    if(inBlock) {
+      blocks.push({
+        time: minsToTime(inBlock.start), endTime: minsToTime(inBlock.end),
+        name: inBlock.type==='event'?`📅 ${inBlock.name}`:`🍽️ Almoço`,
+        type: inBlock.type, xp:0
+      });
+      cur = inBlock.end;
+      pomoCount = 0;
+      session++;
+      continue;
+    }
+
+    // Find next blocked interval
+    const nextBlock = blocked.find(b => b.start > cur);
+    const nextBlockStart = nextBlock ? nextBlock.start : endMins;
+    const gap = nextBlockStart - cur;
+
+    // Gap is smaller than a full pomodoro — fill it smartly
+    if(gap < cfg.pomo && gap > 0) {
+      const half = cfg.pomo / 2;
+      const lastStudy = [...blocks].reverse().find(b=>b.type==='estudo');
+
+      if(gap >= half) {
+        // Gap is >= half a pomodoro: add a mini study block
+        const estudoN = blocks.filter(b=>b.type==='estudo').length+1;
+        const xp = calcXP(gap);
+        blocks.push({time:minsToTime(cur), endTime:minsToTime(cur+gap), name:`📖 Estudo ${estudoN}`, type:'estudo', xp, mini:true, session});
+      } else if(lastStudy) {
+        // Gap is small: stretch the last study block to fill it
+        lastStudy.endTime = minsToTime(timeToMins(lastStudy.endTime) + gap);
+        lastStudy.xp = calcXP(timeToMins(lastStudy.endTime) - timeToMins(lastStudy.time));
+      }
+      cur = nextBlockStart;
+      continue;
+    }
+
+    // Normal study block
+    const estudoN = blocks.filter(b=>b.type==='estudo').length+1;
+    const xp = calcXP(cfg.pomo);
+    blocks.push({time:minsToTime(cur), endTime:minsToTime(cur+cfg.pomo), name:`📖 Estudo ${estudoN}`, type:'estudo', xp, session});
+    cur += cfg.pomo;
+    pomoCount++;
+
+    // Break
+    const isLong = pomoCount % 4 === 0;
+    if(isLong) session++;
+    const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
+    const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
+    const bxp = Math.max(1, Math.round(breakDur/5));
+    const afterBreak = cur + breakDur;
+
+    const nextBlockAfterBreak = blocked.find(b => b.start > cur);
+    const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : endMins;
+
+    // Skip break if it overlaps next blocked interval
+    if(afterBreak > nextStartAfterBreak) {
+      cur = nextStartAfterBreak;
+      continue;
+    }
+
+    // Only add break if a study still fits after it
+    if(afterBreak + cfg.pomo <= endMins) {
+      blocks.push({time:minsToTime(cur), endTime:minsToTime(afterBreak), name:breakName, type:'pausa', xp:bxp, session});
+      cur = afterBreak;
+    } else {
+      break;
+    }
+  }
+
+  // Ensure last block is always a study (never end on a pausa)
+  while(blocks.length>0 && blocks[blocks.length-1].type==='pausa') {
+    blocks.pop();
+  }
+
+  return blocks;
 }
-const getChecks = key => allData[key]||{};
-function setCheck(key,idx,val) {
-  if(!allData[key]) allData[key]={};
+
+function calcXP(minutes) {
+  return Math.round((minutes/25)*10*(1+Math.max(0,minutes-25)*0.002));
+}
+
+function calcActualEnd(cfg, events=[]) {
+  const blocks = generateBlocks(cfg, events);
+  const lastStudy = [...blocks].reverse().find(b=>b.type==='estudo');
+  return lastStudy ? lastStudy.endTime : cfg.end;
+}
+
+// ---- STATE ----
+let curWeek=1, curDay=0, allData={}, dayEvents={}, lunchOverrides={}, userCfg={...DEFAULT_CFG}, saveTimeout=null, currentUser=null;
+
+const getChecks=key=>allData[key]||{};
+function setCheck(key,idx,val){
+  if(!allData[key])allData[key]={};
   allData[key][idx]=val;
+  scheduleSave();
+}
+const getDayEvents=key=>dayEvents[key]||[];
+
+async function loadData(uid){
+  const snap=await getDoc(doc(db,'users',uid));
+  if(snap.exists()){
+    const d=snap.data();
+    allData=d.checks||{};
+    dayEvents=d.events||{};
+    lunchOverrides=d.lunchOverrides||{};
+    userCfg={...DEFAULT_CFG,...(d.config||{})};
+  } else {
+    allData={};dayEvents={};userCfg={...DEFAULT_CFG};
+  }
+}
+
+function showSave(msg='Salvando...', done=false){
   const ind=document.getElementById('save-indicator');
-  ind.textContent='Salvando...'; ind.classList.add('show');
+  ind.textContent=msg;ind.classList.add('show');
+  if(done)setTimeout(()=>ind.classList.remove('show'),1500);
+}
+
+function scheduleSave(){
+  showSave('Salvando...');
   clearTimeout(saveTimeout);
   saveTimeout=setTimeout(async()=>{
-    if(!currentUser) return;
-    await setDoc(doc(db,'users',currentUser.uid),{checks:allData},{merge:true});
-    ind.textContent='Salvo ✓';
-    setTimeout(()=>ind.classList.remove('show'),1500);
+    if(!currentUser)return;
+    await setDoc(doc(db,'users',currentUser.uid),{checks:allData,events:dayEvents,lunchOverrides:lunchOverrides,config:userCfg},{merge:true});
+    showSave('Salvo ✓',true);
   },800);
 }
 
-window.loginGoogle = async () => { try { await signInWithPopup(auth,provider); } catch(e){console.error(e);} };
-window.logoutUser = async () => { await signOut(auth); };
-window.onWeekChange = () => { curWeek=parseInt(document.getElementById('week-select').value); curDay=0; renderAll(); };
+window.loginGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){console.error(e);}};
+window.logoutUser=async()=>{await signOut(auth);};
 
-onAuthStateChanged(auth, async user => {
-  document.getElementById('loading').style.display='none';
-  if(user) {
+onAuthStateChanged(auth,async user=>{
+  if(user){
     currentUser=user;
     await loadData(user.uid);
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
     initApp();
   } else {
-    currentUser=null; allData={};
+    currentUser=null;allData={};dayEvents={};userCfg={...DEFAULT_CFG};
     document.getElementById('login-screen').style.display='flex';
     document.getElementById('app').style.display='none';
   }
 });
 
-function initApp() {
+// ---- SETTINGS ----
+window.openSettings=()=>{
+  document.getElementById('cfg-start').value=userCfg.start;
+  document.getElementById('cfg-lunch').value=userCfg.lunch;
+  document.getElementById('cfg-lunch-dur').value=userCfg.lunchDur;
+  document.getElementById('cfg-end').value=userCfg.end;
+  document.getElementById('cfg-pomo').value=userCfg.pomo;
+  document.getElementById('cfg-short').value=userCfg.shortBreak;
+  document.getElementById('cfg-long').value=userCfg.longBreak;
+  document.getElementById('cfg-has-lunch').checked=userCfg.hasLunch!==false;
+  toggleLunchFields();
+  updatePreview();
+  document.getElementById('settings-panel').classList.add('open');
+};
+
+window.toggleLunchFields=()=>{
+  const has=document.getElementById('cfg-has-lunch').checked;
+  const fields=document.getElementById('lunch-fields');
+  fields.style.opacity=has?'1':'0.35';
+  fields.style.pointerEvents=has?'auto':'none';
+  document.getElementById('cfg-lunch').disabled=!has;
+  document.getElementById('cfg-lunch-dur').disabled=!has;
+};
+window.closeSettings=()=>document.getElementById('settings-panel').classList.remove('open');
+
+window.resetSettings=()=>{
+  document.getElementById('cfg-start').value=DEFAULT_CFG.start;
+  document.getElementById('cfg-lunch').value=DEFAULT_CFG.lunch;
+  document.getElementById('cfg-lunch-dur').value=DEFAULT_CFG.lunchDur;
+  document.getElementById('cfg-end').value=DEFAULT_CFG.end;
+  document.getElementById('cfg-pomo').value=DEFAULT_CFG.pomo;
+  document.getElementById('cfg-short').value=DEFAULT_CFG.shortBreak;
+  document.getElementById('cfg-long').value=DEFAULT_CFG.longBreak;
+  document.getElementById('cfg-has-lunch').checked=true;
+  toggleLunchFields();
+  updatePreview();
+};
+
+window.updatePreview=()=>{
+  const cfg=readCfgForm();
+  if(Object.values(cfg).some(v=>isNaN(v)&&typeof v==='number')){
+    document.getElementById('config-preview').innerHTML='⚠️ Preencha todos os campos.';return;
+  }
+  const blocks=generateBlocks(cfg,[]);
+  if(blocks.length===0){document.getElementById('config-preview').innerHTML='⚠️ Configuração inválida.';return;}
+  const estudos=blocks.filter(b=>b.type==='estudo').length;
+  const totalXP=blocks.reduce((s,b)=>s+b.xp,0);
+  const totalMins=estudos*cfg.pomo;
+  const actualEnd=calcActualEnd(cfg,[]);
+  const diff=timeToMins(actualEnd)-timeToMins(cfg.end);
+  let timingHtml='';
+  if(diff===0) timingHtml=`<span class="ok">✅ Termina exatamente às ${actualEnd}</span>`;
+  else if(diff>0) timingHtml=`<span class="warn">⚠️ Termina às ${actualEnd} (+${diff} min além do previsto)</span>`;
+  else timingHtml=`<span class="warn">⚠️ Termina às ${actualEnd} (${Math.abs(diff)} min antes do previsto)</span>`;
+  document.getElementById('config-preview').innerHTML=
+    `Pomodoros: <span>${estudos}</span> · Estudo: <span>${Math.floor(totalMins/60)}h${totalMins%60>0?totalMins%60+'min':''}</span> · XP/dia: <span>~${totalXP}</span>\n${timingHtml}`;
+};
+
+function readCfgForm(){
+  return {
+    start:document.getElementById('cfg-start').value,
+    lunch:document.getElementById('cfg-lunch').value,
+    lunchDur:parseInt(document.getElementById('cfg-lunch-dur').value),
+    end:document.getElementById('cfg-end').value,
+    pomo:parseInt(document.getElementById('cfg-pomo').value),
+    shortBreak:parseInt(document.getElementById('cfg-short').value),
+    longBreak:parseInt(document.getElementById('cfg-long').value),
+    hasLunch:document.getElementById('cfg-has-lunch').checked,
+  };
+}
+
+window.saveSettings=()=>{
+  userCfg=readCfgForm();
+  closeSettings();
+  scheduleSave();
+  renderAll();
+};
+
+// ---- EVENT PANEL ----
+window.openEventPanel=()=>document.getElementById('event-panel').classList.add('open');
+window.closeEventPanel=()=>document.getElementById('event-panel').classList.remove('open');
+
+window.saveEvent=()=>{
+  const name=document.getElementById('ev-name').value.trim()||'Evento';
+  const start=document.getElementById('ev-start').value;
+  const end=document.getElementById('ev-end').value;
+  if(timeToMins(end)<=timeToMins(start)){alert('O horário de fim deve ser depois do início.');return;}
+  const date=new Date(WEEKS[curWeek-1].start); date.setDate(date.getDate()+curDay);
+  const key=dk(date);
+  if(!dayEvents[key])dayEvents[key]=[];
+  dayEvents[key].push({name,start,end});
+  closeEventPanel();
+  document.getElementById('ev-name').value='';
+  renderAll();
+  scheduleSave();
+};
+
+window.deleteEvent=(key,idx)=>{
+  dayEvents[key].splice(idx,1);
+  renderAll();
+  scheduleSave();
+};
+
+window.closeIfOutside=(e,id)=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('open');};
+
+// ---- APP ----
+function initApp(){
   const t=today();
   document.getElementById('today-label').textContent=t.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   curWeek=findWeek(t);
-  const sel=document.getElementById('week-select'); sel.innerHTML='';
+  const sel=document.getElementById('week-select');sel.innerHTML='';
   WEEKS.forEach(w=>{
     const o=document.createElement('option');
     o.value=w.n;
     o.textContent=`Semana ${w.n}  ·  ${w.start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} – ${w.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`;
-    if(w.n===curWeek) o.selected=true;
+    if(w.n===curWeek)o.selected=true;
     sel.appendChild(o);
   });
   curDay=Math.min(6,Math.max(0,Math.round((t-WEEKS[curWeek-1].start)/86400000)));
   renderAll();
 }
 
-function renderAll(){ renderTabs(); renderBlocks(); renderXP(); }
+window.onWeekChange=()=>{curWeek=parseInt(document.getElementById('week-select').value);curDay=0;renderAll();};
+
+function getLunchForDay(key){
+  if(lunchOverrides[key]) return lunchOverrides[key];
+  return { lunch: userCfg.lunch, lunchDur: userCfg.lunchDur };
+}
+
+let editingLunchKey = null;
+window.openLunchPanel=(key)=>{
+  editingLunchKey=key;
+  const ov=getLunchForDay(key);
+  document.getElementById('lunch-edit-start').value=ov.lunch;
+  document.getElementById('lunch-edit-dur').value=ov.lunchDur;
+  document.getElementById('lunch-panel').classList.add('open');
+};
+window.closeLunchPanel=()=>document.getElementById('lunch-panel').classList.remove('open');
+window.resetLunchEdit=()=>{
+  document.getElementById('lunch-edit-start').value=userCfg.lunch;
+  document.getElementById('lunch-edit-dur').value=userCfg.lunchDur;
+};
+window.saveLunchEdit=()=>{
+  if(!editingLunchKey) return;
+  lunchOverrides[editingLunchKey]={
+    lunch: document.getElementById('lunch-edit-start').value,
+    lunchDur: parseInt(document.getElementById('lunch-edit-dur').value)
+  };
+  closeLunchPanel();
+  scheduleSave();
+  renderAll();
+};
+
+function renderAll(){renderTabs();renderEvents();renderBlocks();renderXP();}
 
 function renderTabs(){
-  const c=document.getElementById('day-tabs'); c.innerHTML='';
+  const c=document.getElementById('day-tabs');c.innerHTML='';
   DAYS.forEach((d,i)=>{
-    const date=new Date(WEEKS[curWeek-1].start); date.setDate(date.getDate()+i);
+    const date=new Date(WEEKS[curWeek-1].start);date.setDate(date.getDate()+i);
     const done=Object.values(getChecks(dk(date))).filter(Boolean).length;
     const btn=document.createElement('button');
     btn.className='day-tab'+(i===curDay?' active':'')+(done>0?' has-progress':'');
@@ -351,21 +685,82 @@ function renderTabs(){
   });
 }
 
+function renderEvents(){
+  const date=new Date(WEEKS[curWeek-1].start);date.setDate(date.getDate()+curDay);
+  const key=dk(date);
+  const events=getDayEvents(key);
+  const listEl=document.getElementById('events-list');
+  const labelEl=document.getElementById('events-label');
+  listEl.innerHTML='';
+  if(events.length===0){labelEl.textContent='Sem eventos especiais';return;}
+  labelEl.textContent=`${events.length} evento${events.length>1?'s':''} hoje`;
+  events.forEach((ev,i)=>{
+    const chip=document.createElement('div');
+    chip.className='event-chip';
+    chip.innerHTML=`
+      <span class="ev-icon">📅</span>
+      <div class="ev-info">
+        <div class="ev-name">${ev.name}</div>
+        <div class="ev-time">${ev.start} – ${ev.end}</div>
+
+      </div>
+      <button class="ev-del" onclick="deleteEvent('${key}',${i})">✕</button>
+    `;
+    listEl.appendChild(chip);
+  });
+}
+
 function renderBlocks(){
-  const date=new Date(WEEKS[curWeek-1].start); date.setDate(date.getDate()+curDay);
-  const key=dk(date); const checks=getChecks(key);
-  const c=document.getElementById('blocks-list'); c.innerHTML='';
+  const date=new Date(WEEKS[curWeek-1].start);date.setDate(date.getDate()+curDay);
+  const key=dk(date);
+  const checks=getChecks(key);
+  const events=getDayEvents(key);
+  const ov=getLunchForDay(key);
+  const dayCfg={...userCfg,...ov};
+  const blocks=generateBlocks(dayCfg,events);
+  const c=document.getElementById('blocks-list');c.innerHTML='';
   let eD=0,eT=0,pD=0,pT=0;
-  BLOCKS.forEach((b,i)=>{
-    const isE=b.type==='estudo';
-    if(isE)eT++;else pT++;
+  const svg=`<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
+  const SESSION_NAMES=['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
+  const NUM_SESSIONS=6;
+  let lastSession=-1;
+
+  blocks.forEach((b,i)=>{
+    const isE=b.type==='estudo',isP=b.type==='pausa',isA=b.type==='almoco',isEv=b.type==='event';
+    if(isE)eT++;else if(isP)pT++;
     const done=!!checks[i];
-    if(done){if(isE)eD++;else pD++;}
+    if(done){if(isE)eD++;else if(isP)pD++;}
+
+    const sIdx=(b.session!==undefined)?b.session%NUM_SESSIONS:0;
+
+    if((isE||isP)&&b.session!==undefined&&b.session!==lastSession){
+      lastSession=b.session;
+      const div=document.createElement('div');
+      div.className=`session-divider s${sIdx}`;
+      div.innerHTML=`<div class="sd-line"></div><span class="sd-label">${SESSION_NAMES[sIdx]||'Sessão'}</span><div class="sd-line"></div>`;
+      c.appendChild(div);
+    }
+
     const row=document.createElement('div');
-    row.className='block-row'+(b.type==='pausa'?' pausa-row':'')+(done?' done':'');
-    const svg=`<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
-    row.innerHTML=`<div class="check ${done?'checked':''}">${svg}</div><span class="block-time">${b.time}</span><span class="block-name">${b.name}</span><span class="block-xp ${isE?'estudo-xp':'pausa-xp'}">${isE?'+10':'+2'} XP</span>`;
-    row.onclick=()=>{ checks[i]=!checks[i]; setCheck(key,i,checks[i]); renderAll(); };
+    const sessionClass=(isE||isP)?` session-block s${sIdx}`:'';
+    row.className='block-row'+(isP?' pausa-row':'')+(isA?' almoco-row':'')+(isEv?' event-row':'')+(done&&(isE||isP)?' done':'')+sessionClass;
+
+    let xpLabel='';
+    if(isE||isP)xpLabel=`<span class="block-xp session-xp">+${b.xp} XP</span>`;
+    else if(isA)xpLabel=`<span class="block-xp almoco-xp" style="cursor:pointer">${lunchOverrides[key]?'✏️ editado':'✏️ editar'}</span>`;
+    else xpLabel=`<span class="block-xp event-xp">evento</span>`;
+
+    const checkHtml=(isA||isEv)?'':`<div class="check ${done?'checked':''}">${svg}</div>`;
+    row.innerHTML=`${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
+
+    if(isE||isP){
+      row.onclick=()=>{checks[i]=!checks[i];setCheck(key,i,checks[i]);renderAll();};
+    }
+    if(isA){
+      row.style.cursor='pointer';
+      row.title='Clique para editar o almoço de hoje';
+      row.onclick=()=>openLunchPanel(key);
+    }
     c.appendChild(row);
   });
   document.getElementById('stat-e').textContent=eD+'/'+eT;
@@ -377,14 +772,17 @@ function renderXP(){
   const todayKey=dk(today());
   for(let wi=0;wi<18;wi++){
     for(let di=0;di<7;di++){
-      const d=new Date(WEEKS[wi].start); d.setDate(d.getDate()+di);
-      const checks=getChecks(dk(d));
-      BLOCKS.forEach((b,i)=>{
-        if(checks[i]){
-          const xp=b.type==='estudo'?XP_E:XP_P;
-          total+=xp;
-          if(wi===curWeek-1){weekXP+=xp;weekChecks++;}
-          if(dk(d)===todayKey)todayXP+=xp;
+      const d=new Date(WEEKS[wi].start);d.setDate(d.getDate()+di);
+      const key=dk(d);
+      const checks=getChecks(key);
+      const events=getDayEvents(key);
+      const ov=getLunchForDay(key);
+      const blocks=generateBlocks({...userCfg,...ov},events);
+      blocks.forEach((b,i)=>{
+        if(checks[i]&&b.xp>0){
+          total+=b.xp;
+          if(wi===curWeek-1){weekXP+=b.xp;weekChecks++;}
+          if(key===todayKey)todayXP+=b.xp;
         }
       });
     }
@@ -397,6 +795,7 @@ function renderXP(){
   document.getElementById('today-xp-val').textContent='Hoje: '+todayXP+' XP';
   document.getElementById('stat-w').textContent=weekChecks+' ✓';
 }
+
 </script>
 </body>
 </html>
