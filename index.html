@@ -167,6 +167,30 @@
   .streak-label { font-size:13px; color:var(--text); }
   .streak-val { font-size:15px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); }
 
+  /* PROFILE PAGE */
+  .profile-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
+  .profile-page.visible { display:block; }
+  .char-stage { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:32px 20px 24px; margin-bottom:16px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .char-wrap { position:relative; display:flex; align-items:center; justify-content:center; }
+  .char-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:128px; height:128px; object-fit:contain; }
+  .char-level-badge { position:absolute; bottom:-10px; right:-10px; background:var(--accent); color:#0e0e0f; font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; font-family:'DM Mono',monospace; }
+  .char-name { font-size:18px; font-weight:600; }
+  .char-title { font-size:12px; color:var(--muted); margin-top:2px; }
+  .char-xp-wrap { width:100%; }
+  .char-xp-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:5px; font-family:'DM Mono',monospace; }
+  .currency-row { display:flex; align-items:center; gap:8px; background:var(--bg3); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:16px; }
+  .currency-icon { font-size:20px; }
+  .currency-label { font-size:12px; color:var(--muted); flex:1; }
+  .currency-val { font-size:20px; font-weight:600; font-family:'DM Mono',monospace; color:#fbbf24; }
+  .profile-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .profile-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; }
+  .profile-stat .ps-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+  .profile-stat .ps-val { font-size:17px; font-weight:600; font-family:'DM Mono',monospace; color:var(--text); }
+  .coming-soon-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; opacity:.6; }
+  .coming-soon-card .cs-icon { font-size:32px; margin-bottom:8px; }
+  .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .coming-soon-card .cs-sub { font-size:12px; color:var(--muted); }
+
   /* TIMER */
   .timer-bar { position:sticky; top:57px; z-index:99; background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 20px; display:none; align-items:center; gap:12px; }
   .timer-bar.active { display:flex; }
@@ -241,6 +265,7 @@
     <div class="nav-tabs">
       <button class="nav-tab active" id="tab-plano" onclick="switchTab('plano')">📚 Plano</button>
       <button class="nav-tab" id="tab-analise" onclick="switchTab('analise')">📊 Análise</button>
+      <button class="nav-tab" id="tab-perfil" onclick="switchTab('perfil')">🧑 Perfil</button>
     </div>
     <div class="sub" id="today-label"></div>
   </div>
@@ -450,6 +475,58 @@
     <div class="streak-row"><span class="streak-label">🏆 Maior sequência</span><span class="streak-val" id="an-best-streak">0 dias</span></div>
     <div class="streak-row"><span class="streak-label">📖 Melhor dia (blocos)</span><span class="streak-val" id="an-best-day">—</span></div>
     <div class="streak-row"><span class="streak-label">⚡ XP num único dia</span><span class="streak-val" id="an-best-xp">0 XP</span></div>
+  </div>
+
+</div>
+
+<div class="profile-page" id="profile-page">
+
+  <!-- CHARACTER STAGE -->
+  <div class="char-stage">
+    <div class="char-wrap">
+      <img id="char-sprite" class="char-sprite" src="idle/0.png" alt="Personagem">
+      <div class="char-level-badge" id="char-level-badge">Lv.1</div>
+    </div>
+    <div style="text-align:center">
+      <div class="char-name" id="char-name">Estudante</div>
+      <div class="char-title" id="char-title">Zero</div>
+    </div>
+    <div class="char-xp-wrap">
+      <div class="char-xp-labels">
+        <span id="char-xp-cur">0 XP</span>
+        <span id="char-xp-next"></span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="char-xp-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- CURRENCY -->
+  <div class="currency-row">
+    <span class="currency-icon">🪙</span>
+    <span class="currency-label">Moedas de estudo</span>
+    <span class="currency-val" id="char-coins">0</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="profile-stats">
+    <div class="profile-stat"><div class="ps-label">Total de XP</div><div class="ps-val" id="ps-xp">0</div></div>
+    <div class="profile-stat"><div class="ps-label">Blocos feitos</div><div class="ps-val" id="ps-blocks">0</div></div>
+    <div class="profile-stat"><div class="ps-label">Horas de estudo</div><div class="ps-val" id="ps-hours">0h</div></div>
+    <div class="profile-stat"><div class="ps-label">Semanas ativas</div><div class="ps-val" id="ps-weeks">0</div></div>
+  </div>
+
+  <!-- COMING SOON: PETS -->
+  <div class="coming-soon-card" style="margin-bottom:12px">
+    <div class="cs-icon">🐣</div>
+    <div class="cs-title">Animais de companhia</div>
+    <div class="cs-sub">Em breve — ganhe moedas estudando e adote seu primeiro pet!</div>
+  </div>
+
+  <!-- COMING SOON: COSMETICS -->
+  <div class="coming-soon-card">
+    <div class="cs-icon">🎨</div>
+    <div class="cs-title">Cosméticos</div>
+    <div class="cs-sub">Em breve — personalize seu personagem com moedas.</div>
   </div>
 
 </div>
@@ -945,14 +1022,18 @@ window.stopTimer=stopTimer;
 
 // ---- TAB SWITCHING ----
 window.switchTab = (tab) => {
-  const isPlano = tab === 'plano';
-  document.getElementById('tab-plano').classList.toggle('active', isPlano);
-  document.getElementById('tab-analise').classList.toggle('active', !isPlano);
-  // Hide/show main content
+  ['plano','analise','perfil'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  const isPlano = tab==='plano';
+  const isAnalise = tab==='analise';
+  const isPerfil = tab==='perfil';
   document.querySelector('.main') && (document.querySelector('.main').style.display = isPlano ? '' : 'none');
   document.getElementById('timer-bar').style.display = isPlano && timerBlock ? 'flex' : 'none';
-  document.getElementById('analytics-page').classList.toggle('visible', !isPlano);
-  if (!isPlano) renderAnalytics();
+  document.getElementById('analytics-page').classList.toggle('visible', isAnalise);
+  document.getElementById('profile-page').classList.toggle('visible', isPerfil);
+  if (isAnalise) renderAnalytics();
+  if (isPerfil) renderProfile();
 };
 
 // ---- ANALYTICS ----
@@ -1090,6 +1171,64 @@ function calcStreaks(dayChecks) {
     }
   }
   return { cur, best };
+}
+
+// ---- CHARACTER ANIMATION ----
+let charFrame=0, charInterval=null;
+const CHAR_FRAMES=4;
+function startCharAnim(){
+  if(charInterval) clearInterval(charInterval);
+  charInterval=setInterval(()=>{
+    charFrame=(charFrame+1)%CHAR_FRAMES;
+    const img=document.getElementById('char-sprite');
+    if(img) img.src=`idle/${charFrame}.png`;
+  },180);
+}
+
+// ---- PROFILE ----
+function renderProfile(){
+  startCharAnim();
+  const totalXP = calcTotalXP();
+  const level = getLevel(totalXP);
+  const pct = getLevelPct(totalXP);
+  const nextLvl = LEVELS.find(([t])=>t>totalXP);
+  const lvlIdx = LEVELS.findIndex(([t],i)=>totalXP>=t&&(!LEVELS[i+1]||totalXP<LEVELS[i+1][0]));
+
+  document.getElementById('char-level-badge').textContent = 'Lv.'+(lvlIdx+1);
+  document.getElementById('char-name').textContent = 'Estudante';
+  document.getElementById('char-title').textContent = level;
+  document.getElementById('char-xp-cur').textContent = totalXP+' XP';
+  document.getElementById('char-xp-next').textContent = nextLvl ? nextLvl[0]+' XP' : 'MAX';
+  document.getElementById('char-xp-bar').style.width = pct+'%';
+
+  // Coins: 1 coin per study block completed
+  let coins=0, totalBlocks=0, totalStudyMins=0, activeWeeks=0;
+  for(let wi=0;wi<18;wi++){
+    let weekHasCheck=false;
+    for(let di=0;di<7;di++){
+      const d=new Date(WEEKS[wi].start); d.setDate(d.getDate()+di);
+      const key=dk(d);
+      const checks=getChecks(key);
+      const events=getDayEvents(key);
+      const ov=getLunchForDay(key);
+      const blocks=generateBlocks({...userCfg,...ov},events);
+      blocks.forEach((b,i)=>{
+        if(checks[i]&&b.xp>0){
+          totalBlocks++;
+          if(b.type==='estudo'){ coins++; totalStudyMins+=userCfg.pomo; }
+          weekHasCheck=true;
+        }
+      });
+    }
+    if(weekHasCheck) activeWeeks++;
+  }
+
+  document.getElementById('char-coins').textContent = coins;
+  document.getElementById('ps-xp').textContent = totalXP;
+  document.getElementById('ps-blocks').textContent = totalBlocks;
+  const h=Math.floor(totalStudyMins/60), m=totalStudyMins%60;
+  document.getElementById('ps-hours').textContent = h+'h'+(m>0?m+'min':'');
+  document.getElementById('ps-weeks').textContent = activeWeeks;
 }
 
 function initApp(){
