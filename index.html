@@ -191,6 +191,33 @@
   .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
   .coming-soon-card .cs-sub { font-size:12px; color:var(--muted); }
 
+  /* FAB */
+  .fab-config {
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#0e0e0f;
+    border:none;
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.4), 0 0 0 4px rgba(163,230,53,.15);
+    transition:all .2s ease;
+    z-index:90;
+  }
+  .fab-config:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 24px rgba(0,0,0,.5), 0 0 0 6px rgba(163,230,53,.2);
+  }
+  .fab-config:active { transform:translateY(0); }
+  .fab-config.hidden { display:none; }
+
   /* TIMER */
   .timer-bar { position:sticky; top:57px; z-index:99; background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 20px; display:none; align-items:center; gap:12px; }
   .timer-bar.active { display:flex; }
@@ -383,7 +410,7 @@
   </div>
   <div class="topbar-right">
     <div class="xp-badge"><span id="top-xp">0 XP</span><span class="level-tag" id="top-level">Zero</span></div>
-    <button class="icon-btn" onclick="openSettings()">⚙️ Config</button>
+
       <button class="icon-btn" onclick="logoutUser()">Sair</button>
   </div>
 </div>
@@ -643,9 +670,18 @@
 
 </div>
 
+<button id="fab-config" class="fab-config" onclick="openSettings()" aria-label="Configurações">⚙️</button>
+
 <div id="save-indicator">Salvando...</div>
 
 <script type="module">
+// ============================================================
+// PLANO DE ESTUDOS — refatorado
+// ============================================================
+
+// ============================================================
+// FIREBASE
+// ============================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -665,80 +701,175 @@ const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
 
-// ---- CONSTANTS ----
-const DEFAULT_CFG = { start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00', pomo:25, shortBreak:5, longBreak:20, hasLunch:true };
-const WEEKS = [];
-const START_DATE = new Date(2026,4,4);
-for(let w=0;w<18;w++){
-  const s=new Date(START_DATE); s.setDate(s.getDate()+w*7);
-  const e=new Date(s); e.setDate(e.getDate()+6);
-  WEEKS.push({n:w+1,start:s,end:e});
-}
-const DAYS=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-const LEVELS=[[0,'Zero'],[50,'Iniciante'],[150,'Focado'],[300,'Dedicado'],[500,'Consistente'],[800,'Avançado'],[1200,'Expert'],[2000,'Mestre']];
-const getLevel=xp=>{let lv=LEVELS[0][1];for(const[t,n]of LEVELS){if(xp>=t)lv=n;}return lv;};
-const getLevelPct=xp=>{let lo=0,hi=null;for(let i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i][0]){lo=LEVELS[i][0];hi=LEVELS[i+1]?LEVELS[i+1][0]:null;}}return hi?Math.round(((xp-lo)/(hi-lo))*100):100;};
-const dk=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const today=()=>new Date();
-const findWeek=d=>{for(const w of WEEKS){if(d>=w.start&&d<=w.end)return w.n;}return 1;};
-const timeToMins=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
-const minsToTime=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+// ============================================================
+// CONSTANTS
+// ============================================================
+const DEFAULT_CFG = {
+  start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00',
+  pomo:25, shortBreak:5, longBreak:20, hasLunch:true
+};
+const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
+const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
+const NUM_SESSIONS = 6;
+const LEVELS = [
+  [0,'Zero'],[50,'Iniciante'],[150,'Focado'],[300,'Dedicado'],
+  [500,'Consistente'],[800,'Avançado'],[1200,'Expert'],[2000,'Mestre']
+];
 
-// ---- BLOCK GENERATOR ----
-function generateBlocks(cfg, events=[]) {
+// ============================================================
+// STATE — single source of truth
+// ============================================================
+const state = {
+  user: null,
+  checks: {},          // { "2026-05-07": { "09:00": true } }
+  events: {},          // { "2026-05-07": [{name, start, end}] }
+  lunchOverrides: {},  // { "2026-05-07": {lunch, lunchDur} }
+  config: {...DEFAULT_CFG},
+
+  // UI state (not persisted)
+  uiTab: 'plano',
+  uiWeek: 1,
+  uiDay: 0,
+};
+
+let WEEKS = [];
+let saveTimeout = null;
+
+// ============================================================
+// DATE / TIME HELPERS
+// ============================================================
+const dk = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const timeToMins = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+const minsToTime = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+
+function mondayOf(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function dateForWeekDay(weekN, dayIdx) {
+  const d = new Date(WEEKS[weekN-1].start);
+  d.setDate(d.getDate() + dayIdx);
+  return d;
+}
+
+function findWeek(date) {
+  for (const w of WEEKS) if (date >= w.start && date <= w.end) return w.n;
+  return 1;
+}
+
+// ============================================================
+// WEEKS — dynamic, no hardcoded dates
+// ============================================================
+function buildWeeks() {
+  const today = new Date();
+  let startDate = mondayOf(today);
+
+  // If user has data from earlier, expand backwards to include it
+  const allKeys = [
+    ...Object.keys(state.checks),
+    ...Object.keys(state.events),
+    ...Object.keys(state.lunchOverrides),
+  ];
+  if (allKeys.length > 0) {
+    allKeys.sort();
+    const earliestDate = new Date(allKeys[0] + 'T12:00:00');
+    const earliestMon = mondayOf(earliestDate);
+    if (earliestMon < startDate) startDate = earliestMon;
+  }
+
+  // Total weeks: from startDate to current Monday + FUTURE_WEEKS
+  const currentMon = mondayOf(today);
+  const weeksToCurrent = Math.round((currentMon - startDate) / (7 * 86400000));
+  const totalWeeks = weeksToCurrent + FUTURE_WEEKS;
+
+  WEEKS = [];
+  for (let i = 0; i < totalWeeks; i++) {
+    const s = new Date(startDate); s.setDate(s.getDate() + i*7);
+    const e = new Date(s); e.setDate(e.getDate() + 6);
+    WEEKS.push({ n: i+1, start: s, end: e });
+  }
+}
+
+function forEachDay(callback) {
+  for (let wi = 0; wi < WEEKS.length; wi++) {
+    for (let di = 0; di < 7; di++) {
+      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
+      callback(dk(d), d, wi, di);
+    }
+  }
+}
+
+// ============================================================
+// BLOCK GENERATOR — with memoization
+// ============================================================
+const blockCache = new Map();
+
+function generateBlocks(cfg, events = []) {
+  const cacheKey = JSON.stringify({ cfg, events });
+  if (blockCache.has(cacheKey)) return blockCache.get(cacheKey);
+
   const blocks = [];
   let cur = timeToMins(cfg.start);
   const endMins = timeToMins(cfg.end);
 
-  // Build sorted blocked intervals
-  const blocked = [...events.map(ev=>({
+  // Build sorted blocked intervals (events + lunch)
+  const blocked = [...events.map(ev => ({
     start: timeToMins(ev.start), end: timeToMins(ev.end),
-    name: ev.name, type:'event'
+    name: ev.name, type: 'event'
   }))];
-
-  // Add lunch unless disabled
-  const lunchStart = timeToMins(cfg.lunch);
-  const lunchEnd = lunchStart + cfg.lunchDur;
-  if(cfg.hasLunch !== false) {
-    blocked.push({ start:lunchStart, end:lunchEnd, name:'🍽️ Almoço', type:'almoco' });
+  if (cfg.hasLunch !== false) {
+    const lunchStart = timeToMins(cfg.lunch);
+    blocked.push({
+      start: lunchStart, end: lunchStart + cfg.lunchDur,
+      name: '🍽️ Almoço', type: 'almoco'
+    });
   }
-  blocked.sort((a,b)=>a.start-b.start);
+  blocked.sort((a, b) => a.start - b.start);
 
-  let pomoCount=0, session=0;
-  const MAX=300; let iter=0;
+  let pomoCount = 0, sessionN = 0;
+  const MAX = 300; let iter = 0;
 
-  while(cur < endMins && iter++ < MAX) {
-    // Inside a blocked interval — emit it and skip
+  while (cur < endMins && iter++ < MAX) {
+    // Currently inside a blocked interval — emit it and skip past
     const inBlock = blocked.find(b => cur >= b.start && cur < b.end);
-    if(inBlock) {
+    if (inBlock) {
       blocks.push({
-        time: minsToTime(inBlock.start), endTime: minsToTime(inBlock.end),
-        name: inBlock.type==='event'?`📅 ${inBlock.name}`:`🍽️ Almoço`,
-        type: inBlock.type, xp:0
+        time: minsToTime(inBlock.start),
+        endTime: minsToTime(inBlock.end),
+        name: inBlock.type === 'event' ? `📅 ${inBlock.name}` : '🍽️ Almoço',
+        type: inBlock.type, xp: 0
       });
       cur = inBlock.end;
       pomoCount = 0;
-      session++;
+      sessionN++;
       continue;
     }
 
-    // Find next blocked interval
+    // How much room until next block (or end of day)?
     const nextBlock = blocked.find(b => b.start > cur);
     const nextBlockStart = nextBlock ? nextBlock.start : endMins;
     const gap = nextBlockStart - cur;
 
-    // Gap is smaller than a full pomodoro — fill it smartly
-    if(gap < cfg.pomo && gap > 0) {
+    // Gap smaller than a full pomodoro: fill smartly
+    if (gap < cfg.pomo && gap > 0) {
       const half = cfg.pomo / 2;
-      const lastStudy = [...blocks].reverse().find(b=>b.type==='estudo');
-
-      if(gap >= half) {
-        // Gap is >= half a pomodoro: add a mini study block
-        const estudoN = blocks.filter(b=>b.type==='estudo').length+1;
-        const xp = calcXP(gap);
-        blocks.push({time:minsToTime(cur), endTime:minsToTime(cur+gap), name:`📖 Estudo ${estudoN}`, type:'estudo', xp, mini:true, session});
-      } else if(lastStudy) {
-        // Gap is small: stretch the last study block to fill it
+      const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
+      if (gap >= half) {
+        // Mini study block
+        const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
+        blocks.push({
+          time: minsToTime(cur), endTime: minsToTime(cur + gap),
+          name: `📖 Estudo ${estudoN}`, type: 'estudo',
+          xp: calcXP(gap), session: sessionN, mini: true
+        });
+      } else if (lastStudy) {
+        // Stretch the previous study
         lastStudy.endTime = minsToTime(timeToMins(lastStudy.endTime) + gap);
         lastStudy.xp = calcXP(timeToMins(lastStudy.endTime) - timeToMins(lastStudy.time));
       }
@@ -747,415 +878,828 @@ function generateBlocks(cfg, events=[]) {
     }
 
     // Normal study block
-    const estudoN = blocks.filter(b=>b.type==='estudo').length+1;
-    const xp = calcXP(cfg.pomo);
-    blocks.push({time:minsToTime(cur), endTime:minsToTime(cur+cfg.pomo), name:`📖 Estudo ${estudoN}`, type:'estudo', xp, session});
+    const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
+    blocks.push({
+      time: minsToTime(cur), endTime: minsToTime(cur + cfg.pomo),
+      name: `📖 Estudo ${estudoN}`, type: 'estudo',
+      xp: calcXP(cfg.pomo), session: sessionN
+    });
     cur += cfg.pomo;
     pomoCount++;
 
-    // Break
+    // Break (long every 4 pomodoros)
     const isLong = pomoCount % 4 === 0;
-    if(isLong) session++;
+    if (isLong) sessionN++;
     const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
     const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
-    const bxp = Math.max(1, Math.round(breakDur/5));
+    const bxp = Math.max(1, Math.round(breakDur / 5));
     const afterBreak = cur + breakDur;
 
     const nextBlockAfterBreak = blocked.find(b => b.start > cur);
     const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : endMins;
 
-    // Skip break if it overlaps next blocked interval
-    if(afterBreak > nextStartAfterBreak) {
+    if (afterBreak > nextStartAfterBreak) {
       cur = nextStartAfterBreak;
       continue;
     }
-
-    // Only add break if a study still fits after it
-    if(afterBreak + cfg.pomo <= endMins) {
-      blocks.push({time:minsToTime(cur), endTime:minsToTime(afterBreak), name:breakName, type:'pausa', xp:bxp, session});
+    if (afterBreak + cfg.pomo <= endMins) {
+      blocks.push({
+        time: minsToTime(cur), endTime: minsToTime(afterBreak),
+        name: breakName, type: 'pausa', xp: bxp, session: sessionN
+      });
       cur = afterBreak;
     } else {
       break;
     }
   }
 
-  // Ensure last block is always a study (never end on a pausa)
-  while(blocks.length>0 && blocks[blocks.length-1].type==='pausa') {
+  // Last block must always be a study
+  while (blocks.length > 0 && blocks[blocks.length - 1].type === 'pausa') {
     blocks.pop();
   }
 
+  blockCache.set(cacheKey, blocks);
+  if (blockCache.size > 500) {
+    const toDelete = [...blockCache.keys()].slice(0, 250);
+    toDelete.forEach(k => blockCache.delete(k));
+  }
   return blocks;
 }
 
 function calcXP(minutes) {
-  return Math.round((minutes/25)*10*(1+Math.max(0,minutes-25)*0.002));
+  return Math.round((minutes / 25) * 10 * (1 + Math.max(0, minutes - 25) * 0.002));
 }
 
-function calcActualEnd(cfg, events=[]) {
-  const blocks = generateBlocks(cfg, events);
-  const lastStudy = [...blocks].reverse().find(b=>b.type==='estudo');
+function clearBlockCache() { blockCache.clear(); }
+
+function blocksForDay(dateKey) {
+  const events = state.events[dateKey] || [];
+  const lunchOv = state.lunchOverrides[dateKey];
+  const cfg = lunchOv ? { ...state.config, ...lunchOv } : state.config;
+  return generateBlocks(cfg, events);
+}
+
+function calcActualEnd(cfg) {
+  const blocks = generateBlocks(cfg, []);
+  const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
   return lastStudy ? lastStudy.endTime : cfg.end;
 }
 
-// ---- STATE ----
-let curWeek=1, curDay=0, allData={}, dayEvents={}, lunchOverrides={}, userCfg={...DEFAULT_CFG}, saveTimeout=null, currentUser=null;
+// ============================================================
+// CHECKS — by time string, not index
+// ============================================================
+function isChecked(dateKey, blockTime) {
+  return !!(state.checks[dateKey] && state.checks[dateKey][blockTime]);
+}
 
-const getChecks=key=>allData[key]||{};
-function setCheck(key,idx,val){
-  if(!allData[key])allData[key]={};
-  allData[key][idx]=val;
+function toggleCheck(dateKey, blockTime) {
+  if (!state.checks[dateKey]) state.checks[dateKey] = {};
+  if (state.checks[dateKey][blockTime]) {
+    delete state.checks[dateKey][blockTime];
+    if (Object.keys(state.checks[dateKey]).length === 0) delete state.checks[dateKey];
+  } else {
+    state.checks[dateKey][blockTime] = true;
+  }
   scheduleSave();
 }
-const getDayEvents=key=>dayEvents[key]||[];
 
-async function loadData(uid){
-  const snap=await getDoc(doc(db,'users',uid));
-  if(snap.exists()){
-    const d=snap.data();
-    allData=d.checks||{};
-    dayEvents=d.events||{};
-    lunchOverrides=d.lunchOverrides||{};
-    userCfg={...DEFAULT_CFG,...(d.config||{})};
-  } else {
-    allData={};dayEvents={};userCfg={...DEFAULT_CFG};
+function dayCheckCount(dateKey) {
+  return state.checks[dateKey] ? Object.keys(state.checks[dateKey]).length : 0;
+}
+
+// ============================================================
+// STATS — single computation
+// ============================================================
+function computeStats() {
+  const stats = {
+    totalXP: 0, totalChecks: 0,
+    weekXP: {}, weekChecks: {},
+    todayXP: 0, todayChecks: 0,
+    hourCounts: {},
+    bestWeekChecks: 0,
+    bestDayChecks: 0, bestDayLabel: '—', bestDayXP: 0,
+    studyMins: 0, coins: 0,
+    activeWeeks: 0,
+    estudosToday: { done: 0, total: 0 },
+    pausasToday: { done: 0, total: 0 },
+    weekChecksOfCurrent: 0,
+    dayCheckCounts: {},
+  };
+
+  const todayKey = dk(new Date());
+  const curDateKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+
+  forEachDay((key, d, wi) => {
+    const blocks = blocksForDay(key);
+    let dayXP = 0, dayChecks = 0, weekHasCheck = false;
+    stats.weekXP[wi] = stats.weekXP[wi] || 0;
+    stats.weekChecks[wi] = stats.weekChecks[wi] || 0;
+
+    blocks.forEach(b => {
+      if (b.type !== 'estudo' && b.type !== 'pausa') return;
+      if (key === curDateKey) {
+        if (b.type === 'estudo') stats.estudosToday.total++;
+        else stats.pausasToday.total++;
+      }
+      if (isChecked(key, b.time)) {
+        stats.totalChecks++;
+        stats.totalXP += b.xp;
+        dayXP += b.xp;
+        dayChecks++;
+        weekHasCheck = true;
+        stats.weekXP[wi] += b.xp;
+        stats.weekChecks[wi]++;
+        if (b.type === 'estudo') {
+          stats.coins++;
+          stats.studyMins += state.config.pomo;
+        }
+        const hour = parseInt(b.time.split(':')[0]);
+        stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
+        if (key === todayKey) { stats.todayXP += b.xp; stats.todayChecks++; }
+        if (key === curDateKey) {
+          if (b.type === 'estudo') stats.estudosToday.done++;
+          else stats.pausasToday.done++;
+        }
+      }
+    });
+
+    stats.dayCheckCounts[key] = dayChecks;
+    if (dayChecks > stats.bestDayChecks) {
+      stats.bestDayChecks = dayChecks;
+      stats.bestDayLabel = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+    }
+    if (dayXP > stats.bestDayXP) stats.bestDayXP = dayXP;
+    if (weekHasCheck) stats.activeWeeks++;
+    if (stats.weekChecks[wi] > stats.bestWeekChecks) stats.bestWeekChecks = stats.weekChecks[wi];
+  });
+
+  stats.weekChecksOfCurrent = stats.weekChecks[state.uiWeek - 1] || 0;
+  return stats;
+}
+
+function calcStreaks(dayCheckCounts) {
+  const today = dk(new Date());
+  let cur = 0, best = 0, temp = 0;
+  const allKeys = [];
+  forEachDay(key => allKeys.push(key));
+  allKeys.forEach(k => {
+    if ((dayCheckCounts[k] || 0) > 0) { temp++; if (temp > best) best = temp; }
+    else temp = 0;
+  });
+  const idx = allKeys.indexOf(today);
+  if (idx >= 0) {
+    for (let i = idx; i >= 0; i--) {
+      if ((dayCheckCounts[allKeys[i]] || 0) > 0) cur++;
+      else break;
+    }
   }
+  return { cur, best };
 }
 
-function showSave(msg='Salvando...', done=false){
-  const ind=document.getElementById('save-indicator');
-  ind.textContent=msg;ind.classList.add('show');
-  if(done)setTimeout(()=>ind.classList.remove('show'),1500);
+// ============================================================
+// LEVEL HELPERS
+// ============================================================
+function getLevel(xp) { let lv = LEVELS[0][1]; for (const [t, n] of LEVELS) { if (xp >= t) lv = n; } return lv; }
+function getLevelIdx(xp) {
+  for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i][0]) return i;
+  return 0;
+}
+function getLevelPct(xp) {
+  let lo = 0, hi = null;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (xp >= LEVELS[i][0]) { lo = LEVELS[i][0]; hi = LEVELS[i+1] ? LEVELS[i+1][0] : null; }
+  }
+  return hi ? Math.round(((xp - lo) / (hi - lo)) * 100) : 100;
 }
 
-function scheduleSave(){
-  showSave('Salvando...');
+// ============================================================
+// FIREBASE LOAD / SAVE
+// ============================================================
+async function loadData(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      state.checks = d.checks || {};
+      state.events = d.events || {};
+      state.lunchOverrides = d.lunchOverrides || {};
+      state.config = { ...DEFAULT_CFG, ...(d.config || {}) };
+    } else {
+      state.checks = {}; state.events = {}; state.lunchOverrides = {};
+      state.config = { ...DEFAULT_CFG };
+    }
+  } catch (e) {
+    console.error('Load failed:', e);
+    showToast('⚠️ Erro ao carregar dados');
+  }
+  buildWeeks();
+  clearBlockCache();
+}
+
+function showSaveIndicator(msg = 'Salvando...', done = false) {
+  const ind = document.getElementById('save-indicator');
+  if (!ind) return;
+  ind.textContent = msg;
+  ind.classList.add('show');
+  if (done) setTimeout(() => ind.classList.remove('show'), 1500);
+}
+
+function scheduleSave() {
+  showSaveIndicator('Salvando...');
   clearTimeout(saveTimeout);
-  saveTimeout=setTimeout(async()=>{
-    if(!currentUser)return;
-    await setDoc(doc(db,'users',currentUser.uid),{checks:allData,events:dayEvents,lunchOverrides:lunchOverrides,config:userCfg},{merge:true});
-    showSave('Salvo ✓',true);
-  },800);
+  saveTimeout = setTimeout(async () => {
+    if (!state.user) return;
+    try {
+      await setDoc(doc(db, 'users', state.user.uid), {
+        checks: state.checks,
+        events: state.events,
+        lunchOverrides: state.lunchOverrides,
+        config: state.config,
+      }, { merge: true });
+      showSaveIndicator('Salvo ✓', true);
+    } catch (e) {
+      console.error('Save failed:', e);
+      showSaveIndicator('⚠️ Erro ao salvar', true);
+    }
+  }, 800);
 }
 
-window.loginGoogle=async()=>{try{await signInWithPopup(auth,provider);}catch(e){console.error(e);}};
-window.logoutUser=async()=>{await signOut(auth);};
+// ============================================================
+// AUTH
+// ============================================================
+window.loginGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch (e) { console.error(e); }
+};
+window.logoutUser = async () => { await signOut(auth); };
 
-onAuthStateChanged(auth,async user=>{
-  if(user){
-    currentUser=user;
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    state.user = user;
     await loadData(user.uid);
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
     initApp();
   } else {
-    currentUser=null;allData={};dayEvents={};userCfg={...DEFAULT_CFG};
-    document.getElementById('login-screen').style.display='flex';
-    document.getElementById('app').style.display='none';
+    state.user = null;
+    state.checks = {}; state.events = {}; state.lunchOverrides = {};
+    state.config = { ...DEFAULT_CFG };
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
   }
 });
 
-// ---- SETTINGS ----
-window.openSettings=()=>{
-  document.getElementById('cfg-start').value=userCfg.start;
-  document.getElementById('cfg-lunch').value=userCfg.lunch;
-  document.getElementById('cfg-lunch-dur').value=userCfg.lunchDur;
-  document.getElementById('cfg-end').value=userCfg.end;
-  document.getElementById('cfg-pomo').value=userCfg.pomo;
-  document.getElementById('cfg-short').value=userCfg.shortBreak;
-  document.getElementById('cfg-long').value=userCfg.longBreak;
-  document.getElementById('cfg-has-lunch').checked=userCfg.hasLunch!==false;
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimeout = null;
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.style.opacity = '0', 2500);
+}
+
+// ============================================================
+// AUDIO
+// ============================================================
+let audioCtx = null;
+let timerMuted = false;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playSound(type = 'estudo') {
+  try {
+    const ctx = getAudioCtx();
+    const slider = document.getElementById('vol-slider');
+    const vol = slider ? parseFloat(slider.value) : 0.7;
+    if (timerMuted || vol === 0) return;
+    const t = ctx.currentTime;
+
+    if (type === 'check') {
+      [880, 1100].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.type = 'square'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t + i * 0.1);
+        g.gain.linearRampToValueAtTime(vol * 0.3, t + i * 0.1 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.12);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.13);
+      });
+    } else if (type === 'estudo') {
+      [110, 220, 330].forEach(freq => {
+        const osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(vol * 0.5, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t + 0.4);
+      });
+      setTimeout(() => {
+        const osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.value = 80;
+        g.gain.setValueAtTime(vol * 0.8, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
+      }, 350);
+    } else if (type === 'pausa_curta') {
+      [523, 659].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(vol * 0.4, t + i * 0.25);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.25 + 1.2);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t + i * 0.25); osc.stop(t + i * 0.25 + 1.2);
+      });
+    } else if (type === 'pausa_longa') {
+      [784, 784, 784].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), g = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t + i * 0.28);
+        g.gain.linearRampToValueAtTime(vol * 0.5, t + i * 0.28 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.28 + 0.25);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t + i * 0.28); osc.stop(t + i * 0.28 + 0.26);
+      });
+    }
+  } catch (e) {}
+}
+
+window.toggleMute = () => {
+  timerMuted = !timerMuted;
+  document.getElementById('vol-btn').textContent = timerMuted ? '🔕' : '🔔';
+};
+window.setVolume = (v) => {
+  if (parseFloat(v) === 0) {
+    timerMuted = true;
+    document.getElementById('vol-btn').textContent = '🔕';
+  } else {
+    timerMuted = false;
+    document.getElementById('vol-btn').textContent = '🔔';
+  }
+};
+
+// ============================================================
+// TIMER
+// ============================================================
+let timerInterval = null;
+let timerBlock = null;
+
+function startTimer(block) {
+  if (timerInterval) clearInterval(timerInterval);
+  timerBlock = block;
+  document.getElementById('timer-bar').classList.add('active');
+  document.getElementById('timer-block-name').textContent =
+    block.name.replace(/📖|🧘|☕/g, '').trim();
+  if (Notification && Notification.permission === 'default') Notification.requestPermission();
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    if (updateTimerDisplay()) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      onTimerEnd();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  if (!timerBlock) return true;
+  const now = new Date();
+  const [eh, em] = timerBlock.endTime.split(':').map(Number);
+  const end = new Date(); end.setHours(eh, em, 0, 0);
+  const diffSec = Math.floor((end - now) / 1000);
+  if (diffSec <= 0) {
+    document.getElementById('timer-display').textContent = '00:00';
+    return true;
+  }
+  const m = Math.floor(diffSec / 60), s = diffSec % 60;
+  const disp = document.getElementById('timer-display');
+  disp.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  disp.className = 'timer-time' + (diffSec <= 60 ? ' ending' : '');
+  return false;
+}
+
+function onTimerEnd() {
+  const soundType = timerBlock
+    ? (timerBlock.type === 'estudo' ? 'estudo'
+       : timerBlock.name.includes('longa') ? 'pausa_longa' : 'pausa_curta')
+    : 'estudo';
+  playSound(soundType);
+  if (Notification && Notification.permission === 'granted' && timerBlock) {
+    const emoji = timerBlock.type === 'estudo' ? '📖'
+                : timerBlock.name.includes('longa') ? '☕' : '🧘';
+    const label = timerBlock.type === 'estudo'
+      ? 'Estudo concluído! Hora da pausa.'
+      : 'Pausa concluída! Hora de estudar.';
+    new Notification(`${emoji} ${label}`, {
+      body: timerBlock.name.replace(/📖|🧘|☕/g, '').trim(),
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📚</text></svg>'
+    });
+  }
+  document.getElementById('timer-bar').classList.remove('active');
+  timerBlock = null;
+  renderAll();
+}
+
+window.stopTimer = () => {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null; timerBlock = null;
+  document.getElementById('timer-bar').classList.remove('active');
+  renderAll();
+};
+
+function tryStartTimer(b) {
+  const now = new Date();
+  const [sh, sm] = b.time.split(':').map(Number);
+  const [eh, em] = b.endTime.split(':').map(Number);
+  const blockStart = new Date(); blockStart.setHours(sh, sm, 0, 0);
+  const blockEnd = new Date(); blockEnd.setHours(eh, em, 0, 0);
+  if (now >= blockEnd) { showToast('Este bloco já terminou ⏎'); return; }
+  if (now < blockStart) {
+    const diffMin = Math.round((blockStart - now) / 60000);
+    showToast(`Este bloco começa em ${diffMin} min ⏳`);
+    return;
+  }
+  startTimer(b);
+  renderAll();
+}
+
+// ============================================================
+// SETTINGS PANEL
+// ============================================================
+window.openSettings = () => {
+  document.getElementById('cfg-start').value = state.config.start;
+  document.getElementById('cfg-lunch').value = state.config.lunch;
+  document.getElementById('cfg-lunch-dur').value = state.config.lunchDur;
+  document.getElementById('cfg-end').value = state.config.end;
+  document.getElementById('cfg-pomo').value = state.config.pomo;
+  document.getElementById('cfg-short').value = state.config.shortBreak;
+  document.getElementById('cfg-long').value = state.config.longBreak;
+  document.getElementById('cfg-has-lunch').checked = state.config.hasLunch !== false;
   toggleLunchFields();
   updatePreview();
   document.getElementById('settings-panel').classList.add('open');
 };
+window.closeSettings = () => document.getElementById('settings-panel').classList.remove('open');
 
-window.toggleLunchFields=()=>{
-  const has=document.getElementById('cfg-has-lunch').checked;
-  const fields=document.getElementById('lunch-fields');
-  fields.style.opacity=has?'1':'0.35';
-  fields.style.pointerEvents=has?'auto':'none';
-  document.getElementById('cfg-lunch').disabled=!has;
-  document.getElementById('cfg-lunch-dur').disabled=!has;
+window.toggleLunchFields = () => {
+  const has = document.getElementById('cfg-has-lunch').checked;
+  const fields = document.getElementById('lunch-fields');
+  fields.style.opacity = has ? '1' : '0.35';
+  fields.style.pointerEvents = has ? 'auto' : 'none';
+  document.getElementById('cfg-lunch').disabled = !has;
+  document.getElementById('cfg-lunch-dur').disabled = !has;
 };
-window.closeSettings=()=>document.getElementById('settings-panel').classList.remove('open');
 
-window.resetSettings=()=>{
-  document.getElementById('cfg-start').value=DEFAULT_CFG.start;
-  document.getElementById('cfg-lunch').value=DEFAULT_CFG.lunch;
-  document.getElementById('cfg-lunch-dur').value=DEFAULT_CFG.lunchDur;
-  document.getElementById('cfg-end').value=DEFAULT_CFG.end;
-  document.getElementById('cfg-pomo').value=DEFAULT_CFG.pomo;
-  document.getElementById('cfg-short').value=DEFAULT_CFG.shortBreak;
-  document.getElementById('cfg-long').value=DEFAULT_CFG.longBreak;
-  document.getElementById('cfg-has-lunch').checked=true;
+window.resetSettings = () => {
+  document.getElementById('cfg-start').value = DEFAULT_CFG.start;
+  document.getElementById('cfg-lunch').value = DEFAULT_CFG.lunch;
+  document.getElementById('cfg-lunch-dur').value = DEFAULT_CFG.lunchDur;
+  document.getElementById('cfg-end').value = DEFAULT_CFG.end;
+  document.getElementById('cfg-pomo').value = DEFAULT_CFG.pomo;
+  document.getElementById('cfg-short').value = DEFAULT_CFG.shortBreak;
+  document.getElementById('cfg-long').value = DEFAULT_CFG.longBreak;
+  document.getElementById('cfg-has-lunch').checked = true;
   toggleLunchFields();
   updatePreview();
 };
 
-window.updatePreview=()=>{
-  const cfg=readCfgForm();
-  if(Object.values(cfg).some(v=>isNaN(v)&&typeof v==='number')){
-    document.getElementById('config-preview').innerHTML='⚠️ Preencha todos os campos.';return;
-  }
-  const blocks=generateBlocks(cfg,[]);
-  if(blocks.length===0){document.getElementById('config-preview').innerHTML='⚠️ Configuração inválida.';return;}
-  const estudos=blocks.filter(b=>b.type==='estudo').length;
-  const totalXP=blocks.reduce((s,b)=>s+b.xp,0);
-  const totalMins=estudos*cfg.pomo;
-  const actualEnd=calcActualEnd(cfg,[]);
-  const diff=timeToMins(actualEnd)-timeToMins(cfg.end);
-  let timingHtml='';
-  if(diff===0) timingHtml=`<span class="ok">✅ Termina exatamente às ${actualEnd}</span>`;
-  else if(diff>0) timingHtml=`<span class="warn">⚠️ Termina às ${actualEnd} (+${diff} min além do previsto)</span>`;
-  else timingHtml=`<span class="warn">⚠️ Termina às ${actualEnd} (${Math.abs(diff)} min antes do previsto)</span>`;
-  document.getElementById('config-preview').innerHTML=
-    `Pomodoros: <span>${estudos}</span> · Estudo: <span>${Math.floor(totalMins/60)}h${totalMins%60>0?totalMins%60+'min':''}</span> · XP/dia: <span>~${totalXP}</span>\n${timingHtml}`;
-};
-
-function readCfgForm(){
+function readCfgForm() {
   return {
-    start:document.getElementById('cfg-start').value,
-    lunch:document.getElementById('cfg-lunch').value,
-    lunchDur:parseInt(document.getElementById('cfg-lunch-dur').value),
-    end:document.getElementById('cfg-end').value,
-    pomo:parseInt(document.getElementById('cfg-pomo').value),
-    shortBreak:parseInt(document.getElementById('cfg-short').value),
-    longBreak:parseInt(document.getElementById('cfg-long').value),
-    hasLunch:document.getElementById('cfg-has-lunch').checked,
+    start: document.getElementById('cfg-start').value,
+    lunch: document.getElementById('cfg-lunch').value,
+    lunchDur: parseInt(document.getElementById('cfg-lunch-dur').value),
+    end: document.getElementById('cfg-end').value,
+    pomo: parseInt(document.getElementById('cfg-pomo').value),
+    shortBreak: parseInt(document.getElementById('cfg-short').value),
+    longBreak: parseInt(document.getElementById('cfg-long').value),
+    hasLunch: document.getElementById('cfg-has-lunch').checked,
   };
 }
 
-window.saveSettings=()=>{
-  userCfg=readCfgForm();
+window.updatePreview = () => {
+  const cfg = readCfgForm();
+  if ([cfg.pomo, cfg.shortBreak, cfg.longBreak, cfg.lunchDur].some(isNaN)) {
+    document.getElementById('config-preview').innerHTML = '⚠️ Preencha todos os campos.';
+    return;
+  }
+  const blocks = generateBlocks(cfg, []);
+  if (blocks.length === 0) {
+    document.getElementById('config-preview').innerHTML = '⚠️ Configuração inválida.';
+    return;
+  }
+  const estudos = blocks.filter(b => b.type === 'estudo').length;
+  const totalXP = blocks.reduce((s, b) => s + b.xp, 0);
+  const totalMins = estudos * cfg.pomo;
+  const actualEnd = calcActualEnd(cfg);
+  const diff = timeToMins(actualEnd) - timeToMins(cfg.end);
+  let timing = '';
+  if (diff === 0) timing = `<span class="ok">✅ Termina exatamente às ${actualEnd}</span>`;
+  else if (diff > 0) timing = `<span class="warn">⚠️ Termina às ${actualEnd} (+${diff} min além do previsto)</span>`;
+  else timing = `<span class="warn">⚠️ Termina às ${actualEnd} (${Math.abs(diff)} min antes do previsto)</span>`;
+  document.getElementById('config-preview').innerHTML =
+    `Pomodoros: <span>${estudos}</span> · Estudo: <span>${Math.floor(totalMins/60)}h${totalMins%60>0?totalMins%60+'min':''}</span> · XP/dia: <span>~${totalXP}</span><br>${timing}`;
+};
+
+window.saveSettings = () => {
+  state.config = readCfgForm();
   closeSettings();
+  clearBlockCache();
   scheduleSave();
   renderAll();
 };
 
-// ---- EVENT PANEL ----
-window.openEventPanel=()=>document.getElementById('event-panel').classList.add('open');
-window.closeEventPanel=()=>document.getElementById('event-panel').classList.remove('open');
+// ============================================================
+// EVENT PANEL
+// ============================================================
+window.openEventPanel = () => document.getElementById('event-panel').classList.add('open');
+window.closeEventPanel = () => document.getElementById('event-panel').classList.remove('open');
 
-window.saveEvent=()=>{
-  const name=document.getElementById('ev-name').value.trim()||'Evento';
-  const start=document.getElementById('ev-start').value;
-  const end=document.getElementById('ev-end').value;
-  if(timeToMins(end)<=timeToMins(start)){alert('O horário de fim deve ser depois do início.');return;}
-  const date=new Date(WEEKS[curWeek-1].start); date.setDate(date.getDate()+curDay);
-  const key=dk(date);
-  if(!dayEvents[key])dayEvents[key]=[];
-  dayEvents[key].push({name,start,end});
+window.saveEvent = () => {
+  const name = document.getElementById('ev-name').value.trim() || 'Evento';
+  const start = document.getElementById('ev-start').value;
+  const end = document.getElementById('ev-end').value;
+  if (timeToMins(end) <= timeToMins(start)) {
+    alert('O horário de fim deve ser depois do início.'); return;
+  }
+  const date = dateForWeekDay(state.uiWeek, state.uiDay);
+  const key = dk(date);
+  if (!state.events[key]) state.events[key] = [];
+  state.events[key].push({ name, start, end });
   closeEventPanel();
-  document.getElementById('ev-name').value='';
-  renderAll();
+  document.getElementById('ev-name').value = '';
+  clearBlockCache();
   scheduleSave();
+  renderAll();
 };
 
-window.deleteEvent=(key,idx)=>{
-  dayEvents[key].splice(idx,1);
-  renderAll();
+window.deleteEvent = (key, idx) => {
+  state.events[key].splice(idx, 1);
+  if (state.events[key].length === 0) delete state.events[key];
+  clearBlockCache();
   scheduleSave();
+  renderAll();
 };
 
-window.closeIfOutside=(e,id)=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('open');};
+// ============================================================
+// LUNCH OVERRIDE PANEL
+// ============================================================
+let editingLunchKey = null;
 
-// ---- APP ----
-// ---- TOAST ----
-let toastTimeout=null;
-function showToast(msg){
-  let toast=document.getElementById('toast');
-  if(!toast){
-    toast=document.createElement('div');
-    toast.id='toast';
-    toast.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;';
-    document.body.appendChild(toast);
-  }
-  toast.textContent=msg;
-  toast.style.opacity='1';
-  clearTimeout(toastTimeout);
-  toastTimeout=setTimeout(()=>toast.style.opacity='0',2500);
+function getLunchForDay(key) {
+  return state.lunchOverrides[key] || { lunch: state.config.lunch, lunchDur: state.config.lunchDur };
 }
 
-// ---- TIMER ----
-let timerInterval=null, timerBlock=null, timerMuted=false;
-let audioCtx=null;
-
-function getAudioCtx(){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  return audioCtx;
-}
-
-function playSound(type='estudo'){
-  try {
-    const ctx=getAudioCtx();
-    const vol=parseFloat(document.getElementById('vol-slider').value);
-    if(timerMuted||vol===0) return;
-    const t=ctx.currentTime;
-
-    if(type==='check'){
-      // Tom eletrônico clean — dois pulsos rápidos ascendentes
-      [880,1100].forEach((freq,i)=>{
-        const osc=ctx.createOscillator();
-        const g=ctx.createGain();
-        osc.type='square'; osc.frequency.value=freq;
-        g.gain.setValueAtTime(0,t+i*0.1);
-        g.gain.linearRampToValueAtTime(vol*0.3,t+i*0.1+0.01);
-        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.1+0.12);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t+i*0.1); osc.stop(t+i*0.1+0.13);
-      });
-
-    } else if(type==='estudo'){
-      // Mais agressivo — buzz + impacto
-      const freqs=[110,220,330];
-      freqs.forEach((freq,i)=>{
-        const osc=ctx.createOscillator();
-        const g=ctx.createGain();
-        osc.type='sawtooth'; osc.frequency.value=freq;
-        g.gain.setValueAtTime(vol*0.5,t);
-        g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t); osc.stop(t+0.4);
-      });
-      // Impacto final
-      setTimeout(()=>{
-        const osc=ctx.createOscillator();
-        const g=ctx.createGain();
-        osc.type='sawtooth'; osc.frequency.value=80;
-        g.gain.setValueAtTime(vol*0.8,ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.5);
-      },350);
-
-    } else if(type==='pausa_curta'){
-      // Sino suave — senoidal com decay longo
-      [523,659].forEach((freq,i)=>{
-        const osc=ctx.createOscillator();
-        const g=ctx.createGain();
-        osc.type='sine'; osc.frequency.value=freq;
-        g.gain.setValueAtTime(vol*0.4,t+i*0.25);
-        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.25+1.2);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t+i*0.25); osc.stop(t+i*0.25+1.2);
-      });
-
-    } else if(type==='pausa_longa'){
-      // Campainha simples — três toques curtos
-      [784,784,784].forEach((freq,i)=>{
-        const osc=ctx.createOscillator();
-        const g=ctx.createGain();
-        osc.type='sine'; osc.frequency.value=freq;
-        g.gain.setValueAtTime(0,t+i*0.28);
-        g.gain.linearRampToValueAtTime(vol*0.5,t+i*0.28+0.01);
-        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.28+0.25);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t+i*0.28); osc.stop(t+i*0.28+0.26);
-      });
-    }
-  } catch(e){}
-}
-
-function toggleMute(){
-  timerMuted=!timerMuted;
-  document.getElementById('vol-btn').textContent=timerMuted?'🔕':'🔔';
-}
-window.toggleMute=toggleMute;
-
-function setVolume(v){
-  if(parseFloat(v)===0){ timerMuted=true; document.getElementById('vol-btn').textContent='🔕'; }
-  else { timerMuted=false; document.getElementById('vol-btn').textContent='🔔'; }
-}
-window.setVolume=setVolume;
-
-function startTimer(block){
-  if(timerInterval) clearInterval(timerInterval);
-  timerBlock=block;
-  document.getElementById('timer-bar').classList.add('active');
-  document.getElementById('timer-block-name').textContent=block.name.replace(/📖|🧘|☕/g,'').trim();
-  // Request notification permission
-  if(Notification && Notification.permission==='default') Notification.requestPermission();
-  updateTimerDisplay();
-  timerInterval=setInterval(()=>{
-    const done=updateTimerDisplay();
-    if(done){
-      clearInterval(timerInterval);
-      timerInterval=null;
-      onTimerEnd();
-    }
-  },1000);
-}
-
-function updateTimerDisplay(){
-  if(!timerBlock) return true;
-  const now=new Date();
-  const endParts=timerBlock.endTime.split(':').map(Number);
-  const end=new Date(); end.setHours(endParts[0],endParts[1],0,0);
-  const diffMs=end-now;
-  const diffSec=Math.floor(diffMs/1000);
-  if(diffSec<=0){
-    document.getElementById('timer-display').textContent='00:00';
-    return true;
-  }
-  const m=Math.floor(diffSec/60), s=diffSec%60;
-  const str=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  const disp=document.getElementById('timer-display');
-  disp.textContent=str;
-  disp.className='timer-time'+(diffSec<=60?' ending':'');
-  return false;
-}
-
-function onTimerEnd(){
-  const soundType = timerBlock
-    ? (timerBlock.type==='estudo' ? 'estudo'
-      : timerBlock.name.includes('longa') ? 'pausa_longa' : 'pausa_curta')
-    : 'estudo';
-  playSound(soundType);
-  if(Notification && Notification.permission==='granted' && timerBlock){
-    const emoji = timerBlock.type==='estudo'?'📖':timerBlock.name.includes('longa')?'☕':'🧘';
-    const label = timerBlock.type==='estudo'?'Estudo concluído! Hora da pausa.':'Pausa concluída! Hora de estudar.';
-    new Notification(`${emoji} ${label}`,{
-      body: timerBlock.name.replace(/📖|🧘|☕/g,'').trim(),
-      icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📚</text></svg>'
-    });
-  }
-  document.getElementById('timer-bar').classList.remove('active');
-  timerBlock=null;
+window.openLunchPanel = (key) => {
+  editingLunchKey = key;
+  const ov = getLunchForDay(key);
+  document.getElementById('lunch-edit-start').value = ov.lunch;
+  document.getElementById('lunch-edit-dur').value = ov.lunchDur;
+  document.getElementById('lunch-panel').classList.add('open');
+};
+window.closeLunchPanel = () => document.getElementById('lunch-panel').classList.remove('open');
+window.resetLunchEdit = () => {
+  document.getElementById('lunch-edit-start').value = state.config.lunch;
+  document.getElementById('lunch-edit-dur').value = state.config.lunchDur;
+};
+window.saveLunchEdit = () => {
+  if (!editingLunchKey) return;
+  state.lunchOverrides[editingLunchKey] = {
+    lunch: document.getElementById('lunch-edit-start').value,
+    lunchDur: parseInt(document.getElementById('lunch-edit-dur').value),
+  };
+  closeLunchPanel();
+  clearBlockCache();
+  scheduleSave();
   renderAll();
-}
+};
 
-function stopTimer(){
-  if(timerInterval) clearInterval(timerInterval);
-  timerInterval=null; timerBlock=null;
-  document.getElementById('timer-bar').classList.remove('active');
-  renderAll();
-}
-window.stopTimer=stopTimer;
+window.closeIfOutside = (e, id) => {
+  if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('open');
+};
 
-// ---- TAB SWITCHING ----
+// ============================================================
+// TAB SWITCHING
+// ============================================================
 window.switchTab = (tab) => {
+  state.uiTab = tab;
   ['plano','analise','perfil'].forEach(t => {
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
   });
-  const isPlano = tab==='plano';
-  const isAnalise = tab==='analise';
-  const isPerfil = tab==='perfil';
-  document.querySelector('.main') && (document.querySelector('.main').style.display = isPlano ? '' : 'none');
+  const isPlano = tab === 'plano';
+  document.querySelector('.main').style.display = isPlano ? '' : 'none';
   document.getElementById('timer-bar').style.display = isPlano && timerBlock ? 'flex' : 'none';
-  document.getElementById('analytics-page').classList.toggle('visible', isAnalise);
-  document.getElementById('profile-page').classList.toggle('visible', isPerfil);
-  if (isAnalise) renderAnalytics();
-  if (isPerfil) renderProfile();
+  document.getElementById('analytics-page').classList.toggle('visible', tab === 'analise');
+  document.getElementById('profile-page').classList.toggle('visible', tab === 'perfil');
+  document.getElementById('fab-config').classList.toggle('hidden', !isPlano);
+  if (tab === 'analise') renderAnalytics();
+  if (tab === 'perfil') renderProfile();
 };
 
-// ---- ANALYTICS ----
+// ============================================================
+// CHARACTER ANIMATION (profile tab)
+// ============================================================
+let charFrame = 0, charInterval = null;
+const CHAR_FRAMES = 4;
+function startCharAnim() {
+  if (charInterval) clearInterval(charInterval);
+  charInterval = setInterval(() => {
+    charFrame = (charFrame + 1) % CHAR_FRAMES;
+    const img = document.getElementById('char-sprite');
+    if (img) img.src = `idle/${charFrame}.png`;
+  }, 180);
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function initApp() {
+  buildWeeks();
+  const today = new Date();
+  document.getElementById('today-label').textContent =
+    today.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+  state.uiWeek = findWeek(today);
+
+  const sel = document.getElementById('week-select');
+  sel.innerHTML = '';
+  WEEKS.forEach(w => {
+    const o = document.createElement('option');
+    o.value = w.n;
+    o.textContent = `Semana ${w.n}  ·  ${w.start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} – ${w.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`;
+    if (w.n === state.uiWeek) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  state.uiDay = Math.min(6, Math.max(0,
+    Math.round((today - WEEKS[state.uiWeek - 1].start) / 86400000)
+  ));
+  renderAll();
+}
+
+window.onWeekChange = () => {
+  state.uiWeek = parseInt(document.getElementById('week-select').value);
+  state.uiDay = 0;
+  renderAll();
+};
+
+function renderAll() { renderTabs(); renderEvents(); renderBlocks(); renderXP(); }
+
+function renderTabs() {
+  const c = document.getElementById('day-tabs');
+  c.innerHTML = '';
+  DAYS.forEach((label, i) => {
+    const date = new Date(WEEKS[state.uiWeek - 1].start);
+    date.setDate(date.getDate() + i);
+    const done = dayCheckCount(dk(date));
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (i === state.uiDay ? ' active' : '') + (done > 0 ? ' has-progress' : '');
+    btn.innerHTML = label + '<span class="dot"></span>';
+    btn.onclick = () => { state.uiDay = i; renderAll(); };
+    c.appendChild(btn);
+  });
+}
+
+function renderEvents() {
+  const date = dateForWeekDay(state.uiWeek, state.uiDay);
+  const key = dk(date);
+  const events = state.events[key] || [];
+  const listEl = document.getElementById('events-list');
+  const labelEl = document.getElementById('events-label');
+  listEl.innerHTML = '';
+  if (events.length === 0) { labelEl.textContent = 'Sem eventos especiais'; return; }
+  labelEl.textContent = `${events.length} evento${events.length>1?'s':''} hoje`;
+  events.forEach((ev, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'event-chip';
+    chip.innerHTML = `
+      <span class="ev-icon">📅</span>
+      <div class="ev-info">
+        <div class="ev-name">${ev.name}</div>
+        <div class="ev-time">${ev.start} – ${ev.end}</div>
+      </div>
+      <button class="ev-del" onclick="deleteEvent('${key}',${i})">✕</button>
+    `;
+    listEl.appendChild(chip);
+  });
+}
+
+function renderBlocks() {
+  const date = dateForWeekDay(state.uiWeek, state.uiDay);
+  const key = dk(date);
+  const blocks = blocksForDay(key);
+  const c = document.getElementById('blocks-list');
+  c.innerHTML = '';
+
+  let eD=0, eT=0, pD=0, pT=0;
+  const checkSvg = `<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
+  const now = new Date();
+  let lastSession = -1;
+
+  blocks.forEach(b => {
+    const isE = b.type === 'estudo', isP = b.type === 'pausa';
+    const isA = b.type === 'almoco', isEv = b.type === 'event';
+    if (isE) eT++; else if (isP) pT++;
+    const done = isChecked(key, b.time);
+    if (done) { if (isE) eD++; else if (isP) pD++; }
+    const sIdx = b.session !== undefined ? b.session % NUM_SESSIONS : 0;
+
+    // Is this block currently happening?
+    const [sh, sm] = b.time.split(':').map(Number);
+    const [eh, em] = b.endTime.split(':').map(Number);
+    const bStart = new Date(); bStart.setHours(sh, sm, 0, 0);
+    const bEnd = new Date(); bEnd.setHours(eh, em, 0, 0);
+    const isNow = (isE || isP || isA) && now >= bStart && now < bEnd;
+
+    // Session divider
+    if ((isE || isP) && b.session !== undefined && b.session !== lastSession) {
+      lastSession = b.session;
+      const sessionHasNow = blocks.some(bl => {
+        if (bl.session !== b.session || (bl.type !== 'estudo' && bl.type !== 'pausa')) return false;
+        const [bsh, bsm] = bl.time.split(':').map(Number);
+        const [beh, bem] = bl.endTime.split(':').map(Number);
+        const s2 = new Date(); s2.setHours(bsh, bsm, 0, 0);
+        const e2 = new Date(); e2.setHours(beh, bem, 0, 0);
+        return now >= s2 && now < e2;
+      });
+      const div = document.createElement('div');
+      div.className = `session-divider s${sIdx}` + (sessionHasNow ? ' now-session' : '');
+      div.innerHTML = `<div class="sd-line"></div><span class="sd-label">${SESSION_NAMES[sIdx] || 'Sessão'}</span><div class="sd-line"></div>`;
+      c.appendChild(div);
+    }
+
+    const row = document.createElement('div');
+    const sessionClass = (isE || isP) ? ` session-block s${sIdx}` : '';
+    const nowClass = isNow ? ' now-block' : '';
+    const timerClass = (timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime) ? ' timer-active' : '';
+    row.className = 'block-row' + (isP?' pausa-row':'') + (isA?' almoco-row':'') + (isEv?' event-row':'')
+      + (done && (isE || isP) ? ' done' : '') + sessionClass + nowClass + timerClass;
+
+    let xpLabel = '';
+    if (isE || isP) xpLabel = `<span class="block-xp session-xp">+${b.xp} XP</span>`;
+    else if (isA) xpLabel = `<span class="block-xp almoco-xp" style="cursor:pointer">${state.lunchOverrides[key]?'✏️ editado':'✏️ editar'}</span>`;
+    else xpLabel = `<span class="block-xp event-xp">evento</span>`;
+
+    const checkHtml = (isA || isEv) ? '' : `<div class="check ${done?'checked':''}">${checkSvg}</div>`;
+    row.innerHTML = `${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
+
+    if (isE || isP) {
+      row.onclick = (e) => {
+        if (e.target.closest('.check')) return;
+        tryStartTimer(b);
+      };
+      const checkEl = row.querySelector('.check');
+      if (checkEl) {
+        checkEl.onclick = (e) => {
+          e.stopPropagation();
+          const wasChecked = isChecked(key, b.time);
+          toggleCheck(key, b.time);
+          if (!wasChecked) playSound('check');
+          renderAll();
+        };
+      }
+    }
+    if (isA) {
+      row.style.cursor = 'pointer';
+      row.title = 'Clique para editar o almoço de hoje';
+      row.onclick = () => openLunchPanel(key);
+    }
+    c.appendChild(row);
+  });
+
+  document.getElementById('stat-e').textContent = eD + '/' + eT;
+  document.getElementById('stat-p').textContent = pD + '/' + pT;
+}
+
+function renderXP() {
+  const stats = computeStats();
+  document.getElementById('xp-total').textContent = stats.totalXP;
+  document.getElementById('top-xp').textContent = stats.totalXP + ' XP';
+  document.getElementById('top-level').textContent = getLevel(stats.totalXP);
+  document.getElementById('xp-bar').style.width = getLevelPct(stats.totalXP) + '%';
+  document.getElementById('week-xp-val').textContent = 'Semana: ' + (stats.weekXP[state.uiWeek - 1] || 0) + ' XP';
+  document.getElementById('today-xp-val').textContent = 'Hoje: ' + stats.todayXP + ' XP';
+  document.getElementById('stat-w').textContent = stats.weekChecksOfCurrent + ' ✓';
+}
+
+// ============================================================
+// ANALYTICS RENDER
+// ============================================================
 function renderAnalytics() {
-  const totalXP = calcTotalXP();
+  const stats = computeStats();
+  const totalXP = stats.totalXP;
   const level = getLevel(totalXP);
   const pct = getLevelPct(totalXP);
-
-  // Find next level threshold
   const nextLvl = LEVELS.find(([t]) => t > totalXP);
+
   document.getElementById('an-level-name').textContent = level;
   document.getElementById('an-level-sub').textContent = nextLvl
     ? `Faltam ${nextLvl[0] - totalXP} XP para ${nextLvl[1]}`
@@ -1164,59 +1708,27 @@ function renderAnalytics() {
   document.getElementById('an-xp-next').textContent = nextLvl ? nextLvl[0] + ' XP' : '';
   document.getElementById('an-xp-bar').style.width = pct + '%';
 
-  // Collect per-day data
-  let totalChecks = 0, bestWeekChecks = 0, bestDayChecks = 0, bestDayLabel = '—', bestDayXP = 0;
-  const weekChecks = Array(18).fill(0);
-  const hourChecks = {}; // hour (9-18) -> count
-  const dayChecks = {}; // dk -> count
+  document.getElementById('an-total-checks').textContent = stats.totalChecks;
+  document.getElementById('an-best-week').textContent = stats.bestWeekChecks;
+  document.getElementById('an-best-day').textContent = stats.bestDayChecks > 0
+    ? `${stats.bestDayLabel} (${stats.bestDayChecks})` : '—';
+  document.getElementById('an-best-xp').textContent = stats.bestDayXP + ' XP';
 
-  for (let wi = 0; wi < 18; wi++) {
-    for (let di = 0; di < 7; di++) {
-      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
-      const key = dk(d);
-      const checks = getChecks(key);
-      const events = getDayEvents(key);
-      const ov = getLunchForDay(key);
-      const blocks = generateBlocks({...userCfg,...ov}, events);
-      let dayCount = 0, dayXP = 0;
-      blocks.forEach((b, i) => {
-        if (checks[i] && b.xp > 0) {
-          totalChecks++;
-          weekChecks[wi]++;
-          dayCount++;
-          dayXP += b.xp;
-          // Extract hour from block time
-          const hour = parseInt(b.time.split(':')[0]);
-          hourChecks[hour] = (hourChecks[hour] || 0) + 1;
-        }
-      });
-      dayChecks[key] = dayCount;
-      if (dayCount > bestDayChecks) {
-        bestDayChecks = dayCount;
-        bestDayLabel = d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
-      }
-      if (dayXP > bestDayXP) bestDayXP = dayXP;
-    }
-    if (weekChecks[wi] > bestWeekChecks) bestWeekChecks = weekChecks[wi];
-  }
-
-  document.getElementById('an-total-checks').textContent = totalChecks;
-  document.getElementById('an-best-week').textContent = bestWeekChecks;
-  document.getElementById('an-best-day').textContent = bestDayChecks > 0 ? `${bestDayLabel} (${bestDayChecks})` : '—';
-  document.getElementById('an-best-xp').textContent = bestDayXP + ' XP';
-
-  // Streaks
-  const { cur, best } = calcStreaks(dayChecks);
+  const { cur, best } = calcStreaks(stats.dayCheckCounts);
   document.getElementById('an-streak').textContent = cur;
   document.getElementById('an-cur-streak').textContent = cur + ' dias';
   document.getElementById('an-best-streak').textContent = best + ' dias';
 
-  // Heatmap
-  const maxWeek = Math.max(...weekChecks, 1);
+  // Heatmap — show only first 18 weeks for visual consistency
+  const weekCountsArr = WEEKS.map((_, wi) => stats.weekChecks[wi] || 0);
+  const showWeeks = weekCountsArr.slice(0, 18);
+  const maxWeek = Math.max(...weekCountsArr, 1);
   const heatColors = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e635'];
   const grid = document.getElementById('heatmap-grid');
   grid.innerHTML = '';
-  weekChecks.forEach((count, wi) => {
+  // Adjust grid columns to actual count
+  grid.style.gridTemplateColumns = `repeat(${Math.min(WEEKS.length, 18)}, 1fr)`;
+  showWeeks.forEach((count, wi) => {
     const intensity = Math.min(4, Math.floor((count / maxWeek) * 4));
     const cell = document.createElement('div');
     cell.className = 'heatmap-cell';
@@ -1225,13 +1737,16 @@ function renderAnalytics() {
     grid.appendChild(cell);
   });
 
-  // Hour bar chart
-  const hours = Array.from({length:10}, (_,i) => i + 9); // 9-18
-  const maxHour = Math.max(...hours.map(h => hourChecks[h] || 0), 1);
-  const barChart = document.getElementById('hour-bar-chart');
-  barChart.innerHTML = '';
+  // Hour chart
+  const startH = parseInt(state.config.start.split(':')[0]);
+  const endH = parseInt(state.config.end.split(':')[0]) + 1;
+  const hours = [];
+  for (let h = startH; h <= endH; h++) hours.push(h);
+  const maxHour = Math.max(...hours.map(h => stats.hourCounts[h] || 0), 1);
+  const chart = document.getElementById('hour-bar-chart');
+  chart.innerHTML = '';
   hours.forEach(h => {
-    const count = hourChecks[h] || 0;
+    const count = stats.hourCounts[h] || 0;
     const pctH = Math.round((count / maxHour) * 100);
     const wrap = document.createElement('div');
     wrap.className = 'bar-wrap';
@@ -1240,333 +1755,35 @@ function renderAnalytics() {
       <span class="bar-label">${h}h</span>
     `;
     wrap.title = `${h}h: ${count} blocos concluídos`;
-    barChart.appendChild(wrap);
+    chart.appendChild(wrap);
   });
 }
 
-function calcTotalXP() {
-  let total = 0;
-  for (let wi = 0; wi < 18; wi++) {
-    for (let di = 0; di < 7; di++) {
-      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
-      const key = dk(d);
-      const checks = getChecks(key);
-      const events = getDayEvents(key);
-      const ov = getLunchForDay(key);
-      const blocks = generateBlocks({...userCfg,...ov}, events);
-      blocks.forEach((b, i) => { if (checks[i] && b.xp > 0) total += b.xp; });
-    }
-  }
-  return total;
-}
-
-function calcStreaks(dayChecks) {
-  let cur = 0, best = 0, temp = 0;
-  const today = dk(new Date());
-  const keys = [];
-  for (let wi = 0; wi < 18; wi++) {
-    for (let di = 0; di < 7; di++) {
-      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
-      keys.push(dk(d));
-    }
-  }
-  keys.forEach(k => {
-    if ((dayChecks[k] || 0) > 0) { temp++; if (temp > best) best = temp; }
-    else temp = 0;
-  });
-  // Current streak (counting backwards from today)
-  const todayIdx = keys.indexOf(today);
-  if (todayIdx >= 0) {
-    for (let i = todayIdx; i >= 0; i--) {
-      if ((dayChecks[keys[i]] || 0) > 0) cur++;
-      else break;
-    }
-  }
-  return { cur, best };
-}
-
-// ---- CHARACTER ANIMATION ----
-let charFrame=0, charInterval=null;
-const CHAR_FRAMES=4;
-function startCharAnim(){
-  if(charInterval) clearInterval(charInterval);
-  charInterval=setInterval(()=>{
-    charFrame=(charFrame+1)%CHAR_FRAMES;
-    const img=document.getElementById('char-sprite');
-    if(img) img.src=`idle/${charFrame}.png`;
-  },180);
-}
-
-// ---- PROFILE ----
-function renderProfile(){
+// ============================================================
+// PROFILE RENDER
+// ============================================================
+function renderProfile() {
   startCharAnim();
-  const totalXP = calcTotalXP();
+  const stats = computeStats();
+  const totalXP = stats.totalXP;
   const level = getLevel(totalXP);
   const pct = getLevelPct(totalXP);
-  const nextLvl = LEVELS.find(([t])=>t>totalXP);
-  const lvlIdx = LEVELS.findIndex(([t],i)=>totalXP>=t&&(!LEVELS[i+1]||totalXP<LEVELS[i+1][0]));
+  const lvlIdx = getLevelIdx(totalXP);
+  const nextLvl = LEVELS.find(([t]) => t > totalXP);
 
-  document.getElementById('char-level-badge').textContent = 'Lv.'+(lvlIdx+1);
+  document.getElementById('char-level-badge').textContent = 'Lv.' + (lvlIdx + 1);
   document.getElementById('char-name').textContent = 'Estudante';
   document.getElementById('char-title').textContent = level;
-  document.getElementById('char-xp-cur').textContent = totalXP+' XP';
-  document.getElementById('char-xp-next').textContent = nextLvl ? nextLvl[0]+' XP' : 'MAX';
-  document.getElementById('char-xp-bar').style.width = pct+'%';
+  document.getElementById('char-xp-cur').textContent = totalXP + ' XP';
+  document.getElementById('char-xp-next').textContent = nextLvl ? nextLvl[0] + ' XP' : 'MAX';
+  document.getElementById('char-xp-bar').style.width = pct + '%';
 
-  // Coins: 1 coin per study block completed
-  let coins=0, totalBlocks=0, totalStudyMins=0, activeWeeks=0;
-  for(let wi=0;wi<18;wi++){
-    let weekHasCheck=false;
-    for(let di=0;di<7;di++){
-      const d=new Date(WEEKS[wi].start); d.setDate(d.getDate()+di);
-      const key=dk(d);
-      const checks=getChecks(key);
-      const events=getDayEvents(key);
-      const ov=getLunchForDay(key);
-      const blocks=generateBlocks({...userCfg,...ov},events);
-      blocks.forEach((b,i)=>{
-        if(checks[i]&&b.xp>0){
-          totalBlocks++;
-          if(b.type==='estudo'){ coins++; totalStudyMins+=userCfg.pomo; }
-          weekHasCheck=true;
-        }
-      });
-    }
-    if(weekHasCheck) activeWeeks++;
-  }
-
-  document.getElementById('char-coins').textContent = coins;
+  document.getElementById('char-coins').textContent = stats.coins;
   document.getElementById('ps-xp').textContent = totalXP;
-  document.getElementById('ps-blocks').textContent = totalBlocks;
-  const h=Math.floor(totalStudyMins/60), m=totalStudyMins%60;
-  document.getElementById('ps-hours').textContent = h+'h'+(m>0?m+'min':'');
-  document.getElementById('ps-weeks').textContent = activeWeeks;
-}
-
-function initApp(){
-  const t=today();
-  document.getElementById('today-label').textContent=t.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  curWeek=findWeek(t);
-  const sel=document.getElementById('week-select');sel.innerHTML='';
-  WEEKS.forEach(w=>{
-    const o=document.createElement('option');
-    o.value=w.n;
-    o.textContent=`Semana ${w.n}  ·  ${w.start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} – ${w.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`;
-    if(w.n===curWeek)o.selected=true;
-    sel.appendChild(o);
-  });
-  curDay=Math.min(6,Math.max(0,Math.round((t-WEEKS[curWeek-1].start)/86400000)));
-  renderAll();
-}
-
-window.onWeekChange=()=>{curWeek=parseInt(document.getElementById('week-select').value);curDay=0;renderAll();};
-
-function getLunchForDay(key){
-  if(lunchOverrides[key]) return lunchOverrides[key];
-  return { lunch: userCfg.lunch, lunchDur: userCfg.lunchDur };
-}
-
-let editingLunchKey = null;
-window.openLunchPanel=(key)=>{
-  editingLunchKey=key;
-  const ov=getLunchForDay(key);
-  document.getElementById('lunch-edit-start').value=ov.lunch;
-  document.getElementById('lunch-edit-dur').value=ov.lunchDur;
-  document.getElementById('lunch-panel').classList.add('open');
-};
-window.closeLunchPanel=()=>document.getElementById('lunch-panel').classList.remove('open');
-window.resetLunchEdit=()=>{
-  document.getElementById('lunch-edit-start').value=userCfg.lunch;
-  document.getElementById('lunch-edit-dur').value=userCfg.lunchDur;
-};
-window.saveLunchEdit=()=>{
-  if(!editingLunchKey) return;
-  lunchOverrides[editingLunchKey]={
-    lunch: document.getElementById('lunch-edit-start').value,
-    lunchDur: parseInt(document.getElementById('lunch-edit-dur').value)
-  };
-  closeLunchPanel();
-  scheduleSave();
-  renderAll();
-};
-
-function renderAll(){renderTabs();renderEvents();renderBlocks();renderXP();}
-
-function renderTabs(){
-  const c=document.getElementById('day-tabs');c.innerHTML='';
-  DAYS.forEach((d,i)=>{
-    const date=new Date(WEEKS[curWeek-1].start);date.setDate(date.getDate()+i);
-    const done=Object.values(getChecks(dk(date))).filter(Boolean).length;
-    const btn=document.createElement('button');
-    btn.className='day-tab'+(i===curDay?' active':'')+(done>0?' has-progress':'');
-    btn.innerHTML=d+'<span class="dot"></span>';
-    btn.onclick=()=>{curDay=i;renderAll();};
-    c.appendChild(btn);
-  });
-}
-
-function renderEvents(){
-  const date=new Date(WEEKS[curWeek-1].start);date.setDate(date.getDate()+curDay);
-  const key=dk(date);
-  const events=getDayEvents(key);
-  const listEl=document.getElementById('events-list');
-  const labelEl=document.getElementById('events-label');
-  listEl.innerHTML='';
-  if(events.length===0){labelEl.textContent='Sem eventos especiais';return;}
-  labelEl.textContent=`${events.length} evento${events.length>1?'s':''} hoje`;
-  events.forEach((ev,i)=>{
-    const chip=document.createElement('div');
-    chip.className='event-chip';
-    chip.innerHTML=`
-      <span class="ev-icon">📅</span>
-      <div class="ev-info">
-        <div class="ev-name">${ev.name}</div>
-        <div class="ev-time">${ev.start} – ${ev.end}</div>
-
-      </div>
-      <button class="ev-del" onclick="deleteEvent('${key}',${i})">✕</button>
-    `;
-    listEl.appendChild(chip);
-  });
-}
-
-function renderBlocks(){
-  const date=new Date(WEEKS[curWeek-1].start);date.setDate(date.getDate()+curDay);
-  const key=dk(date);
-  const checks=getChecks(key);
-  const events=getDayEvents(key);
-  const ov=getLunchForDay(key);
-  const dayCfg={...userCfg,...ov};
-  const blocks=generateBlocks(dayCfg,events);
-  const c=document.getElementById('blocks-list');c.innerHTML='';
-  let eD=0,eT=0,pD=0,pT=0;
-  const svg=`<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
-  const SESSION_NAMES=['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
-  const NUM_SESSIONS=6;
-  let lastSession=-1;
-
-  blocks.forEach((b,i)=>{
-    const isE=b.type==='estudo',isP=b.type==='pausa',isA=b.type==='almoco',isEv=b.type==='event';
-    if(isE)eT++;else if(isP)pT++;
-    const done=!!checks[i];
-    if(done){if(isE)eD++;else if(isP)pD++;}
-
-    const sIdx=(b.session!==undefined)?b.session%NUM_SESSIONS:0;
-
-    // Check if this block is happening right now
-    const nowMs=new Date();
-    const bStartParts=b.time.split(':').map(Number);
-    const bEndParts=b.endTime.split(':').map(Number);
-    const bStart=new Date(); bStart.setHours(bStartParts[0],bStartParts[1],0,0);
-    const bEnd=new Date(); bEnd.setHours(bEndParts[0],bEndParts[1],0,0);
-    const isNowBlock=(isE||isP||isA)&&nowMs>=bStart&&nowMs<bEnd;
-
-    if((isE||isP)&&b.session!==undefined&&b.session!==lastSession){
-      lastSession=b.session;
-      const div=document.createElement('div');
-      // Check if any block in this session is happening now
-      const sessionHasNow=blocks.some(bl=>{
-        if(bl.session!==b.session||(bl.type!=='estudo'&&bl.type!=='pausa')) return false;
-        const sp=bl.time.split(':').map(Number),ep=bl.endTime.split(':').map(Number);
-        const bs=new Date();bs.setHours(sp[0],sp[1],0,0);
-        const be=new Date();be.setHours(ep[0],ep[1],0,0);
-        return new Date()>=bs&&new Date()<be;
-      });
-      div.className=`session-divider s${sIdx}${sessionHasNow?' now-session':''}`;
-      div.innerHTML=`<div class="sd-line"></div><span class="sd-label">${SESSION_NAMES[sIdx]||'Sessão'}</span><div class="sd-line"></div>`;
-      c.appendChild(div);
-    }
-
-    const row=document.createElement('div');
-    const sessionClass=(isE||isP)?` session-block s${sIdx}`:'';
-    const nowClass=isNowBlock?' now-block':'';
-    row.className='block-row'+(isP?' pausa-row':'')+(isA?' almoco-row':'')+(isEv?' event-row':'')+(done&&(isE||isP)?' done':'')+sessionClass+nowClass;
-
-    let xpLabel='';
-    if(isE||isP)xpLabel=`<span class="block-xp session-xp">+${b.xp} XP</span>`;
-    else if(isA)xpLabel=`<span class="block-xp almoco-xp" style="cursor:pointer">${lunchOverrides[key]?'✏️ editado':'✏️ editar'}</span>`;
-    else xpLabel=`<span class="block-xp event-xp">evento</span>`;
-
-    const checkHtml=(isA||isEv)?'':`<div class="check ${done?'checked':''}">${svg}</div>`;
-    row.innerHTML=`${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
-
-    if(isE||isP){
-      // Clicking the row starts the timer
-      row.onclick=(e)=>{
-        if(e.target.closest('.check')) return; // handled by checkbox
-        const now=new Date();
-        const startParts=b.time.split(':').map(Number);
-        const endParts=b.endTime.split(':').map(Number);
-        const blockStart=new Date(); blockStart.setHours(startParts[0],startParts[1],0,0);
-        const blockEnd=new Date(); blockEnd.setHours(endParts[0],endParts[1],0,0);
-        if(now>=blockEnd){
-          // Block already finished — show brief toast
-          showToast('Este bloco já terminou ⏎');
-          return;
-        }
-        if(now<blockStart){
-          // Block hasn't started yet
-          const diffMin=Math.round((blockStart-now)/60000);
-          showToast(`Este bloco começa em ${diffMin} min ⏳`);
-          return;
-        }
-        startTimer(b);
-        renderAll();
-      };
-      // Checkbox marks done
-      const checkEl=row.querySelector('.check');
-      if(checkEl){
-        checkEl.onclick=(e)=>{
-          e.stopPropagation();
-          checks[i]=!checks[i];
-          if(checks[i]) playSound('check');
-          setCheck(key,i,checks[i]);
-          renderAll();
-        };
-      }
-      // Highlight if active timer
-      if(timerBlock&&timerBlock.time===b.time&&timerBlock.endTime===b.endTime){
-        row.classList.add('timer-active');
-      }
-    }
-    if(isA){
-      row.style.cursor='pointer';
-      row.title='Clique para editar o almoço de hoje';
-      row.onclick=()=>openLunchPanel(key);
-    }
-    c.appendChild(row);
-  });
-  document.getElementById('stat-e').textContent=eD+'/'+eT;
-  document.getElementById('stat-p').textContent=pD+'/'+pT;
-}
-
-function renderXP(){
-  let total=0,weekXP=0,todayXP=0,weekChecks=0;
-  const todayKey=dk(today());
-  for(let wi=0;wi<18;wi++){
-    for(let di=0;di<7;di++){
-      const d=new Date(WEEKS[wi].start);d.setDate(d.getDate()+di);
-      const key=dk(d);
-      const checks=getChecks(key);
-      const events=getDayEvents(key);
-      const ov=getLunchForDay(key);
-      const blocks=generateBlocks({...userCfg,...ov},events);
-      blocks.forEach((b,i)=>{
-        if(checks[i]&&b.xp>0){
-          total+=b.xp;
-          if(wi===curWeek-1){weekXP+=b.xp;weekChecks++;}
-          if(key===todayKey)todayXP+=b.xp;
-        }
-      });
-    }
-  }
-  document.getElementById('xp-total').textContent=total;
-  document.getElementById('top-xp').textContent=total+' XP';
-  document.getElementById('top-level').textContent=getLevel(total);
-  document.getElementById('xp-bar').style.width=getLevelPct(total)+'%';
-  document.getElementById('week-xp-val').textContent='Semana: '+weekXP+' XP';
-  document.getElementById('today-xp-val').textContent='Hoje: '+todayXP+' XP';
-  document.getElementById('stat-w').textContent=weekChecks+' ✓';
+  document.getElementById('ps-blocks').textContent = stats.totalChecks;
+  const h = Math.floor(stats.studyMins / 60), m = stats.studyMins % 60;
+  document.getElementById('ps-hours').textContent = h + 'h' + (m > 0 ? m + 'min' : '');
+  document.getElementById('ps-weeks').textContent = stats.activeWeeks;
 }
 
 </script>
