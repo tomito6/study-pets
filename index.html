@@ -126,6 +126,9 @@
   .save-btn:hover{opacity:.9;}
   .reset-btn{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .reset-btn:hover{border-color:#555;color:var(--text);}
+  .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}
 
   /* EVENT PANEL */
   .checkbox-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
@@ -171,8 +174,10 @@
   .profile-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
   .profile-page.visible { display:block; }
   .char-stage { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:32px 20px 24px; margin-bottom:16px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .char-wrap { position:relative; display:flex; align-items:center; justify-content:center; }
+  .char-wrap { display:flex; align-items:flex-end; justify-content:center; gap:6px; }
+  .char-self { position:relative; display:flex; align-items:center; justify-content:center; }
   .char-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:128px; height:128px; object-fit:contain; }
+  .pet-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:64px; height:64px; object-fit:contain; margin-bottom:4px; }
   .char-level-badge { position:absolute; bottom:-10px; right:-10px; background:var(--accent); color:#0e0e0f; font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; font-family:'DM Mono',monospace; }
   .char-name { font-size:18px; font-weight:600; }
   .char-title { font-size:12px; color:var(--muted); margin-top:2px; }
@@ -190,6 +195,18 @@
   .coming-soon-card .cs-icon { font-size:32px; margin-bottom:8px; }
   .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
   .coming-soon-card .cs-sub { font-size:12px; color:var(--muted); }
+  .shop-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+  .shop-grid { display:grid; grid-template-columns:1fr; gap:8px; }
+  .shop-item { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--bg3); border-radius:var(--radius-sm); border:1px solid var(--border); }
+  .shop-item-sprite { width:48px; height:48px; image-rendering:pixelated; image-rendering:crisp-edges; flex-shrink:0; object-fit:contain; }
+  .shop-item-info { flex:1; min-width:0; }
+  .shop-item-name { font-size:13px; font-weight:600; }
+  .shop-item-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+  .shop-btn { font-size:11px; padding:6px 12px; border-radius:6px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-weight:600; font-family:inherit; transition:background .15s, color .15s; }
+  .shop-btn:hover { background:var(--accent); color:#0e0e0f; }
+  .shop-btn.active { background:var(--accent); color:#0e0e0f; }
+  .shop-btn.owned { border-color:var(--border); color:var(--muted); }
+  .shop-btn.owned:hover { background:var(--bg3); color:var(--text); }
 
   /* FAB */
   .fab-config {
@@ -371,7 +388,7 @@
 </div>
 
 <div class="ls-content">
-  <img class="ls-char" src="idle/0.png" alt="Personagem" id="ls-char-sprite">
+  <img class="ls-char" src="idle/user/0.png" alt="Personagem" id="ls-char-sprite">
   <div class="ls-eyebrow">✦ SISTEMA DE ESTUDOS ✦</div>
   <div class="ls-title">ESTUDO<br><span>RPG</span></div>
   <div class="ls-sub">Transforme sua rotina de estudos<br>numa aventura. Suba de nível. Evolua.</div>
@@ -393,7 +410,7 @@
   setInterval(()=>{
     lsFrame=(lsFrame+1)%4;
     const img=document.getElementById('ls-char-sprite');
-    if(img) img.src=`idle/${lsFrame}.png`;
+    if(img) img.src=`idle/user/${lsFrame}.png`;
   },180);
 </script>
 </div>
@@ -497,9 +514,52 @@
       <label>Pausa longa — a cada 4 pomodoros (min)</label>
       <input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()">
     </div>
+
+    <div class="field-group">
+      <label>Período de uso</label>
+      <div class="field-row">
+        <div><div class="field-sublabel">Início</div><input type="date" id="cfg-period-start"></div>
+        <div><div class="field-sublabel">Fim</div><input type="date" id="cfg-period-end"></div>
+      </div>
+      <button type="button" class="ghost-btn" onclick="clearPeriod()" style="margin-top:8px;">Usar sempre</button>
+      <div class="checkbox-row" style="margin-top:10px;">
+        <input type="checkbox" id="cfg-skip-weekends">
+        <label for="cfg-skip-weekends" style="font-size:13px;color:var(--text);">Pular finais de semana</label>
+      </div>
+    </div>
+
     <div class="btn-row">
       <button class="reset-btn" onclick="resetSettings()">↺ Padrão</button>
       <button class="save-btn" onclick="saveSettings()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING PANEL -->
+<div class="panel-overlay" id="onboarding-panel">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>👋 Bem-vindo!</h2>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;">
+      Vamos configurar quando você quer usar o app. Você pode mudar isso depois nas configurações.
+    </p>
+    <div class="field-group">
+      <label>Período de uso</label>
+      <div class="field-row">
+        <div><div class="field-sublabel">Início</div><input type="date" id="onb-start"></div>
+        <div><div class="field-sublabel">Fim</div><input type="date" id="onb-end"></div>
+      </div>
+      <button type="button" class="ghost-btn" onclick="onbUseAlways()" style="margin-top:8px;">Usar sempre (sem data fim)</button>
+    </div>
+    <div class="field-group">
+      <div class="checkbox-row">
+        <input type="checkbox" id="onb-skip-weekends">
+        <label for="onb-skip-weekends" style="font-size:13px;color:var(--text);">Pular finais de semana (sáb e dom)</label>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="save-btn" onclick="finishOnboarding()" style="width:100%;">Começar</button>
     </div>
   </div>
 </div>
@@ -623,8 +683,11 @@
   <!-- CHARACTER STAGE -->
   <div class="char-stage">
     <div class="char-wrap">
-      <img id="char-sprite" class="char-sprite" src="idle/0.png" alt="Personagem">
-      <div class="char-level-badge" id="char-level-badge">Lv.1</div>
+      <div class="char-self">
+        <img id="char-sprite" class="char-sprite" src="idle/user/0.png" alt="Personagem">
+        <div class="char-level-badge" id="char-level-badge">Lv.1</div>
+      </div>
+      <img id="pet-sprite" class="pet-sprite" alt="Pet" style="display:none">
     </div>
     <div style="text-align:center">
       <div class="char-name" id="char-name">Estudante</div>
@@ -654,11 +717,10 @@
     <div class="profile-stat"><div class="ps-label">Semanas ativas</div><div class="ps-val" id="ps-weeks">0</div></div>
   </div>
 
-  <!-- COMING SOON: PETS -->
-  <div class="coming-soon-card" style="margin-bottom:12px">
-    <div class="cs-icon">🐣</div>
-    <div class="cs-title">Animais de companhia</div>
-    <div class="cs-sub">Em breve — ganhe moedas estudando e adote seu primeiro pet!</div>
+  <!-- PETS SHOP -->
+  <div class="shop-card">
+    <div class="section-title">🐾 Pets</div>
+    <div class="shop-grid" id="pets-shop"></div>
   </div>
 
   <!-- COMING SOON: COSMETICS -->
@@ -706,7 +768,8 @@ const provider = new GoogleAuthProvider();
 // ============================================================
 const DEFAULT_CFG = {
   start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00',
-  pomo:25, shortBreak:5, longBreak:20, hasLunch:true
+  pomo:25, shortBreak:5, longBreak:20, hasLunch:true,
+  periodStart: null, periodEnd: null, skipWeekends: false
 };
 const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -726,11 +789,25 @@ const state = {
   events: {},          // { "2026-05-07": [{name, start, end}] }
   lunchOverrides: {},  // { "2026-05-07": {lunch, lunchDur} }
   config: {...DEFAULT_CFG},
+  pets: { owned: [], active: null },
 
   // UI state (not persisted)
   uiTab: 'plano',
   uiWeek: 1,
   uiDay: 0,
+};
+
+// ============================================================
+// PETS REGISTRY
+// ============================================================
+const PETS = {
+  cat: {
+    id: 'cat',
+    name: 'Gato',
+    desc: 'Um companheiro felino fofo.',
+    frames: 4,
+    sprite: i => `idle/pets/cat/${i}.png`,
+  },
 };
 
 let WEEKS = [];
@@ -783,10 +860,27 @@ function buildWeeks() {
     if (earliestMon < startDate) startDate = earliestMon;
   }
 
-  // Total weeks: from startDate to current Monday + FUTURE_WEEKS
-  const currentMon = mondayOf(today);
-  const weeksToCurrent = Math.round((currentMon - startDate) / (7 * 86400000));
-  const totalWeeks = weeksToCurrent + FUTURE_WEEKS;
+  // periodStart pode empurrar startDate pra trás (mas nunca pra frente — preserva dados anteriores)
+  const { periodStart, periodEnd } = state.config;
+  if (periodStart) {
+    const ps = mondayOf(new Date(periodStart + 'T12:00:00'));
+    if (ps < startDate) startDate = ps;
+  }
+
+  // endDate: periodEnd manda; senão, hoje + FUTURE_WEEKS (comportamento atual)
+  let endDate;
+  if (periodEnd) {
+    const pe = new Date(periodEnd + 'T12:00:00');
+    endDate = mondayOf(pe); endDate.setDate(endDate.getDate() + 6);
+    // Garante que cobre pelo menos até hoje + 1 semana, caso o periodEnd seja no passado
+    const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 7);
+    if (endDate < minEnd) endDate = minEnd;
+  } else {
+    const currentMon = mondayOf(today);
+    endDate = new Date(currentMon); endDate.setDate(endDate.getDate() + FUTURE_WEEKS*7 - 1);
+  }
+
+  const totalWeeks = Math.max(1, Math.round((endDate - startDate) / (7 * 86400000)) + 1);
 
   WEEKS = [];
   for (let i = 0; i < totalWeeks; i++) {
@@ -797,8 +891,10 @@ function buildWeeks() {
 }
 
 function forEachDay(callback) {
+  const skip = state.config.skipWeekends === true;
   for (let wi = 0; wi < WEEKS.length; wi++) {
     for (let di = 0; di < 7; di++) {
+      if (skip && di >= 5) continue; // 5 = sáb, 6 = dom (segunda = di 0)
       const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
       callback(dk(d), d, wi, di);
     }
@@ -933,6 +1029,10 @@ function calcXP(minutes) {
 function clearBlockCache() { blockCache.clear(); }
 
 function blocksForDay(dateKey) {
+  if (state.config.skipWeekends) {
+    const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
+    if (dow === 0 || dow === 6) return [];
+  }
   const events = state.events[dateKey] || [];
   const lunchOv = state.lunchOverrides[dateKey];
   const cfg = lunchOv ? { ...state.config, ...lunchOv } : state.config;
@@ -1076,6 +1176,7 @@ function getLevelPct(xp) {
 // FIREBASE LOAD / SAVE
 // ============================================================
 async function loadData(uid) {
+  let isNew = false;
   try {
     const snap = await getDoc(doc(db, 'users', uid));
     if (snap.exists()) {
@@ -1084,9 +1185,15 @@ async function loadData(uid) {
       state.events = d.events || {};
       state.lunchOverrides = d.lunchOverrides || {};
       state.config = { ...DEFAULT_CFG, ...(d.config || {}) };
+      state.pets = {
+        owned: (d.pets && Array.isArray(d.pets.owned)) ? d.pets.owned : [],
+        active: (d.pets && d.pets.active) || null,
+      };
     } else {
+      isNew = true;
       state.checks = {}; state.events = {}; state.lunchOverrides = {};
       state.config = { ...DEFAULT_CFG };
+      state.pets = { owned: [], active: null };
     }
   } catch (e) {
     console.error('Load failed:', e);
@@ -1094,6 +1201,7 @@ async function loadData(uid) {
   }
   buildWeeks();
   clearBlockCache();
+  return isNew;
 }
 
 function showSaveIndicator(msg = 'Salvando...', done = false) {
@@ -1115,6 +1223,7 @@ function scheduleSave() {
         events: state.events,
         lunchOverrides: state.lunchOverrides,
         config: state.config,
+        pets: state.pets,
       }, { merge: true });
       showSaveIndicator('Salvo ✓', true);
     } catch (e) {
@@ -1136,14 +1245,16 @@ window.logoutUser = async () => { await signOut(auth); };
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     state.user = user;
-    await loadData(user.uid);
+    const isNew = await loadData(user.uid);
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     initApp();
+    if (isNew) openOnboarding();
   } else {
     state.user = null;
     state.checks = {}; state.events = {}; state.lunchOverrides = {};
     state.config = { ...DEFAULT_CFG };
+    state.pets = { owned: [], active: null };
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
   }
@@ -1345,6 +1456,9 @@ window.openSettings = () => {
   document.getElementById('cfg-short').value = state.config.shortBreak;
   document.getElementById('cfg-long').value = state.config.longBreak;
   document.getElementById('cfg-has-lunch').checked = state.config.hasLunch !== false;
+  document.getElementById('cfg-period-start').value = state.config.periodStart || '';
+  document.getElementById('cfg-period-end').value = state.config.periodEnd || '';
+  document.getElementById('cfg-skip-weekends').checked = state.config.skipWeekends === true;
   toggleLunchFields();
   updatePreview();
   document.getElementById('settings-panel').classList.add('open');
@@ -1369,11 +1483,21 @@ window.resetSettings = () => {
   document.getElementById('cfg-short').value = DEFAULT_CFG.shortBreak;
   document.getElementById('cfg-long').value = DEFAULT_CFG.longBreak;
   document.getElementById('cfg-has-lunch').checked = true;
+  document.getElementById('cfg-period-start').value = '';
+  document.getElementById('cfg-period-end').value = '';
+  document.getElementById('cfg-skip-weekends').checked = false;
   toggleLunchFields();
   updatePreview();
 };
 
+window.clearPeriod = () => {
+  document.getElementById('cfg-period-start').value = '';
+  document.getElementById('cfg-period-end').value = '';
+};
+
 function readCfgForm() {
+  const pStart = document.getElementById('cfg-period-start').value;
+  const pEnd = document.getElementById('cfg-period-end').value;
   return {
     start: document.getElementById('cfg-start').value,
     lunch: document.getElementById('cfg-lunch').value,
@@ -1383,6 +1507,9 @@ function readCfgForm() {
     shortBreak: parseInt(document.getElementById('cfg-short').value),
     longBreak: parseInt(document.getElementById('cfg-long').value),
     hasLunch: document.getElementById('cfg-has-lunch').checked,
+    periodStart: pStart || null,
+    periodEnd: pEnd || null,
+    skipWeekends: document.getElementById('cfg-skip-weekends').checked,
   };
 }
 
@@ -1413,8 +1540,55 @@ window.updatePreview = () => {
 window.saveSettings = () => {
   state.config = readCfgForm();
   closeSettings();
+  buildWeeks();
   clearBlockCache();
   scheduleSave();
+  renderAll();
+};
+
+// ============================================================
+// ONBOARDING PANEL
+// ============================================================
+window.openOnboarding = () => {
+  const todayKey = dk(new Date());
+  document.getElementById('onb-start').value = state.config.periodStart || todayKey;
+  document.getElementById('onb-end').value = state.config.periodEnd || '';
+  document.getElementById('onb-skip-weekends').checked = state.config.skipWeekends === true;
+  document.getElementById('onboarding-panel').classList.add('open');
+};
+
+window.onbUseAlways = () => {
+  document.getElementById('onb-start').value = '';
+  document.getElementById('onb-end').value = '';
+  showToast('Modo "sempre" — sem datas');
+};
+
+window.finishOnboarding = () => {
+  const pStart = document.getElementById('onb-start').value;
+  const pEnd = document.getElementById('onb-end').value;
+  // Se só uma das datas: trata como sempre
+  let periodStart = null, periodEnd = null;
+  if (pStart && pEnd) {
+    if (pEnd < pStart) {
+      showToast('⚠️ Data fim antes da data início');
+      return;
+    }
+    periodStart = pStart;
+    periodEnd = pEnd;
+  } else if (pStart || pEnd) {
+    showToast('Preencha as duas datas ou use "sempre"');
+    return;
+  }
+  state.config = {
+    ...state.config,
+    periodStart,
+    periodEnd,
+    skipWeekends: document.getElementById('onb-skip-weekends').checked,
+  };
+  document.getElementById('onboarding-panel').classList.remove('open');
+  buildWeeks();
+  clearBlockCache();
+  if (typeof scheduleSave === 'function') scheduleSave();
   renderAll();
 };
 
@@ -1515,8 +1689,67 @@ function startCharAnim() {
   charInterval = setInterval(() => {
     charFrame = (charFrame + 1) % CHAR_FRAMES;
     const img = document.getElementById('char-sprite');
-    if (img) img.src = `idle/${charFrame}.png`;
+    if (img) img.src = `idle/user/${charFrame}.png`;
   }, 180);
+}
+
+// ============================================================
+// PET ANIMATION + SHOP
+// ============================================================
+let petFrame = 0, petInterval = null;
+function startPetAnim() {
+  if (petInterval) clearInterval(petInterval);
+  petInterval = null;
+  const img = document.getElementById('pet-sprite');
+  if (!img) return;
+  const activeId = state.pets.active;
+  const pet = activeId && PETS[activeId];
+  if (!pet) { img.style.display = 'none'; return; }
+  img.style.display = '';
+  petFrame = 0;
+  img.src = pet.sprite(0);
+  petInterval = setInterval(() => {
+    petFrame = (petFrame + 1) % pet.frames;
+    img.src = pet.sprite(petFrame);
+  }, 180);
+}
+
+function renderShop() {
+  const grid = document.getElementById('pets-shop');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.values(PETS).forEach(pet => {
+    const owned = state.pets.owned.includes(pet.id);
+    const active = state.pets.active === pet.id;
+    const item = document.createElement('div');
+    item.className = 'shop-item';
+    item.innerHTML = `
+      <img class="shop-item-sprite" src="${pet.sprite(0)}" alt="${pet.name}">
+      <div class="shop-item-info">
+        <div class="shop-item-name">${pet.name}</div>
+        <div class="shop-item-desc">${pet.desc}</div>
+      </div>
+    `;
+    const btn = document.createElement('button');
+    btn.className = 'shop-btn' + (active ? ' active' : owned ? ' owned' : '');
+    btn.textContent = active ? 'Ativo' : owned ? 'Equipar' : 'Adotar';
+    btn.onclick = () => {
+      if (!owned) {
+        state.pets.owned.push(pet.id);
+        state.pets.active = pet.id;
+        showToast(`${pet.name} adotado! 🎉`);
+      } else if (active) {
+        state.pets.active = null;
+      } else {
+        state.pets.active = pet.id;
+      }
+      scheduleSave();
+      renderShop();
+      startPetAnim();
+    };
+    item.appendChild(btn);
+    grid.appendChild(item);
+  });
 }
 
 // ============================================================
@@ -1598,6 +1831,13 @@ function renderBlocks() {
   const blocks = blocksForDay(key);
   const c = document.getElementById('blocks-list');
   c.innerHTML = '';
+
+  if (blocks.length === 0) {
+    c.innerHTML = '<div class="empty-day">🌴 Dia livre</div>';
+    document.getElementById('stat-e').textContent = '0/0';
+    document.getElementById('stat-p').textContent = '0/0';
+    return;
+  }
 
   let eD=0, eT=0, pD=0, pT=0;
   const checkSvg = `<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
@@ -1764,6 +2004,8 @@ function renderAnalytics() {
 // ============================================================
 function renderProfile() {
   startCharAnim();
+  startPetAnim();
+  renderShop();
   const stats = computeStats();
   const totalXP = stats.totalXP;
   const level = getLevel(totalXP);
