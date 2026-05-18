@@ -196,25 +196,39 @@
   /* PROFILE PAGE */
   .profile-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
   .profile-page.visible { display:block; }
-  .char-stage { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:32px 20px 24px; margin-bottom:16px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .char-wrap { display:flex; align-items:flex-end; justify-content:center; gap:6px; }
-  .char-self { position:relative; display:flex; align-items:center; justify-content:center; }
-  .char-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:128px; height:128px; object-fit:contain; }
-  .pet-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:64px; height:64px; object-fit:contain; margin-bottom:4px; filter:url(#pet-remove-white); }
+
+  /* HERO (personagem + pet ativo) */
+  .profile-hero { background:linear-gradient(180deg, #22262e 0%, #1f232a 100%); border:1px solid var(--border); border-radius:var(--radius); padding:20px 16px 14px; margin-bottom:16px; }
+  .profile-hero-stage { position:relative; height:150px; display:flex; align-items:flex-end; justify-content:center; gap:28px; }
+  .profile-hero-divider { height:1px; background:rgba(255,255,255,.06); margin:8px -16px 12px; }
+  .profile-hero-row { display:flex; justify-content:space-between; align-items:flex-end; padding:0 4px 10px; }
+  .profile-hero-left { display:flex; flex-direction:column; }
+  .profile-hero-name { display:flex; align-items:center; gap:8px; }
+  .profile-hero-name span:first-child { font-size:16px; font-weight:600; color:var(--text); }
+  .hero-lv-badge { background:var(--accent); color:#1a3a08; font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px; font-family:'DM Mono',monospace; }
+  .profile-hero-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .profile-hero-right { text-align:right; }
+  .profile-hero-right .phr-label { font-size:11px; color:var(--muted); }
+  .profile-hero-right .phr-val { font-size:13px; font-weight:500; color:var(--text); font-family:'DM Mono',monospace; }
+  .profile-hero-bar { background:rgba(255,255,255,.08); height:6px; border-radius:99px; margin:0 4px; overflow:hidden; }
+  .profile-hero-bar .bar-fill { background:var(--accent); height:100%; border-radius:99px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+  .char-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:120px; height:120px; object-fit:contain; }
+  .pet-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:96px; height:96px; object-fit:contain; margin-bottom:8px; filter:url(#pet-remove-white); }
   .shop-item-sprite { filter:url(#pet-remove-white); }
-  .char-level-badge { position:absolute; bottom:-10px; right:-10px; background:var(--accent); color:#0e0e0f; font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; font-family:'DM Mono',monospace; }
-  .char-name { font-size:18px; font-weight:600; }
-  .char-title { font-size:12px; color:var(--muted); margin-top:2px; }
-  .char-xp-wrap { width:100%; }
-  .char-xp-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:5px; font-family:'DM Mono',monospace; }
-  .currency-row { display:flex; align-items:center; gap:8px; background:var(--bg3); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:16px; }
-  .currency-icon { font-size:20px; }
-  .currency-label { font-size:12px; color:var(--muted); flex:1; }
-  .currency-val { font-size:20px; font-weight:600; font-family:'DM Mono',monospace; color:#fbbf24; }
-  .profile-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
-  .profile-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; }
-  .profile-stat .ps-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
-  .profile-stat .ps-val { font-size:17px; font-weight:600; font-family:'DM Mono',monospace; color:var(--text); }
+
+  /* STATS 4-col */
+  .profile-stats-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
+  .profile-stat-mini { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 6px; text-align:center; }
+  .profile-stat-mini .psm-val { font-size:16px; font-weight:600; font-family:'DM Mono',monospace; color:var(--text); }
+  .profile-stat-mini .psm-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+  .profile-stat-mini.coins-stat { background:linear-gradient(135deg,#3a2f12 0%,#2a2510 100%); border-color:rgba(245,179,66,.25); }
+  .profile-stat-mini.coins-stat .psm-val { color:#f5b342; }
+  .profile-stat-mini.coins-stat .psm-label { color:#b89968; }
+
+  /* HEADER da seção "Meus pets" inline */
+  .my-pets-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 2px; }
+  .my-pets-header-title { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:600; }
+  .my-pets-header-count { font-size:11px; color:var(--muted); }
   .coming-soon-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; opacity:.6; }
   .coming-soon-card .cs-icon { font-size:32px; margin-bottom:8px; }
   .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
@@ -236,6 +250,96 @@
   .shop-btn.active { background:var(--accent); color:#0e0e0f; }
   .shop-btn.owned { border-color:var(--border); color:var(--muted); }
   .shop-btn.owned:hover { background:var(--bg3); color:var(--text); }
+  .shop-btn.locked { border-color:var(--border); color:var(--muted); opacity:.5; cursor:not-allowed; }
+  .shop-btn.locked:hover { background:transparent; color:var(--muted); }
+
+  /* Card de pet com info extra (level + ativa badge) */
+  .shop-item { position:relative; }
+  .shop-item.active-pet { border-color:rgba(163,230,53,.35); }
+  .shop-item-active-badge { position:absolute; top:8px; right:8px; background:var(--accent); color:#1a3a08; font-size:9px; font-weight:600; padding:2px 6px; border-radius:99px; text-transform:uppercase; letter-spacing:.05em; }
+  .shop-item-name-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+  .shop-item-lv { background:rgba(163,230,53,.15); color:var(--accent); font-size:10px; padding:1px 6px; border-radius:99px; font-family:'DM Mono',monospace; }
+
+  /* MEUS PETS empty state (no modal) */
+  .my-pets-empty { grid-column:1/-1; text-align:center; padding:18px 8px; font-size:13px; color:var(--muted); line-height:1.5; }
+  .my-pets-empty .mpe-icon { font-size:24px; margin-bottom:6px; }
+
+  /* FINISH DAY */
+  .finish-day-wrap { margin:14px 0 4px; }
+  .finish-day-btn { width:100%; padding:14px; background:var(--accent); color:#0e0e0f; border:none; border-radius:var(--radius); font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:filter .15s; }
+  .finish-day-btn:hover { filter:brightness(1.08); }
+  .finish-day-banner { width:100%; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--muted); font-size:13px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .finish-day-banner .fdb-check { color:var(--accent); font-size:16px; }
+  .block-row.day-closed { opacity:.55; }
+  .block-row.day-closed .check { cursor:default; }
+
+  /* DAY SUMMARY */
+  .ds-hero { display:flex; gap:14px; justify-content:center; padding:14px 0 18px; }
+  .ds-stat { flex:1; max-width:140px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:14px 10px; text-align:center; }
+  .ds-stat .ds-val { font-size:24px; font-weight:700; font-family:'DM Mono',monospace; line-height:1; }
+  .ds-stat.xp .ds-val { color:var(--accent); }
+  .ds-stat.coins .ds-val { color:#f5b342; }
+  .ds-stat .ds-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:6px; }
+  .ds-levelup { background:linear-gradient(135deg,#1a3a08 0%,#2d5a18 100%); border:1px solid var(--accent); border-radius:var(--radius); padding:12px 14px; text-align:center; margin-bottom:12px; font-size:13px; color:var(--accent); font-weight:600; }
+  .ds-levelup .ds-lu-icon { font-size:18px; margin-right:6px; }
+  .ds-pet-row { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; }
+  .ds-pet-row img { width:40px; height:40px; image-rendering:pixelated; object-fit:contain; }
+  .ds-pet-row .ds-pet-name { font-size:13px; font-weight:600; flex:1; }
+  .ds-pet-row .ds-pet-gain { color:var(--accent); font-family:'DM Mono',monospace; font-size:12px; }
+  .ds-pet-row .ds-pet-lv { font-size:10px; color:var(--muted); margin-top:2px; }
+  .ds-pet-row .ds-pet-lv.up { color:var(--accent); }
+  .ds-empty-msg { text-align:center; padding:14px; color:var(--muted); font-size:13px; line-height:1.5; }
+
+  /* END-OF-DAY PROMPT (auto) */
+  .eop-choice { width:100%; padding:14px 16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; margin-bottom:10px; text-align:left; transition:border-color .15s, background .15s; display:flex; gap:12px; align-items:center; font-family:inherit; color:var(--text); }
+  .eop-choice:hover { border-color:var(--accent); background:var(--bg2); }
+  .eop-choice .eop-icon { font-size:22px; }
+  .eop-choice .eop-text { flex:1; }
+  .eop-choice .eop-title { font-size:14px; font-weight:600; }
+  .eop-choice .eop-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .eop-extend-form { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:8px; }
+  .eop-extend-form label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em; }
+  .eop-extend-form input[type=time] { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; padding:9px 12px; outline:none; color-scheme:dark; margin-bottom:10px; }
+
+  /* FOCUS MODE (tela cheia, escala com a viewport) */
+  .focus-overlay { display:none; position:fixed; inset:0; z-index:300; background:var(--bg); overflow-y:auto; }
+  .focus-overlay.open { display:block; }
+  .focus-inner { max-width:min(95vw, 720px); margin:0 auto; padding:clamp(12px, 2.5vmin, 28px) clamp(16px, 4vmin, 40px) clamp(20px, 4vmin, 40px); }
+  .focus-topbar { display:flex; justify-content:space-between; align-items:center; padding:6px 4px 18px; font-family:'DM Mono',monospace; font-size:clamp(11px, 1.6vmin, 14px); color:#555; }
+  .focus-exit { background:transparent; border:1px solid var(--border); color:var(--muted); font-size:clamp(10px, 1.5vmin, 13px); padding:clamp(4px, .8vmin, 7px) clamp(10px, 1.8vmin, 16px); border-radius:99px; cursor:pointer; font-family:inherit; }
+  .focus-exit:hover { border-color:#555; color:var(--text); }
+  .focus-header { text-align:center; margin-bottom:clamp(14px, 2.5vmin, 28px); }
+  .focus-chip { display:inline-flex; align-items:center; gap:6px; background:var(--green-bg); border:1px solid var(--accent2); padding:clamp(4px, .7vmin, 6px) clamp(10px, 1.6vmin, 16px); border-radius:99px; font-size:clamp(10px, 1.4vmin, 13px); font-family:'DM Mono',monospace; color:var(--accent); text-transform:uppercase; letter-spacing:.08em; }
+  .focus-chip.pausa { background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
+  .focus-chip .fc-dot { width:6px; height:6px; background:currentColor; border-radius:50%; display:inline-block; }
+  .focus-block-name { color:var(--text); font-size:clamp(16px, 2.6vmin, 22px); font-weight:600; margin-top:10px; }
+  .focus-pomo-label { color:var(--muted); font-size:clamp(12px, 1.8vmin, 15px); margin-top:2px; }
+  .focus-timer-wrap { position:relative; width:clamp(220px, 55vmin, 380px); height:clamp(220px, 55vmin, 380px); margin:0 auto 4px; }
+  .focus-timer-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .focus-timer-track { fill:none; stroke:#1a1a1c; stroke-width:3; }
+  .focus-timer-fill { fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset .5s linear; }
+  .focus-timer-fill.pausa { stroke:var(--blue); }
+  .focus-timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .focus-time-big { font-family:'DM Mono',monospace; font-size:clamp(44px, 11vmin, 88px); font-weight:600; color:var(--text); line-height:1; letter-spacing:-.02em; }
+  .focus-time-big.ending { color:var(--orange); }
+  .focus-time-sub { font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); margin-top:8px; font-family:'DM Mono',monospace; }
+  .focus-scene { background:linear-gradient(180deg, transparent 0%, var(--bg2) 60%); border-radius:16px; padding:clamp(16px, 2.5vmin, 28px) clamp(16px, 2.5vmin, 28px) clamp(12px, 2vmin, 20px); margin:clamp(12px, 2vmin, 24px) 0 clamp(14px, 2.5vmin, 28px); position:relative; overflow:hidden; }
+  .focus-scene-stage { display:flex; align-items:flex-end; justify-content:center; gap:12px; height:clamp(100px, 14vmin, 160px); margin-bottom:10px; }
+  .focus-scene-foot { text-align:center; font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); font-family:'DM Mono',monospace; }
+  .focus-scene-xp { color:var(--accent); }
+  .focus-scene-coins { color:#fbbf24; }
+  .focus-next { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:clamp(10px, 1.6vmin, 16px) clamp(14px, 2vmin, 20px); display:flex; align-items:center; gap:10px; }
+  .focus-next-label { font-size:clamp(10px, 1.4vmin, 13px); color:var(--muted); font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.06em; }
+  .focus-next-sep { width:4px; height:4px; background:#555; border-radius:50%; }
+  .focus-next-name { flex:1; color:var(--text); font-size:clamp(12px, 1.8vmin, 15px); }
+  .focus-next-dur { color:#555; font-family:'DM Mono',monospace; font-size:clamp(11px, 1.6vmin, 14px); }
+
+  /* BUY CONFIRM */
+  .buy-confirm-body { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:18px; }
+  .buy-confirm-img { width:80px; height:80px; image-rendering:pixelated; image-rendering:crisp-edges; object-fit:contain; }
+  .buy-confirm-emoji { font-size:56px; line-height:1; }
+  .buy-confirm-text { font-size:14px; text-align:center; color:var(--text); line-height:1.5; }
+  .buy-confirm-text b { color:var(--accent); font-family:'DM Mono',monospace; }
 
   /* FAB */
   .fab-config {
@@ -391,6 +495,76 @@
   </div>
   <div class="events-list" id="events-list"></div>
   <div class="blocks-list" id="blocks-list"></div>
+  <div class="finish-day-wrap" id="finish-day-wrap"></div>
+</div>
+
+<!-- FINISH DAY CONFIRM -->
+<div class="panel-overlay center" id="finish-day-confirm" onclick="closeIfOutside(event,'finish-day-confirm')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>Encerrar o dia?</h2>
+      <button class="panel-close" onclick="closeFinishDay()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.6;">
+      Isso vai <strong>creditar o XP</strong> dos blocos marcados de hoje (no usuário e no pet equipado) e <strong>travar os checks</strong> deste dia.
+    </p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.5;">
+      Decisão final — não dá pra reabrir o dia depois.
+    </p>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="closeFinishDay()">Cancelar</button>
+      <button class="save-btn" onclick="confirmFinishDay()">Encerrar dia</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY SUMMARY -->
+<div class="panel-overlay center" id="day-summary-panel" onclick="closeIfOutside(event,'day-summary-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🎉 Dia encerrado</h2>
+      <button class="panel-close" onclick="closeDaySummary()">✕</button>
+    </div>
+    <div id="day-summary-body"></div>
+    <div class="btn-row" style="grid-template-columns:1fr">
+      <button class="save-btn" onclick="closeDaySummary()">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- END-OF-DAY PROMPT (auto) -->
+<div class="panel-overlay center" id="day-end-prompt" onclick="closeIfOutside(event,'day-end-prompt')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🌙 Passou do horário</h2>
+      <button class="panel-close" onclick="closeEndOfDayPrompt()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;" id="eop-intro">
+      O fim do dia configurado já passou. O que você quer fazer?
+    </p>
+    <button class="eop-choice" onclick="endPromptFinish()">
+      <span class="eop-icon">✓</span>
+      <div class="eop-text">
+        <div class="eop-title">Encerrar o dia</div>
+        <div class="eop-sub">Creditar XP, travar checks. Decisão final.</div>
+      </div>
+    </button>
+    <button class="eop-choice" onclick="endPromptShowExtend()">
+      <span class="eop-icon">⏰</span>
+      <div class="eop-text">
+        <div class="eop-title">Prolongar estudos</div>
+        <div class="eop-sub">Mudar o horário de fim do dia.</div>
+      </div>
+    </button>
+    <div id="eop-extend-form" class="eop-extend-form" style="display:none">
+      <label>Novo horário de fim</label>
+      <input type="time" id="eop-new-end">
+      <div class="btn-row">
+        <button class="reset-btn" onclick="endPromptHideExtend()">Voltar</button>
+        <button class="save-btn" onclick="endPromptSaveExtend()">Prolongar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- SETTINGS PANEL -->
@@ -513,6 +687,71 @@
       <button class="panel-close" onclick="closePetsShop()">✕</button>
     </div>
     <div class="shop-grid" id="pets-shop"></div>
+  </div>
+</div>
+
+<!-- FOCUS MODE -->
+<div class="focus-overlay" id="focus-overlay">
+  <div class="focus-inner">
+    <div class="focus-topbar">
+      <span id="focus-clock">--:--</span>
+      <button class="focus-exit" onclick="closeFocusMode()">← Sair do foco</button>
+    </div>
+    <div class="focus-header">
+      <div class="focus-chip" id="focus-chip">
+        <span class="fc-dot"></span>
+        <span id="focus-chip-text">—</span>
+      </div>
+      <div class="focus-block-name" id="focus-block-name">—</div>
+      <div class="focus-pomo-label" id="focus-pomo-label">—</div>
+    </div>
+    <div class="focus-timer-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="focus-timer-track" cx="50" cy="50" r="45"/>
+        <circle class="focus-timer-fill" id="focus-timer-fill" cx="50" cy="50" r="45"
+          stroke-dasharray="282.7" stroke-dashoffset="0"/>
+      </svg>
+      <div class="focus-timer-center">
+        <div class="focus-time-big" id="focus-time-big">00:00</div>
+        <div class="focus-time-sub" id="focus-time-sub">completou · 0%</div>
+      </div>
+    </div>
+    <div class="focus-scene">
+      <div class="focus-scene-stage" id="focus-scene-stage"></div>
+      <div class="focus-scene-foot" id="focus-scene-foot">—</div>
+    </div>
+    <div class="focus-next" id="focus-next">
+      <div class="focus-next-label">Em seguida</div>
+      <div class="focus-next-sep"></div>
+      <div class="focus-next-name" id="focus-next-name">—</div>
+      <div class="focus-next-dur" id="focus-next-dur">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- MEUS PETS PANEL -->
+<div class="panel-overlay center" id="my-pets-panel" onclick="closeIfOutside(event,'my-pets-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🐾 Meus pets</h2>
+      <button class="panel-close" onclick="closeMyPets()">✕</button>
+    </div>
+    <div class="shop-grid" id="my-pets-grid"></div>
+  </div>
+</div>
+
+<!-- PET BUY CONFIRM -->
+<div class="panel-overlay center" id="pet-buy-confirm" onclick="closeIfOutside(event,'pet-buy-confirm')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>Adotar pet?</h2>
+      <button class="panel-close" onclick="closeBuyConfirm()">✕</button>
+    </div>
+    <div class="buy-confirm-body" id="buy-confirm-body"></div>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="closeBuyConfirm()">Cancelar</button>
+      <button class="save-btn" onclick="confirmBuy()">Adotar</button>
+    </div>
   </div>
 </div>
 
@@ -660,41 +899,45 @@
 
 <div class="profile-page" id="profile-page">
 
-  <!-- CHARACTER STAGE -->
-  <div class="char-stage">
-    <div class="char-wrap">
-      <div class="char-self">
-        <img id="char-sprite" class="char-sprite" src="idle/user/0.png" alt="Personagem">
-        <div class="char-level-badge" id="char-level-badge">Lv.1</div>
+  <!-- HERO SCENE -->
+  <div class="profile-hero">
+    <div class="profile-hero-stage">
+      <img id="char-sprite" class="char-sprite" src="idle/user/0.png" alt="Personagem">
+      <img id="pet-sprite" class="pet-sprite" alt="Pet" style="display:none">
+    </div>
+    <div class="profile-hero-divider"></div>
+    <div class="profile-hero-row">
+      <div class="profile-hero-left">
+        <div class="profile-hero-name">
+          <span id="char-name">Estudante</span>
+          <span class="hero-lv-badge" id="char-level-badge">Lv.1</span>
+        </div>
+        <div class="profile-hero-sub" id="char-title-sub">Zero</div>
+      </div>
+      <div class="profile-hero-right">
+        <div class="phr-label">próximo nível</div>
+        <div class="phr-val" id="char-xp-next-val">— XP</div>
       </div>
     </div>
-    <div style="text-align:center">
-      <div class="char-name" id="char-name">Estudante</div>
-      <div class="char-title" id="char-title">Zero</div>
-    </div>
-    <div class="char-xp-wrap">
-      <div class="char-xp-labels">
-        <span id="char-xp-cur">0 XP</span>
-        <span id="char-xp-next"></span>
-      </div>
-      <div class="bar-track"><div class="bar-fill" id="char-xp-bar" style="width:0%"></div></div>
+    <div class="profile-hero-bar">
+      <div class="bar-fill" id="char-xp-bar" style="width:0%"></div>
     </div>
   </div>
 
-  <!-- CURRENCY -->
-  <div class="currency-row">
-    <span class="currency-icon">🪙</span>
-    <span class="currency-label">Moedas de estudo</span>
-    <span class="currency-val" id="char-coins">0</span>
+  <!-- STATS 4-col -->
+  <div class="profile-stats-4">
+    <div class="profile-stat-mini"><div class="psm-val" id="ps-xp">0</div><div class="psm-label">XP total</div></div>
+    <div class="profile-stat-mini"><div class="psm-val" id="ps-blocks">0</div><div class="psm-label">Blocos</div></div>
+    <div class="profile-stat-mini"><div class="psm-val" id="ps-hours">0h</div><div class="psm-label">Estudo</div></div>
+    <div class="profile-stat-mini coins-stat"><div class="psm-val" id="char-coins">0</div><div class="psm-label">Moedas</div></div>
   </div>
 
-  <!-- STATS -->
-  <div class="profile-stats">
-    <div class="profile-stat"><div class="ps-label">Total de XP</div><div class="ps-val" id="ps-xp">0</div></div>
-    <div class="profile-stat"><div class="ps-label">Blocos feitos</div><div class="ps-val" id="ps-blocks">0</div></div>
-    <div class="profile-stat"><div class="ps-label">Horas de estudo</div><div class="ps-val" id="ps-hours">0h</div></div>
-    <div class="profile-stat"><div class="ps-label">Semanas ativas</div><div class="ps-val" id="ps-weeks">0</div></div>
+  <!-- MEUS PETS HEADER + GRID INLINE -->
+  <div class="my-pets-header">
+    <span class="my-pets-header-title">Meus pets</span>
+    <span class="my-pets-header-count" id="my-pets-count">0 de 0 ✨</span>
   </div>
+  <div class="shop-grid" id="my-pets-grid-profile" style="margin-bottom:12px;"></div>
 
   <!-- PETS SHOP BUTTON -->
   <button type="button" class="shop-open-btn" onclick="openPetsShop()">
@@ -703,12 +946,12 @@
     <span class="shop-open-arrow">›</span>
   </button>
 
-  <!-- COMING SOON: COSMETICS -->
-  <div class="coming-soon-card">
-    <div class="cs-icon">🎨</div>
-    <div class="cs-title">Cosméticos</div>
-    <div class="cs-sub">Em breve — personalize seu personagem com moedas.</div>
-  </div>
+  <!-- MEUS PETS BUTTON (modal) -->
+  <button type="button" class="shop-open-btn" onclick="openMyPets()">
+    <span class="shop-open-icon">🐾</span>
+    <span class="shop-open-label">Meus pets (em destaque)</span>
+    <span class="shop-open-arrow">›</span>
+  </button>
 
 </div>
 
@@ -762,6 +1005,12 @@ function coinsForStudyBlock(pomoMins) {
   return Math.round(pomoMins * mult);
 }
 
+// Saldo de moedas = total ganho - gasto. Nunca negativo.
+function getCoinBalance() {
+  const stats = computeStats();
+  return Math.max(0, stats.coins - (state.coinsSpent || 0));
+}
+
 const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
@@ -776,11 +1025,13 @@ const LEVELS = [
 // ============================================================
 const state = {
   user: null,
-  checks: {},          // { "2026-05-07": { "09:00": true } }
+  checks: {},          // { "2026-05-07": { "09:00": { pet: petId | null } } }   (true antigo é tratado como { pet: null })
   events: {},          // { "2026-05-07": [{name, start, end}] }
   lunchOverrides: {},  // { "2026-05-07": {lunch, lunchDur} }
+  closedDays: {},      // { "2026-05-07": true } — dias encerrados manualmente pelo usuário
   config: {...DEFAULT_CFG},
-  pets: { owned: [], active: null },
+  pets: { owned: [], active: null, xp: {}, xpProcessedUntil: null },   // xp/level por pet. xpProcessedUntil = último dia já creditado (YYYY-MM-DD | null = "ainda não inicializado")
+  coinsSpent: 0,       // total de moedas gastas (em pets, etc). Saldo = ganho - gasto.
 
   // UI state (not persisted)
   uiTab: 'plano',
@@ -1048,14 +1299,75 @@ function isChecked(dateKey, blockTime) {
   return !!(state.checks[dateKey] && state.checks[dateKey][blockTime]);
 }
 
-function toggleCheck(dateKey, blockTime) {
+function isDayClosed(dateKey) {
+  return !!(state.closedDays && state.closedDays[dateKey]);
+}
+
+function toggleCheck(dateKey, blockTime, block) {
+  if (isDayClosed(dateKey)) return;   // dia encerrado: read-only
   if (!state.checks[dateKey]) state.checks[dateKey] = {};
   if (state.checks[dateKey][blockTime]) {
     delete state.checks[dateKey][blockTime];
     if (Object.keys(state.checks[dateKey]).length === 0) delete state.checks[dateKey];
   } else {
-    state.checks[dateKey][blockTime] = true;
+    // Guarda o pet equipado no momento do check (null se nenhum).
+    // No fim do dia, applyPendingPetXP() credita o XP no pet certo.
+    state.checks[dateKey][blockTime] = { pet: state.pets.active || null };
   }
+  scheduleSave();
+}
+
+function getPetXP(petId) {
+  return (state.pets.xp && state.pets.xp[petId]) || 0;
+}
+function getPetLevel(petId) {
+  return getLevelIdx(getPetXP(petId)) + 1;
+}
+
+// Lê o petId associado a um check. Retrocompat: checks antigos eram `true` (sem pet).
+function checkPet(dateKey, blockTime) {
+  const v = state.checks[dateKey] && state.checks[dateKey][blockTime];
+  if (!v || v === true) return null;
+  return v.pet || null;
+}
+
+// Processa XP de dias fechados (anteriores a hoje OU hoje se encerrado manualmente)
+// creditando no pet salvo em cada check. Idempotente via xpProcessedUntil.
+function applyPendingPetXP() {
+  if (!state.pets) state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
+  const today = dk(new Date());
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  const yesterday = dk(yest);
+
+  // Inclui hoje no processamento se foi encerrado manualmente
+  const endKey = isDayClosed(today) ? today : yesterday;
+
+  // Primeira execução depois da mudança: zera XP antigo e marca yesterday como processado.
+  if (state.pets.xpProcessedUntil == null) {
+    state.pets.xp = {};
+    state.pets.xpProcessedUntil = yesterday;
+    scheduleSave();
+    // Se hoje também já tá fechado (edge case), continua pra processá-lo abaixo
+  }
+  if (state.pets.xpProcessedUntil >= endKey) return;
+
+  const dayKeys = Object.keys(state.checks).filter(k =>
+    k > state.pets.xpProcessedUntil && k <= endKey
+  ).sort();
+
+  dayKeys.forEach(dayKey => {
+    const blocks = generateBlocks(state.config, state.events[dayKey] || []);
+    blocks.forEach(b => {
+      if (b.type !== 'estudo') return;
+      if (!isChecked(dayKey, b.time)) return;
+      const petId = checkPet(dayKey, b.time);
+      if (!petId) return;
+      if (!state.pets.xp) state.pets.xp = {};
+      state.pets.xp[petId] = (state.pets.xp[petId] || 0) + (b.xp || 0);
+    });
+  });
+
+  state.pets.xpProcessedUntil = endKey;
   scheduleSave();
 }
 
@@ -1089,6 +1401,8 @@ function computeStats() {
   let runningStreak = 0;
 
   forEachDay((key, d, wi) => {
+    // Dia "fechado" entra nos totais: dia passado OU encerrado manualmente hoje
+    const isPast = (key !== todayKey) || isDayClosed(key);
     const blocks = blocksForDay(key);
     let dayXP = 0, dayChecks = 0, dayStudyMins = 0, weekHasCheck = false;
     stats.weekXP[wi] = stats.weekXP[wi] || 0;
@@ -1101,20 +1415,26 @@ function computeStats() {
         else stats.pausasToday.total++;
       }
       if (isChecked(key, b.time)) {
-        stats.totalChecks++;
-        stats.totalXP += b.xp;
-        dayXP += b.xp;
+        // Counters do próprio dia (incluindo hoje) — usados pra streak/melhor dia
         dayChecks++;
-        weekHasCheck = true;
-        stats.weekXP[wi] += b.xp;
-        stats.weekChecks[wi]++;
-        if (b.type === 'estudo') {
-          stats.coins += coinsForStudyBlock(state.config.pomo);
-          stats.studyMins += state.config.pomo;
-          dayStudyMins += state.config.pomo;
+        if (b.type === 'estudo') dayStudyMins += state.config.pomo;
+
+        if (isPast) {
+          // Agregados só de dias fechados (XP/moedas/horas/etc.)
+          stats.totalChecks++;
+          stats.totalXP += b.xp;
+          dayXP += b.xp;
+          weekHasCheck = true;
+          stats.weekXP[wi] += b.xp;
+          stats.weekChecks[wi]++;
+          if (b.type === 'estudo') {
+            stats.coins += coinsForStudyBlock(state.config.pomo);
+            stats.studyMins += state.config.pomo;
+          }
+          const hour = parseInt(b.time.split(':')[0]);
+          stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
         }
-        const hour = parseInt(b.time.split(':')[0]);
-        stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
+
         if (key === todayKey) { stats.todayXP += b.xp; stats.todayChecks++; }
         if (key === curDateKey) {
           if (b.type === 'estudo') stats.estudosToday.done++;
@@ -1127,7 +1447,8 @@ function computeStats() {
     stats.dayStudyMins[key] = dayStudyMins;
     if (dayStudyMins >= minDailyMins) {
       runningStreak++;
-      stats.coins += dailyBonusForStreak(runningStreak);
+      // Bônus de streak só conta nas moedas se o dia já fechou
+      if (isPast) stats.coins += dailyBonusForStreak(runningStreak);
     } else {
       runningStreak = 0;
     }
@@ -1323,6 +1644,7 @@ function startTimer(block) {
   document.getElementById('timer-block-name').textContent =
     block.name.replace(/📖|🧘|☕/g, '').trim();
   if (Notification && Notification.permission === 'default') Notification.requestPermission();
+  openFocusMode(block);
   updateTimerDisplay();
   timerInterval = setInterval(() => {
     if (updateTimerDisplay()) {
@@ -1341,12 +1663,14 @@ function updateTimerDisplay() {
   const diffSec = Math.floor((end - now) / 1000);
   if (diffSec <= 0) {
     document.getElementById('timer-display').textContent = '00:00';
+    updateFocusTimer();
     return true;
   }
   const m = Math.floor(diffSec / 60), s = diffSec % 60;
   const disp = document.getElementById('timer-display');
   disp.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   disp.className = 'timer-time' + (diffSec <= 60 ? ' ending' : '');
+  updateFocusTimer();
   return false;
 }
 
@@ -1369,6 +1693,7 @@ function onTimerEnd() {
   }
   document.getElementById('timer-bar').classList.remove('active');
   timerBlock = null;
+  closeFocusMode();
   renderAll();
 }
 
@@ -1376,6 +1701,7 @@ window.stopTimer = () => {
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = null; timerBlock = null;
   document.getElementById('timer-bar').classList.remove('active');
+  closeFocusMode();
   renderAll();
 };
 
@@ -1396,6 +1722,110 @@ function tryStartTimer(b) {
   }
   startTimer(b);
   renderAll();
+}
+
+// ============================================================
+// FOCUS MODE (tela cheia ao iniciar um bloco do momento)
+// ============================================================
+let focusOpen = false;
+
+function blockDurationMin(b) {
+  const [sh, sm] = b.time.split(':').map(Number);
+  const [eh, em] = b.endTime.split(':').map(Number);
+  return (eh * 60 + em) - (sh * 60 + sm);
+}
+
+function openFocusMode(block) {
+  populateFocusMode(block);
+  focusOpen = true;
+  document.getElementById('focus-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  updateFocusTimer();
+}
+
+window.closeFocusMode = () => {
+  focusOpen = false;
+  document.getElementById('focus-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+function populateFocusMode(block) {
+  const isE = block.type === 'estudo';
+  const isP = block.type === 'pausa';
+  const key = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+  const dayBlocks = blocksForDay(key);
+
+  // Número do bloco dentro da sessão atual (conta só estudo+pausa da mesma sessão)
+  let blockNumInSession = 0;
+  for (const b of dayBlocks) {
+    if (b.session === block.session && (b.type === 'estudo' || b.type === 'pausa')) {
+      blockNumInSession++;
+      if (b.time === block.time && b.endTime === block.endTime) break;
+    }
+  }
+  const sessionName = SESSION_NAMES[(block.session ?? 0) % NUM_SESSIONS] || 'Sessão';
+
+  // Chip (verde pra estudo, azul pra pausa)
+  const chip = document.getElementById('focus-chip');
+  chip.className = 'focus-chip' + (isP ? ' pausa' : '');
+  document.getElementById('focus-chip-text').textContent = `${sessionName} · Bloco ${blockNumInSession}`;
+
+  // Nome limpo + subtitulo de duração
+  document.getElementById('focus-block-name').textContent =
+    block.name.replace(/📖|🧘|☕/g, '').trim();
+  const durMin = blockDurationMin(block);
+  const tipo = isE ? 'Pomodoro' : 'Pausa';
+  document.getElementById('focus-pomo-label').textContent = `${tipo} de ${durMin} min`;
+
+  // Cor do anel do timer
+  document.getElementById('focus-timer-fill').classList.toggle('pausa', isP);
+
+  // XP e moedas ao concluir
+  const xp = block.xp || 0;
+  const coins = isE ? coinsForStudyBlock(durMin) : 0;
+  document.getElementById('focus-scene-foot').innerHTML =
+    `<span class="focus-scene-xp">+${xp} XP</span> · <span class="focus-scene-coins">+${coins} 🪙</span> ao concluir`;
+
+  // Próximo bloco no dia
+  const idx = dayBlocks.findIndex(b => b.time === block.time && b.endTime === block.endTime);
+  const next = idx >= 0 && idx + 1 < dayBlocks.length ? dayBlocks[idx + 1] : null;
+  const nextName = document.getElementById('focus-next-name');
+  const nextDur = document.getElementById('focus-next-dur');
+  if (next) {
+    nextName.textContent = next.name.replace(/📖|🧘|☕/g, '').trim();
+    nextDur.textContent = blockDurationMin(next) + ' min';
+  } else {
+    nextName.textContent = 'Fim do dia 🌙';
+    nextDur.textContent = '—';
+  }
+}
+
+const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7
+
+function updateFocusTimer() {
+  if (!focusOpen || !timerBlock) return;
+  const now = new Date();
+  document.getElementById('focus-clock').textContent =
+    String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+  const [eh, em] = timerBlock.endTime.split(':').map(Number);
+  const [sh, sm] = timerBlock.time.split(':').map(Number);
+  const end = new Date(); end.setHours(eh, em, 0, 0);
+  const start = new Date(); start.setHours(sh, sm, 0, 0);
+  const totalSec = Math.max(1, Math.floor((end - start) / 1000));
+  const remainingSec = Math.max(0, Math.floor((end - now) / 1000));
+  const m = Math.floor(remainingSec / 60), s = remainingSec % 60;
+
+  const big = document.getElementById('focus-time-big');
+  big.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  big.classList.toggle('ending', remainingSec <= 60);
+
+  const pct = Math.round((1 - remainingSec / totalSec) * 100);
+  document.getElementById('focus-time-sub').textContent = `completou · ${pct}%`;
+
+  // anel "drena" conforme o tempo passa: offset 0 = cheio, FOCUS_CIRC = vazio
+  const offset = FOCUS_CIRC * (1 - remainingSec / totalSec);
+  document.getElementById('focus-timer-fill').setAttribute('stroke-dashoffset', String(offset));
 }
 
 // ============================================================
@@ -1513,6 +1943,8 @@ window.saveSettings = () => {
   clearBlockCache();
   scheduleSave();
   renderAll();
+  endPromptShown = false;     // config mudou → permite o prompt aparecer com o novo horário
+  scheduleEndOfDayPrompt();
 };
 
 // ============================================================
@@ -1710,66 +2142,185 @@ window.closePetsShop = () => {
   document.getElementById('pets-shop-panel').classList.remove('open');
 };
 
+window.openMyPets = () => {
+  renderOwnedPets();
+  document.getElementById('my-pets-panel').classList.add('open');
+};
+window.closeMyPets = () => {
+  document.getElementById('my-pets-panel').classList.remove('open');
+};
+
+// Cria um card de pet pra grade. Se `showPrice` for false (aba "Meus pets"),
+// não mostra preço e desativa o botão "Adotar" — só Equipar/Ativo.
+function buildPetCard(pet, { showPrice }) {
+  const owned = state.pets.owned.includes(pet.id);
+  const active = state.pets.active === pet.id;
+  const item = document.createElement('div');
+  item.className = 'shop-item' + (active ? ' active-pet' : '');
+
+  if (active) {
+    const badge = document.createElement('div');
+    badge.className = 'shop-item-active-badge';
+    badge.textContent = 'Ativa';
+    item.appendChild(badge);
+  }
+
+  const img = document.createElement('img');
+  img.className = 'shop-item-img';
+  img.src = pet.sprite(0);
+  img.alt = pet.name;
+  img.onerror = () => {
+    const fallback = document.createElement('div');
+    fallback.className = 'shop-item-emoji';
+    fallback.textContent = pet.emoji;
+    img.replaceWith(fallback);
+  };
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'shop-item-name-row';
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'shop-item-name';
+  nameSpan.textContent = pet.name;
+  nameRow.appendChild(nameSpan);
+  if (owned) {
+    const lv = document.createElement('span');
+    lv.className = 'shop-item-lv';
+    lv.textContent = 'Lv. ' + getPetLevel(pet.id);
+    nameRow.appendChild(lv);
+  }
+
+  item.appendChild(img);
+  item.appendChild(nameRow);
+
+  if (showPrice && !owned) {
+    const priceDiv = document.createElement('div');
+    priceDiv.className = 'shop-item-price';
+    priceDiv.textContent = `🪙 ${pet.price}`;
+    item.appendChild(priceDiv);
+  }
+
+  const btn = document.createElement('button');
+  const balance = getCoinBalance();
+  const canAfford = balance >= pet.price;
+  const locked = !owned && !canAfford;
+  btn.className = 'shop-btn' + (active ? ' active' : owned ? ' owned' : locked ? ' locked' : '');
+  btn.textContent = active ? '✓ Equipada' : owned ? 'Equipar' : 'Adotar';
+  btn.onclick = () => {
+    if (!owned) {
+      if (!canAfford) {
+        showToast('Moedas insuficientes');
+        return;
+      }
+      openBuyConfirm(pet.id);
+      return;
+    }
+    if (active) {
+      state.pets.active = null;
+    } else {
+      state.pets.active = pet.id;
+    }
+    scheduleSave();
+    renderShop();
+    renderOwnedPets();
+    renderProfile();
+    startPetAnim();
+  };
+  item.appendChild(btn);
+  return item;
+}
+
 function renderShop() {
   const grid = document.getElementById('pets-shop');
   if (!grid) return;
   grid.innerHTML = '';
   Object.values(PETS).forEach(pet => {
-    const owned = state.pets.owned.includes(pet.id);
-    const active = state.pets.active === pet.id;
-    const item = document.createElement('div');
-    item.className = 'shop-item';
-
-    const img = document.createElement('img');
-    img.className = 'shop-item-img';
-    img.src = pet.sprite(0);
-    img.alt = pet.name;
-    img.onerror = () => {
-      const fallback = document.createElement('div');
-      fallback.className = 'shop-item-emoji';
-      fallback.textContent = pet.emoji;
-      img.replaceWith(fallback);
-    };
-
-    const nameDiv = document.createElement('div');
-    nameDiv.className = 'shop-item-name';
-    nameDiv.textContent = pet.name;
-
-    const priceDiv = document.createElement('div');
-    priceDiv.className = 'shop-item-price';
-    priceDiv.textContent = `🪙 ${pet.price}`;
-
-    item.appendChild(img);
-    item.appendChild(nameDiv);
-    item.appendChild(priceDiv);
-
-    const btn = document.createElement('button');
-    btn.className = 'shop-btn' + (active ? ' active' : owned ? ' owned' : '');
-    btn.textContent = active ? 'Ativo' : owned ? 'Equipar' : 'Adotar';
-    btn.onclick = () => {
-      if (!owned) {
-        state.pets.owned.push(pet.id);
-        state.pets.active = pet.id;
-        showToast(`${pet.name} adotado! 🎉`);
-      } else if (active) {
-        state.pets.active = null;
-      } else {
-        state.pets.active = pet.id;
-      }
-      scheduleSave();
-      renderShop();
-      startPetAnim();
-    };
-    item.appendChild(btn);
-    grid.appendChild(item);
+    grid.appendChild(buildPetCard(pet, { showPrice: true }));
   });
 }
+
+function renderOwnedPets() {
+  ['my-pets-grid', 'my-pets-grid-profile'].forEach(id => {
+    const grid = document.getElementById(id);
+    if (!grid) return;
+    grid.innerHTML = '';
+    const owned = state.pets.owned;
+    if (!owned || owned.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'my-pets-empty';
+      empty.innerHTML = '<div class="mpe-icon">🐾</div>Nenhum pet ainda.<br>Visite a loja pra adotar um!';
+      grid.appendChild(empty);
+      return;
+    }
+    owned.forEach(petId => {
+      const pet = PETS[petId];
+      if (!pet) return;
+      grid.appendChild(buildPetCard(pet, { showPrice: false }));
+    });
+  });
+}
+
+// === BUY CONFIRMATION MODAL ===
+let pendingBuy = null;
+
+window.openBuyConfirm = (petId) => {
+  const pet = PETS[petId];
+  if (!pet) return;
+  pendingBuy = petId;
+  const body = document.getElementById('buy-confirm-body');
+  body.innerHTML = '';
+  const img = document.createElement('img');
+  img.className = 'buy-confirm-img';
+  img.src = pet.sprite(0);
+  img.alt = pet.name;
+  img.onerror = () => {
+    const fallback = document.createElement('div');
+    fallback.className = 'buy-confirm-emoji';
+    fallback.textContent = pet.emoji;
+    img.replaceWith(fallback);
+  };
+  const text = document.createElement('div');
+  text.className = 'buy-confirm-text';
+  text.innerHTML = `Adotar <b>${pet.name}</b> por 🪙 <b>${pet.price}</b>?`;
+  body.appendChild(img);
+  body.appendChild(text);
+  document.getElementById('pet-buy-confirm').classList.add('open');
+};
+
+window.closeBuyConfirm = () => {
+  pendingBuy = null;
+  document.getElementById('pet-buy-confirm').classList.remove('open');
+};
+
+window.confirmBuy = () => {
+  const petId = pendingBuy;
+  if (!petId) return;
+  const pet = PETS[petId];
+  if (!pet) { closeBuyConfirm(); return; }
+  if (state.pets.owned.includes(pet.id)) { closeBuyConfirm(); return; }
+  if (getCoinBalance() < pet.price) {
+    showToast('Moedas insuficientes');
+    closeBuyConfirm();
+    return;
+  }
+  state.pets.owned.push(pet.id);
+  state.pets.active = pet.id;
+  state.coinsSpent = (state.coinsSpent || 0) + pet.price;
+  scheduleSave();
+  closeBuyConfirm();
+  renderShop();
+  renderOwnedPets();
+  renderProfile();
+  startPetAnim();
+  showToast(`${pet.name} adotado! 🎉`);
+};
 
 // ============================================================
 // RENDERING
 // ============================================================
 function initApp() {
   buildWeeks();
+  applyPendingPetXP();   // credita XP de dias passados nos pets equipados na hora de cada check
+  setTimeout(scheduleEndOfDayPrompt, 600);   // agenda o prompt pro horário exato do último bloco de estudo
   const today = new Date();
   document.getElementById('today-label').textContent =
     today.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
@@ -1811,7 +2362,227 @@ window.onWeekChange = () => {
   renderAll();
 };
 
-function renderAll() { renderTabs(); renderEvents(); renderBlocks(); renderXP(); }
+function renderAll() { renderTabs(); renderEvents(); renderBlocks(); renderFinishDay(); renderXP(); }
+
+// === FINISH DAY ===
+function renderFinishDay() {
+  const wrap = document.getElementById('finish-day-wrap');
+  if (!wrap) return;
+  const viewKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+  const todayKey = dk(new Date());
+  wrap.innerHTML = '';
+  if (viewKey !== todayKey) return;          // só mostra hoje
+  if (isDayClosed(viewKey)) {
+    wrap.innerHTML = `<div class="finish-day-banner"><span class="fdb-check">✓</span>Dia encerrado</div>`;
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.className = 'finish-day-btn';
+  btn.innerHTML = '<span>✓</span><span>Encerrar o dia</span>';
+  btn.onclick = openFinishDay;
+  wrap.appendChild(btn);
+}
+
+window.openFinishDay = () => {
+  document.getElementById('finish-day-confirm').classList.add('open');
+};
+window.closeFinishDay = () => {
+  document.getElementById('finish-day-confirm').classList.remove('open');
+};
+
+// Snapshot dos stats antes/depois pra montar o resumo do dia
+function snapshotForSummary() {
+  const stats = computeStats();
+  return {
+    totalXP: stats.totalXP,
+    coins: stats.coins,
+    userLevelIdx: getLevelIdx(stats.totalXP),
+    petXP: JSON.parse(JSON.stringify(state.pets.xp || {})),
+  };
+}
+
+function renderDaySummary(before, after) {
+  const userXP = after.totalXP - before.totalXP;
+  const userCoins = after.coins - before.coins;
+  const userLevelUp = after.userLevelIdx > before.userLevelIdx;
+
+  const body = document.getElementById('day-summary-body');
+  let html = `
+    <div class="ds-hero">
+      <div class="ds-stat xp"><div class="ds-val">+${userXP}</div><div class="ds-label">XP</div></div>
+      <div class="ds-stat coins"><div class="ds-val">+${userCoins}</div><div class="ds-label">Moedas</div></div>
+    </div>
+  `;
+
+  if (userLevelUp) {
+    const newLevelName = LEVELS[after.userLevelIdx][1];
+    html += `<div class="ds-levelup"><span class="ds-lu-icon">🆙</span>Subiu pro nível ${after.userLevelIdx + 1} — ${newLevelName}!</div>`;
+  }
+
+  const petsWithGain = [];
+  for (const id of Object.keys(after.petXP)) {
+    const oldXP = before.petXP[id] || 0;
+    const newXP = after.petXP[id] || 0;
+    const gain = newXP - oldXP;
+    if (gain > 0) {
+      petsWithGain.push({
+        id,
+        gain,
+        oldLevel: getLevelIdx(oldXP) + 1,
+        newLevel: getLevelIdx(newXP) + 1,
+      });
+    }
+  }
+
+  if (petsWithGain.length > 0) {
+    petsWithGain.forEach(p => {
+      const pet = PETS[p.id];
+      if (!pet) return;
+      const lvUp = p.newLevel > p.oldLevel;
+      const lvText = lvUp
+        ? `Lv. ${p.oldLevel} → ${p.newLevel} ✨`
+        : `Lv. ${p.newLevel}`;
+      html += `
+        <div class="ds-pet-row">
+          <img src="${pet.sprite(0)}" alt="${pet.name}" onerror="this.style.display='none'">
+          <div style="flex:1">
+            <div class="ds-pet-name">${pet.name}</div>
+            <div class="ds-pet-lv${lvUp ? ' up' : ''}">${lvText}</div>
+          </div>
+          <div class="ds-pet-gain">+${p.gain} XP</div>
+        </div>
+      `;
+    });
+  }
+
+  if (userXP === 0 && userCoins === 0 && petsWithGain.length === 0) {
+    html += `<div class="ds-empty-msg">Nenhum bloco marcado hoje.<br>Dia encerrado sem ganhos.</div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+window.openDaySummary = () => {
+  document.getElementById('day-summary-panel').classList.add('open');
+};
+window.closeDaySummary = () => {
+  document.getElementById('day-summary-panel').classList.remove('open');
+};
+
+window.confirmFinishDay = () => {
+  const todayKey = dk(new Date());
+  const before = snapshotForSummary();
+  if (!state.closedDays) state.closedDays = {};
+  state.closedDays[todayKey] = true;
+  applyPendingPetXP();   // credita o XP do pet imediatamente
+  scheduleSave();
+  closeFinishDay();
+  if (endPromptTimeout) { clearTimeout(endPromptTimeout); endPromptTimeout = null; }
+  const after = snapshotForSummary();
+  renderDaySummary(before, after);
+  renderAll();
+  if (state.uiTab === 'perfil') renderProfile();
+  openDaySummary();
+};
+
+// === END-OF-DAY AUTO PROMPT ===
+let endPromptShown = false;
+let endPromptTimeout = null;
+
+// Retorna o endTime ("HH:MM") do último bloco de estudo de hoje, ou null se não houver
+function lastStudyEndToday() {
+  const todayKey = dk(new Date());
+  const blocks = blocksForDay(todayKey);
+  let latest = null;
+  let latestMins = -1;
+  for (const b of blocks) {
+    if (b.type !== 'estudo') continue;
+    const [eh, em] = b.endTime.split(':').map(Number);
+    const m = eh * 60 + em;
+    if (m > latestMins) { latestMins = m; latest = b.endTime; }
+  }
+  return latest;
+}
+
+function checkEndOfDayPrompt() {
+  if (endPromptShown) return;
+  const todayKey = dk(new Date());
+  if (isDayClosed(todayKey)) return;
+  const hasCheckToday = !!(state.checks[todayKey] && Object.keys(state.checks[todayKey]).length > 0);
+  if (!hasCheckToday) return;
+  const lastEnd = lastStudyEndToday();
+  if (!lastEnd) return;   // nenhum bloco de estudo hoje
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const [eh, em] = lastEnd.split(':').map(Number);
+  const lastEndMins = eh * 60 + em;
+  if (nowMins < lastEndMins) return;
+  endPromptShown = true;
+  openEndOfDayPrompt();
+}
+
+// Agenda o prompt pra disparar no momento exato em que o último bloco de estudo termina.
+// Chamado em initApp, ao prolongar e ao salvar settings (já que o último bloco pode mudar).
+function scheduleEndOfDayPrompt() {
+  if (endPromptTimeout) { clearTimeout(endPromptTimeout); endPromptTimeout = null; }
+  if (endPromptShown) return;
+  const todayKey = dk(new Date());
+  if (isDayClosed(todayKey)) return;
+  const lastEnd = lastStudyEndToday();
+  if (!lastEnd) return;
+  const now = new Date();
+  const [eh, em] = lastEnd.split(':').map(Number);
+  const target = new Date(); target.setHours(eh, em, 0, 0);
+  const delay = target.getTime() - now.getTime();
+  if (delay <= 0) {
+    // Já passou — checa imediatamente (condições internas decidem se mostra)
+    checkEndOfDayPrompt();
+    return;
+  }
+  endPromptTimeout = setTimeout(() => {
+    endPromptTimeout = null;
+    checkEndOfDayPrompt();
+  }, delay);
+}
+
+window.openEndOfDayPrompt = () => {
+  const lastEnd = lastStudyEndToday() || (state.config.end || '18:00');
+  document.getElementById('eop-intro').textContent =
+    `O último bloco de estudo (${lastEnd}) já passou. O que você quer fazer?`;
+  document.getElementById('eop-extend-form').style.display = 'none';
+  document.getElementById('day-end-prompt').classList.add('open');
+};
+window.closeEndOfDayPrompt = () => {
+  document.getElementById('day-end-prompt').classList.remove('open');
+};
+window.endPromptFinish = () => {
+  closeEndOfDayPrompt();
+  openFinishDay();
+};
+window.endPromptShowExtend = () => {
+  const now = new Date();
+  // Sugere o horário atual + 1h arredondado, como ponto de partida
+  const suggested = new Date(now.getTime() + 60 * 60 * 1000);
+  const hh = String(suggested.getHours()).padStart(2, '0');
+  const mm = String(suggested.getMinutes()).padStart(2, '0');
+  document.getElementById('eop-new-end').value = `${hh}:${mm}`;
+  document.getElementById('eop-extend-form').style.display = 'block';
+};
+window.endPromptHideExtend = () => {
+  document.getElementById('eop-extend-form').style.display = 'none';
+};
+window.endPromptSaveExtend = () => {
+  const newEnd = document.getElementById('eop-new-end').value;
+  if (!newEnd) return;
+  state.config.end = newEnd;
+  clearBlockCache();
+  scheduleSave();
+  closeEndOfDayPrompt();
+  renderAll();
+  endPromptShown = false;          // novo horário, permite o prompt aparecer de novo quando esse passar
+  scheduleEndOfDayPrompt();        // reagenda pro novo horário do último bloco
+  showToast(`Fim do dia: ${newEnd} ⏰`);
+};
 
 function renderTabs() {
   const c = document.getElementById('day-tabs');
@@ -1908,8 +2679,9 @@ function renderBlocks() {
     const sessionClass = (isE || isP) ? ` session-block s${sIdx}` : '';
     const nowClass = isNow ? ' now-block' : '';
     const timerClass = (timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime) ? ' timer-active' : '';
+    const closedClass = isDayClosed(key) ? ' day-closed' : '';
     row.className = 'block-row' + (isP?' pausa-row':'') + (isA?' almoco-row':'') + (isEv?' event-row':'')
-      + (done && (isE || isP) ? ' done' : '') + sessionClass + nowClass + timerClass;
+      + (done && (isE || isP) ? ' done' : '') + sessionClass + nowClass + timerClass + closedClass;
 
     let xpLabel = '';
     if (isE || isP) xpLabel = `<span class="block-xp session-xp">+${b.xp} XP</span>`;
@@ -1920,16 +2692,19 @@ function renderBlocks() {
     row.innerHTML = `${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
 
     if (isE || isP) {
+      const dayClosed = isDayClosed(key);
       row.onclick = (e) => {
         if (e.target.closest('.check')) return;
+        if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
         tryStartTimer(b);
       };
       const checkEl = row.querySelector('.check');
       if (checkEl) {
         checkEl.onclick = (e) => {
           e.stopPropagation();
+          if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
           const wasChecked = isChecked(key, b.time);
-          toggleCheck(key, b.time);
+          toggleCheck(key, b.time, b);
           if (!wasChecked) playSound('check');
           renderAll();
         };
@@ -2033,6 +2808,7 @@ function renderAnalytics() {
 function renderProfile() {
   startCharAnim();
   startPetAnim();
+  applyPendingPetXP();   // se atravessou a meia-noite, credita XP do dia fechado
   const stats = computeStats();
   const totalXP = stats.totalXP;
   const level = getLevel(totalXP);
@@ -2040,19 +2816,32 @@ function renderProfile() {
   const lvlIdx = getLevelIdx(totalXP);
   const nextLvl = LEVELS.find(([t]) => t > totalXP);
 
-  document.getElementById('char-level-badge').textContent = 'Lv.' + (lvlIdx + 1);
+  document.getElementById('char-level-badge').textContent = 'Lv. ' + (lvlIdx + 1);
   document.getElementById('char-name').textContent = 'Estudante';
-  document.getElementById('char-title').textContent = level;
-  document.getElementById('char-xp-cur').textContent = totalXP + ' XP';
-  document.getElementById('char-xp-next').textContent = nextLvl ? nextLvl[0] + ' XP' : 'MAX';
+
+  // Subtitle: nível + pet ativo (se houver)
+  const activePet = state.pets.active && PETS[state.pets.active];
+  const subLine = activePet ? `${level} · com ${activePet.name}` : level;
+  document.getElementById('char-title-sub').textContent = subLine;
+
+  // Próximo XP label
+  document.getElementById('char-xp-next-val').textContent = nextLvl ? (nextLvl[0] - totalXP) + ' XP' : 'MÁX';
   document.getElementById('char-xp-bar').style.width = pct + '%';
 
-  document.getElementById('char-coins').textContent = stats.coins;
+  // Stats 4-col
   document.getElementById('ps-xp').textContent = totalXP;
   document.getElementById('ps-blocks').textContent = stats.totalChecks;
   const h = Math.floor(stats.studyMins / 60), m = stats.studyMins % 60;
   document.getElementById('ps-hours').textContent = h + 'h' + (m > 0 ? m + 'min' : '');
-  document.getElementById('ps-weeks').textContent = stats.activeWeeks;
+  document.getElementById('char-coins').textContent = getCoinBalance();
+
+  // Header "Meus pets" contador (X de N)
+  const totalPets = Object.keys(PETS).length;
+  const ownedCount = (state.pets.owned || []).length;
+  document.getElementById('my-pets-count').textContent = `${ownedCount} de ${totalPets} ✨`;
+
+  // Grid inline (renderOwnedPets já popula ambos #my-pets-grid e #my-pets-grid-profile)
+  renderOwnedPets();
 }
 
 

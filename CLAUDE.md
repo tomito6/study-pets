@@ -69,7 +69,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 Mais importantes que valores concretos. Estes você protege ao mexer no código:
 
 - **Estado centralizado**: tudo em um único objeto `state`. Não criar globais soltas.
-- **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda.
+- **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null }` (guarda o pet equipado no momento do check). Retrocompat: `true` antigo é tratado como `{ pet: null }` por `checkPet()`.
 - **Memoization em `generateBlocks`**: a função tem cache. Sempre que alterar config ou eventos, chamar `clearBlockCache()`.
 - **Stats em uma passada**: `computeStats()` calcula tudo de uma vez iterando os dias uma única vez. Não criar funções separadas que reiteram.
 - **Datas dinâmicas**: sem dates hardcoded. As semanas são construídas a partir da semana atual.
@@ -117,6 +117,7 @@ INIT (no final)
 - **`periodStart` é fixo por sessão**: na aba Geral, o input "Início" fica `disabled`. Só `periodEnd` e `skipWeekends` são editáveis. `resetSettings` e `clearPeriod` preservam o `periodStart`. Pra mudar o início, o usuário precisa **cancelar a sessão**.
 - **Cancelar sessão**: botão "Zona de perigo" na aba Geral. Modal de confirmação lista o que vai apagar. Ao confirmar: zera `checks`, `events`, `lunchOverrides`, `pets`, `coinsSpent`, e reseta `config` pro `DEFAULT_CFG`. Em seguida abre o onboarding (equivalente a uma conta nova). É a única forma de redefinir o `periodStart`.
 - **Dia vazio**: se `blocksForDay()` retorna `[]` (fim de semana com `skipWeekends`), `renderBlocks` mostra "🌴 Dia livre".
+- **Modo foco**: ao clicar num bloco de estudo ou pausa **do momento** (passou validação de `tryStartTimer`), abre overlay tela-cheia `#focus-overlay` por cima da UI: chip "Sessão N · Bloco M", nome do bloco limpo, timer circular SVG que drena (`stroke-dashoffset`), "+X XP · +Y 🪙 ao concluir", e card "Em seguida" com o próximo bloco do dia (ou "Fim do dia 🌙"). Anel verde pra estudo, azul pra pausa. Sem controles centrais (sem pausar nem skip — decisão consciente). Botão "← Sair do foco" no topo só fecha o overlay e mantém o timer rodando — pra cancelar mesmo, a `timer-bar` no topo da UI normal tem o "✕ Parar". O `onTimerEnd`/`stopTimer` fecham o foco automaticamente. `updateFocusTimer()` é chamada dentro de `updateTimerDisplay()` a cada segundo. Espaço `.focus-scene-stage` está reservado pra cena ambiente (personagem + pet), por enquanto vazio.
 
 ## Sistema de gamificação
 
@@ -147,16 +148,47 @@ Campos: `id` (key), `name` (label em pt-BR), `emoji` (fallback visual quando spr
 
 `renderShop()` monta o card; se a imagem do sprite falhar (pasta não existe ainda), o emoji entra no lugar — então dá pra cadastrar pets sem sprites e adicionar os arquivos depois sem mexer no código.
 
-A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). `renderShop()` é chamado em `openPetsShop()` e após cada compra/equip, não no `renderProfile()`.
+A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). `renderShop()` é chamado em `openPetsShop()` e após cada compra/equip — não no `renderProfile()`. A função interna `buildPetCard(pet, { showPrice })` é compartilhada com a aba "Meus pets" (ver abaixo).
 
-> **Nota atual**: o `price` é só display — não é descontado de moedas nem gating de compra (`coinsSpent` continua dormente). Adicionar a economia real é uma decisão futura.
+A **aba "Meus pets"** aparece em **dois lugares ao mesmo tempo**: (1) inline no perfil, abaixo dos stats — header "Meus pets" + contador "X de N ✨" + grid `#my-pets-grid-profile`; (2) num modal próprio (`#my-pets-panel`) acessível pelo botão "🐾 Meus pets (em destaque)" no perfil. Ambos mostram a mesma coisa: cards dos pets em `state.pets.owned`, sem preço, com botão **Equipar / ✓ Equipada** + level badge "Lv. N" ao lado do nome. Pet ativo ganha borda verde + badge "Ativa" no canto. Empty state quando coleção vazia. `renderOwnedPets()` itera os dois grids (`my-pets-grid` e `my-pets-grid-profile`) e popula ambos — é chamado em `renderProfile()`, `openMyPets()` e após cada compra/equip.
+
+**Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: petId | null }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada estudo done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera `state.pets.xp` e marca `yesterday` como processado (sem aplicar retroativamente). Level usa as mesmas thresholds do usuário (`LEVELS` + `getLevelIdx`). Pausa não conta (só estudo). Pet null no momento do check = ninguém ganha XP.
+
+**XP/moedas do usuário também só refletem dias fechados**: `computeStats()` itera todos os dias, mas só agrega `totalXP/totalChecks/coins/studyMins/hourCounts/weekXP/weekChecks/bestDay/activeWeeks` quando o dia está fechado (`isPast = key !== todayKey || isDayClosed(key)`). Stats específicos de hoje (`todayXP`, `estudosToday`, `pausasToday`, `dayStudyMins[today]`) continuam refletindo o dia atual. Streak ainda usa `dayStudyMins` incluindo hoje (você "está em sequência" se atingiu o mínimo), mas o **bônus de moedas** do streak só entra quando o dia fechou. Motivo: evitar exploit de marcar/desmarcar pra ganhar XP/moedas; também garante consistência com o XP do pet.
+
+**Encerrar o dia manualmente**: na aba Plano (só pra hoje, só se ainda não fechado), aparece o botão **"✓ Encerrar o dia"** abaixo da lista de blocos. Clicar abre o modal `#finish-day-confirm` com aviso de que é decisão final. Confirmar:
+1. Captura `before = snapshotForSummary()` (XP, moedas, level idx, pet XPs antes).
+2. Adiciona `state.closedDays[today] = true`.
+3. Chama `applyPendingPetXP()` na hora.
+4. Re-renderiza.
+5. Captura `after = snapshotForSummary()`.
+6. Mostra o modal **`#day-summary-panel`** com `renderDaySummary(before, after)`: cards "+X XP" e "+Y Moedas" no topo, banner verde "🆙 Subiu pro nível N" se o usuário upou, e uma linha por pet que ganhou XP (sprite + nome + Lv. antiga → nova ✨ se upou).
+
+A partir daí, `computeStats` trata hoje como dia fechado (XP/moedas entram nos totais na mesma hora), `toggleCheck` no-op pra esse dia, e a UI dos blocos fica esmaecida (`.day-closed`) — clicar mostra toast "Dia encerrado 🔒". O botão vira banner cinza "✓ Dia encerrado". Não há reabrir — é definitivo. A virada de meia-noite continua sendo fallback automático.
+
+**Prompt automático no fim do dia**: `scheduleEndOfDayPrompt()` calcula o `endTime` do **último bloco de estudo** do dia (via `lastStudyEndToday()`) e agenda um `setTimeout` único pra disparar nesse momento exato. Sem polling. Quando dispara, `checkEndOfDayPrompt()` verifica as condições (hoje não fechado, ≥1 check hoje) e abre o modal `#day-end-prompt` com 2 opções:
+- **"✓ Encerrar o dia"** → fecha o prompt e abre o `#finish-day-confirm` (fluxo normal).
+- **"⏰ Prolongar estudos"** → expande inline um input `time` (sugerindo agora+1h) + botão Prolongar. Salvar muda `state.config.end` pro novo horário, chama `clearBlockCache()` e re-renderiza — o dia se estende e o app continua a gerar blocos.
+
+Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPromptSaveExtend` (depois de prolongar — reseta `endPromptShown` pra permitir novo disparo com o novo horário), e em `saveSettings` (config mudou → último bloco pode ter mudado). `confirmFinishDay` faz `clearTimeout` no timeout pendente (higiene — `isDayClosed` já segura, mas evita disparo desnecessário). Flag `endPromptShown` evita reabrir o prompt depois que já apareceu uma vez (até que prolongar/saveSettings reset). Persistência: dia encerrado fica em `state.closedDays` no Firestore, então a checagem `isDayClosed(today)` em `checkEndOfDayPrompt` pula naturalmente em qualquer reabertura do app no mesmo dia.
+
+**Hero scene do perfil**: container com gradient escuro contém personagem (`#char-sprite`) + pet ativo (`#pet-sprite`) lado a lado. Subtitle abaixo mostra `${nome do nível} · com ${pet ativo}` (ou só o nível se sem pet). Canto direito mostra "próximo nível · X XP". Stats em grid 4-col: XP total / Blocos / Estudo (horas) / Moedas (card dourado destacado).
+
+**Economia real** (não é mais decisão futura): ao adotar um pet, abre modal de confirmação `#pet-buy-confirm` ("Adotar X por 🪙 Y?"). Ao confirmar: `state.pets.owned.push(...)`, `state.pets.active = id`, **`state.coinsSpent += pet.price`**. Saldo exibido em `#char-coins` = `getCoinBalance() = stats.coins - coinsSpent` (nunca negativo). Se saldo < preço, botão "Adotar" ganha classe `.shop-btn.locked` (opacity .5, cursor:not-allowed) e clicar dispara toast "Moedas insuficientes" — não abre o modal. **Equipar/desequipar é grátis** e instantâneo (sem confirmação, sem custo). Cancelar sessão zera `coinsSpent` junto com o resto.
 
 ## Schema do Firestore
 
 ```
 users/{uid} {
   checks, events, lunchOverrides,
-  pets, coinsSpent,
+  closedDays: { "YYYY-MM-DD": true, ... },   // dias encerrados manualmente via botão "Encerrar o dia"
+  pets: {
+    owned: [petId, ...],
+    active: petId | null,
+    xp: { petId: number, ... },           // XP acumulado por pet (creditado quando o dia em que o check foi feito fecha)
+    xpProcessedUntil: "YYYY-MM-DD" | null  // último dia já processado por applyPendingPetXP (null = ainda não inicializado)
+  },
+  coinsSpent,
   config: {
     start, lunch, lunchDur, end, pomo, shortBreak, longBreak, hasLunch,
     periodStart,    // "YYYY-MM-DD" | null (null = "sempre", sem fim)
@@ -183,7 +215,6 @@ Schema flat funciona pro volume atual. Quando ficar lento, considerar subcollect
 ## Direções futuras
 
 - Mais pets (estrutura pronta)
-- Cosméticos pro personagem
 - Chatbot pra otimizar configuração (precisa avaliar custo de API)
 - Sync mais responsivo entre dispositivos
 
