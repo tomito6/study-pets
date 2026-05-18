@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pomodoro">
-<title>Plano de Estudos</title>
+<title>Plano de Estudos [TESTE]</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -28,6 +28,8 @@
   .xp-badge .level-tag{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;}
   .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
   .icon-btn:hover{border-color:#555;color:var(--text);}
+  .test-badge{background:var(--orange-bg);border:1px solid var(--orange);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--orange);}
+
   /* MAIN */
   .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
 
@@ -198,7 +200,8 @@
   .char-wrap { display:flex; align-items:flex-end; justify-content:center; gap:6px; }
   .char-self { position:relative; display:flex; align-items:center; justify-content:center; }
   .char-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:128px; height:128px; object-fit:contain; }
-  .pet-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:64px; height:64px; object-fit:contain; margin-bottom:4px; }
+  .pet-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:64px; height:64px; object-fit:contain; margin-bottom:4px; filter:url(#pet-remove-white); }
+  .shop-item-sprite { filter:url(#pet-remove-white); }
   .char-level-badge { position:absolute; bottom:-10px; right:-10px; background:var(--accent); color:#0e0e0f; font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; font-family:'DM Mono',monospace; }
   .char-name { font-size:18px; font-weight:600; }
   .char-title { font-size:12px; color:var(--muted); margin-top:2px; }
@@ -319,129 +322,19 @@
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-screen" style="display:none;">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;600&display=swap');
-  #login-screen {
-    min-height:100vh; background:#0a0a0b;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:40px 20px; position:relative; overflow:hidden;
-  }
-  .ls-bg {
-    position:absolute; inset:0; overflow:hidden; pointer-events:none;
-  }
-  .ls-grid {
-    position:absolute; inset:0;
-    background-image: linear-gradient(rgba(163,230,53,.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(163,230,53,.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-  .ls-glow {
-    position:absolute; width:600px; height:600px; border-radius:50%;
-    background: radial-gradient(circle, rgba(163,230,53,.08) 0%, transparent 70%);
-    top:50%; left:50%; transform:translate(-50%,-50%);
-    animation: glow-pulse 4s ease-in-out infinite;
-  }
-  .ls-star { position:absolute; width:2px; height:2px; background:rgba(163,230,53,.5); border-radius:50%; animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s); }
-  @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
-  @keyframes glow-pulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-  .ls-scanline {
-    position:absolute; left:0; right:0; height:2px;
-    background:linear-gradient(transparent, rgba(163,230,53,.08), transparent);
-    animation:scanline 6s linear infinite; pointer-events:none;
-  }
-  .ls-content { position:relative; z-index:1; text-align:center; max-width:340px; width:100%; }
-  .ls-char {
-    image-rendering:pixelated; width:96px; height:96px; object-fit:contain;
-    animation:float 2.4s ease-in-out infinite; margin-bottom:24px;
-    filter: drop-shadow(0 0 16px rgba(163,230,53,.5));
-  }
-  .ls-eyebrow {
-    font-family:'Press Start 2P',monospace; font-size:9px;
-    color:var(--accent); letter-spacing:.15em; margin-bottom:12px;
-    text-shadow: 0 0 12px rgba(163,230,53,.6);
-  }
-  .ls-title {
-    font-family:'Press Start 2P',monospace; font-size:20px; line-height:1.4;
-    color:#f0f0f0; margin-bottom:6px;
-    text-shadow: 0 0 20px rgba(163,230,53,.3), 2px 2px 0 rgba(0,0,0,.8);
-  }
-  .ls-title span { color:var(--accent); }
-  .ls-sub {
-    font-family:'DM Sans',sans-serif; font-size:13px; color:#666;
-    line-height:1.7; margin-bottom:36px; margin-top:16px;
-  }
-  .ls-features {
-    display:flex; gap:16px; justify-content:center; margin-bottom:36px;
-  }
-  .ls-feat {
-    background:rgba(163,230,53,.06); border:1px solid rgba(163,230,53,.15);
-    border-radius:8px; padding:10px 12px; font-size:11px;
-    color:#888; font-family:'DM Sans',sans-serif; text-align:center; line-height:1.5;
-  }
-  .ls-feat .lf-icon { font-size:18px; display:block; margin-bottom:4px; }
-  .ls-google-btn {
-    display:flex; align-items:center; justify-content:center; gap:12px;
-    width:100%; padding:15px 24px; border:none; border-radius:12px;
-    background:white; color:#1a1a1a; font-size:15px; font-weight:600;
-    font-family:'DM Sans',sans-serif; cursor:pointer;
-    box-shadow:0 4px 24px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.1);
-    transition:all .2s; position:relative; overflow:hidden;
-  }
-  .ls-google-btn:hover { transform:translateY(-1px); box-shadow:0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.15); }
-  .ls-google-btn:active { transform:translateY(0); }
-  .ls-fine-print { font-size:11px; color:#444; margin-top:16px; line-height:1.6; font-family:'DM Sans',sans-serif; }
-</style>
+<!-- SVG filter: makes near-white pixels of pet sprites transparent -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="pet-remove-white" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="
+        1 0 0 0 0
+        0 1 0 0 0
+        0 0 1 0 0
+        -10 -10 -10 30 0"/>
+    </filter>
+  </defs>
+</svg>
 
-<div class="ls-bg">
-  <div class="ls-grid"></div>
-  <div class="ls-glow"></div>
-  <div class="ls-scanline"></div>
-  <script>
-    for(let i=0;i<30;i++){
-      const s=document.createElement('div');
-      s.className='ls-star';
-      s.style.left=Math.random()*100+'%';
-      s.style.top=Math.random()*100+'%';
-      s.style.setProperty('--d',(2+Math.random()*4)+'s');
-      s.style.setProperty('--delay',(-Math.random()*4)+'s');
-      document.querySelector('.ls-bg').appendChild(s);
-    }
-  </script>
-</div>
-
-<div class="ls-content">
-  <img class="ls-char" src="idle/user/0.png" alt="Personagem" id="ls-char-sprite">
-  <div class="ls-eyebrow">✦ SISTEMA DE ESTUDOS ✦</div>
-  <div class="ls-title">ESTUDO<br><span>RPG</span></div>
-  <div class="ls-sub">Transforme sua rotina de estudos<br>numa aventura. Suba de nível. Evolua.</div>
-  <div class="ls-features">
-    <div class="ls-feat"><span class="lf-icon">⚡</span>Pomodoro<br>inteligente</div>
-    <div class="ls-feat"><span class="lf-icon">📊</span>Analytics<br>pessoal</div>
-    <div class="ls-feat"><span class="lf-icon">🎮</span>XP &<br>Níveis</div>
-  </div>
-  <button class="ls-google-btn" onclick="loginGoogle()">
-    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-    Continuar com Google
-  </button>
-  <div class="ls-fine-print">Dados salvos na nuvem · Sincronizado em todos os dispositivos</div>
-</div>
-
-<script>
-  // Animate login character
-  let lsFrame=0;
-  setInterval(()=>{
-    lsFrame=(lsFrame+1)%4;
-    const img=document.getElementById('ls-char-sprite');
-    if(img) img.src=`idle/user/${lsFrame}.png`;
-  },180);
-</script>
-</div>
-
-<div id="app" style="display:none;">
 <div class="topbar">
   <div class="topbar-left">
     <div class="nav-tabs">
@@ -452,9 +345,9 @@
     <div class="sub" id="today-label"></div>
   </div>
   <div class="topbar-right">
+    <span class="test-badge">MODO TESTE</span>
     <div class="xp-badge"><span id="top-xp">0 XP</span><span class="level-tag" id="top-level">Zero</span></div>
 
-      <button class="icon-btn" onclick="logoutUser()">Sair</button>
   </div>
 </div>
 
@@ -702,7 +595,6 @@
   </div>
 </div>
 
-</div><!-- end #app -->
 <div class="analytics-page" id="analytics-page">
 
   <!-- PROFILE CARD -->
@@ -822,34 +714,18 @@
 
 <button id="fab-config" class="fab-config" onclick="openSettings()" aria-label="Configurações">⚙️</button>
 
-<div id="save-indicator">Salvando...</div>
+<div id="save-indicator">💾 Modo teste</div>
 
-<script type="module">
+<script>
 // ============================================================
 // PLANO DE ESTUDOS — refatorado
 // ============================================================
 
 // ============================================================
-// FIREBASE
+// TEST MODE — no Firebase, in-memory state
 // ============================================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyABZ4DR7v94YyKaswY8FR7T8tOVQkIR7B0",
-  authDomain: "plano-estudos-bf51d.firebaseapp.com",
-  projectId: "plano-estudos-bf51d",
-  storageBucket: "plano-estudos-bf51d.firebasestorage.app",
-  messagingSenderId: "807419074503",
-  appId: "1:807419074503:web:905534d0f0ef64edf26be2"
-};
-const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
-const provider = new GoogleAuthProvider();
+window.loginGoogle = () => {};
+window.logoutUser = () => {};
 
 // ============================================================
 // CONSTANTS
@@ -1014,7 +890,7 @@ function forEachDay(callback) {
   const skip = state.config.skipWeekends === true;
   for (let wi = 0; wi < WEEKS.length; wi++) {
     for (let di = 0; di < 7; di++) {
-      if (skip && di >= 5) continue; // 5 = sáb, 6 = dom (segunda = di 0)
+      if (skip && di >= 5) continue;
       const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
       callback(dk(d), d, wi, di);
     }
@@ -1150,7 +1026,7 @@ function clearBlockCache() { blockCache.clear(); }
 
 function blocksForDay(dateKey) {
   if (state.config.skipWeekends) {
-    const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
+    const dow = new Date(dateKey + 'T12:00:00').getDay();
     if (dow === 0 || dow === 6) return [];
   }
   const events = state.events[dateKey] || [];
@@ -1308,32 +1184,9 @@ function getLevelPct(xp) {
 // FIREBASE LOAD / SAVE
 // ============================================================
 async function loadData(uid) {
-  let isNew = false;
-  try {
-    const snap = await getDoc(doc(db, 'users', uid));
-    if (snap.exists()) {
-      const d = snap.data();
-      state.checks = d.checks || {};
-      state.events = d.events || {};
-      state.lunchOverrides = d.lunchOverrides || {};
-      state.config = { ...DEFAULT_CFG, ...(d.config || {}) };
-      state.pets = {
-        owned: (d.pets && Array.isArray(d.pets.owned)) ? d.pets.owned : [],
-        active: (d.pets && d.pets.active) || null,
-      };
-    } else {
-      isNew = true;
-      state.checks = {}; state.events = {}; state.lunchOverrides = {};
-      state.config = { ...DEFAULT_CFG };
-      state.pets = { owned: [], active: null };
-    }
-  } catch (e) {
-    console.error('Load failed:', e);
-    showToast('⚠️ Erro ao carregar dados');
-  }
+  // Test mode: no-op
   buildWeeks();
   clearBlockCache();
-  return isNew;
 }
 
 function showSaveIndicator(msg = 'Salvando...', done = false) {
@@ -1345,52 +1198,18 @@ function showSaveIndicator(msg = 'Salvando...', done = false) {
 }
 
 function scheduleSave() {
-  showSaveIndicator('Salvando...');
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    if (!state.user) return;
-    try {
-      await setDoc(doc(db, 'users', state.user.uid), {
-        checks: state.checks,
-        events: state.events,
-        lunchOverrides: state.lunchOverrides,
-        config: state.config,
-        pets: state.pets,
-      }, { merge: true });
-      showSaveIndicator('Salvo ✓', true);
-    } catch (e) {
-      console.error('Save failed:', e);
-      showSaveIndicator('⚠️ Erro ao salvar', true);
-    }
-  }, 800);
+  // Test mode: just show indicator briefly
+  showSaveIndicator('💾 Modo teste (não salva)', true);
 }
 
 // ============================================================
 // AUTH
 // ============================================================
-window.loginGoogle = async () => {
-  try { await signInWithPopup(auth, provider); }
-  catch (e) { console.error(e); }
-};
-window.logoutUser = async () => { await signOut(auth); };
+// Test mode: stubbed
+window.loginGoogle = () => {};
+window.logoutUser = () => {};
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    state.user = user;
-    const isNew = await loadData(user.uid);
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    initApp();
-    if (isNew) openOnboarding();
-  } else {
-    state.user = null;
-    state.checks = {}; state.events = {}; state.lunchOverrides = {};
-    state.config = { ...DEFAULT_CFG };
-    state.pets = { owned: [], active: null };
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-  }
-});
+// (init moved to end)
 
 // ============================================================
 // TOAST
@@ -1686,7 +1505,6 @@ window.updatePreview = () => {
 };
 
 window.saveSettings = () => {
-  // periodStart fica fixo: preserva o valor atual do state (não vem do form, input está disabled)
   const newCfg = readCfgForm();
   newCfg.periodStart = state.config.periodStart;
   state.config = newCfg;
@@ -1743,7 +1561,6 @@ window.onbUseAlways = () => {
 window.finishOnboarding = () => {
   const pStart = document.getElementById('onb-start').value;
   const pEnd = document.getElementById('onb-end').value;
-  // periodStart sempre marca o início (pra preservar progresso). periodEnd null = "sempre" (até fim do ano).
   let periodStart = pStart || dk(new Date());
   let periodEnd = pEnd || null;
   if (periodEnd && periodEnd < periodStart) {
@@ -2238,6 +2055,12 @@ function renderProfile() {
   document.getElementById('ps-weeks').textContent = stats.activeWeeks;
 }
 
+
+// ============================================================
+// INIT (test mode — runs after all declarations)
+// ============================================================
+buildWeeks();
+initApp();
 </script>
 </body>
 </html>
