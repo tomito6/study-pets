@@ -1562,6 +1562,9 @@ window.stopTimer = () => {
 
 function tryStartTimer(b) {
   const now = new Date();
+  const viewKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+  const todayKey = dk(now);
+  if (viewKey !== todayKey) { showToast('Só dá pra iniciar timer em blocos de hoje 📅'); return; }
   const [sh, sm] = b.time.split(':').map(Number);
   const [eh, em] = b.endTime.split(':').map(Number);
   const blockStart = new Date(); blockStart.setHours(sh, sm, 0, 0);
@@ -1969,6 +1972,20 @@ function initApp() {
     Math.round((today - WEEKS[state.uiWeek - 1].start) / 86400000)
   ));
   renderAll();
+  startNowTick();
+}
+
+// Re-renderiza a aba Plano a cada virada de minuto, pra manter o destaque "agora" alinhado com o relógio real.
+let nowTickInterval = null;
+function startNowTick() {
+  if (nowTickInterval) return;
+  const tick = () => {
+    if (state.uiTab === 'plano' && document.getElementById('app').style.display !== 'none') {
+      renderBlocks();
+    }
+  };
+  const msToNextMinute = 60000 - (Date.now() % 60000);
+  setTimeout(() => { tick(); nowTickInterval = setInterval(tick, 60000); }, msToNextMinute);
 }
 
 window.onWeekChange = () => {
@@ -2035,6 +2052,7 @@ function renderBlocks() {
   let eD=0, eT=0, pD=0, pT=0;
   const checkSvg = `<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
   const now = new Date();
+  const isToday = key === dk(now);
   let lastSession = -1;
 
   blocks.forEach(b => {
@@ -2050,12 +2068,12 @@ function renderBlocks() {
     const [eh, em] = b.endTime.split(':').map(Number);
     const bStart = new Date(); bStart.setHours(sh, sm, 0, 0);
     const bEnd = new Date(); bEnd.setHours(eh, em, 0, 0);
-    const isNow = (isE || isP || isA) && now >= bStart && now < bEnd;
+    const isNow = isToday && (isE || isP || isA) && now >= bStart && now < bEnd;
 
     // Session divider
     if ((isE || isP) && b.session !== undefined && b.session !== lastSession) {
       lastSession = b.session;
-      const sessionHasNow = blocks.some(bl => {
+      const sessionHasNow = isToday && blocks.some(bl => {
         if (bl.session !== b.session || (bl.type !== 'estudo' && bl.type !== 'pausa')) return false;
         const [bsh, bsm] = bl.time.split(':').map(Number);
         const [beh, bem] = bl.endTime.split(':').map(Number);
