@@ -217,12 +217,17 @@
   .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
   .coming-soon-card .cs-sub { font-size:12px; color:var(--muted); }
   .shop-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
-  .shop-grid { display:grid; grid-template-columns:1fr; gap:8px; }
-  .shop-item { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--bg3); border-radius:var(--radius-sm); border:1px solid var(--border); }
-  .shop-item-sprite { width:48px; height:48px; image-rendering:pixelated; image-rendering:crisp-edges; flex-shrink:0; object-fit:contain; }
-  .shop-item-info { flex:1; min-width:0; }
-  .shop-item-name { font-size:13px; font-weight:600; }
-  .shop-item-desc { font-size:11px; color:var(--muted); margin-top:2px; }
+  .shop-open-btn { display:flex; align-items:center; gap:12px; width:100%; padding:16px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); cursor:pointer; font-family:inherit; margin-bottom:12px; transition:border-color .15s, background .15s; }
+  .shop-open-btn:hover { border-color:var(--accent); background:var(--bg3); }
+  .shop-open-btn .shop-open-icon { font-size:24px; }
+  .shop-open-btn .shop-open-label { flex:1; text-align:left; font-size:14px; font-weight:600; }
+  .shop-open-btn .shop-open-arrow { color:var(--muted); font-size:20px; }
+  .shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .shop-item { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 10px; background:var(--bg3); border-radius:var(--radius-sm); border:1px solid var(--border); }
+  .shop-item-img { width:64px; height:64px; image-rendering:pixelated; image-rendering:crisp-edges; object-fit:contain; }
+  .shop-item-emoji { width:64px; height:64px; display:flex; align-items:center; justify-content:center; font-size:44px; line-height:1; }
+  .shop-item-name { font-size:13px; font-weight:600; text-align:center; }
+  .shop-item-price { font-size:12px; color:var(--accent); font-family:'DM Mono',monospace; font-weight:600; }
   .shop-btn { font-size:11px; padding:6px 12px; border-radius:6px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-weight:600; font-family:inherit; transition:background .15s, color .15s; }
   .shop-btn:hover { background:var(--accent); color:#0e0e0f; }
   .shop-btn.active { background:var(--accent); color:#0e0e0f; }
@@ -504,7 +509,7 @@
     </div>
 
     <div class="settings-tabs">
-      <button type="button" class="settings-tab active" data-tab="day" onclick="switchSettingsTab('day')">Dia a dia</button>
+      <button type="button" class="settings-tab active" data-tab="day" onclick="switchSettingsTab('day')">Rotina</button>
       <button type="button" class="settings-tab" data-tab="general" onclick="switchSettingsTab('general')">Geral</button>
     </div>
 
@@ -561,6 +566,12 @@
         </div>
       </div>
 
+      <div class="field-group">
+        <label>Mínimo diário de estudo</label>
+        <div class="field-sublabel">Minutos por dia pra contar streak e ganhar bônus de moedas (15–240).</div>
+        <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15">
+      </div>
+
       <div class="danger-zone">
         <div class="danger-zone-label">Zona de perigo</div>
         <div class="danger-zone-desc">Cancela sua sessão atual e apaga tudo (checks, eventos, pets, configurações). Vai abrir o onboarding pra você começar uma nova sessão.</div>
@@ -598,6 +609,17 @@
       <button class="reset-btn" onclick="closeCancelConfirm()">Voltar</button>
       <button class="danger-btn" onclick="confirmCancelSession()">Sim, cancelar</button>
     </div>
+  </div>
+</div>
+
+<!-- PETS SHOP PANEL -->
+<div class="panel-overlay center" id="pets-shop-panel" onclick="closeIfOutside(event,'pets-shop-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🛒 Loja de pets</h2>
+      <button class="panel-close" onclick="closePetsShop()">✕</button>
+    </div>
+    <div class="shop-grid" id="pets-shop"></div>
   </div>
 </div>
 
@@ -782,11 +804,12 @@
     <div class="profile-stat"><div class="ps-label">Semanas ativas</div><div class="ps-val" id="ps-weeks">0</div></div>
   </div>
 
-  <!-- PETS SHOP -->
-  <div class="shop-card">
-    <div class="section-title">🐾 Pets</div>
-    <div class="shop-grid" id="pets-shop"></div>
-  </div>
+  <!-- PETS SHOP BUTTON -->
+  <button type="button" class="shop-open-btn" onclick="openPetsShop()">
+    <span class="shop-open-icon">🛒</span>
+    <span class="shop-open-label">Loja de pets</span>
+    <span class="shop-open-arrow">›</span>
+  </button>
 
   <!-- COMING SOON: COSMETICS -->
   <div class="coming-soon-card">
@@ -834,8 +857,35 @@ const provider = new GoogleAuthProvider();
 const DEFAULT_CFG = {
   start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00',
   pomo:25, shortBreak:5, longBreak:20, hasLunch:true,
-  periodStart: null, periodEnd: null, skipWeekends: false
+  periodStart: null, periodEnd: null, skipWeekends: false,
+  dailyStudyMin: 60,
 };
+
+// Bônus diário por dia de streak. Ordem decrescente — primeiro match vence.
+const DAILY_BONUS_TIERS = [
+  [30, 25],
+  [14, 18],
+  [7,  12],
+  [3,  8],
+  [1,  5],
+];
+function dailyBonusForStreak(streakDay) {
+  for (const [min, coins] of DAILY_BONUS_TIERS) {
+    if (streakDay >= min) return coins;
+  }
+  return 0;
+}
+
+// Moedas por bloco de estudo: proporcional ao tempo, com multiplicador pra pomos longos.
+function coinsForStudyBlock(pomoMins) {
+  let mult = 1.0;
+  if (pomoMins > 120) mult = 3.0;
+  else if (pomoMins > 90) mult = 2.5;
+  else if (pomoMins > 60) mult = 2.0;
+  else if (pomoMins > 30) mult = 1.5;
+  return Math.round(pomoMins * mult);
+}
+
 const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
@@ -866,13 +916,11 @@ const state = {
 // PETS REGISTRY
 // ============================================================
 const PETS = {
-  cat: {
-    id: 'cat',
-    name: 'Gato',
-    desc: 'Um companheiro felino fofo.',
-    frames: 4,
-    sprite: i => `idle/pets/cat/${i}.png`,
-  },
+  cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `idle/pets/cat/${i}.png` },
+  cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `idle/pets/cow/${i}.png` },
+  snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `idle/pets/snake/${i}.png` },
+  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `idle/pets/owl/${i}.png` },
+  dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `idle/pets/dog/${i}.png` },
 };
 
 let WEEKS = [];
@@ -932,24 +980,24 @@ function buildWeeks() {
     if (ps < startDate) startDate = ps;
   }
 
-  // endDate: periodEnd manda; senão, até 31/12 do ano atual (mínimo: hoje + 8 semanas)
+  // endDate: periodEnd é limite REAL (respeitado exatamente). Senão, até 31/12 do ano atual.
   let endDate;
   if (periodEnd) {
     const pe = new Date(periodEnd + 'T12:00:00');
     endDate = mondayOf(pe); endDate.setDate(endDate.getDate() + 6);
     const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 7);
     if (endDate < minEnd) endDate = minEnd;
+    // Sem expansão pra frente: user definiu o limite, app respeita.
   } else {
     const yearEnd = new Date(today.getFullYear(), 11, 31, 12, 0, 0);
     const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 8*7);
     endDate = yearEnd > minEnd ? yearEnd : minEnd;
-  }
-
-  // Se há dados depois do endDate, expande pra frente pra preservar o progresso
-  if (allKeys.length > 0) {
-    const latestDate = new Date(allKeys[allKeys.length - 1] + 'T12:00:00');
-    const latestMon = mondayOf(latestDate); latestMon.setDate(latestMon.getDate() + 6);
-    if (latestMon > endDate) endDate = latestMon;
+    // Modo "sempre": se há dados futuros, expande pra preservá-los na UI
+    if (allKeys.length > 0) {
+      const latestDate = new Date(allKeys[allKeys.length - 1] + 'T12:00:00');
+      const latestMon = mondayOf(latestDate); latestMon.setDate(latestMon.getDate() + 6);
+      if (latestMon > endDate) endDate = latestMon;
+    }
   }
 
   const totalWeeks = Math.max(1, Math.round((endDate - startDate) / (7 * 86400000)) + 1);
@@ -1156,14 +1204,17 @@ function computeStats() {
     pausasToday: { done: 0, total: 0 },
     weekChecksOfCurrent: 0,
     dayCheckCounts: {},
+    dayStudyMins: {},
   };
 
   const todayKey = dk(new Date());
   const curDateKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+  const minDailyMins = state.config.dailyStudyMin || 60;
+  let runningStreak = 0;
 
   forEachDay((key, d, wi) => {
     const blocks = blocksForDay(key);
-    let dayXP = 0, dayChecks = 0, weekHasCheck = false;
+    let dayXP = 0, dayChecks = 0, dayStudyMins = 0, weekHasCheck = false;
     stats.weekXP[wi] = stats.weekXP[wi] || 0;
     stats.weekChecks[wi] = stats.weekChecks[wi] || 0;
 
@@ -1182,8 +1233,9 @@ function computeStats() {
         stats.weekXP[wi] += b.xp;
         stats.weekChecks[wi]++;
         if (b.type === 'estudo') {
-          stats.coins++;
+          stats.coins += coinsForStudyBlock(state.config.pomo);
           stats.studyMins += state.config.pomo;
+          dayStudyMins += state.config.pomo;
         }
         const hour = parseInt(b.time.split(':')[0]);
         stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
@@ -1196,6 +1248,13 @@ function computeStats() {
     });
 
     stats.dayCheckCounts[key] = dayChecks;
+    stats.dayStudyMins[key] = dayStudyMins;
+    if (dayStudyMins >= minDailyMins) {
+      runningStreak++;
+      stats.coins += dailyBonusForStreak(runningStreak);
+    } else {
+      runningStreak = 0;
+    }
     if (dayChecks > stats.bestDayChecks) {
       stats.bestDayChecks = dayChecks;
       stats.bestDayLabel = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
@@ -1209,19 +1268,20 @@ function computeStats() {
   return stats;
 }
 
-function calcStreaks(dayCheckCounts) {
+function calcStreaks(dayStudyMins) {
   const today = dk(new Date());
+  const minMins = state.config.dailyStudyMin || 60;
   let cur = 0, best = 0, temp = 0;
   const allKeys = [];
   forEachDay(key => allKeys.push(key));
   allKeys.forEach(k => {
-    if ((dayCheckCounts[k] || 0) > 0) { temp++; if (temp > best) best = temp; }
+    if ((dayStudyMins[k] || 0) >= minMins) { temp++; if (temp > best) best = temp; }
     else temp = 0;
   });
   const idx = allKeys.indexOf(today);
   if (idx >= 0) {
     for (let i = idx; i >= 0; i--) {
-      if ((dayCheckCounts[allKeys[i]] || 0) > 0) cur++;
+      if ((dayStudyMins[allKeys[i]] || 0) >= minMins) cur++;
       else break;
     }
   }
@@ -1531,6 +1591,7 @@ window.openSettings = () => {
   document.getElementById('cfg-period-start').value = state.config.periodStart || '';
   document.getElementById('cfg-period-end').value = state.config.periodEnd || '';
   document.getElementById('cfg-skip-weekends').checked = state.config.skipWeekends === true;
+  document.getElementById('cfg-daily-study-min').value = state.config.dailyStudyMin || 60;
   toggleLunchFields();
   updatePreview();
   switchSettingsTab('day');
@@ -1568,6 +1629,7 @@ window.resetSettings = () => {
   // periodStart NÃO é resetado — é fixo por sessão (só "Cancelar sessão" muda)
   document.getElementById('cfg-period-end').value = '';
   document.getElementById('cfg-skip-weekends').checked = false;
+  document.getElementById('cfg-daily-study-min').value = DEFAULT_CFG.dailyStudyMin;
   toggleLunchFields();
   updatePreview();
 };
@@ -1592,6 +1654,7 @@ function readCfgForm() {
     periodStart: pStart || null,
     periodEnd: pEnd || null,
     skipWeekends: document.getElementById('cfg-skip-weekends').checked,
+    dailyStudyMin: Math.min(240, Math.max(15, parseInt(document.getElementById('cfg-daily-study-min').value) || 60)),
   };
 }
 
@@ -1819,6 +1882,14 @@ function startPetAnim() {
   }, 180);
 }
 
+window.openPetsShop = () => {
+  renderShop();
+  document.getElementById('pets-shop-panel').classList.add('open');
+};
+window.closePetsShop = () => {
+  document.getElementById('pets-shop-panel').classList.remove('open');
+};
+
 function renderShop() {
   const grid = document.getElementById('pets-shop');
   if (!grid) return;
@@ -1828,12 +1899,30 @@ function renderShop() {
     const active = state.pets.active === pet.id;
     const item = document.createElement('div');
     item.className = 'shop-item';
-    item.innerHTML = `
-      <div class="shop-item-info">
-        <div class="shop-item-name">${pet.name}</div>
-        <div class="shop-item-desc">${pet.desc}</div>
-      </div>
-    `;
+
+    const img = document.createElement('img');
+    img.className = 'shop-item-img';
+    img.src = pet.sprite(0);
+    img.alt = pet.name;
+    img.onerror = () => {
+      const fallback = document.createElement('div');
+      fallback.className = 'shop-item-emoji';
+      fallback.textContent = pet.emoji;
+      img.replaceWith(fallback);
+    };
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'shop-item-name';
+    nameDiv.textContent = pet.name;
+
+    const priceDiv = document.createElement('div');
+    priceDiv.className = 'shop-item-price';
+    priceDiv.textContent = `🪙 ${pet.price}`;
+
+    item.appendChild(img);
+    item.appendChild(nameDiv);
+    item.appendChild(priceDiv);
+
     const btn = document.createElement('button');
     btn.className = 'shop-btn' + (active ? ' active' : owned ? ' owned' : '');
     btn.textContent = active ? 'Ativo' : owned ? 'Equipar' : 'Adotar';
@@ -2058,7 +2147,7 @@ function renderAnalytics() {
     ? `${stats.bestDayLabel} (${stats.bestDayChecks})` : '—';
   document.getElementById('an-best-xp').textContent = stats.bestDayXP + ' XP';
 
-  const { cur, best } = calcStreaks(stats.dayCheckCounts);
+  const { cur, best } = calcStreaks(stats.dayStudyMins);
   document.getElementById('an-streak').textContent = cur;
   document.getElementById('an-cur-streak').textContent = cur + ' dias';
   document.getElementById('an-best-streak').textContent = best + ' dias';
@@ -2109,7 +2198,6 @@ function renderAnalytics() {
 function renderProfile() {
   startCharAnim();
   startPetAnim();
-  renderShop();
   const stats = computeStats();
   const totalXP = stats.totalXP;
   const level = getLevel(totalXP);

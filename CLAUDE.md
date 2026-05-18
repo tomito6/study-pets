@@ -111,9 +111,9 @@ INIT (no final)
 - **Sessões**: pomodoros separados por pausa longa, evento ou almoço viram "sessões" coloridas (classes `.s0` a `.s5`).
 - **Bloco atual**: o que está acontecendo no horário real ganha destaque visual.
 - **Gap antes de eventos/almoço**: se sobrar tempo menor que um pomodoro, preenche inteligentemente (mini-estudo ou estica o último).
-- **Datas**: WEEKS construído dinamicamente. Sem `periodEnd`: até 31 de dezembro do ano atual (mínimo de hoje+8 semanas, pra cobrir virada de ano). Com `periodEnd` definido: cobre exatamente o intervalo escolhido. Em todos os casos, `buildWeeks` expande pra trás E pra frente se houver checks/events/lunchOverrides fora do range — garante que **progresso nunca some** da UI mesmo se o usuário encolher o período.
+- **Datas**: WEEKS construído dinamicamente. Sem `periodEnd` (modo "sempre"): até 31 de dezembro do ano atual (mínimo de hoje+8 semanas, pra cobrir virada de ano); expande pra frente se houver dados futuros. Com `periodEnd` definido: cobre **exatamente** o intervalo escolhido — limite real, sem expansão pra frente (dados fora do período ficam guardados no Firestore mas não aparecem na UI; reabrir o período os traz de volta). Em ambos os casos, expansão pra trás se houver dados antigos.
 - **Onboarding**: na primeira vez que um usuário loga (Firestore doc não existe), abre modal perguntando período de uso + se pula fins de semana. Usuários existentes não veem (defaults preservam comportamento anterior). Config é editável depois em Configurações. "Usar sempre" preserva `periodStart` (= hoje) como marco inicial; só `periodEnd` fica null.
-- **Settings em 2 abas**: "Dia a dia" (horários, almoço, pomodoro, pausa longa — coisas do ritmo do dia, com preview) e "Geral" (período de uso + pular fins de semana — afeta o range de XP). Abre sempre em "Dia a dia".
+- **Settings em 2 abas**: "Rotina" (horários, almoço, pomodoro, pausa longa — coisas do ritmo do dia, com preview) e "Geral" (período de uso, pular fins de semana, mínimo diário de estudo). Abre sempre em "Rotina". O id interno da aba continua `day` por compatibilidade.
 - **`periodStart` é fixo por sessão**: na aba Geral, o input "Início" fica `disabled`. Só `periodEnd` e `skipWeekends` são editáveis. `resetSettings` e `clearPeriod` preservam o `periodStart`. Pra mudar o início, o usuário precisa **cancelar a sessão**.
 - **Cancelar sessão**: botão "Zona de perigo" na aba Geral. Modal de confirmação lista o que vai apagar. Ao confirmar: zera `checks`, `events`, `lunchOverrides`, `pets`, `coinsSpent`, e reseta `config` pro `DEFAULT_CFG`. Em seguida abre o onboarding (equivalente a uma conta nova). É a única forma de redefinir o `periodStart`.
 - **Dia vazio**: se `blocksForDay()` retorna `[]` (fim de semana com `skipWeekends`), `renderBlocks` mostra "🌴 Dia livre".
@@ -124,7 +124,8 @@ Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqu
 
 - **XP**: ganho por bloco concluído, mais por estudos que por pausas. Valor depende da duração.
 - **Níveis**: lista ordenada definida em `LEVELS` com thresholds e nomes.
-- **Moedas**: ganhas em blocos de estudo. Saldo = ganhas − `coinsSpent`.
+- **Moedas**: duas fontes. (a) Por bloco de estudo concluído: `coinsForStudyBlock(pomo)` — proporcional ao tempo com multiplicador crescente (×1 até 30min, ×1.5 até 60, ×2 até 90, ×2.5 até 120, ×3 acima). (b) Bônus diário por faixa de streak: `DAILY_BONUS_TIERS` (5/8/12/18/25 moedas nos marcos 1/3/7/14/30 dias). O bônus só conta no dia se total de estudo concluído ≥ `config.dailyStudyMin`. Saldo = total − `coinsSpent`.
+- **Streak**: dia entra no streak só se `dayStudyMins ≥ config.dailyStudyMin` (padrão 60min, editável em Configurações → Geral). Pausas sozinhas não contam. Mudar o mínimo recalcula retroativamente.
 - **Sons**: Web Audio API (sem arquivos externos), diferentes por tipo.
 - **Notificações**: Web Notifications API quando timer acaba.
 
@@ -132,17 +133,23 @@ Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqu
 
 Adicionar um pet novo:
 
-1. Colocar sprites em `idle/pets/{id}/`
+1. Colocar sprites em `idle/pets/{id}/` (`0.png` a `{frames-1}.png`)
 2. Adicionar entrada em `PETS`:
 
 ```js
 const PETS = {
-  cat: { id, name, emoji, price, sprite, frames, description },
-  // novo pet aqui
+  cat: { id, name, emoji, price, frames, sprite: i => `idle/pets/cat/${i}.png` },
+  // novo pet aqui — mesmo shape
 };
 ```
 
-`renderPets()` cuida do resto: animação idle, loja, compra, "Meus Pets".
+Campos: `id` (key), `name` (label em pt-BR), `emoji` (fallback visual quando sprite não carrega), `price` (moedas), `frames` (quantos frames de animação), `sprite(i)` (path do frame `i`).
+
+`renderShop()` monta o card; se a imagem do sprite falhar (pasta não existe ainda), o emoji entra no lugar — então dá pra cadastrar pets sem sprites e adicionar os arquivos depois sem mexer no código.
+
+A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). `renderShop()` é chamado em `openPetsShop()` e após cada compra/equip, não no `renderProfile()`.
+
+> **Nota atual**: o `price` é só display — não é descontado de moedas nem gating de compra (`coinsSpent` continua dormente). Adicionar a economia real é uma decisão futura.
 
 ## Schema do Firestore
 
@@ -152,9 +159,10 @@ users/{uid} {
   pets, coinsSpent,
   config: {
     start, lunch, lunchDur, end, pomo, shortBreak, longBreak, hasLunch,
-    periodStart,   // "YYYY-MM-DD" | null (null = "sempre", sem fim)
-    periodEnd,     // "YYYY-MM-DD" | null
-    skipWeekends   // boolean (true = sáb/dom sem blocos nem stats)
+    periodStart,    // "YYYY-MM-DD" | null (null = "sempre", sem fim)
+    periodEnd,      // "YYYY-MM-DD" | null
+    skipWeekends,   // boolean (true = sáb/dom sem blocos nem stats)
+    dailyStudyMin   // number (15–240, padrão 60). Min de estudo/dia pra contar streak + bônus.
   }
 }
 ```
