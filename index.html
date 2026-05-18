@@ -104,6 +104,9 @@
   /* SETTINGS PANEL */
   .panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;}
   .panel-overlay.open{display:flex;}
+  .panel-overlay.center{align-items:center;padding:20px;}
+  .panel-overlay.center .panel-sheet{border-radius:var(--radius);border-bottom:1px solid var(--border);max-width:420px;max-height:90vh;padding:24px 20px;}
+  #settings-panel.center .panel-sheet{max-width:560px;padding:28px 28px;}
   .panel-sheet{background:var(--bg2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border);border-bottom:none;width:100%;max-width:480px;padding:24px 20px 40px;max-height:85vh;overflow-y:auto;}
   .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
   .panel-header h2{font-size:16px;font-weight:600;}
@@ -115,8 +118,11 @@
   .field-sublabel{font-size:11px;color:var(--muted);margin-bottom:4px;}
   .field-group input[type=time],
   .field-group input[type=number],
-  .field-group input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;padding:9px 12px;outline:none;}
+  .field-group input[type=text],
+  .field-group input[type=date]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;padding:9px 12px;outline:none;color-scheme:dark;}
   .field-group input:focus{border-color:var(--accent2);}
+  .field-group input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(4) hue-rotate(50deg);cursor:pointer;opacity:.8;}
+  .field-group input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1;}
   .config-preview{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:18px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.9;}
   .config-preview span{color:var(--text);}
   .config-preview .warn{color:var(--orange);}
@@ -129,11 +135,26 @@
   .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
   .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}
+  .settings-tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--bg3);border-radius:var(--radius-sm);padding:4px;}
+  .settings-tab{flex:1;background:transparent;border:none;color:var(--muted);font-size:12px;font-weight:500;padding:8px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .settings-tab:hover{color:var(--text);}
+  .settings-tab.active{background:var(--bg2);color:var(--accent);font-weight:600;}
+  .settings-tab-content{display:none;}
+  .settings-tab-content.active{display:block;}
+  .danger-zone{margin-top:24px;padding-top:18px;border-top:1px dashed var(--border);}
+  .danger-zone-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+  .danger-zone-desc{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
+  .danger-btn{width:100%;background:transparent;color:#ef4444;border:1px solid #ef4444;border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .danger-btn:hover{background:#ef4444;color:#fff;}
+  input[type=date]:disabled,input[type=time]:disabled,input[type=number]:disabled{opacity:.5;cursor:not-allowed;}
 
   /* EVENT PANEL */
   .checkbox-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
-  .checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
-  .checkbox-row label{font-size:13px;color:var(--muted);cursor:pointer;}
+  .checkbox-row input[type=checkbox]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;background:var(--bg3);cursor:pointer;flex-shrink:0;margin:0;padding:0;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
+  .checkbox-row input[type=checkbox]:hover{border-color:var(--accent);}
+  .checkbox-row input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent);}
+  .checkbox-row input[type=checkbox]:checked::after{content:'';width:3px;height:7px;border:solid #0e0e0f;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-1px);}
+  .checkbox-row label{font-size:13px;color:var(--muted);cursor:pointer;margin:0;padding:0;line-height:16px;display:flex;align-items:center;}
 
   /* NAV TABS */
   .nav-tabs { display:flex; gap:4px; margin-bottom:2px; }
@@ -475,56 +496,75 @@
 </div>
 
 <!-- SETTINGS PANEL -->
-<div class="panel-overlay" id="settings-panel" onclick="closeIfOutside(event,'settings-panel')">
+<div class="panel-overlay center" id="settings-panel" onclick="closeIfOutside(event,'settings-panel')">
   <div class="panel-sheet">
     <div class="panel-header">
       <h2>⚙️ Configurações</h2>
       <button class="panel-close" onclick="closeSettings()">✕</button>
     </div>
-    <div class="config-preview" id="config-preview">Calculando...</div>
-    <div class="field-group">
-      <label>Horários</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="time" id="cfg-start" value="09:00" oninput="updatePreview()"></div>
-        <div><div class="field-sublabel">Término</div><input type="time" id="cfg-end" value="18:00" oninput="updatePreview()"></div>
-      </div>
+
+    <div class="settings-tabs">
+      <button type="button" class="settings-tab active" data-tab="day" onclick="switchSettingsTab('day')">Dia a dia</button>
+      <button type="button" class="settings-tab" data-tab="general" onclick="switchSettingsTab('general')">Geral</button>
     </div>
 
-    <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
-      <div class="checkbox-row" style="margin-bottom:10px;">
-        <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
-        <label for="cfg-has-lunch" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Almoço</label>
-      </div>
-      <div id="lunch-fields">
-        <div class="field-row" style="margin-bottom:8px;">
-          <div><div class="field-sublabel">Horário</div><input type="time" id="cfg-lunch" value="13:00" oninput="updatePreview()"></div>
-          <div><div class="field-sublabel">Duração (min)</div><input type="number" id="cfg-lunch-dur" value="60" min="15" max="180" step="5" oninput="updatePreview()"></div>
+    <div class="settings-tab-content active" data-tab-content="day">
+      <div class="config-preview" id="config-preview">Calculando...</div>
+      <div class="field-group">
+        <label>Horários</label>
+        <div class="field-row">
+          <div><div class="field-sublabel">Início</div><input type="time" id="cfg-start" value="09:00" oninput="updatePreview()"></div>
+          <div><div class="field-sublabel">Término</div><input type="time" id="cfg-end" value="18:00" oninput="updatePreview()"></div>
         </div>
       </div>
-    </div>
 
-    <div class="field-group">
-      <label>Pomodoro</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Estudo (min)</div><input type="number" id="cfg-pomo" value="25" min="10" max="90" step="5" oninput="updatePreview()"></div>
-        <div><div class="field-sublabel">Pausa curta (min)</div><input type="number" id="cfg-short" value="5" min="1" max="30" step="1" oninput="updatePreview()"></div>
+      <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+        <div class="checkbox-row" style="margin-bottom:10px;">
+          <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
+          <label for="cfg-has-lunch" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Almoço</label>
+        </div>
+        <div id="lunch-fields">
+          <div class="field-row" style="margin-bottom:8px;">
+            <div><div class="field-sublabel">Horário</div><input type="time" id="cfg-lunch" value="13:00" oninput="updatePreview()"></div>
+            <div><div class="field-sublabel">Duração (min)</div><input type="number" id="cfg-lunch-dur" value="60" min="15" max="180" step="5" oninput="updatePreview()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Pomodoro</label>
+        <div class="field-row">
+          <div><div class="field-sublabel">Estudo (min)</div><input type="number" id="cfg-pomo" value="25" min="10" max="90" step="5" oninput="updatePreview()"></div>
+          <div><div class="field-sublabel">Pausa curta (min)</div><input type="number" id="cfg-short" value="5" min="1" max="30" step="1" oninput="updatePreview()"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Pausa longa — a cada 4 pomodoros (min)</label>
+        <input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()">
       </div>
     </div>
-    <div class="field-group">
-      <label>Pausa longa — a cada 4 pomodoros (min)</label>
-      <input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()">
-    </div>
 
-    <div class="field-group">
-      <label>Período de uso</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="date" id="cfg-period-start"></div>
-        <div><div class="field-sublabel">Fim</div><input type="date" id="cfg-period-end"></div>
+    <div class="settings-tab-content" data-tab-content="general">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
+        Defina o período em que você quer ganhar XP e ver seu progresso.
+      </p>
+      <div class="field-group">
+        <label>Período de uso</label>
+        <div class="field-row">
+          <div><div class="field-sublabel">Início (fixo)</div><input type="date" id="cfg-period-start" disabled title="O início da sessão é fixo. Use Cancelar sessão pra recomeçar."></div>
+          <div><div class="field-sublabel">Fim</div><input type="date" id="cfg-period-end"></div>
+        </div>
+        <button type="button" class="ghost-btn" onclick="clearPeriod()" style="margin-top:8px;">Sem data fim</button>
+        <div class="checkbox-row" style="margin-top:14px;">
+          <input type="checkbox" id="cfg-skip-weekends">
+          <label for="cfg-skip-weekends" style="font-size:13px;">Pular finais de semana</label>
+        </div>
       </div>
-      <button type="button" class="ghost-btn" onclick="clearPeriod()" style="margin-top:8px;">Usar sempre</button>
-      <div class="checkbox-row" style="margin-top:10px;">
-        <input type="checkbox" id="cfg-skip-weekends">
-        <label for="cfg-skip-weekends" style="font-size:13px;color:var(--text);">Pular finais de semana</label>
+
+      <div class="danger-zone">
+        <div class="danger-zone-label">Zona de perigo</div>
+        <div class="danger-zone-desc">Cancela sua sessão atual e apaga tudo (checks, eventos, pets, configurações). Vai abrir o onboarding pra você começar uma nova sessão.</div>
+        <button type="button" class="danger-btn" onclick="openCancelConfirm()">Cancelar sessão</button>
       </div>
     </div>
 
@@ -535,8 +575,34 @@
   </div>
 </div>
 
+<!-- CANCEL SESSION CONFIRM -->
+<div class="panel-overlay center" id="cancel-confirm-panel" onclick="closeIfOutside(event,'cancel-confirm-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>⚠️ Cancelar sessão?</h2>
+      <button class="panel-close" onclick="closeCancelConfirm()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;">
+      Isso vai apagar <strong>tudo</strong>:
+    </p>
+    <ul style="font-size:13px;color:var(--muted);margin:0 0 16px 18px;line-height:1.7;">
+      <li>Todos os checks feitos</li>
+      <li>Eventos e ajustes de almoço</li>
+      <li>Pets adotados e moedas</li>
+      <li>Configurações personalizadas</li>
+    </ul>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;">
+      Depois você vai começar do zero, como uma conta nova. <strong>Esta ação não pode ser desfeita.</strong>
+    </p>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="closeCancelConfirm()">Voltar</button>
+      <button class="danger-btn" onclick="confirmCancelSession()">Sim, cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ONBOARDING PANEL -->
-<div class="panel-overlay" id="onboarding-panel">
+<div class="panel-overlay center" id="onboarding-panel">
   <div class="panel-sheet">
     <div class="panel-header">
       <h2>👋 Bem-vindo!</h2>
@@ -555,7 +621,7 @@
     <div class="field-group">
       <div class="checkbox-row">
         <input type="checkbox" id="onb-skip-weekends">
-        <label for="onb-skip-weekends" style="font-size:13px;color:var(--text);">Pular finais de semana (sáb e dom)</label>
+        <label for="onb-skip-weekends" style="font-size:13px;">Pular finais de semana (sáb e dom)</label>
       </div>
     </div>
     <div class="btn-row">
@@ -565,7 +631,7 @@
 </div>
 
 <!-- LUNCH EDIT PANEL -->
-<div class="panel-overlay" id="lunch-panel" onclick="closeIfOutside(event,'lunch-panel')">
+<div class="panel-overlay center" id="lunch-panel" onclick="closeIfOutside(event,'lunch-panel')">
   <div class="panel-sheet">
     <div class="panel-header">
       <h2>🍽️ Editar Almoço</h2>
@@ -587,7 +653,7 @@
 </div>
 
 <!-- EVENT PANEL -->
-<div class="panel-overlay" id="event-panel" onclick="closeIfOutside(event,'event-panel')">
+<div class="panel-overlay center" id="event-panel" onclick="closeIfOutside(event,'event-panel')">
   <div class="panel-sheet">
     <div class="panel-header">
       <h2>📅 Novo Evento</h2>
@@ -687,7 +753,6 @@
         <img id="char-sprite" class="char-sprite" src="idle/user/0.png" alt="Personagem">
         <div class="char-level-badge" id="char-level-badge">Lv.1</div>
       </div>
-      <img id="pet-sprite" class="pet-sprite" alt="Pet" style="display:none">
     </div>
     <div style="text-align:center">
       <div class="char-name" id="char-name">Estudante</div>
@@ -867,17 +932,24 @@ function buildWeeks() {
     if (ps < startDate) startDate = ps;
   }
 
-  // endDate: periodEnd manda; senão, hoje + FUTURE_WEEKS (comportamento atual)
+  // endDate: periodEnd manda; senão, até 31/12 do ano atual (mínimo: hoje + 8 semanas)
   let endDate;
   if (periodEnd) {
     const pe = new Date(periodEnd + 'T12:00:00');
     endDate = mondayOf(pe); endDate.setDate(endDate.getDate() + 6);
-    // Garante que cobre pelo menos até hoje + 1 semana, caso o periodEnd seja no passado
     const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 7);
     if (endDate < minEnd) endDate = minEnd;
   } else {
-    const currentMon = mondayOf(today);
-    endDate = new Date(currentMon); endDate.setDate(endDate.getDate() + FUTURE_WEEKS*7 - 1);
+    const yearEnd = new Date(today.getFullYear(), 11, 31, 12, 0, 0);
+    const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 8*7);
+    endDate = yearEnd > minEnd ? yearEnd : minEnd;
+  }
+
+  // Se há dados depois do endDate, expande pra frente pra preservar o progresso
+  if (allKeys.length > 0) {
+    const latestDate = new Date(allKeys[allKeys.length - 1] + 'T12:00:00');
+    const latestMon = mondayOf(latestDate); latestMon.setDate(latestMon.getDate() + 6);
+    if (latestMon > endDate) endDate = latestMon;
   }
 
   const totalWeeks = Math.max(1, Math.round((endDate - startDate) / (7 * 86400000)) + 1);
@@ -1461,7 +1533,17 @@ window.openSettings = () => {
   document.getElementById('cfg-skip-weekends').checked = state.config.skipWeekends === true;
   toggleLunchFields();
   updatePreview();
+  switchSettingsTab('day');
   document.getElementById('settings-panel').classList.add('open');
+};
+
+window.switchSettingsTab = (tab) => {
+  document.querySelectorAll('.settings-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  document.querySelectorAll('.settings-tab-content').forEach(c => {
+    c.classList.toggle('active', c.dataset.tabContent === tab);
+  });
 };
 window.closeSettings = () => document.getElementById('settings-panel').classList.remove('open');
 
@@ -1483,7 +1565,7 @@ window.resetSettings = () => {
   document.getElementById('cfg-short').value = DEFAULT_CFG.shortBreak;
   document.getElementById('cfg-long').value = DEFAULT_CFG.longBreak;
   document.getElementById('cfg-has-lunch').checked = true;
-  document.getElementById('cfg-period-start').value = '';
+  // periodStart NÃO é resetado — é fixo por sessão (só "Cancelar sessão" muda)
   document.getElementById('cfg-period-end').value = '';
   document.getElementById('cfg-skip-weekends').checked = false;
   toggleLunchFields();
@@ -1491,7 +1573,7 @@ window.resetSettings = () => {
 };
 
 window.clearPeriod = () => {
-  document.getElementById('cfg-period-start').value = '';
+  // Só limpa o fim — periodStart é fixo por sessão
   document.getElementById('cfg-period-end').value = '';
 };
 
@@ -1538,12 +1620,41 @@ window.updatePreview = () => {
 };
 
 window.saveSettings = () => {
-  state.config = readCfgForm();
+  // periodStart fica fixo: preserva o valor atual do state (não vem do form, input está disabled)
+  const newCfg = readCfgForm();
+  newCfg.periodStart = state.config.periodStart;
+  state.config = newCfg;
   closeSettings();
   buildWeeks();
   clearBlockCache();
   scheduleSave();
   renderAll();
+};
+
+// ============================================================
+// CANCEL SESSION
+// ============================================================
+window.openCancelConfirm = () => {
+  document.getElementById('cancel-confirm-panel').classList.add('open');
+};
+window.closeCancelConfirm = () => {
+  document.getElementById('cancel-confirm-panel').classList.remove('open');
+};
+window.confirmCancelSession = () => {
+  state.checks = {};
+  state.events = {};
+  state.lunchOverrides = {};
+  state.config = { ...DEFAULT_CFG };
+  state.pets = { owned: [], active: null };
+  if ('coinsSpent' in state) state.coinsSpent = 0;
+  closeCancelConfirm();
+  closeSettings();
+  buildWeeks();
+  clearBlockCache();
+  scheduleSave();
+  renderAll();
+  openOnboarding();
+  showToast('Sessão cancelada — começando do zero');
 };
 
 // ============================================================
@@ -1558,25 +1669,19 @@ window.openOnboarding = () => {
 };
 
 window.onbUseAlways = () => {
-  document.getElementById('onb-start').value = '';
+  document.getElementById('onb-start').value = dk(new Date());
   document.getElementById('onb-end').value = '';
-  showToast('Modo "sempre" — sem datas');
+  showToast('Modo "sempre" — até o fim do ano');
 };
 
 window.finishOnboarding = () => {
   const pStart = document.getElementById('onb-start').value;
   const pEnd = document.getElementById('onb-end').value;
-  // Se só uma das datas: trata como sempre
-  let periodStart = null, periodEnd = null;
-  if (pStart && pEnd) {
-    if (pEnd < pStart) {
-      showToast('⚠️ Data fim antes da data início');
-      return;
-    }
-    periodStart = pStart;
-    periodEnd = pEnd;
-  } else if (pStart || pEnd) {
-    showToast('Preencha as duas datas ou use "sempre"');
+  // periodStart sempre marca o início (pra preservar progresso). periodEnd null = "sempre" (até fim do ano).
+  let periodStart = pStart || dk(new Date());
+  let periodEnd = pEnd || null;
+  if (periodEnd && periodEnd < periodStart) {
+    showToast('⚠️ Data fim antes da data início');
     return;
   }
   state.config = {
@@ -1724,7 +1829,6 @@ function renderShop() {
     const item = document.createElement('div');
     item.className = 'shop-item';
     item.innerHTML = `
-      <img class="shop-item-sprite" src="${pet.sprite(0)}" alt="${pet.name}">
       <div class="shop-item-info">
         <div class="shop-item-name">${pet.name}</div>
         <div class="shop-item-desc">${pet.desc}</div>

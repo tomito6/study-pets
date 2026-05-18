@@ -111,8 +111,11 @@ INIT (no final)
 - **Sessões**: pomodoros separados por pausa longa, evento ou almoço viram "sessões" coloridas (classes `.s0` a `.s5`).
 - **Bloco atual**: o que está acontecendo no horário real ganha destaque visual.
 - **Gap antes de eventos/almoço**: se sobrar tempo menor que um pomodoro, preenche inteligentemente (mini-estudo ou estica o último).
-- **Datas**: WEEKS construído dinamicamente. Sem `periodStart/periodEnd`: segunda-feira atual + 24 semanas. Com período definido: cobre exatamente o intervalo escolhido (mais expansão pra trás se houver dados antigos).
-- **Onboarding**: na primeira vez que um usuário loga (Firestore doc não existe), abre modal perguntando período de uso + se pula fins de semana. Usuários existentes não veem (defaults preservam comportamento anterior). Config é editável depois em Configurações.
+- **Datas**: WEEKS construído dinamicamente. Sem `periodEnd`: até 31 de dezembro do ano atual (mínimo de hoje+8 semanas, pra cobrir virada de ano). Com `periodEnd` definido: cobre exatamente o intervalo escolhido. Em todos os casos, `buildWeeks` expande pra trás E pra frente se houver checks/events/lunchOverrides fora do range — garante que **progresso nunca some** da UI mesmo se o usuário encolher o período.
+- **Onboarding**: na primeira vez que um usuário loga (Firestore doc não existe), abre modal perguntando período de uso + se pula fins de semana. Usuários existentes não veem (defaults preservam comportamento anterior). Config é editável depois em Configurações. "Usar sempre" preserva `periodStart` (= hoje) como marco inicial; só `periodEnd` fica null.
+- **Settings em 2 abas**: "Dia a dia" (horários, almoço, pomodoro, pausa longa — coisas do ritmo do dia, com preview) e "Geral" (período de uso + pular fins de semana — afeta o range de XP). Abre sempre em "Dia a dia".
+- **`periodStart` é fixo por sessão**: na aba Geral, o input "Início" fica `disabled`. Só `periodEnd` e `skipWeekends` são editáveis. `resetSettings` e `clearPeriod` preservam o `periodStart`. Pra mudar o início, o usuário precisa **cancelar a sessão**.
+- **Cancelar sessão**: botão "Zona de perigo" na aba Geral. Modal de confirmação lista o que vai apagar. Ao confirmar: zera `checks`, `events`, `lunchOverrides`, `pets`, `coinsSpent`, e reseta `config` pro `DEFAULT_CFG`. Em seguida abre o onboarding (equivalente a uma conta nova). É a única forma de redefinir o `periodStart`.
 - **Dia vazio**: se `blocksForDay()` retorna `[]` (fim de semana com `skipWeekends`), `renderBlocks` mostra "🌴 Dia livre".
 
 ## Sistema de gamificação
@@ -167,6 +170,7 @@ Schema flat funciona pro volume atual. Quando ficar lento, considerar subcollect
 - Fontes: DM Sans (UI), DM Mono (números), Press Start 2P (landing)
 - Layout mobile-first, max-width 480px centralizado
 - Sprites com `image-rendering: pixelated`
+- **Modais**: todos centralizados na tela (classe `.panel-overlay.center`). Não usar sheet de baixo pra cima.
 
 ## Direções futuras
 
