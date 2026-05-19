@@ -119,6 +119,37 @@ INIT (no final)
 - **Dia vazio**: se `blocksForDay()` retorna `[]` (fim de semana com `skipWeekends`), `renderBlocks` mostra "🌴 Dia livre".
 - **Modo foco**: ao clicar num bloco de estudo ou pausa **do momento** (passou validação de `tryStartTimer`), abre overlay tela-cheia `#focus-overlay` por cima da UI: chip "Sessão N · Bloco M", nome do bloco limpo, timer circular SVG que drena (`stroke-dashoffset`), "+X XP · +Y 🪙 ao concluir", e card "Em seguida" com o próximo bloco do dia (ou "Fim do dia 🌙"). Anel verde pra estudo, azul pra pausa. Sem controles centrais (sem pausar nem skip — decisão consciente). Botão "← Sair do foco" no topo só fecha o overlay e mantém o timer rodando — pra cancelar mesmo, a `timer-bar` no topo da UI normal tem o "✕ Parar". O `onTimerEnd`/`stopTimer` fecham o foco automaticamente. `updateFocusTimer()` é chamada dentro de `updateTimerDisplay()` a cada segundo. Espaço `.focus-scene-stage` está reservado pra cena ambiente (personagem + pet), por enquanto vazio.
 
+## Aba Análise
+
+A aba responde "tô fazendo o que planejei?" — diagnóstico, não vitrine. Estrutura: **profile card + sparkline sempre visíveis no topo**, depois **sub-nav com 4 chips** (Hoje / Semana / Geral / Recordes; default = Hoje) que troca o conteúdo abaixo via `.subview.active`.
+
+**Profile card (sempre visível)**: nível, XP, barra de progresso pro próximo nível, e abaixo uma **sparkline SVG** com as últimas 8 semanas de minutos de estudo (`stats.dayStudyDoneMins` agregado por `mondayOf(d)`). Prefixa com zeros se houver menos de 8 semanas de dados. Ponto destacado no último valor.
+
+**Sub-abas e o que cada uma mostra:**
+
+- **Hoje** (default): card **grande** "Realizado hoje" (min cumpridos / planejados + barra + %) + card "Meta diária" com 7 dots da semana, com o dia de hoje destacado por anel (`.goal-dot.today`).
+- **Semana**: card "Realizado na semana" + card "Meta diária" (dots sem anel) + "Conclusão por sessão" (drop-off, marcado como *histórico*).
+- **Geral**: card "Realizado no geral" (agrega **todos os dias com dados** até hoje, não só o mês corrente) + heatmap GH-style (7×16) + "Horários onde mais estuda" (hour chart).
+- **Recordes**: stats row (Blocos / Dias seguidos / Melhor semana) + cartão de recordes (sequência atual, maior sequência, melhor dia, XP num dia).
+
+**Realizado (cumprido vs planejado, por tempo)**: cada card mostra `min cumpridos / min planejados`, sub em horas (`Xh de Yh`), barra, e %. Classes `.low` (laranja, pct<20) e `.zero` (cinza + "sem dados ainda"). Card "Hoje" tem variante `.adh-big` (padding/fontes maiores). Decisão de granularidade por tempo (não por sessão) é consciente: mais reliable.
+
+**Meta diária — 7 dots**: card com headline "Você bateu a meta de Xmin em **N de 7** dias esta semana" + 7 spans (Seg–Dom) com classes `.met` / `.miss` / `.future` / `.weekend` / `.today` (anel verde só no card da aba Hoje). Conecta `config.dailyStudyMin` à análise. Se `skipWeekends=true`, headline vira "N de 5" e sáb/dom ficam neutros.
+
+**Heatmap GitHub-style**: 7 linhas (dias) × 16 colunas (semanas) com `grid-auto-flow:column`. Cor por **% da meta diária batida** (0/25/50/75/100+). Cells futuras dashed, sáb/dom (se skipWeekends) neutros. Tooltip "DD/MM (hoje): X de Y min (Z%)". Se `dailyStudyMin===0`, intensidade = 4 se done>0 senão 0.
+
+**Drop-off por sessão**: linha por número de sessão (Sessão 1, 2, 3...) com barra + pct + "done/total". Itera `stats.sessionStats` (só dias fechados). `.do-fill.low` se pct<50.
+
+**Implementação**: `renderAnalytics()` é orquestrador curto que chama todos os sub-renderers (`renderAnalyticsProfile`, `renderAdherenceCards`, `renderGoalWeekDots`, `renderAnalyticsStats`, `renderHeatmapGH`, `renderHourChart`, `renderDropoffChart`, `renderSparkline`, `setupAnalyticsSubnav`). `renderGoalWeekDots` chama `renderGoalWeekDotsTo` 2 vezes (uma pro card da Hoje com `highlightToday:true`, outra pro card da Semana). `setupAnalyticsSubnav` registra um único listener de click em `#an-subnav` que toggla `.active` nos chips e nas subviews — protegido por flag `_anSubnavBound` pra não dobrar se a aba for re-aberta. Os ids dos cards de realizado são `adherence-today` (variante grande), `adherence-week`, `adherence-geral`. **`adherence-geral` agrega `Object.keys(stats.dayStudyPlanned).filter(k => k <= today)`** — todos os dias passados+hoje, não só mês corrente.
+
+**Novos campos de `computeStats`** (todos populados na mesma passada do loop existente — sem segunda iteração):
+- `dayStudyPlanned: { "YYYY-MM-DD": min }` — soma `endTime-time` de todos blocos `type==='estudo'` no dia (planejado).
+- `dayStudyDoneMins: { "YYYY-MM-DD": min }` — mesmo somatório, mas só dos blocos checked. Inclui hoje (sem exploit possível — aderência não é XP).
+- `dayMetGoal: { "YYYY-MM-DD": bool }` — `dayStudyDoneMins[key] >= dailyStudyMin`.
+- `sessionStats: { N: {done, total} }` — só dias fechados (`isPast`), só blocos de estudo, agrupados por `b.session`.
+
+**Importante**: `dayStudyMins` (campo antigo) **continua existindo intocado**, ainda calcula com `cfg.pomo` fixo e ainda alimenta streak + bônus de moedas. Os campos novos usam **duração real** (`endTime-time`) pra mini-estudos contarem certo. Não mudar `dayStudyMins` foi decisão consciente: economia e streak não devem ser afetadas por refator de UI. Helpers novos: `monthKey(d)`, `currentWeekDayKeys()`, `aggregateMins(doneObj, plannedObj, keys)`.
+
 ## Sistema de gamificação
 
 Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqui só o conceito:
@@ -154,7 +185,11 @@ A **aba "Meus pets"** aparece em **dois lugares ao mesmo tempo**: (1) inline no 
 
 **Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: petId | null }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada estudo done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera `state.pets.xp` e marca `yesterday` como processado (sem aplicar retroativamente). Level usa as mesmas thresholds do usuário (`LEVELS` + `getLevelIdx`). Pausa não conta (só estudo). Pet null no momento do check = ninguém ganha XP.
 
-**XP/moedas do usuário também só refletem dias fechados**: `computeStats()` itera todos os dias, mas só agrega `totalXP/totalChecks/coins/studyMins/hourCounts/weekXP/weekChecks/bestDay/activeWeeks` quando o dia está fechado (`isPast = key !== todayKey || isDayClosed(key)`). Stats específicos de hoje (`todayXP`, `estudosToday`, `pausasToday`, `dayStudyMins[today]`) continuam refletindo o dia atual. Streak ainda usa `dayStudyMins` incluindo hoje (você "está em sequência" se atingiu o mínimo), mas o **bônus de moedas** do streak só entra quando o dia fechou. Motivo: evitar exploit de marcar/desmarcar pra ganhar XP/moedas; também garante consistência com o XP do pet.
+**XP/moedas do usuário também só refletem dias fechados**: `computeStats()` itera todos os dias, mas só agrega `totalXP/totalChecks/coins/studyMins/hourCounts/weekXP/weekChecks/bestDay/activeWeeks` quando o dia está fechado (`isPast = key !== todayKey || isDayClosed(key)`). Stats específicos de hoje (`todayXP`, `todayCoins`, `estudosToday`, `pausasToday`, `dayStudyMins[today]`) continuam refletindo o dia atual. Streak ainda usa `dayStudyMins` incluindo hoje (você "está em sequência" se atingiu o mínimo), mas o **bônus de moedas** do streak só entra quando o dia fechou. Motivo: evitar exploit de marcar/desmarcar pra ganhar XP/moedas; também garante consistência com o XP do pet.
+
+**Contador de hoje pendente (UI)**: no `xp-card`, a linha "Hoje" (`#today-xp-val`) mostra em laranja "pendente" os ganhos previstos — `Hoje: +X XP · +Y 🪙` — sempre que hoje tem checks e ainda não foi encerrado, num pill com glow e pulse bouncy (`@keyframes pulse-pending`) quando o valor sobe. Quando o dia fecha, vira "✓ Hoje encerrado" em verde (e os totais já abrigam o ganho). `renderTodayPending(stats)` cuida do display. Marcar/desmarcar atualiza o pendente em tempo real sem reabrir o exploit — o XP real só entra no total quando o dia fecha.
+
+**Feedback dopamínico no check**: ao marcar um bloco (não ao desmarcar), o click handler em `renderBlocks` dispara três efeitos visuais sincronizados com o som `playSound('check')`: (1) `spawnCheckRipple(rect)` joga um anel verde expandindo a partir do check, (2) `spawnFloatGain(checkEl, xp, coins)` cria um overlay flutuante com "+X XP" verde grande e "+Y 🪙" laranja menor que sobem e somem em ~1.2s, (3) o badge "Hoje" pulsa no próximo `renderXP`. A `rect` do check é capturada **antes** de `toggleCheck`/`renderAll` porque o re-render destrói o nó; os overlays vivem em `document.body` (não dentro da row) pra sobreviver. CSS: `.float-gain`, `.check-ripple`, `@keyframes gain-fly-xp/gain-fly-coin/check-ripple`.
 
 **Encerrar o dia manualmente**: na aba Plano (só pra hoje, só se ainda não fechado), aparece o botão **"✓ Encerrar o dia"** abaixo da lista de blocos. Clicar abre o modal `#finish-day-confirm` com aviso de que é decisão final. Confirmar:
 1. Captura `before = snapshotForSummary()` (XP, moedas, level idx, pet XPs antes).

@@ -38,7 +38,20 @@
   .xp-sub{font-size:11px;color:var(--muted);margin-top:2px;}
   .xp-right{text-align:right;}
   .xp-right .week-xp{font-size:13px;font-family:'DM Mono',monospace;color:var(--muted);}
-  .xp-right .today-xp{font-size:11px;color:var(--muted);margin-top:2px;}
+  .xp-right .today-xp{font-size:11px;color:var(--muted);margin-top:6px;display:inline-block;transition:transform .2s;}
+  .xp-right .today-xp.today-pending{color:var(--orange);background:linear-gradient(135deg,var(--orange-bg),rgba(251,146,60,.2));border:1px solid var(--orange);border-radius:99px;padding:4px 12px;font-family:'DM Mono',monospace;font-weight:600;font-size:12.5px;letter-spacing:.02em;box-shadow:0 0 14px rgba(251,146,60,.32),inset 0 0 8px rgba(251,146,60,.12);}
+  .xp-right .today-xp.today-closed{color:var(--accent);font-weight:600;font-size:12px;}
+  .xp-right .today-xp.flash{animation:pulse-pending .55s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes pulse-pending{0%{transform:scale(1);}35%{transform:scale(1.22);background:var(--orange);color:#0e0e0f;box-shadow:0 0 28px rgba(251,146,60,.75);}100%{transform:scale(1);}}
+
+  /* FLOAT GAIN (dopamina ao marcar check) */
+  .float-gain{position:fixed;pointer-events:none;z-index:9999;font-family:'DM Mono',monospace;font-weight:700;will-change:transform,opacity;}
+  .float-gain .fg-xp{font-size:17px;color:var(--accent);text-shadow:0 0 14px rgba(163,230,53,.85),0 0 4px rgba(163,230,53,1);animation:gain-fly-xp 1.15s cubic-bezier(.2,.7,.3,1) forwards;}
+  .float-gain .fg-coin{font-size:14px;color:var(--orange);text-shadow:0 0 12px rgba(251,146,60,.85),0 0 3px rgba(251,146,60,1);margin-top:3px;opacity:0;animation:gain-fly-coin 1.25s cubic-bezier(.2,.7,.3,1) .12s forwards;}
+  @keyframes gain-fly-xp{0%{opacity:0;transform:translate(0,6px) scale(.55);}18%{opacity:1;transform:translate(4px,-8px) scale(1.2);}40%{transform:translate(8px,-20px) scale(1);}100%{opacity:0;transform:translate(16px,-56px) scale(.92);}}
+  @keyframes gain-fly-coin{0%{opacity:0;transform:translate(0,6px) scale(.55);}22%{opacity:1;transform:translate(6px,-6px) scale(1.2);}100%{opacity:0;transform:translate(20px,-50px) scale(.92);}}
+  .check-ripple{position:fixed;pointer-events:none;z-index:9998;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,.65),transparent 70%);transform:translate(-50%,-50%);animation:check-ripple .6s ease-out forwards;}
+  @keyframes check-ripple{0%{transform:translate(-50%,-50%) scale(.5);opacity:1;}100%{transform:translate(-50%,-50%) scale(4.2);opacity:0;}}
   .bar-track{height:4px;background:var(--bg3);border-radius:99px;overflow:hidden;}
   .bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);}
 
@@ -186,6 +199,64 @@
   .heatmap-cell { aspect-ratio:1; border-radius:2px; }
   .heatmap-legend { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); justify-content:flex-end; }
   .heatmap-legend .lc { width:10px; height:10px; border-radius:2px; }
+  .heatmap-gh { display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; grid-auto-columns:1fr; gap:2px; margin-bottom:6px; }
+  .heatmap-gh .heatmap-cell.future { background:transparent; border:1px dashed var(--border); }
+  .heatmap-gh .heatmap-cell.weekend-off { background:rgba(46,46,53,.3); }
+
+  /* Realizado (cumprido vs planejado) */
+  .adh-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
+  .adh-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:16px; }
+  .adh-card .adh-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .adh-card .adh-val { font-size:13px; font-weight:600; font-family:'DM Mono',monospace; color:var(--text); margin-bottom:2px; }
+  .adh-card .adh-sub { font-size:10px; color:var(--muted); margin-bottom:8px; min-height:12px; }
+  .adh-card .bar-track { height:5px; }
+  .adh-card .adh-pct { font-size:11px; color:var(--accent); font-family:'DM Mono',monospace; margin-top:6px; text-align:right; }
+  .adh-card.low .bar-fill { background:var(--orange,#f59e0b); }
+  .adh-card.zero .bar-fill { background:var(--bg3); }
+  .adh-card.zero .adh-pct { color:var(--muted); }
+  .adh-card.adh-big { padding:20px; }
+  .adh-card.adh-big .adh-label { font-size:11px; }
+  .adh-card.adh-big .adh-val { font-size:24px; margin-bottom:4px; }
+  .adh-card.adh-big .adh-sub { font-size:12px; margin-bottom:14px; }
+  .adh-card.adh-big .bar-track { height:8px; }
+  .adh-card.adh-big .adh-pct { font-size:15px; margin-top:10px; }
+
+  /* Sub-nav da aba Análise */
+  .subnav { display:flex; gap:6px; margin-bottom:18px; padding:4px 0; }
+  .subnav-chip { flex:1; background:var(--bg2); border:1px solid var(--border); border-radius:99px; padding:8px 6px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; transition:all .15s; text-align:center; }
+  .subnav-chip:hover { color:var(--text); border-color:#555; }
+  .subnav-chip.active { background:var(--accent); border-color:var(--accent); color:#0e0e0f; font-weight:600; }
+  .subview { display:none; }
+  .subview.active { display:block; animation:subview-in .2s ease; }
+  @keyframes subview-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+  .historic-tag { font-size:9px; color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; margin-left:6px; }
+
+  /* Meta diária — 7 dots */
+  .goal-week-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+  .goal-week-headline { font-size:13px; color:var(--text); margin-bottom:12px; }
+  .goal-week-headline strong { color:var(--accent); }
+  .goal-week-dots { display:flex; gap:6px; justify-content:space-between; }
+  .goal-dot { flex:1; aspect-ratio:1; max-width:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-family:'DM Mono',monospace; color:var(--muted); }
+  .goal-dot.met { background:var(--accent); color:#0e0e0f; font-weight:600; }
+  .goal-dot.miss { background:var(--bg3); color:var(--muted); opacity:.7; }
+  .goal-dot.future { background:transparent; border:1px dashed var(--border); color:var(--muted); }
+  .goal-dot.weekend { background:rgba(46,46,53,.25); color:var(--muted); opacity:.5; }
+  .goal-dot.today { outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* Sparkline */
+  .sparkline-wrap { display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .sparkline-wrap svg { flex:1; height:24px; max-width:140px; overflow:visible; }
+  .sparkline-label { font-size:10px; color:var(--muted); }
+
+  /* Drop-off por sessão */
+  .dropoff-row { display:grid; grid-template-columns:64px 1fr 38px 56px; gap:8px; align-items:center; padding:5px 0; }
+  .dropoff-row .do-label { font-size:11px; color:var(--muted); }
+  .dropoff-row .do-bar { height:6px; background:var(--bg3); border-radius:99px; overflow:hidden; }
+  .dropoff-row .do-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
+  .dropoff-row .do-fill.low { background:var(--orange,#f59e0b); }
+  .dropoff-row .do-pct { font-size:11px; color:var(--text); font-family:'DM Mono',monospace; text-align:right; }
+  .dropoff-row .do-count { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; text-align:right; }
+  .dropoff-empty { font-size:11px; color:var(--muted); text-align:center; padding:14px 0; }
   .streak-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
   .streak-row:last-child { border-bottom:none; }
   .streak-label { font-size:13px; color:var(--text); }
@@ -944,7 +1015,7 @@
 </div><!-- end #app -->
 <div class="analytics-page" id="analytics-page">
 
-  <!-- PROFILE CARD -->
+  <!-- PROFILE CARD (sempre visível) -->
   <div class="profile-card">
     <div class="profile-top">
       <div class="profile-avatar">🎓</div>
@@ -958,49 +1029,101 @@
       <span id="an-xp-next"></span>
     </div>
     <div class="bar-track"><div class="bar-fill" id="an-xp-bar" style="width:0%"></div></div>
-  </div>
-
-  <!-- STATS ROW -->
-  <div class="an-stats">
-    <div class="an-stat"><div class="as-val" id="an-total-checks">0</div><div class="as-label">Blocos feitos</div></div>
-    <div class="an-stat"><div class="as-val" id="an-streak">0</div><div class="as-label">Dias seguidos</div></div>
-    <div class="an-stat"><div class="as-val" id="an-best-week">0</div><div class="as-label">Melhor semana</div></div>
-  </div>
-
-  <!-- HEATMAP -->
-  <div class="chart-card">
-    <div class="section-title">Atividade — 18 semanas</div>
-    <div class="heatmap-grid" id="heatmap-grid"></div>
-    <div class="heatmap-legend">
-      <span>Menos</span>
-      <div class="lc" style="background:var(--bg3)"></div>
-      <div class="lc" style="background:#1a3a20"></div>
-      <div class="lc" style="background:#2d6b35"></div>
-      <div class="lc" style="background:#65a30d"></div>
-      <div class="lc" style="background:#a3e635"></div>
-      <span>Mais</span>
+    <div class="sparkline-wrap">
+      <span class="sparkline-label">Tendência (8 sem)</span>
+      <svg id="an-sparkline" viewBox="0 0 120 24" preserveAspectRatio="none"></svg>
     </div>
   </div>
 
-  <!-- BAR CHART BY HOUR -->
-  <div class="chart-card">
-    <div class="section-title">Horários onde mais estuda</div>
-    <div class="bar-chart" id="hour-bar-chart"></div>
-    <div style="display:flex;justify-content:space-between;padding:0 2px;">
-      <span style="font-size:9px;color:var(--muted);">09h</span>
-      <span style="font-size:9px;color:var(--muted);">12h</span>
-      <span style="font-size:9px;color:var(--muted);">15h</span>
-      <span style="font-size:9px;color:var(--muted);">18h</span>
+  <!-- SUB-NAV -->
+  <div class="subnav" id="an-subnav">
+    <button class="subnav-chip active" data-view="hoje">Hoje</button>
+    <button class="subnav-chip" data-view="semana">Semana</button>
+    <button class="subnav-chip" data-view="geral">Geral</button>
+    <button class="subnav-chip" data-view="recordes">Recordes</button>
+  </div>
+
+  <!-- HOJE -->
+  <div class="subview active" data-view="hoje">
+    <div class="adh-card adh-big" id="adherence-today">
+      <div class="adh-label">Realizado hoje</div>
+      <div class="adh-val">—</div>
+      <div class="adh-sub">—</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      <div class="adh-pct">0%</div>
+    </div>
+    <div class="goal-week-card">
+      <div class="goal-week-headline" id="goal-week-headline-h">Meta diária</div>
+      <div class="goal-week-dots" id="goal-week-dots-h"></div>
     </div>
   </div>
 
-  <!-- STREAKS -->
-  <div class="chart-card">
-    <div class="section-title">Recordes</div>
-    <div class="streak-row"><span class="streak-label">🔥 Sequência atual</span><span class="streak-val" id="an-cur-streak">0 dias</span></div>
-    <div class="streak-row"><span class="streak-label">🏆 Maior sequência</span><span class="streak-val" id="an-best-streak">0 dias</span></div>
-    <div class="streak-row"><span class="streak-label">📖 Melhor dia (blocos)</span><span class="streak-val" id="an-best-day">—</span></div>
-    <div class="streak-row"><span class="streak-label">⚡ XP num único dia</span><span class="streak-val" id="an-best-xp">0 XP</span></div>
+  <!-- SEMANA -->
+  <div class="subview" data-view="semana">
+    <div class="adh-card" id="adherence-week">
+      <div class="adh-label">Realizado na semana</div>
+      <div class="adh-val">—</div>
+      <div class="adh-sub">—</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      <div class="adh-pct">0%</div>
+    </div>
+    <div class="goal-week-card">
+      <div class="goal-week-headline" id="goal-week-headline">Meta diária</div>
+      <div class="goal-week-dots" id="goal-week-dots"></div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">Conclusão por sessão <span class="historic-tag">(histórico)</span></div>
+      <div id="dropoff-chart"></div>
+    </div>
+  </div>
+
+  <!-- GERAL -->
+  <div class="subview" data-view="geral">
+    <div class="adh-card" id="adherence-geral">
+      <div class="adh-label">Realizado no geral</div>
+      <div class="adh-val">—</div>
+      <div class="adh-sub">—</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+      <div class="adh-pct">0%</div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">Plano cumprido — 16 semanas</div>
+      <div class="heatmap-gh" id="heatmap-grid-gh"></div>
+      <div class="heatmap-legend">
+        <span>0%</span>
+        <div class="lc" style="background:var(--bg3)"></div>
+        <div class="lc" style="background:#1a3a20"></div>
+        <div class="lc" style="background:#2d6b35"></div>
+        <div class="lc" style="background:#65a30d"></div>
+        <div class="lc" style="background:#a3e635"></div>
+        <span>100%+</span>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="section-title">Horários onde mais estuda</div>
+      <div class="bar-chart" id="hour-bar-chart"></div>
+      <div style="display:flex;justify-content:space-between;padding:0 2px;">
+        <span style="font-size:9px;color:var(--muted);">09h</span>
+        <span style="font-size:9px;color:var(--muted);">12h</span>
+        <span style="font-size:9px;color:var(--muted);">15h</span>
+        <span style="font-size:9px;color:var(--muted);">18h</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORDES -->
+  <div class="subview" data-view="recordes">
+    <div class="an-stats">
+      <div class="an-stat"><div class="as-val" id="an-total-checks">0</div><div class="as-label">Blocos feitos</div></div>
+      <div class="an-stat"><div class="as-val" id="an-streak">0</div><div class="as-label">Dias seguidos</div></div>
+      <div class="an-stat"><div class="as-val" id="an-best-week">0</div><div class="as-label">Melhor semana</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="streak-row"><span class="streak-label">🔥 Sequência atual</span><span class="streak-val" id="an-cur-streak">0 dias</span></div>
+      <div class="streak-row"><span class="streak-label">🏆 Maior sequência</span><span class="streak-val" id="an-best-streak">0 dias</span></div>
+      <div class="streak-row"><span class="streak-label">📖 Melhor dia (blocos)</span><span class="streak-val" id="an-best-day">—</span></div>
+      <div class="streak-row"><span class="streak-label">⚡ XP num único dia</span><span class="streak-val" id="an-best-xp">0 XP</span></div>
+    </div>
   </div>
 
 </div>
@@ -1202,6 +1325,24 @@ function dateForWeekDay(weekN, dayIdx) {
 function findWeek(date) {
   for (const w of WEEKS) if (date >= w.start && date <= w.end) return w.n;
   return 1;
+}
+
+const monthKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+
+function currentWeekDayKeys() {
+  const mon = mondayOf(new Date());
+  const keys = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(d.getDate() + i);
+    keys.push(dk(d));
+  }
+  return keys;
+}
+
+function aggregateMins(doneObj, plannedObj, keys) {
+  let done = 0, planned = 0;
+  keys.forEach(k => { done += doneObj[k]||0; planned += plannedObj[k]||0; });
+  return { done, planned, pct: planned > 0 ? Math.round(done/planned*100) : 0 };
 }
 
 // ============================================================
@@ -1506,7 +1647,7 @@ function computeStats() {
   const stats = {
     totalXP: 0, totalChecks: 0,
     weekXP: {}, weekChecks: {},
-    todayXP: 0, todayChecks: 0,
+    todayXP: 0, todayChecks: 0, todayCoins: 0,
     hourCounts: {},
     bestWeekChecks: 0,
     bestDayChecks: 0, bestDayLabel: '—', bestDayXP: 0,
@@ -1517,6 +1658,10 @@ function computeStats() {
     weekChecksOfCurrent: 0,
     dayCheckCounts: {},
     dayStudyMins: {},
+    dayStudyPlanned: {},
+    dayStudyDoneMins: {},
+    dayMetGoal: {},
+    sessionStats: {},
   };
 
   const todayKey = dk(new Date());
@@ -1529,10 +1674,22 @@ function computeStats() {
     const isPast = (key !== todayKey) || isDayClosed(key);
     const blocks = blocksForDay(key);
     let dayXP = 0, dayChecks = 0, dayStudyMins = 0, weekHasCheck = false;
+    let dayPlanned = 0, dayDone = 0;
     stats.weekXP[wi] = stats.weekXP[wi] || 0;
     stats.weekChecks[wi] = stats.weekChecks[wi] || 0;
 
     blocks.forEach(b => {
+      if (b.type === 'estudo') {
+        const dur = timeToMins(b.endTime) - timeToMins(b.time);
+        dayPlanned += dur;
+        if (isChecked(key, b.time)) dayDone += dur;
+        if (isPast) {
+          const s = b.session ?? 0;
+          if (!stats.sessionStats[s]) stats.sessionStats[s] = { done: 0, total: 0 };
+          stats.sessionStats[s].total++;
+          if (isChecked(key, b.time)) stats.sessionStats[s].done++;
+        }
+      }
       if (b.type !== 'estudo' && b.type !== 'pausa') return;
       if (key === curDateKey) {
         if (b.type === 'estudo') stats.estudosToday.total++;
@@ -1559,7 +1716,11 @@ function computeStats() {
           stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
         }
 
-        if (key === todayKey) { stats.todayXP += b.xp; stats.todayChecks++; }
+        if (key === todayKey) {
+          stats.todayXP += b.xp;
+          stats.todayChecks++;
+          if (b.type === 'estudo') stats.todayCoins += coinsForStudyBlock(state.config.pomo);
+        }
         if (key === curDateKey) {
           if (b.type === 'estudo') stats.estudosToday.done++;
           else stats.pausasToday.done++;
@@ -1569,10 +1730,15 @@ function computeStats() {
 
     stats.dayCheckCounts[key] = dayChecks;
     stats.dayStudyMins[key] = dayStudyMins;
+    stats.dayStudyPlanned[key] = dayPlanned;
+    stats.dayStudyDoneMins[key] = dayDone;
+    stats.dayMetGoal[key] = dayDone >= minDailyMins;
     if (dayStudyMins >= minDailyMins) {
       runningStreak++;
       // Bônus de streak só conta nas moedas se o dia já fechou
       if (isPast) stats.coins += dailyBonusForStreak(runningStreak);
+      // Pra hoje (ainda aberto), expõe o bônus como pendente
+      else if (key === todayKey) stats.todayCoins += dailyBonusForStreak(runningStreak);
     } else {
       runningStreak = 0;
     }
@@ -1726,6 +1892,32 @@ onAuthStateChanged(auth, async (user) => {
 // ============================================================
 // TOAST
 // ============================================================
+// Spawn floating "+X XP +Y 🪙" near an element (dopamina ao marcar check)
+function spawnFloatGain(anchorEl, xp, coins) {
+  if (!anchorEl) return;
+  const rect = anchorEl.getBoundingClientRect();
+  const wrap = document.createElement('div');
+  wrap.className = 'float-gain';
+  wrap.style.left = (rect.right + 8) + 'px';
+  wrap.style.top = (rect.top - 6) + 'px';
+  let html = '<div class="fg-xp">+' + xp + ' XP</div>';
+  if (coins > 0) html += '<div class="fg-coin">+' + coins + ' 🪙</div>';
+  wrap.innerHTML = html;
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 1400);
+}
+
+// Ripple verde expandindo a partir do check
+function spawnCheckRipple(rect) {
+  if (!rect) return;
+  const r = document.createElement('div');
+  r.className = 'check-ripple';
+  r.style.left = (rect.left + rect.width / 2) + 'px';
+  r.style.top = (rect.top + rect.height / 2) + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 650);
+}
+
 let toastTimeout = null;
 function showToast(msg) {
   let toast = document.getElementById('toast');
@@ -2898,8 +3090,15 @@ function renderBlocks() {
           e.stopPropagation();
           if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
           const wasChecked = isChecked(key, b.time);
+          if (!wasChecked) {
+            // Captura a posição ANTES do renderAll (que destrói o nó)
+            const rect = checkEl.getBoundingClientRect();
+            const coins = b.type === 'estudo' ? coinsForStudyBlock(state.config.pomo) : 0;
+            playSound('check');
+            spawnCheckRipple(rect);
+            spawnFloatGain(checkEl, b.xp, coins);
+          }
           toggleCheck(key, b.time, b);
-          if (!wasChecked) playSound('check');
           renderAll();
         };
       }
@@ -2916,6 +3115,7 @@ function renderBlocks() {
   document.getElementById('stat-p').textContent = pD + '/' + pT;
 }
 
+let _prevPendingToday = null;
 function renderXP() {
   const stats = computeStats();
   document.getElementById('xp-total').textContent = stats.totalXP;
@@ -2923,8 +3123,35 @@ function renderXP() {
   document.getElementById('top-level').textContent = getLevel(stats.totalXP);
   document.getElementById('xp-bar').style.width = getLevelPct(stats.totalXP) + '%';
   document.getElementById('week-xp-val').textContent = 'Semana: ' + (stats.weekXP[state.uiWeek - 1] || 0) + ' XP';
-  document.getElementById('today-xp-val').textContent = 'Hoje: ' + stats.todayXP + ' XP';
+  renderTodayPending(stats);
   document.getElementById('stat-w').textContent = stats.weekChecksOfCurrent + ' ✓';
+}
+
+function renderTodayPending(stats) {
+  const el = document.getElementById('today-xp-val');
+  if (!el) return;
+  const todayKey = dk(new Date());
+  if (isDayClosed(todayKey)) {
+    el.textContent = '✓ Hoje encerrado';
+    el.className = 'today-xp today-closed';
+    _prevPendingToday = null;
+    return;
+  }
+  if (stats.todayXP > 0 || stats.todayCoins > 0) {
+    el.textContent = 'Hoje: +' + stats.todayXP + ' XP · +' + stats.todayCoins + ' 🪙';
+    el.className = 'today-xp today-pending';
+    const cur = stats.todayXP * 1000 + stats.todayCoins;
+    if (_prevPendingToday !== null && cur > _prevPendingToday) {
+      el.classList.remove('flash');
+      void el.offsetWidth; // reinicia animação
+      el.classList.add('flash');
+    }
+    _prevPendingToday = cur;
+  } else {
+    el.textContent = 'Hoje: —';
+    el.className = 'today-xp';
+    _prevPendingToday = 0;
+  }
 }
 
 // ============================================================
@@ -2932,11 +3159,37 @@ function renderXP() {
 // ============================================================
 function renderAnalytics() {
   const stats = computeStats();
+  renderAnalyticsProfile(stats);
+  renderAdherenceCards(stats);
+  renderGoalWeekDots(stats);
+  renderAnalyticsStats(stats);
+  renderHeatmapGH(stats);
+  renderHourChart(stats);
+  renderDropoffChart(stats);
+  renderSparkline(stats);
+  setupAnalyticsSubnav();
+}
+
+let _anSubnavBound = false;
+function setupAnalyticsSubnav() {
+  if (_anSubnavBound) return;
+  const nav = document.getElementById('an-subnav');
+  if (!nav) return;
+  nav.addEventListener('click', e => {
+    const chip = e.target.closest('.subnav-chip');
+    if (!chip) return;
+    const view = chip.dataset.view;
+    nav.querySelectorAll('.subnav-chip').forEach(c => c.classList.toggle('active', c.dataset.view === view));
+    document.querySelectorAll('#analytics-page .subview').forEach(v => v.classList.toggle('active', v.dataset.view === view));
+  });
+  _anSubnavBound = true;
+}
+
+function renderAnalyticsProfile(stats) {
   const totalXP = stats.totalXP;
   const level = getLevel(totalXP);
   const pct = getLevelPct(totalXP);
   const nextLvl = LEVELS.find(([t]) => t > totalXP);
-
   document.getElementById('an-level-name').textContent = level;
   document.getElementById('an-level-sub').textContent = nextLvl
     ? `Faltam ${nextLvl[0] - totalXP} XP para ${nextLvl[1]}`
@@ -2944,37 +3197,133 @@ function renderAnalytics() {
   document.getElementById('an-xp-label').textContent = totalXP + ' XP';
   document.getElementById('an-xp-next').textContent = nextLvl ? nextLvl[0] + ' XP' : '';
   document.getElementById('an-xp-bar').style.width = pct + '%';
+}
 
+function renderAnalyticsStats(stats) {
   document.getElementById('an-total-checks').textContent = stats.totalChecks;
   document.getElementById('an-best-week').textContent = stats.bestWeekChecks;
   document.getElementById('an-best-day').textContent = stats.bestDayChecks > 0
     ? `${stats.bestDayLabel} (${stats.bestDayChecks})` : '—';
   document.getElementById('an-best-xp').textContent = stats.bestDayXP + ' XP';
-
   const { cur, best } = calcStreaks(stats.dayStudyMins);
   document.getElementById('an-streak').textContent = cur;
   document.getElementById('an-cur-streak').textContent = cur + ' dias';
   document.getElementById('an-best-streak').textContent = best + ' dias';
+}
 
-  // Heatmap — show only first 18 weeks for visual consistency
-  const weekCountsArr = WEEKS.map((_, wi) => stats.weekChecks[wi] || 0);
-  const showWeeks = weekCountsArr.slice(0, 18);
-  const maxWeek = Math.max(...weekCountsArr, 1);
-  const heatColors = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e635'];
-  const grid = document.getElementById('heatmap-grid');
-  grid.innerHTML = '';
-  // Adjust grid columns to actual count
-  grid.style.gridTemplateColumns = `repeat(${Math.min(WEEKS.length, 18)}, 1fr)`;
-  showWeeks.forEach((count, wi) => {
-    const intensity = Math.min(4, Math.floor((count / maxWeek) * 4));
-    const cell = document.createElement('div');
-    cell.className = 'heatmap-cell';
-    cell.style.background = heatColors[intensity];
-    cell.title = `Semana ${wi+1}: ${count} blocos`;
-    grid.appendChild(cell);
+function setAdhCard(id, agg) {
+  const card = document.getElementById(id);
+  card.classList.remove('low','zero');
+  if (agg.planned === 0) card.classList.add('zero');
+  else if (agg.pct < 20) card.classList.add('low');
+  card.querySelector('.adh-val').textContent = agg.planned > 0
+    ? `${agg.done} / ${agg.planned} min`
+    : '— / — min';
+  const sub = card.querySelector('.adh-sub');
+  if (agg.planned === 0) sub.textContent = 'sem dados ainda';
+  else sub.textContent = `${Math.round(agg.done/60*10)/10}h de ${Math.round(agg.planned/60*10)/10}h`;
+  card.querySelector('.bar-fill').style.width = Math.min(100, agg.pct) + '%';
+  card.querySelector('.adh-pct').textContent = agg.pct + '%';
+}
+
+function renderAdherenceCards(stats) {
+  const today = dk(new Date());
+  const weekKeys = currentWeekDayKeys();
+  const allKeys = Object.keys(stats.dayStudyPlanned).filter(k => k <= today);
+  setAdhCard('adherence-today', aggregateMins(stats.dayStudyDoneMins, stats.dayStudyPlanned, [today]));
+  setAdhCard('adherence-week',  aggregateMins(stats.dayStudyDoneMins, stats.dayStudyPlanned, weekKeys));
+  setAdhCard('adherence-geral', aggregateMins(stats.dayStudyDoneMins, stats.dayStudyPlanned, allKeys));
+}
+
+function renderGoalWeekDotsTo(stats, headlineId, containerId, opts) {
+  opts = opts || {};
+  const headline = document.getElementById(headlineId);
+  const container = document.getElementById(containerId);
+  if (!headline || !container) return;
+  const weekKeys = currentWeekDayKeys();          // Mon..Sun
+  const todayKey = dk(new Date());
+  const skip = !!state.config.skipWeekends;
+  const dayLabels = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const considered = weekKeys.filter((k, i) => !(skip && i >= 5));
+  const passedConsidered = considered.filter(k => k <= todayKey);
+  const metCount = passedConsidered.filter(k => stats.dayMetGoal[k]).length;
+  const totalDays = considered.length;
+  const min = state.config.dailyStudyMin || 60;
+  headline.innerHTML = `Você bateu a meta de ${min}min em <strong>${metCount} de ${totalDays}</strong> ${totalDays === 1 ? 'dia' : 'dias'} esta semana`;
+  container.innerHTML = '';
+  weekKeys.forEach((k, i) => {
+    const dot = document.createElement('span');
+    dot.className = 'goal-dot';
+    const done = stats.dayStudyDoneMins[k] || 0;
+    if (skip && i >= 5) {
+      dot.classList.add('weekend');
+      dot.title = `${dayLabels[i]} — fim de semana pausado`;
+    } else if (k > todayKey) {
+      dot.classList.add('future');
+      dot.title = `${dayLabels[i]} — futuro`;
+    } else if (stats.dayMetGoal[k]) {
+      dot.classList.add('met');
+      dot.title = `${dayLabels[i]}: ${done} min ✓`;
+    } else {
+      dot.classList.add('miss');
+      dot.title = `${dayLabels[i]}: ${done} min (meta ${min})`;
+    }
+    if (opts.highlightToday && k === todayKey) dot.classList.add('today');
+    dot.textContent = dayLabels[i][0];
+    container.appendChild(dot);
   });
+}
 
-  // Hour chart
+function renderGoalWeekDots(stats) {
+  renderGoalWeekDotsTo(stats, 'goal-week-headline-h', 'goal-week-dots-h', { highlightToday: true });
+  renderGoalWeekDotsTo(stats, 'goal-week-headline',   'goal-week-dots',   {});
+}
+
+function renderHeatmapGH(stats) {
+  const N_WEEKS = 16;
+  const heatColors = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e635'];
+  const goal = state.config.dailyStudyMin || 60;
+  const skip = !!state.config.skipWeekends;
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  const todayKey = dk(todayDate);
+  const startMon = mondayOf(todayDate);
+  startMon.setDate(startMon.getDate() - 7 * (N_WEEKS - 1));
+  const grid = document.getElementById('heatmap-grid-gh');
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${N_WEEKS}, 1fr)`;
+  for (let col = 0; col < N_WEEKS; col++) {
+    for (let row = 0; row < 7; row++) {
+      const d = new Date(startMon);
+      d.setDate(d.getDate() + col * 7 + row);
+      const key = dk(d);
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      const dow = d.getDay();
+      if (d > todayDate) {
+        cell.classList.add('future');
+        cell.title = `${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} — futuro`;
+      } else if (skip && (dow === 0 || dow === 6)) {
+        cell.classList.add('weekend-off');
+        cell.title = `${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} — fim de semana`;
+      } else {
+        const done = stats.dayStudyDoneMins[key] || 0;
+        let intensity;
+        if (goal <= 0) intensity = done > 0 ? 4 : 0;
+        else {
+          const pct = (done / goal) * 100;
+          intensity = pct >= 100 ? 4 : Math.min(4, Math.floor(pct / 25));
+        }
+        cell.style.background = heatColors[intensity];
+        const pctTxt = goal > 0 ? Math.round((done/goal)*100) : (done>0?100:0);
+        const label = key === todayKey ? ' (hoje)' : '';
+        cell.title = `${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}${label}: ${done} de ${goal} min (${pctTxt}%)`;
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function renderHourChart(stats) {
   const startH = parseInt(state.config.start.split(':')[0]);
   const endH = parseInt(state.config.end.split(':')[0]) + 1;
   const hours = [];
@@ -2994,6 +3343,65 @@ function renderAnalytics() {
     wrap.title = `${h}h: ${count} blocos concluídos`;
     chart.appendChild(wrap);
   });
+}
+
+function renderDropoffChart(stats) {
+  const wrap = document.getElementById('dropoff-chart');
+  wrap.innerHTML = '';
+  const keys = Object.keys(stats.sessionStats)
+    .map(Number).sort((a,b) => a - b)
+    .filter(s => stats.sessionStats[s].total > 0);
+  if (keys.length === 0) {
+    wrap.innerHTML = '<div class="dropoff-empty">Ainda não há dados suficientes.</div>';
+    return;
+  }
+  keys.forEach(s => {
+    const { done, total } = stats.sessionStats[s];
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    const row = document.createElement('div');
+    row.className = 'dropoff-row';
+    row.innerHTML = `
+      <div class="do-label">Sessão ${s + 1}</div>
+      <div class="do-bar"><div class="do-fill${pct < 50 ? ' low' : ''}" style="width:${pct}%"></div></div>
+      <div class="do-pct">${pct}%</div>
+      <div class="do-count">${done}/${total}</div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function renderSparkline(stats) {
+  const svg = document.getElementById('an-sparkline');
+  if (!svg) return;
+  const byWeek = {};
+  Object.entries(stats.dayStudyDoneMins).forEach(([key, mins]) => {
+    if (!mins) return;
+    const d = new Date(key + 'T00:00:00');
+    const wk = dk(mondayOf(d));
+    byWeek[wk] = (byWeek[wk] || 0) + mins;
+  });
+  const todayMon = mondayOf(new Date());
+  const series = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(todayMon); d.setDate(d.getDate() - i * 7);
+    const wk = dk(d);
+    series.push({ wk, mins: byWeek[wk] || 0 });
+  }
+  const max = Math.max(...series.map(s => s.mins), 1);
+  const W = 120, H = 24, pad = 2;
+  const stepX = (W - pad*2) / (series.length - 1);
+  const points = series.map((s, i) => {
+    const x = pad + i * stepX;
+    const y = H - pad - (s.mins / max) * (H - pad*2);
+    return [x, y];
+  });
+  const poly = points.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const last = points[points.length - 1];
+  svg.innerHTML = `
+    <polyline points="${poly}" stroke="var(--accent)" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.2" fill="var(--accent)"/>
+  `;
+  svg.parentElement.title = `Últimas 8 semanas: ${series.map(s => s.mins + 'min').join(' · ')}`;
 }
 
 // ============================================================

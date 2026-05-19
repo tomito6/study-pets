@@ -20,6 +20,10 @@ Pontos a pensar antes de implementar:
 - Equilibrar: skills muito fortes viram pegadinha (quem não pegou tá perdendo). Preferir skills temáticas/situacionais a numéricas puras.
 - UI: provavelmente um modal/aba "Skills" no perfil, parecido com loja de pets. Árvore visual ou lista categorizada?
 
+## ~~Contador "do dia" em tempo real (XP e moedas previstos)~~ → implementado
+
+Implementado no card de XP (linha "Hoje"): mostra `Hoje: +X XP · +Y 🪙` em laranja ("pendente") quando hoje tem checks e não foi encerrado. Vira `✓ Hoje encerrado` em verde quando o dia fecha (os totais já abrigam o ganho). `computeStats` ganhou `todayCoins` (moedas de estudo + bônus de streak se o mínimo foi batido). Pequeno pulse na mudança pra reforço sem virar caça-níquel. XP previsto do pet ativo ficou de fora (sub-ideia que pode virar plan separado).
+
 ## Builds de estudo por horário
 
 As skills viram a base pra **builds** — combinações que o usuário monta dependendo do horário/contexto do dia.
