@@ -69,7 +69,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 Mais importantes que valores concretos. Estes você protege ao mexer no código:
 
 - **Estado centralizado**: tudo em um único objeto `state`. Não criar globais soltas.
-- **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null }` (guarda o pet equipado no momento do check). Retrocompat: `true` antigo é tratado como `{ pet: null }` por `checkPet()`.
+- **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null, bonus: number }` — `pet` = equipado no momento do check; `bonus` = multiplicador aditivo de XP (0 ou 0.05) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
 - **Memoization em `generateBlocks`**: a função tem cache. Sempre que alterar config ou eventos, chamar `clearBlockCache()`.
 - **Stats em uma passada**: `computeStats()` calcula tudo de uma vez iterando os dias uma única vez. Não criar funções separadas que reiteram.
 - **Datas dinâmicas**: sem dates hardcoded. As semanas são construídas a partir da semana atual.
@@ -117,6 +117,7 @@ INIT (no final)
 - **`periodStart` é fixo por sessão**: na aba Geral, o input "Início" fica `disabled`. Só `periodEnd` e `skipWeekends` são editáveis. `resetSettings` e `clearPeriod` preservam o `periodStart`. Pra mudar o início, o usuário precisa **cancelar a sessão**.
 - **Cancelar sessão**: botão "Zona de perigo" na aba Geral. Modal de confirmação lista o que vai apagar. Ao confirmar: zera `checks`, `events`, `lunchOverrides`, `pets`, `coinsSpent`, e reseta `config` pro `DEFAULT_CFG`. Em seguida abre o onboarding (equivalente a uma conta nova). É a única forma de redefinir o `periodStart`.
 - **Dia vazio**: se `blocksForDay()` retorna `[]` (fim de semana com `skipWeekends`), `renderBlocks` mostra "🌴 Dia livre".
+- **Dia futuro**: navegar pra qualquer dia > hoje mostra blocos esmaecidos (`.block-row.day-future`, opacity .45) e clicar dispara toast "Ainda não chegou 🔮" — não inicia timer nem marca check. Helper `isFutureDay(dateKey)`. `toggleCheck` também blinda como fallback. Espelha o padrão `.day-closed`/`isDayClosed` que já existia pra dias encerrados.
 - **Modo foco**: ao clicar num bloco de estudo ou pausa **do momento** (passou validação de `tryStartTimer`), abre overlay tela-cheia `#focus-overlay` por cima da UI: chip "Sessão N · Bloco M", nome do bloco limpo, timer circular SVG que drena (`stroke-dashoffset`), "+X XP · +Y 🪙 ao concluir", e card "Em seguida" com o próximo bloco do dia (ou "Fim do dia 🌙"). Anel verde pra estudo, azul pra pausa. Sem controles centrais (sem pausar nem skip — decisão consciente). Botão "← Sair do foco" no topo só fecha o overlay e mantém o timer rodando — pra cancelar mesmo, a `timer-bar` no topo da UI normal tem o "✕ Parar". O `onTimerEnd`/`stopTimer` fecham o foco automaticamente. `updateFocusTimer()` é chamada dentro de `updateTimerDisplay()` a cada segundo. Espaço `.focus-scene-stage` está reservado pra cena ambiente (personagem + pet), por enquanto vazio.
 
 ## Aba Análise
@@ -181,7 +182,17 @@ Campos: `id` (key), `name` (label em pt-BR), `emoji` (fallback visual quando spr
 
 A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). `renderShop()` é chamado em `openPetsShop()` e após cada compra/equip — não no `renderProfile()`. A função interna `buildPetCard(pet, { showPrice })` é compartilhada com a aba "Meus pets" (ver abaixo).
 
-A **aba "Meus pets"** aparece em **dois lugares ao mesmo tempo**: (1) inline no perfil, abaixo dos stats — header "Meus pets" + contador "X de N ✨" + grid `#my-pets-grid-profile`; (2) num modal próprio (`#my-pets-panel`) acessível pelo botão "🐾 Meus pets (em destaque)" no perfil. Ambos mostram a mesma coisa: cards dos pets em `state.pets.owned`, sem preço, com botão **Equipar / ✓ Equipada** + level badge "Lv. N" ao lado do nome. Pet ativo ganha borda verde + badge "Ativa" no canto. Empty state quando coleção vazia. `renderOwnedPets()` itera os dois grids (`my-pets-grid` e `my-pets-grid-profile`) e popula ambos — é chamado em `renderProfile()`, `openMyPets()` e após cada compra/equip.
+**Estrutura da área de pets no perfil** (abaixo dos stats 4-col):
+
+1. **Card "Pet ativo"** (`.active-pet-card`, id `#active-pet-card`): destaque do pet equipado no momento. Sprite pequeno (54×54) + tag "Pet ativo" + nome + badge `Lv. N` + barra de XP + texto `X / Y XP · faltam Z pro Lv. N+1`. Quando não tem pet equipado, esconde e mostra `#no-active-pet` ("Nenhum pet equipado. Adote um na loja e equipe em 🐾 Meus pets."). Populado por `renderActivePetCard()` chamado dentro de `renderProfile()` (que já roda em equip/compra). Cálculo de XP usa `getPetXP`, `getPetLevel` (já existentes) + thresholds do `LEVELS`.
+
+2. **Botão "🐾 Meus pets"** (`.shop-open-btn` com `onclick=openMyPets()`): abre o modal `#my-pets-panel` com a grade completa de todos os pets adquiridos. Mostra contador `X/N ✨` no canto direito (`#my-pets-count`). Modal lista todos via `renderOwnedPets()` populando `#my-pets-grid`, inclusive o ativo (com badge "✓ Equipada"). Equipar/desequipar de dentro do modal é grátis e instantâneo.
+
+3. **Botão "🛒 Loja de pets"**: igual antes — abre modal de compra.
+
+**Subtitle do hero do perfil** (`#char-title-sub`): mostra **só o nível do usuário** (ex: "Dedicado"). Info do pet vive no card dedicado abaixo — sem redundância.
+
+Removido: grade inline `#my-pets-grid-profile` e header "Meus pets" inline. O id `my-pets-count` foi reaproveitado pro contador no botão.
 
 **Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: petId | null }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada estudo done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera `state.pets.xp` e marca `yesterday` como processado (sem aplicar retroativamente). Level usa as mesmas thresholds do usuário (`LEVELS` + `getLevelIdx`). Pausa não conta (só estudo). Pet null no momento do check = ninguém ganha XP.
 
@@ -211,17 +222,36 @@ Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPrompt
 
 **Economia real** (não é mais decisão futura): ao adotar um pet, abre modal de confirmação `#pet-buy-confirm` ("Adotar X por 🪙 Y?"). Ao confirmar: `state.pets.owned.push(...)`, `state.pets.active = id`, **`state.coinsSpent += pet.price`**. Saldo exibido em `#char-coins` = `getCoinBalance() = stats.coins - coinsSpent` (nunca negativo). Se saldo < preço, botão "Adotar" ganha classe `.shop-btn.locked` (opacity .5, cursor:not-allowed) e clicar dispara toast "Moedas insuficientes" — não abre o modal. **Equipar/desequipar é grátis** e instantâneo (sem confirmação, sem custo). Cancelar sessão zera `coinsSpent` junto com o resto.
 
+## Sistema de skills
+
+Skills opcionais por pet — ficam visíveis e ativáveis dentro do modal "Meus pets" (no card do pet correspondente). Cada pet pode ter um array `skills: [{ id, name, desc }]` no `PETS`. Quem tem hoje: **Coruja** (`owl`) → `noturno` (+5% XP em estudos a partir das 18h) e `voo` (placeholder, sem efeito).
+
+**Escolha exclusiva por pet**: `state.skills.owl` guarda **só uma** skill ativa por vez (`'noturno' | 'voo' | null`). Clicar na skill ativa desliga (vira null); clicar em outra troca. `state.skills.activatedAt` (ms) marca o timestamp da última troca — usado pra prevenir exploit.
+
+**Anti-exploit ("equipar no final")**: o bônus de XP é decidido **no momento do check** (não retroativamente), e a skill precisa estar ativa **desde antes do bloco começar**. `noturnoBonusEligible(b, dateKey)` valida: bloco de estudo + coruja equipada + skill `noturno` ativa + hora >= 18 + `dateKey === hoje` + `activatedAt <= blockStartMs`. Se elegível, `toggleCheck` salva `bonus: 0.05` dentro do check: `state.checks[date][time] = { pet, bonus }`. Sem bonus, salva `bonus: 0`. Bônus salvo é permanente — desligar a skill depois não revoga.
+
+**XP efetivo**: `xpFromCheck(b, check)` retorna `Math.round(b.xp * (1 + (check.bonus || 0)))`. Usado em `computeStats` (todos os pontos onde XP é agregado: `totalXP`, `weekXP`, `todayXP`, `dayXP`), em `applyPendingPetXP` (XP creditado pro pet também respeita bônus), e no `spawnFloatGain` no momento do check (mostra o número final, não o base).
+
+**UI**: dentro do card do pet no modal `#my-pets-panel`, abaixo do botão Equipar, aparece a seção "Skills" com toggles estilo switch. Estado visual: `.pet-skill-row.active` = borda verde + nome em accent + switch `.ps-toggle.on` (knob deslocado). Toggle é `<button>` (acessível por teclado). Cancelar sessão zera `state.skills`.
+
+**Pra adicionar nova skill**: (1) adicionar entrada no array `skills` do pet em PETS, (2) se for skill de XP, adicionar entrada em `xxxBonusEligible(b, dateKey)` análoga a `noturnoBonusEligible` e expandir o cálculo de `bonus` em `toggleCheck`. O resto da pipeline (`xpFromCheck`, render no card, save/load) já cobre genericamente.
+
 ## Schema do Firestore
 
 ```
 users/{uid} {
-  checks, events, lunchOverrides,
+  checks,        // { "YYYY-MM-DD": { "HH:MM": { pet: petId|null, bonus: number } } }   bonus = multiplicador aditivo de XP salvo no check (0 ou 0.05 hoje)
+  events, lunchOverrides,
   closedDays: { "YYYY-MM-DD": true, ... },   // dias encerrados manualmente via botão "Encerrar o dia"
   pets: {
     owned: [petId, ...],
     active: petId | null,
     xp: { petId: number, ... },           // XP acumulado por pet (creditado quando o dia em que o check foi feito fecha)
     xpProcessedUntil: "YYYY-MM-DD" | null  // último dia já processado por applyPendingPetXP (null = ainda não inicializado)
+  },
+  skills: {
+    owl: 'noturno' | 'voo' | null,         // skill ativa pra coruja (exclusivo — só uma por pet)
+    activatedAt: number                    // ms da última troca, usado pra validar elegibilidade do bônus no check
   },
   coinsSpent,
   config: {

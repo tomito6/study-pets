@@ -307,6 +307,29 @@
   .shop-open-btn .shop-open-icon { font-size:24px; }
   .shop-open-btn .shop-open-label { flex:1; text-align:left; font-size:14px; font-weight:600; }
   .shop-open-btn .shop-open-arrow { color:var(--muted); font-size:20px; }
+  .shop-open-btn .shop-open-count { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; }
+
+  /* Card "Pet ativo" destacado (substitui a grade inline antiga) */
+  .active-pet-card {
+    background:linear-gradient(135deg, #1f2618 0%, #1a1f15 100%);
+    border:1px solid var(--accent2);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .active-pet-card .ap-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:54px; height:54px; object-fit:contain; flex-shrink:0; }
+  .active-pet-card .ap-info { flex:1; min-width:0; }
+  .active-pet-card .ap-tag { font-size:9px; color:var(--accent2); text-transform:uppercase; letter-spacing:.1em; font-weight:600; margin-bottom:3px; }
+  .active-pet-card .ap-name-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .active-pet-card .ap-name { font-size:15px; font-weight:600; color:var(--text); }
+  .active-pet-card .ap-lv { background:linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%); color:#0e0e0f; font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px; font-family:'DM Mono',monospace; }
+  .active-pet-card .ap-bar-track { height:5px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+  .active-pet-card .ap-bar-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+  .active-pet-card .ap-xp { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:4px; }
+  .no-active-pet { background:var(--bg2); border:1px dashed var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; text-align:center; font-size:12px; color:var(--muted); }
   .shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .shop-item { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 10px; background:var(--bg3); border-radius:var(--radius-sm); border:1px solid var(--border); }
   .shop-item-img { width:64px; height:64px; image-rendering:pixelated; image-rendering:crisp-edges; object-fit:contain; }
@@ -328,6 +351,32 @@
   .shop-item-name-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
   .shop-item-lv { background:rgba(163,230,53,.15); color:var(--accent); font-size:10px; padding:1px 6px; border-radius:99px; font-family:'DM Mono',monospace; }
 
+  /* Skills no card do pet (dentro do modal "Meus pets") */
+  .pet-skills-wrap { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+  .pet-skills-header { font-size:9px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:2px; }
+  .pet-skill-row {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:8px 10px; cursor:pointer; font-family:'DM Sans',sans-serif;
+    color:var(--text); text-align:left; transition:border-color .15s, background .15s;
+  }
+  .pet-skill-row:hover { border-color:#555; }
+  .pet-skill-row.active { border-color:var(--accent); background:rgba(163,230,53,.08); }
+  .pet-skill-row .ps-info { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
+  .pet-skill-row .ps-name { font-size:12px; font-weight:600; color:var(--text); }
+  .pet-skill-row .ps-desc { font-size:10px; color:var(--muted); line-height:1.3; }
+  .pet-skill-row.active .ps-name { color:var(--accent); }
+  .pet-skill-row .ps-toggle {
+    flex-shrink:0; width:30px; height:16px; background:var(--bg2); border:1px solid var(--border);
+    border-radius:99px; position:relative; transition:background .2s, border-color .2s;
+  }
+  .pet-skill-row .ps-toggle.on { background:var(--accent); border-color:var(--accent); }
+  .pet-skill-row .ps-knob {
+    position:absolute; top:1px; left:1px; width:12px; height:12px; background:var(--text);
+    border-radius:50%; transition:transform .2s; box-shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+  .pet-skill-row .ps-toggle.on .ps-knob { transform:translateX(14px); background:#0e0e0f; }
+
   /* MEUS PETS empty state (no modal) */
   .my-pets-empty { grid-column:1/-1; text-align:center; padding:18px 8px; font-size:13px; color:var(--muted); line-height:1.5; }
   .my-pets-empty .mpe-icon { font-size:24px; margin-bottom:6px; }
@@ -340,6 +389,8 @@
   .finish-day-banner .fdb-check { color:var(--accent); font-size:16px; }
   .block-row.day-closed { opacity:.55; }
   .block-row.day-closed .check { cursor:default; }
+  .block-row.day-future { opacity:.45; cursor:default; }
+  .block-row.day-future .check { cursor:default; pointer-events:none; }
 
   /* DAY SUMMARY */
   .ds-hero { display:flex; gap:14px; justify-content:center; padding:14px 0 18px; }
@@ -907,6 +958,7 @@
   </div>
 </div>
 
+
 <!-- MEUS PETS PANEL -->
 <div class="panel-overlay center" id="my-pets-panel" onclick="closeIfOutside(event,'my-pets-panel')">
   <div class="panel-sheet">
@@ -1163,24 +1215,35 @@
     <div class="profile-stat-mini coins-stat"><div class="psm-val" id="char-coins">0</div><div class="psm-label">Moedas</div></div>
   </div>
 
-  <!-- MEUS PETS HEADER + GRID INLINE -->
-  <div class="my-pets-header">
-    <span class="my-pets-header-title">Meus pets</span>
-    <span class="my-pets-header-count" id="my-pets-count">0 de 0 ✨</span>
+  <!-- PET ATIVO (card destacado) -->
+  <div class="active-pet-card" id="active-pet-card" style="display:none">
+    <img class="ap-sprite" id="ap-sprite" alt="">
+    <div class="ap-info">
+      <div class="ap-tag">Pet ativo</div>
+      <div class="ap-name-row">
+        <span class="ap-name" id="ap-name">—</span>
+        <span class="ap-lv" id="ap-lv">Lv. 1</span>
+      </div>
+      <div class="ap-bar-track"><div class="ap-bar-fill" id="ap-bar-fill" style="width:0%"></div></div>
+      <div class="ap-xp" id="ap-xp">— XP</div>
+    </div>
   </div>
-  <div class="shop-grid" id="my-pets-grid-profile" style="margin-bottom:12px;"></div>
+  <div class="no-active-pet" id="no-active-pet">
+    Nenhum pet equipado. Adote um na loja e equipe em "🐾 Meus pets".
+  </div>
+
+  <!-- MEUS PETS BUTTON -->
+  <button type="button" class="shop-open-btn" onclick="openMyPets()">
+    <span class="shop-open-icon">🐾</span>
+    <span class="shop-open-label">Meus pets</span>
+    <span class="shop-open-count" id="my-pets-count">0 ✨</span>
+    <span class="shop-open-arrow">›</span>
+  </button>
 
   <!-- PETS SHOP BUTTON -->
   <button type="button" class="shop-open-btn" onclick="openPetsShop()">
     <span class="shop-open-icon">🛒</span>
     <span class="shop-open-label">Loja de pets</span>
-    <span class="shop-open-arrow">›</span>
-  </button>
-
-  <!-- MEUS PETS BUTTON (modal) -->
-  <button type="button" class="shop-open-btn" onclick="openMyPets()">
-    <span class="shop-open-icon">🐾</span>
-    <span class="shop-open-label">Meus pets (em destaque)</span>
     <span class="shop-open-arrow">›</span>
   </button>
 
@@ -1258,6 +1321,30 @@ function getCoinBalance() {
   return Math.max(0, stats.coins - (state.coinsSpent || 0));
 }
 
+// ============================================================
+// SKILLS — bônus de XP por pet/skill ativa
+// ============================================================
+// Skill Noturno: +5% XP em blocos de estudo a partir das 18h, com a coruja equipada
+// e a skill ativa DESDE ANTES do bloco começar (evita exploit de equipar no final).
+function noturnoBonusEligible(b, dateKey) {
+  if (b.type !== 'estudo') return false;
+  if (state.pets.active !== 'owl') return false;
+  if (!state.skills || state.skills.owl !== 'noturno') return false;
+  const hour = parseInt(b.time.split(':')[0]);
+  if (hour < 18) return false;
+  if (dateKey !== dk(new Date())) return false;
+  const [bh, bm] = b.time.split(':').map(Number);
+  const blockStartMs = new Date().setHours(bh, bm, 0, 0);
+  if ((state.skills.activatedAt || 0) > blockStartMs) return false;
+  return true;
+}
+
+// XP efetivo de um check: base * (1 + bonus salvo no check). Sem check ou sem bonus = base.
+function xpFromCheck(b, check) {
+  if (!check || !check.bonus) return b.xp;
+  return Math.round(b.xp * (1 + check.bonus));
+}
+
 const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
@@ -1278,6 +1365,7 @@ const state = {
   closedDays: {},      // { "2026-05-07": true } — dias encerrados manualmente pelo usuário
   config: {...DEFAULT_CFG},
   pets: { owned: [], active: null, xp: {}, xpProcessedUntil: null },   // xp/level por pet. xpProcessedUntil = último dia já creditado (YYYY-MM-DD | null = "ainda não inicializado")
+  skills: { owl: null, activatedAt: 0 },   // skill ativa por pet (exclusivo — só uma por pet). activatedAt = ms da última troca, usado p/ evitar exploit "ativa no final"
   coinsSpent: 0,       // total de moedas gastas (em pets, etc). Saldo = ganho - gasto.
 
   // UI state (not persisted)
@@ -1293,7 +1381,11 @@ const PETS = {
   cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `idle/pets/cat/${i}.png` },
   cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `idle/pets/cow/${i}.png` },
   snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `idle/pets/snake/${i}.png` },
-  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `idle/pets/owl/${i}.png` },
+  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `idle/pets/owl/${i}.png`,
+           skills: [
+             { id: 'noturno', name: 'Noturno', desc: '+5% XP em estudos a partir das 18h' },
+             { id: 'voo',     name: 'Voo',     desc: 'Permite o usuário voar (placeholder)' },
+           ] },
   dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `idle/pets/dog/${i}.png` },
 };
 
@@ -1568,8 +1660,13 @@ function isDayClosed(dateKey) {
   return !!(state.closedDays && state.closedDays[dateKey]);
 }
 
+function isFutureDay(dateKey) {
+  return dateKey > dk(new Date());
+}
+
 function toggleCheck(dateKey, blockTime, block) {
   if (isDayClosed(dateKey)) return;   // dia encerrado: read-only
+  if (isFutureDay(dateKey)) return;   // dia futuro: ainda não chegou
   if (!state.checks[dateKey]) state.checks[dateKey] = {};
   if (state.checks[dateKey][blockTime]) {
     delete state.checks[dateKey][blockTime];
@@ -1577,7 +1674,10 @@ function toggleCheck(dateKey, blockTime, block) {
   } else {
     // Guarda o pet equipado no momento do check (null se nenhum).
     // No fim do dia, applyPendingPetXP() credita o XP no pet certo.
-    state.checks[dateKey][blockTime] = { pet: state.pets.active || null };
+    // bonus: multiplicador aditivo (ex: 0.05 = +5%) decidido no momento, baseado em skills ativas.
+    let bonus = 0;
+    if (block && noturnoBonusEligible(block, dateKey)) bonus = 0.05;
+    state.checks[dateKey][blockTime] = { pet: state.pets.active || null, bonus };
   }
   scheduleSave();
 }
@@ -1628,7 +1728,8 @@ function applyPendingPetXP() {
       const petId = checkPet(dayKey, b.time);
       if (!petId) return;
       if (!state.pets.xp) state.pets.xp = {};
-      state.pets.xp[petId] = (state.pets.xp[petId] || 0) + (b.xp || 0);
+      const check = state.checks[dayKey] && state.checks[dayKey][b.time];
+      state.pets.xp[petId] = (state.pets.xp[petId] || 0) + (xpFromCheck(b, check) || 0);
     });
   });
 
@@ -1700,13 +1801,17 @@ function computeStats() {
         dayChecks++;
         if (b.type === 'estudo') dayStudyMins += state.config.pomo;
 
+        // XP efetivo do check (aplica bônus salvo no momento da marcação)
+        const check = state.checks[key] && state.checks[key][b.time];
+        const effXP = xpFromCheck(b, check);
+
         if (isPast) {
           // Agregados só de dias fechados (XP/moedas/horas/etc.)
           stats.totalChecks++;
-          stats.totalXP += b.xp;
-          dayXP += b.xp;
+          stats.totalXP += effXP;
+          dayXP += effXP;
           weekHasCheck = true;
-          stats.weekXP[wi] += b.xp;
+          stats.weekXP[wi] += effXP;
           stats.weekChecks[wi]++;
           if (b.type === 'estudo') {
             stats.coins += coinsForStudyBlock(state.config.pomo);
@@ -1717,7 +1822,7 @@ function computeStats() {
         }
 
         if (key === todayKey) {
-          stats.todayXP += b.xp;
+          stats.todayXP += effXP;
           stats.todayChecks++;
           if (b.type === 'estudo') stats.todayCoins += coinsForStudyBlock(state.config.pomo);
         }
@@ -1811,6 +1916,9 @@ async function loadData(uid) {
         xpProcessedUntil: (d.pets && typeof d.pets.xpProcessedUntil === 'string') ? d.pets.xpProcessedUntil : null,
       };
       state.closedDays = (d.closedDays && typeof d.closedDays === 'object') ? d.closedDays : {};
+      state.skills = (d.skills && typeof d.skills === 'object')
+        ? { owl: d.skills.owl || null, activatedAt: d.skills.activatedAt || 0 }
+        : { owl: null, activatedAt: 0 };
       state.coinsSpent = (typeof d.coinsSpent === 'number') ? d.coinsSpent : 0;
     } else {
       isNew = true;
@@ -1818,6 +1926,7 @@ async function loadData(uid) {
       state.closedDays = {};
       state.config = { ...DEFAULT_CFG };
       state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
+      state.skills = { owl: null, activatedAt: 0 };
       state.coinsSpent = 0;
     }
   } catch (e) {
@@ -1850,6 +1959,7 @@ function scheduleSave() {
         closedDays: state.closedDays || {},
         config: state.config,
         pets: state.pets,
+        skills: state.skills || { owl: null, activatedAt: 0 },
         coinsSpent: state.coinsSpent || 0,
       }, { merge: true });
       showSaveIndicator('Salvo ✓', true);
@@ -2347,6 +2457,7 @@ window.confirmCancelSession = () => {
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
   state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
+  state.skills = { owl: null, activatedAt: 0 };
   if ('coinsSpent' in state) state.coinsSpent = 0;
   closeCancelConfirm();
   closeSettings();
@@ -2612,6 +2723,45 @@ function buildPetCard(pet, { showPrice }) {
     startPetAnim();
   };
   item.appendChild(btn);
+
+  // Skills: só na aba "Meus pets" (showPrice=false), só se o pet tem skills cadastradas, só se o usuário possui o pet
+  if (!showPrice && owned && pet.skills && pet.skills.length) {
+    const skillsWrap = document.createElement('div');
+    skillsWrap.className = 'pet-skills-wrap';
+    const header = document.createElement('div');
+    header.className = 'pet-skills-header';
+    header.textContent = 'Skills';
+    skillsWrap.appendChild(header);
+
+    pet.skills.forEach(skill => {
+      const active = state.skills && state.skills[pet.id] === skill.id;
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'pet-skill-row' + (active ? ' active' : '');
+      row.innerHTML = `
+        <span class="ps-info">
+          <span class="ps-name">${skill.name}</span>
+          <span class="ps-desc">${skill.desc}</span>
+        </span>
+        <span class="ps-toggle ${active ? 'on' : ''}"><span class="ps-knob"></span></span>
+      `;
+      row.onclick = () => {
+        if (!state.skills) state.skills = { activatedAt: 0 };
+        if (state.skills[pet.id] === skill.id) {
+          state.skills[pet.id] = null;
+        } else {
+          state.skills[pet.id] = skill.id;
+        }
+        state.skills.activatedAt = Date.now();
+        scheduleSave();
+        renderOwnedPets();
+      };
+      skillsWrap.appendChild(row);
+    });
+
+    item.appendChild(skillsWrap);
+  }
+
   return item;
 }
 
@@ -2625,7 +2775,7 @@ function renderShop() {
 }
 
 function renderOwnedPets() {
-  ['my-pets-grid', 'my-pets-grid-profile'].forEach(id => {
+  ['my-pets-grid'].forEach(id => {
     const grid = document.getElementById(id);
     if (!grid) return;
     grid.innerHTML = '';
@@ -3066,8 +3216,9 @@ function renderBlocks() {
     const nowClass = isNow ? ' now-block' : '';
     const timerClass = (timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime) ? ' timer-active' : '';
     const closedClass = isDayClosed(key) ? ' day-closed' : '';
+    const futureClass = isFutureDay(key) ? ' day-future' : '';
     row.className = 'block-row' + (isP?' pausa-row':'') + (isA?' almoco-row':'') + (isEv?' event-row':'')
-      + (done && (isE || isP) ? ' done' : '') + sessionClass + nowClass + timerClass + closedClass;
+      + (done && (isE || isP) ? ' done' : '') + sessionClass + nowClass + timerClass + closedClass + futureClass;
 
     let xpLabel = '';
     if (isE || isP) xpLabel = `<span class="block-xp session-xp">+${b.xp} XP</span>`;
@@ -3079,8 +3230,10 @@ function renderBlocks() {
 
     if (isE || isP) {
       const dayClosed = isDayClosed(key);
+      const dayFuture = isFutureDay(key);
       row.onclick = (e) => {
         if (e.target.closest('.check')) return;
+        if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
         if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
         tryStartTimer(b);
       };
@@ -3088,15 +3241,19 @@ function renderBlocks() {
       if (checkEl) {
         checkEl.onclick = (e) => {
           e.stopPropagation();
+          if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
           if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
           const wasChecked = isChecked(key, b.time);
           if (!wasChecked) {
             // Captura a posição ANTES do renderAll (que destrói o nó)
             const rect = checkEl.getBoundingClientRect();
             const coins = b.type === 'estudo' ? coinsForStudyBlock(state.config.pomo) : 0;
+            // XP efetivo já considerando bônus (decidido agora pelas regras de skill)
+            const eligibleBonus = noturnoBonusEligible(b, key) ? 0.05 : 0;
+            const effXP = Math.round(b.xp * (1 + eligibleBonus));
             playSound('check');
             spawnCheckRipple(rect);
-            spawnFloatGain(checkEl, b.xp, coins);
+            spawnFloatGain(checkEl, effXP, coins);
           }
           toggleCheck(key, b.time, b);
           renderAll();
@@ -3421,10 +3578,8 @@ function renderProfile() {
   document.getElementById('char-level-badge').textContent = 'Lv. ' + (lvlIdx + 1);
   document.getElementById('char-name').textContent = 'Estudante';
 
-  // Subtitle: nível + pet ativo (se houver)
-  const activePet = state.pets.active && PETS[state.pets.active];
-  const subLine = activePet ? `${level} · com ${activePet.name}` : level;
-  document.getElementById('char-title-sub').textContent = subLine;
+  // Subtitle: só o nível do usuário (info do pet vive no card destacado abaixo)
+  document.getElementById('char-title-sub').textContent = level;
 
   // Próximo XP label
   document.getElementById('char-xp-next-val').textContent = nextLvl ? (nextLvl[0] - totalXP) + ' XP' : 'MÁX';
@@ -3437,13 +3592,53 @@ function renderProfile() {
   document.getElementById('ps-hours').textContent = h + 'h' + (m > 0 ? m + 'min' : '');
   document.getElementById('char-coins').textContent = getCoinBalance();
 
-  // Header "Meus pets" contador (X de N)
+  // Card do pet ativo + contador no botão "Meus pets"
+  renderActivePetCard();
   const totalPets = Object.keys(PETS).length;
   const ownedCount = (state.pets.owned || []).length;
-  document.getElementById('my-pets-count').textContent = `${ownedCount} de ${totalPets} ✨`;
+  document.getElementById('my-pets-count').textContent = `${ownedCount}/${totalPets} ✨`;
+}
 
-  // Grid inline (renderOwnedPets popula ambos #my-pets-grid e #my-pets-grid-profile)
-  renderOwnedPets();
+function renderActivePetCard() {
+  const activeId = state.pets.active;
+  const pet = activeId && PETS[activeId];
+  const card = document.getElementById('active-pet-card');
+  const empty = document.getElementById('no-active-pet');
+  if (!pet) {
+    card.style.display = 'none';
+    empty.style.display = '';
+    return;
+  }
+  card.style.display = '';
+  empty.style.display = 'none';
+
+  const sprite = document.getElementById('ap-sprite');
+  sprite.src = pet.sprite(0);
+  sprite.alt = pet.name;
+  sprite.onerror = () => { sprite.style.display = 'none'; };
+  sprite.style.display = '';
+
+  document.getElementById('ap-name').textContent = pet.name;
+  const petXP = getPetXP(activeId);
+  const lvl = getPetLevel(activeId);
+  document.getElementById('ap-lv').textContent = 'Lv. ' + lvl;
+
+  const lvlIdx = lvl - 1;
+  const curThreshold = LEVELS[lvlIdx] ? LEVELS[lvlIdx][0] : 0;
+  const nextEntry = LEVELS[lvlIdx + 1];
+  const fill = document.getElementById('ap-bar-fill');
+  const xpLabel = document.getElementById('ap-xp');
+  if (!nextEntry) {
+    fill.style.width = '100%';
+    xpLabel.textContent = `${petXP} XP · nível máximo`;
+  } else {
+    const nextThreshold = nextEntry[0];
+    const inLevel = petXP - curThreshold;
+    const span = nextThreshold - curThreshold;
+    const pct = Math.min(100, Math.round((inLevel / span) * 100));
+    fill.style.width = pct + '%';
+    xpLabel.textContent = `${petXP} / ${nextThreshold} XP · faltam ${nextThreshold - petXP} pro Lv. ${lvl + 1}`;
+  }
 }
 
 </script>
