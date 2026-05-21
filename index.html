@@ -75,10 +75,70 @@
   .day-tab.has-progress:not(.active) .dot{display:block;}
 
   /* DAY EVENTS BAR */
-  .day-events-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .day-events-bar .events-label{font-size:11px;color:var(--muted);}
+  .day-events-bar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;}
   .add-event-btn{font-size:12px;color:var(--accent);background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .add-event-btn:hover{background:var(--green-bg);}
+
+  /* STUDY WINDOWS LIST */
+  .study-window-card{
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    margin-bottom:8px;
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:8px;
+    align-items:center;
+  }
+  .study-window-card .swc-times{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .study-window-card .swc-times input{
+    width:88px;padding:5px 8px;font-size:13px;
+    background:var(--bg3);border:1px solid var(--border);
+    border-radius:var(--radius-sm);color:var(--text);
+    font-family:'DM Mono',monospace;
+  }
+  .study-window-card .swc-sep{color:var(--muted);font-family:'DM Mono',monospace;}
+  .study-window-card .swc-dur{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:6px;}
+  .study-window-card .swc-del{
+    background:transparent;border:none;color:var(--muted);
+    cursor:pointer;padding:4px 8px;font-size:14px;border-radius:4px;
+    transition:color .15s,background .15s;
+  }
+  .study-window-card .swc-del:hover{color:#ef4444;background:rgba(239,68,68,.1);}
+  .add-block-btn{
+    font-size:11px;padding:5px 12px;
+    background:var(--green-bg);color:var(--accent);
+    border:1px solid var(--accent);border-radius:99px;
+    cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
+    transition:filter .15s;
+  }
+  .add-block-btn:hover{filter:brightness(1.15);}
+
+  /* FIT STUDY (suggestions wizard) */
+  .fit-study-btn{width:100%;padding:11px 12px;font-size:13px;color:var(--accent);background:var(--green-bg);border:1px solid var(--accent);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:14px;transition:filter .15s;}
+  .fit-study-btn:hover{filter:brightness(1.15);}
+  .fs-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;}
+  .fs-card.fs-best{border-color:var(--accent);background:var(--green-bg);}
+  .fs-head{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;}
+  .fs-card.fs-best .fs-head{color:var(--accent);}
+  .fs-stats{font-size:14px;color:var(--text);margin-bottom:4px;font-family:'DM Mono',monospace;}
+  .fs-stats strong{color:var(--accent);}
+  .fs-meta{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
+  .fs-card .fs-apply{width:100%;padding:8px;font-size:12px;background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;}
+  .fs-card .fs-apply:hover{filter:brightness(1.1);}
+
+  /* RECURRENCE PICKER */
+  .recurrence-section{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-top:10px;}
+  .recurrence-section.show{display:block;}
+  .weekday-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+  .weekday-chip{padding:6px 11px;border-radius:99px;border:1px solid var(--border);background:var(--bg2);font-size:11px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;transition:all .15s;}
+  .weekday-chip:hover{border-color:var(--accent2);}
+  .weekday-chip.selected{background:var(--green-bg);border-color:var(--accent);color:var(--accent);}
+  .freq-row{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+  .freq-row label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;}
+  .freq-row input[type="radio"]{margin:0;}
 
   /* EVENT CHIPS */
   .events-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
@@ -102,6 +162,7 @@
   .block-row.pausa-row:hover{background:var(--bg3);border-color:var(--border);}
   .block-row.almoco-row{background:var(--bg3);border-color:var(--border);border-style:dashed;cursor:default;}
   .block-row.event-row{background:var(--orange-bg);border-color:var(--orange);cursor:default;opacity:.85;}
+  .block-row.event-row.session-block{border-style:dashed !important;opacity:.9;}
   .check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
   .check.checked{background:var(--accent);border-color:var(--accent);}
   .check svg{width:10px;height:10px;display:none;}
@@ -719,10 +780,8 @@
   <div class="day-tabs" id="day-tabs"></div>
 
   <div class="day-events-bar">
-    <span class="events-label" id="events-label">Sem eventos especiais</span>
     <button class="add-event-btn" onclick="openEventPanel()">+ Evento</button>
   </div>
-  <div class="events-list" id="events-list"></div>
   <div class="blocks-list" id="blocks-list"></div>
   <div class="finish-day-wrap" id="finish-day-wrap"></div>
 </div>
@@ -811,18 +870,20 @@
 
     <div class="settings-tab-content active" data-tab-content="day">
       <div class="config-preview" id="config-preview">Calculando...</div>
-      <div class="field-group">
-        <label>Horários</label>
-        <div class="field-row">
-          <div><div class="field-sublabel">Início</div><input type="time" id="cfg-start" value="09:00" oninput="updatePreview()"></div>
-          <div><div class="field-sublabel">Término</div><input type="time" id="cfg-end" value="18:00" oninput="updatePreview()"></div>
+
+      <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0;">📖 Janelas de estudo</label>
+          <button type="button" class="add-block-btn" onclick="addStudyWindow()">+ Adicionar</button>
         </div>
+        <div class="field-sublabel" style="margin-bottom:10px;">Quando você estuda no dia. Vale todo dia. Pra compromissos pontuais use Eventos.</div>
+        <div id="cfg-windows" class="study-windows-list"></div>
       </div>
 
       <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
         <div class="checkbox-row" style="margin-bottom:10px;">
           <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
-          <label for="cfg-has-lunch" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Almoço</label>
+          <label for="cfg-has-lunch" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">🍽️ Almoço</label>
         </div>
         <div id="lunch-fields">
           <div class="field-row" style="margin-bottom:8px;">
@@ -831,6 +892,8 @@
           </div>
         </div>
       </div>
+
+      <button type="button" class="fit-study-btn" onclick="openFitStudy()">🎯 Encaixar estudo nos meus horários</button>
 
       <div class="field-group">
         <label>Pomodoro</label>
@@ -1037,6 +1100,62 @@
 </div>
 
 <!-- EVENT PANEL -->
+<!-- FIT STUDY WIZARD -->
+<div class="panel-overlay center" id="fit-study-panel" onclick="closeIfOutside(event,'fit-study-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🎯 Encaixar estudo</h2>
+      <button class="panel-close" onclick="closeFitStudy()">✕</button>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
+      💡 Diz como você gosta de estudar e eu sugiro 3 combinações que melhor encaixam nas janelas livres do dia visível (respeita início, fim, almoço e eventos).
+    </div>
+    <div class="field-group">
+      <label>Pomodoro ideal (min)</label>
+      <input type="number" id="fs-pomo" value="25" min="15" max="90" step="5">
+    </div>
+    <div class="field-group">
+      <label>Pausa curta ideal (min)</label>
+      <input type="number" id="fs-short" value="5" min="3" max="20" step="1">
+    </div>
+    <div class="field-group">
+      <label>Pausa longa ideal (min)</label>
+      <input type="number" id="fs-long" value="20" min="10" max="60" step="5">
+    </div>
+    <div class="field-group">
+      <label>Aceito flexibilidade de</label>
+      <div class="freq-row">
+        <label><input type="radio" name="fs-flex" value="5"> ±5 min</label>
+        <label><input type="radio" name="fs-flex" value="10" checked> ±10 min</label>
+        <label><input type="radio" name="fs-flex" value="15"> ±15 min</label>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="reset-btn" onclick="closeFitStudy()">Cancelar</button>
+      <button class="save-btn" onclick="runFitStudy()">Calcular sugestões</button>
+    </div>
+    <div id="fs-suggestions" style="margin-top:20px"></div>
+  </div>
+</div>
+
+<!-- EVENT DELETE CONFIRM -->
+<div class="panel-overlay center" id="event-delete-confirm" onclick="closeIfOutside(event,'event-delete-confirm')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>📅 Apagar evento?</h2>
+      <button class="panel-close" onclick="closeEventDeleteConfirm()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;" id="event-delete-text">
+      Vai apagar o evento <strong id="event-delete-name">—</strong>. Os checks ligados a ele somem junto.
+    </p>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="reset-btn" onclick="closeEventDeleteConfirm()">Cancelar</button>
+      <button class="reset-btn" id="event-delete-once-btn" onclick="confirmEventDeleteOnce()" style="display:none;">Só este dia</button>
+      <button class="danger-btn" id="event-delete-main-btn" onclick="confirmEventDelete()">Apagar</button>
+    </div>
+  </div>
+</div>
+
 <div class="panel-overlay center" id="event-panel" onclick="closeIfOutside(event,'event-panel')">
   <div class="panel-sheet">
     <div class="panel-header">
@@ -1044,7 +1163,9 @@
       <button class="panel-close" onclick="closeEventPanel()">✕</button>
     </div>
     <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
-      💡 <strong style="color:var(--text);">Considere o deslocamento.</strong> Se sua aula começa às 11:30 mas você sai de casa às 11:00, defina o evento a partir das 11:00 — assim os pomodoros param na hora certa e você não fica no meio de um bloco quando precisar sair.
+      💡 <strong style="color:var(--text);">Considere o deslocamento até a aula.</strong> Antes de qualquer compromisso você precisa sair da sala de estudo e ir até o lugar do evento — isso leva tempo. Se a aula começa às 11:30 e o caminho leva uns 15 minutos, defina o evento a partir das 11:15. Assim os pomodoros param na hora certa e você não fica no meio de um bloco quando precisar sair.
+      <br><br>
+      ⏱️ <strong style="color:var(--text);">E o tempo depois também.</strong> Quando o evento acaba, geralmente tem um intervalo até você voltar a estudar. Considere adicionar 15 minutos ao fim do evento.
     </div>
     <div class="field-group">
       <label>Nome do evento</label>
@@ -1055,6 +1176,42 @@
       <div class="field-row">
         <div><div class="field-sublabel">Início</div><input type="time" id="ev-start" value="11:30"></div>
         <div><div class="field-sublabel">Fim</div><input type="time" id="ev-end" value="13:00"></div>
+      </div>
+    </div>
+    <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+      <div class="checkbox-row">
+        <input type="checkbox" id="ev-counts" checked>
+        <label for="ev-counts" style="font-size:13px;">Conta como estudo (dá XP e moedas)</label>
+      </div>
+      <div class="field-sublabel" style="margin-top:6px;line-height:1.5;">Marca pra aula, prova, palestra etc. (vira bloco de estudo, com check e XP). Desliga pra consulta, reunião, evento social etc. (bloqueia o tempo, sem XP).</div>
+    </div>
+    <div class="field-group">
+      <div class="checkbox-row">
+        <input type="checkbox" id="ev-repeat" onchange="toggleRepeatSection()">
+        <label for="ev-repeat" style="font-size:13px;">Repetir este evento</label>
+      </div>
+      <div class="recurrence-section" id="ev-repeat-section">
+        <div class="field-sublabel">Dias da semana</div>
+        <div class="weekday-row" id="ev-weekdays">
+          <button type="button" class="weekday-chip" data-dow="1">Seg</button>
+          <button type="button" class="weekday-chip" data-dow="2">Ter</button>
+          <button type="button" class="weekday-chip" data-dow="3">Qua</button>
+          <button type="button" class="weekday-chip" data-dow="4">Qui</button>
+          <button type="button" class="weekday-chip" data-dow="5">Sex</button>
+          <button type="button" class="weekday-chip" data-dow="6">Sáb</button>
+          <button type="button" class="weekday-chip" data-dow="0">Dom</button>
+        </div>
+        <div class="field-sublabel" style="margin-top:12px;">Frequência</div>
+        <div class="freq-row">
+          <label><input type="radio" name="ev-freq" value="weekly" checked> Toda semana</label>
+          <label><input type="radio" name="ev-freq" value="biweekly"> A cada 2 semanas</label>
+          <label><input type="radio" name="ev-freq" value="monthly"> Mensalmente</label>
+        </div>
+        <div class="field-sublabel" style="margin-top:12px;">Até</div>
+        <div class="field-row" style="align-items:center;">
+          <input type="date" id="ev-until">
+          <button type="button" class="ghost-btn" onclick="clearEvUntil()">Sem fim</button>
+        </div>
       </div>
     </div>
     <div class="btn-row" style="margin-top:20px">
@@ -1284,11 +1441,23 @@ const provider = new GoogleAuthProvider();
 // CONSTANTS
 // ============================================================
 const DEFAULT_CFG = {
+  // start/end mantidos só pra retrocompat (migração). studyWindows é a fonte da verdade.
   start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00',
+  studyWindows: [{ start:'09:00', end:'18:00' }],  // janelas de estudo do dia
   pomo:25, shortBreak:5, longBreak:20, hasLunch:true,
   periodStart: null, periodEnd: null, skipWeekends: false,
   dailyStudyMin: 60,
 };
+
+// Migra cfg antigo (sem studyWindows) pra novo formato. Idempotente.
+function migrateConfig(cfg) {
+  if (!cfg) return cfg;
+  if (!Array.isArray(cfg.studyWindows) || cfg.studyWindows.length === 0) {
+    cfg.studyWindows = [{ start: cfg.start || '09:00', end: cfg.end || '18:00' }];
+  }
+  if (cfg.extraBreaks) delete cfg.extraBreaks;   // descontinuado
+  return cfg;
+}
 
 // Bônus diário por dia de streak. Ordem decrescente — primeiro match vence.
 const DAILY_BONUS_TIERS = [
@@ -1305,14 +1474,14 @@ function dailyBonusForStreak(streakDay) {
   return 0;
 }
 
-// Moedas por bloco de estudo: proporcional ao tempo, com multiplicador pra pomos longos.
+// Moedas por bloco "estudo-equivalente": 1 moeda por minuto (XP é 2×, moeda é 1×).
+// Vale pra estudo e evento igualmente. Skills/streak podem somar bônus em cima depois.
 function coinsForStudyBlock(pomoMins) {
-  let mult = 1.0;
-  if (pomoMins > 120) mult = 3.0;
-  else if (pomoMins > 90) mult = 2.5;
-  else if (pomoMins > 60) mult = 2.0;
-  else if (pomoMins > 30) mult = 1.5;
-  return Math.round(pomoMins * mult);
+  return pomoMins;
+}
+function coinsForBlock(b, durMin) {
+  if (b.type === 'estudo' || b.type === 'event') return durMin;
+  return 0;
 }
 
 // Saldo de moedas = total ganho - gasto. Nunca negativo.
@@ -1350,8 +1519,8 @@ const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
 const NUM_SESSIONS = 6;
 const LEVELS = [
-  [0,'Zero'],[50,'Iniciante'],[150,'Focado'],[300,'Dedicado'],
-  [500,'Consistente'],[800,'Avançado'],[1200,'Expert'],[2000,'Mestre']
+  [0,'Zero'],[250,'Iniciante'],[750,'Focado'],[1500,'Dedicado'],
+  [2500,'Consistente'],[4000,'Avançado'],[6000,'Expert'],[10000,'Mestre']
 ];
 
 // ============================================================
@@ -1360,7 +1529,8 @@ const LEVELS = [
 const state = {
   user: null,
   checks: {},          // { "2026-05-07": { "09:00": { pet: petId | null } } }   (true antigo é tratado como { pet: null })
-  events: {},          // { "2026-05-07": [{name, start, end}] }
+  events: {},          // { "2026-05-07": [{name, start, end}] } — eventos avulsos por dia
+  eventSeries: [],     // séries recorrentes; veja getEventsForDate. shape: {id, name, start, end, weekdays[], freq, anchor, until, exceptions[]}
   lunchOverrides: {},  // { "2026-05-07": {lunch, lunchDur} }
   closedDays: {},      // { "2026-05-07": true } — dias encerrados manualmente pelo usuário
   config: {...DEFAULT_CFG},
@@ -1514,15 +1684,33 @@ function generateBlocks(cfg, events = []) {
   const cacheKey = JSON.stringify({ cfg, events });
   if (blockCache.has(cacheKey)) return blockCache.get(cacheKey);
 
-  const blocks = [];
-  let cur = timeToMins(cfg.start);
-  const endMins = timeToMins(cfg.end);
+  // Resolve janelas de estudo (fallback pra retrocompat se vier cfg antigo)
+  const rawWindows = Array.isArray(cfg.studyWindows) && cfg.studyWindows.length > 0
+    ? cfg.studyWindows
+    : [{ start: cfg.start, end: cfg.end }];
+  const windows = rawWindows
+    .filter(w => w && w.start && w.end)
+    .map(w => ({ start: timeToMins(w.start), end: timeToMins(w.end) }))
+    .filter(w => w.end > w.start)
+    .sort((a, b) => a.start - b.start);
 
-  // Build sorted blocked intervals (events + lunch)
-  const blocked = [...events.map(ev => ({
-    start: timeToMins(ev.start), end: timeToMins(ev.end),
-    name: ev.name, type: 'event'
-  }))];
+  if (windows.length === 0) {
+    blockCache.set(cacheKey, []);
+    return [];
+  }
+
+  // Bloqueios: eventos (countsAsStudy=true→'event', false→'intervalo') + almoço.
+  const blocked = [];
+  for (const ev of events) {
+    const counts = ev.countsAsStudy !== false;   // default true (retrocompat)
+    const entry = {
+      start: timeToMins(ev.start), end: timeToMins(ev.end),
+      name: ev.name,
+      type: counts ? 'event' : 'intervalo',
+    };
+    if (ev._seriesId) entry._seriesId = ev._seriesId;
+    blocked.push(entry);
+  }
   if (cfg.hasLunch !== false) {
     const lunchStart = timeToMins(cfg.lunch);
     blocked.push({
@@ -1532,88 +1720,120 @@ function generateBlocks(cfg, events = []) {
   }
   blocked.sort((a, b) => a.start - b.start);
 
-  let pomoCount = 0, sessionN = 0;
-  const MAX = 300; let iter = 0;
+  const blocks = [];
+  let sessionN = 0;
 
-  while (cur < endMins && iter++ < MAX) {
-    // Currently inside a blocked interval — emit it and skip past
-    const inBlock = blocked.find(b => cur >= b.start && cur < b.end);
-    if (inBlock) {
-      blocks.push({
-        time: minsToTime(inBlock.start),
-        endTime: minsToTime(inBlock.end),
-        name: inBlock.type === 'event' ? `📅 ${inBlock.name}` : '🍽️ Almoço',
-        type: inBlock.type, xp: 0
-      });
-      cur = inBlock.end;
-      pomoCount = 0;
-      sessionN++;
-      continue;
-    }
-
-    // How much room until next block (or end of day)?
-    const nextBlock = blocked.find(b => b.start > cur);
-    const nextBlockStart = nextBlock ? nextBlock.start : endMins;
-    const gap = nextBlockStart - cur;
-
-    // Gap smaller than a full pomodoro: fill smartly
-    if (gap < cfg.pomo && gap > 0) {
-      const half = cfg.pomo / 2;
-      const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
-      if (gap >= half) {
-        // Mini study block
-        const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
-        blocks.push({
-          time: minsToTime(cur), endTime: minsToTime(cur + gap),
-          name: `📖 Estudo ${estudoN}`, type: 'estudo',
-          xp: calcXP(gap), session: sessionN, mini: true
-        });
-      } else if (lastStudy) {
-        // Stretch the previous study
-        lastStudy.endTime = minsToTime(timeToMins(lastStudy.endTime) + gap);
-        lastStudy.xp = calcXP(timeToMins(lastStudy.endTime) - timeToMins(lastStudy.time));
-      }
-      cur = nextBlockStart;
-      continue;
-    }
-
-    // Normal study block
-    const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
-    blocks.push({
-      time: minsToTime(cur), endTime: minsToTime(cur + cfg.pomo),
-      name: `📖 Estudo ${estudoN}`, type: 'estudo',
-      xp: calcXP(cfg.pomo), session: sessionN
-    });
-    cur += cfg.pomo;
-    pomoCount++;
-
-    // Break (long every 4 pomodoros)
-    const isLong = pomoCount % 4 === 0;
-    if (isLong) sessionN++;
-    const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
-    const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
-    const bxp = Math.max(1, Math.round(breakDur / 5));
-    const afterBreak = cur + breakDur;
-
-    const nextBlockAfterBreak = blocked.find(b => b.start > cur);
-    const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : endMins;
-
-    if (afterBreak > nextStartAfterBreak) {
-      cur = nextStartAfterBreak;
-      continue;
-    }
-    if (afterBreak + cfg.pomo <= endMins) {
-      blocks.push({
-        time: minsToTime(cur), endTime: minsToTime(afterBreak),
-        name: breakName, type: 'pausa', xp: bxp, session: sessionN
-      });
-      cur = afterBreak;
-    } else {
-      break;
-    }
+  // Emite um bloqueio como block (almoço/evento/intervalo) preservando metadados úteis.
+  function emitBlocked(b) {
+    const out = {
+      time: minsToTime(b.start),
+      endTime: minsToTime(b.end),
+      name: b.type === 'event' ? `📅 ${b.name}` : (b.type === 'intervalo' && b._seriesId ? `📅 ${b.name}` : b.name),
+      type: b.type,
+      xp: b.type === 'event' ? calcXP(b.end - b.start) : 0,
+      session: b.type === 'event' ? sessionN : undefined,
+    };
+    if (b._seriesId) out._seriesId = b._seriesId;
+    blocks.push(out);
   }
 
-  // Last block must always be a study
+  // Pra cada janela, gera pomos+pausas e respeita bloqueios internos.
+  // Antes de cada janela, emite bloqueios que estão entre a anterior e esta (ou antes da primeira).
+  for (let wi = 0; wi < windows.length; wi++) {
+    const win = windows[wi];
+    const gapStart = wi === 0 ? -Infinity : windows[wi - 1].end;
+    const interGap = blocked.filter(b => b.start >= gapStart && b.end <= win.start);
+    for (const b of interGap) {
+      emitBlocked(b);
+      sessionN++;
+    }
+
+    let cur = win.start;
+    const winEnd = win.end;
+    let pomoCount = 0;
+    const MAX = 300; let iter = 0;
+
+    while (cur < winEnd && iter++ < MAX) {
+      // Dentro de bloqueio que cruza/cai nesta janela?
+      const inBlock = blocked.find(b => cur >= b.start && cur < b.end);
+      if (inBlock) {
+        emitBlocked(inBlock);
+        cur = inBlock.end;
+        pomoCount = 0;
+        sessionN++;
+        continue;
+      }
+
+      // Próximo bloqueio dentro desta janela
+      const nextBlock = blocked.find(b => b.start > cur && b.start < winEnd);
+      const nextBlockStart = nextBlock ? nextBlock.start : winEnd;
+      const gap = nextBlockStart - cur;
+
+      // Gap menor que pomo: mini ou stretch
+      if (gap < cfg.pomo && gap > 0) {
+        const half = cfg.pomo / 2;
+        const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
+        if (gap >= half) {
+          const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
+          blocks.push({
+            time: minsToTime(cur), endTime: minsToTime(cur + gap),
+            name: `📖 Estudo ${estudoN}`, type: 'estudo',
+            xp: calcXP(gap), session: sessionN, mini: true
+          });
+        } else if (lastStudy) {
+          lastStudy.endTime = minsToTime(timeToMins(lastStudy.endTime) + gap);
+          lastStudy.xp = calcXP(timeToMins(lastStudy.endTime) - timeToMins(lastStudy.time));
+        }
+        cur = nextBlockStart;
+        continue;
+      }
+
+      // Pomodoro normal
+      const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
+      blocks.push({
+        time: minsToTime(cur), endTime: minsToTime(cur + cfg.pomo),
+        name: `📖 Estudo ${estudoN}`, type: 'estudo',
+        xp: calcXP(cfg.pomo), session: sessionN
+      });
+      cur += cfg.pomo;
+      pomoCount++;
+
+      const isLong = pomoCount % 4 === 0;
+      if (isLong) sessionN++;
+      const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
+      const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
+      const bxp = Math.max(1, breakDur);
+      const afterBreak = cur + breakDur;
+      const nextBlockAfterBreak = blocked.find(b => b.start > cur && b.start < winEnd);
+      const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : winEnd;
+
+      if (afterBreak > nextStartAfterBreak) {
+        cur = nextStartAfterBreak;
+        continue;
+      }
+      const pausaExataAteBloqueio = afterBreak === nextStartAfterBreak;
+      if (pausaExataAteBloqueio || afterBreak + cfg.pomo <= nextStartAfterBreak) {
+        blocks.push({
+          time: minsToTime(cur), endTime: minsToTime(afterBreak),
+          name: breakName, type: 'pausa', xp: bxp, session: sessionN
+        });
+        cur = afterBreak;
+      } else if (nextStartAfterBreak < winEnd) {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    // Próxima janela = nova sessão (separação visual)
+    sessionN++;
+  }
+
+  // Bloqueios depois da última janela — emite pra não esconder do plano
+  const lastWinEnd = windows[windows.length - 1].end;
+  blocked.filter(b => b.start >= lastWinEnd).forEach(b => emitBlocked(b));
+
+  // Último bloco deve ser sempre um estudo (limpa pausas finais)
   while (blocks.length > 0 && blocks[blocks.length - 1].type === 'pausa') {
     blocks.pop();
   }
@@ -1627,17 +1847,47 @@ function generateBlocks(cfg, events = []) {
 }
 
 function calcXP(minutes) {
-  return Math.round((minutes / 25) * 10 * (1 + Math.max(0, minutes - 25) * 0.002));
+  return minutes * 2;
 }
 
 function clearBlockCache() { blockCache.clear(); }
+
+// Eventos do dia: une avulsos em state.events[dateKey] + ocorrências expandidas de state.eventSeries.
+// Cada ocorrência de série herda o id da série em `_seriesId`, usado pra delete granular.
+function getEventsForDate(dateKey) {
+  const out = (state.events[dateKey] || []).slice();
+  const series = state.eventSeries || [];
+  if (series.length === 0) {
+    return out.sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+  }
+  const date = new Date(dateKey + 'T12:00:00');
+  const dow = date.getDay();
+  for (const s of series) {
+    if (!s || !Array.isArray(s.weekdays) || s.weekdays.length === 0) continue;
+    if (s.anchor && dateKey < s.anchor) continue;
+    if (s.until && dateKey > s.until) continue;
+    if (Array.isArray(s.exceptions) && s.exceptions.includes(dateKey)) continue;
+    if (!s.weekdays.includes(dow)) continue;
+    if (s.freq === 'biweekly') {
+      const aMon = mondayOf(new Date((s.anchor || dateKey) + 'T12:00:00'));
+      const dMon = mondayOf(date);
+      const weeksDiff = Math.round((dMon - aMon) / (7 * 24 * 60 * 60 * 1000));
+      if (weeksDiff < 0 || weeksDiff % 2 !== 0) continue;
+    } else if (s.freq === 'monthly') {
+      const a = new Date((s.anchor || dateKey) + 'T12:00:00');
+      if (date.getDate() !== a.getDate()) continue;
+    }
+    out.push({ name: s.name, start: s.start, end: s.end, _seriesId: s.id, countsAsStudy: s.countsAsStudy !== false });
+  }
+  return out.sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+}
 
 function blocksForDay(dateKey) {
   if (state.config.skipWeekends) {
     const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
     if (dow === 0 || dow === 6) return [];
   }
-  const events = state.events[dateKey] || [];
+  const events = getEventsForDate(dateKey);
   const lunchOv = state.lunchOverrides[dateKey];
   const cfg = lunchOv ? { ...state.config, ...lunchOv } : state.config;
   return generateBlocks(cfg, events);
@@ -1721,9 +1971,9 @@ function applyPendingPetXP() {
   ).sort();
 
   dayKeys.forEach(dayKey => {
-    const blocks = generateBlocks(state.config, state.events[dayKey] || []);
+    const blocks = generateBlocks(state.config, getEventsForDate(dayKey));
     blocks.forEach(b => {
-      if (b.type !== 'estudo') return;
+      if (b.type !== 'estudo' && b.type !== 'event') return;
       if (!isChecked(dayKey, b.time)) return;
       const petId = checkPet(dayKey, b.time);
       if (!petId) return;
@@ -1780,7 +2030,8 @@ function computeStats() {
     stats.weekChecks[wi] = stats.weekChecks[wi] || 0;
 
     blocks.forEach(b => {
-      if (b.type === 'estudo') {
+      const isStudyLike = b.type === 'estudo' || b.type === 'event';
+      if (isStudyLike) {
         const dur = timeToMins(b.endTime) - timeToMins(b.time);
         dayPlanned += dur;
         if (isChecked(key, b.time)) dayDone += dur;
@@ -1791,15 +2042,16 @@ function computeStats() {
           if (isChecked(key, b.time)) stats.sessionStats[s].done++;
         }
       }
-      if (b.type !== 'estudo' && b.type !== 'pausa') return;
+      if (!isStudyLike && b.type !== 'pausa') return;
       if (key === curDateKey) {
-        if (b.type === 'estudo') stats.estudosToday.total++;
+        if (isStudyLike) stats.estudosToday.total++;
         else stats.pausasToday.total++;
       }
       if (isChecked(key, b.time)) {
+        const dur = timeToMins(b.endTime) - timeToMins(b.time);
         // Counters do próprio dia (incluindo hoje) — usados pra streak/melhor dia
         dayChecks++;
-        if (b.type === 'estudo') dayStudyMins += state.config.pomo;
+        if (isStudyLike) dayStudyMins += dur;
 
         // XP efetivo do check (aplica bônus salvo no momento da marcação)
         const check = state.checks[key] && state.checks[key][b.time];
@@ -1813,9 +2065,9 @@ function computeStats() {
           weekHasCheck = true;
           stats.weekXP[wi] += effXP;
           stats.weekChecks[wi]++;
-          if (b.type === 'estudo') {
-            stats.coins += coinsForStudyBlock(state.config.pomo);
-            stats.studyMins += state.config.pomo;
+          if (isStudyLike) {
+            stats.coins += coinsForBlock(b, dur);
+            stats.studyMins += dur;
           }
           const hour = parseInt(b.time.split(':')[0]);
           stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
@@ -1824,10 +2076,10 @@ function computeStats() {
         if (key === todayKey) {
           stats.todayXP += effXP;
           stats.todayChecks++;
-          if (b.type === 'estudo') stats.todayCoins += coinsForStudyBlock(state.config.pomo);
+          if (isStudyLike) stats.todayCoins += coinsForBlock(b, dur);
         }
         if (key === curDateKey) {
-          if (b.type === 'estudo') stats.estudosToday.done++;
+          if (isStudyLike) stats.estudosToday.done++;
           else stats.pausasToday.done++;
         }
       }
@@ -1907,8 +2159,9 @@ async function loadData(uid) {
       const d = snap.data();
       state.checks = d.checks || {};
       state.events = d.events || {};
+      state.eventSeries = Array.isArray(d.eventSeries) ? d.eventSeries : [];
       state.lunchOverrides = d.lunchOverrides || {};
-      state.config = { ...DEFAULT_CFG, ...(d.config || {}) };
+      state.config = migrateConfig({ ...DEFAULT_CFG, ...(d.config || {}) });
       state.pets = {
         owned: (d.pets && Array.isArray(d.pets.owned)) ? d.pets.owned : [],
         active: (d.pets && d.pets.active) || null,
@@ -1922,7 +2175,7 @@ async function loadData(uid) {
       state.coinsSpent = (typeof d.coinsSpent === 'number') ? d.coinsSpent : 0;
     } else {
       isNew = true;
-      state.checks = {}; state.events = {}; state.lunchOverrides = {};
+      state.checks = {}; state.events = {}; state.eventSeries = []; state.lunchOverrides = {};
       state.closedDays = {};
       state.config = { ...DEFAULT_CFG };
       state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
@@ -1955,6 +2208,7 @@ function scheduleSave() {
       await setDoc(doc(db, 'users', state.user.uid), {
         checks: state.checks,
         events: state.events,
+        eventSeries: state.eventSeries || [],
         lunchOverrides: state.lunchOverrides,
         closedDays: state.closedDays || {},
         config: state.config,
@@ -2041,6 +2295,35 @@ function showToast(msg) {
   toast.style.opacity = '1';
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toast.style.opacity = '0', 2500);
+}
+
+// Dispara um toast com o delta entre o plano antigo (capturado antes da mudança) e o novo,
+// pro dia indicado. Silencioso se nada relevante mudou.
+function notifyPlanDelta(dateKey, beforeBlocks) {
+  if (!beforeBlocks) return;
+  const after = blocksForDay(dateKey);
+  const studyCount = arr => arr.filter(b => b.type === 'estudo' || b.type === 'event').length;
+  const lastEnd = arr => {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      const t = arr[i].type;
+      if (t === 'estudo' || t === 'pausa' || t === 'event') return arr[i].endTime;
+    }
+    return null;
+  };
+  const sDelta = studyCount(after) - studyCount(beforeBlocks);
+  const beforeEnd = lastEnd(beforeBlocks);
+  const afterEnd = lastEnd(after);
+  const parts = [];
+  if (sDelta !== 0) {
+    const sign = sDelta > 0 ? '+' : '';
+    const word = Math.abs(sDelta) === 1 ? 'estudo' : 'estudos';
+    parts.push(`${sign}${sDelta} ${word}`);
+  }
+  if (beforeEnd !== afterEnd && afterEnd) {
+    parts.push(`termina às ${afterEnd}`);
+  }
+  if (parts.length === 0) return;
+  showToast('Plano reajustado: ' + parts.join(' · '));
 }
 
 // ============================================================
@@ -2325,10 +2608,8 @@ function updateFocusTimer() {
 // SETTINGS PANEL
 // ============================================================
 window.openSettings = () => {
-  document.getElementById('cfg-start').value = state.config.start;
   document.getElementById('cfg-lunch').value = state.config.lunch;
   document.getElementById('cfg-lunch-dur').value = state.config.lunchDur;
-  document.getElementById('cfg-end').value = state.config.end;
   document.getElementById('cfg-pomo').value = state.config.pomo;
   document.getElementById('cfg-short').value = state.config.shortBreak;
   document.getElementById('cfg-long').value = state.config.longBreak;
@@ -2337,10 +2618,77 @@ window.openSettings = () => {
   document.getElementById('cfg-period-end').value = state.config.periodEnd || '';
   document.getElementById('cfg-skip-weekends').checked = state.config.skipWeekends === true;
   document.getElementById('cfg-daily-study-min').value = state.config.dailyStudyMin || 60;
+  populateStudyWindows();
   toggleLunchFields();
   updatePreview();
   switchSettingsTab('day');
   document.getElementById('settings-panel').classList.add('open');
+};
+
+function populateStudyWindows() {
+  const c = document.getElementById('cfg-windows');
+  c.innerHTML = '';
+  const windows = Array.isArray(state.config.studyWindows) && state.config.studyWindows.length > 0
+    ? state.config.studyWindows
+    : [{ start: state.config.start || '09:00', end: state.config.end || '18:00' }];
+  windows.forEach(w => addStudyWindow(w.start, w.end));
+}
+
+window.addStudyWindow = (start = '09:00', end = '12:00') => {
+  const c = document.getElementById('cfg-windows');
+  // Se já tem janelas, propõe começar onde a última terminou
+  if (start === '09:00' && end === '12:00' && c.children.length > 0) {
+    const last = c.lastElementChild;
+    const lastEnd = last.querySelector('.swc-end').value;
+    if (lastEnd) {
+      start = lastEnd;
+      const [h, m] = lastEnd.split(':').map(Number);
+      const endMins = Math.min(h * 60 + m + 180, 23 * 60 + 59);
+      end = `${String(Math.floor(endMins / 60)).padStart(2,'0')}:${String(endMins % 60).padStart(2,'0')}`;
+    }
+  }
+  const card = document.createElement('div');
+  card.className = 'study-window-card';
+  card.innerHTML = `
+    <div class="swc-times">
+      <input type="time" value="${start}" class="swc-start" oninput="updateSwDur(this);updatePreview()">
+      <span class="swc-sep">→</span>
+      <input type="time" value="${end}" class="swc-end" oninput="updateSwDur(this);updatePreview()">
+      <span class="swc-dur"></span>
+    </div>
+    <button type="button" class="swc-del" title="Remover janela" onclick="removeStudyWindow(this)">✕</button>
+  `;
+  c.appendChild(card);
+  updateSwDur(card.querySelector('.swc-start'));
+  updatePreview();
+};
+
+window.removeStudyWindow = (btn) => {
+  const card = btn.closest('.study-window-card');
+  if (!card) return;
+  const c = document.getElementById('cfg-windows');
+  if (c.children.length <= 1) {
+    showToast('Pelo menos uma janela é necessária.');
+    return;
+  }
+  card.remove();
+  updatePreview();
+};
+
+window.updateSwDur = (input) => {
+  const card = input.closest('.study-window-card');
+  if (!card) return;
+  const s = card.querySelector('.swc-start').value;
+  const e = card.querySelector('.swc-end').value;
+  const durEl = card.querySelector('.swc-dur');
+  if (!s || !e) { durEl.textContent = ''; return; }
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  const mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) { durEl.textContent = '⚠ fim antes do início'; return; }
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  durEl.textContent = h > 0 ? (m > 0 ? `${h}h ${m}min` : `${h}h`) : `${m}min`;
 };
 
 window.switchSettingsTab = (tab) => {
@@ -2363,10 +2711,8 @@ window.toggleLunchFields = () => {
 };
 
 window.resetSettings = () => {
-  document.getElementById('cfg-start').value = DEFAULT_CFG.start;
   document.getElementById('cfg-lunch').value = DEFAULT_CFG.lunch;
   document.getElementById('cfg-lunch-dur').value = DEFAULT_CFG.lunchDur;
-  document.getElementById('cfg-end').value = DEFAULT_CFG.end;
   document.getElementById('cfg-pomo').value = DEFAULT_CFG.pomo;
   document.getElementById('cfg-short').value = DEFAULT_CFG.shortBreak;
   document.getElementById('cfg-long').value = DEFAULT_CFG.longBreak;
@@ -2375,6 +2721,9 @@ window.resetSettings = () => {
   document.getElementById('cfg-period-end').value = '';
   document.getElementById('cfg-skip-weekends').checked = false;
   document.getElementById('cfg-daily-study-min').value = DEFAULT_CFG.dailyStudyMin;
+  // Reseta janelas pra default (1 janela 09:00→18:00)
+  document.getElementById('cfg-windows').innerHTML = '';
+  DEFAULT_CFG.studyWindows.forEach(w => addStudyWindow(w.start, w.end));
   toggleLunchFields();
   updatePreview();
 };
@@ -2387,11 +2736,22 @@ window.clearPeriod = () => {
 function readCfgForm() {
   const pStart = document.getElementById('cfg-period-start').value;
   const pEnd = document.getElementById('cfg-period-end').value;
+  const studyWindows = Array.from(document.querySelectorAll('#cfg-windows .study-window-card'))
+    .map(card => ({
+      start: card.querySelector('.swc-start').value,
+      end: card.querySelector('.swc-end').value,
+    }))
+    .filter(w => w.start && w.end && timeToMins(w.end) > timeToMins(w.start));
+  // start/end derivados (retrocompat com código que ainda lê cfg.start/cfg.end)
+  const sortedW = [...studyWindows].sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+  const startDerived = sortedW.length > 0 ? sortedW[0].start : '09:00';
+  const endDerived = sortedW.length > 0 ? sortedW[sortedW.length - 1].end : '18:00';
   return {
-    start: document.getElementById('cfg-start').value,
+    start: startDerived,
     lunch: document.getElementById('cfg-lunch').value,
     lunchDur: parseInt(document.getElementById('cfg-lunch-dur').value),
-    end: document.getElementById('cfg-end').value,
+    end: endDerived,
+    studyWindows,
     pomo: parseInt(document.getElementById('cfg-pomo').value),
     shortBreak: parseInt(document.getElementById('cfg-short').value),
     longBreak: parseInt(document.getElementById('cfg-long').value),
@@ -2409,26 +2769,142 @@ window.updatePreview = () => {
     document.getElementById('config-preview').innerHTML = '⚠️ Preencha todos os campos.';
     return;
   }
+  const validWindows = (cfg.studyWindows || []).filter(w =>
+    w.start && w.end && timeToMins(w.end) > timeToMins(w.start)
+  );
+  if (validWindows.length === 0) {
+    document.getElementById('config-preview').innerHTML = '⚠️ Adicione pelo menos uma janela de estudo válida.';
+    return;
+  }
   const blocks = generateBlocks(cfg, []);
   if (blocks.length === 0) {
     document.getElementById('config-preview').innerHTML = '⚠️ Configuração inválida.';
     return;
   }
-  const estudos = blocks.filter(b => b.type === 'estudo').length;
-  const totalXP = blocks.reduce((s, b) => s + b.xp, 0);
-  const totalMins = estudos * cfg.pomo;
+  const studyBlocks = blocks.filter(b => b.type === 'estudo');
+  const pauseBlocks = blocks.filter(b => b.type === 'pausa');
+  const studyMins = studyBlocks.reduce((s, b) => s + (timeToMins(b.endTime) - timeToMins(b.time)), 0);
+  const pauseMins = pauseBlocks.reduce((s, b) => s + (timeToMins(b.endTime) - timeToMins(b.time)), 0);
+  const totalXP = blocks.reduce((s, b) => s + (b.xp || 0), 0);
+  const fmt = (mins) => {
+    if (mins <= 0) return '0min';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    if (h === 0) return `${m}min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h${m}min`;
+  };
   const actualEnd = calcActualEnd(cfg);
   const diff = timeToMins(actualEnd) - timeToMins(cfg.end);
   let timing = '';
-  if (diff === 0) timing = `<span class="ok">✅ Termina exatamente às ${actualEnd}</span>`;
-  else if (diff > 0) timing = `<span class="warn">⚠️ Termina às ${actualEnd} (+${diff} min além do previsto)</span>`;
-  else timing = `<span class="warn">⚠️ Termina às ${actualEnd} (${Math.abs(diff)} min antes do previsto)</span>`;
+  if (diff === 0) timing = `<span class="ok">✅ Termina às ${actualEnd}</span>`;
+  else if (diff > 0) timing = `<span class="warn">⚠️ Estende ${diff}min além das ${cfg.end}</span>`;
+  else timing = `<span class="warn">⚠️ Para ${Math.abs(diff)}min antes das ${cfg.end}</span>`;
+  const winInfo = validWindows.length > 1 ? ` em <span>${validWindows.length}</span> janelas` : '';
   document.getElementById('config-preview').innerHTML =
-    `Pomodoros: <span>${estudos}</span> · Estudo: <span>${Math.floor(totalMins/60)}h${totalMins%60>0?totalMins%60+'min':''}</span> · XP/dia: <span>~${totalXP}</span><br>${timing}`;
+    `<span>${studyBlocks.length}</span> pomos${winInfo} · Estudo: <span>${fmt(studyMins)}</span> · Pausa: <span>${fmt(pauseMins)}</span><br>XP/dia: <span>~${totalXP}</span> · ${timing}`;
+};
+
+// ============================================================
+// FIT STUDY WIZARD — sugere config {pomo, shortBreak, longBreak} que melhor encaixa
+// nas janelas livres do dia visível.
+// ============================================================
+window.openFitStudy = () => {
+  document.getElementById('fs-pomo').value = state.config.pomo || 25;
+  document.getElementById('fs-short').value = state.config.shortBreak || 5;
+  document.getElementById('fs-long').value = state.config.longBreak || 20;
+  document.querySelectorAll('input[name="fs-flex"]').forEach(r => r.checked = (r.value === '10'));
+  document.getElementById('fs-suggestions').innerHTML = '';
+  document.getElementById('fit-study-panel').classList.add('open');
+};
+window.closeFitStudy = () => document.getElementById('fit-study-panel').classList.remove('open');
+
+window.runFitStudy = () => {
+  const idealPomo = parseInt(document.getElementById('fs-pomo').value) || 25;
+  const idealShort = parseInt(document.getElementById('fs-short').value) || 5;
+  const idealLong = parseInt(document.getElementById('fs-long').value) || 20;
+  const flexEl = document.querySelector('input[name="fs-flex"]:checked');
+  const flex = parseInt(flexEl ? flexEl.value : 10);
+
+  // Dia visível (ou hoje, se uiWeek/uiDay batem)
+  const dateKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+  const events = getEventsForDate(dateKey);
+  // Lê do form de settings (não do state) — assim respeita start/end/almoço que o usuário
+  // já mexeu mas ainda não salvou.
+  const cfgBase = readCfgForm();
+
+  const pomoRange = [];
+  for (let p = Math.max(15, idealPomo - flex); p <= Math.min(90, idealPomo + flex); p += 5) pomoRange.push(p);
+  const shortRange = [];
+  for (let s = Math.max(3, idealShort - flex); s <= Math.min(20, idealShort + flex); s += 1) shortRange.push(s);
+  const longRange = [];
+  for (let l = Math.max(10, idealLong - flex); l <= Math.min(60, idealLong + flex); l += 5) longRange.push(l);
+
+  const candidates = [];
+  for (const pomo of pomoRange) {
+    for (const short of shortRange) {
+      for (const long of longRange) {
+        const combo = { ...cfgBase, pomo, shortBreak: short, longBreak: long };
+        const blocks = generateBlocks(combo, events);
+        const studyBlocks = blocks.filter(b => b.type === 'estudo');
+        const studyTotal = studyBlocks.reduce((s, b) => s + (timeToMins(b.endTime) - timeToMins(b.time)), 0);
+        const lastEnd = blocks.length > 0 ? timeToMins(blocks[blocks.length - 1].endTime) : 0;
+        // Penalidade por desvio do ideal — pomo pesa mais que pausas
+        const penalty = Math.abs(pomo - idealPomo) + Math.abs(short - idealShort) * 0.5 + Math.abs(long - idealLong) * 0.3;
+        const score = studyTotal - penalty * 0.5;
+        candidates.push({ pomo, short, long, studyTotal, lastEnd, studyCount: studyBlocks.length, score });
+      }
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score);
+  const seen = new Set();
+  const top = [];
+  for (const c of candidates) {
+    const key = `${c.pomo}_${c.short}_${c.long}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    top.push(c);
+    if (top.length >= 3) break;
+  }
+  renderFitSuggestions(top);
+};
+
+function renderFitSuggestions(top) {
+  const c = document.getElementById('fs-suggestions');
+  c.innerHTML = '';
+  if (top.length === 0) {
+    c.innerHTML = '<p style="color:var(--muted);font-size:13px;">Não encontrei combinações válidas. Aumente a flexibilidade ou ajuste os ideais.</p>';
+    return;
+  }
+  top.forEach((s, i) => {
+    const studyH = Math.floor(s.studyTotal / 60);
+    const studyM = s.studyTotal % 60;
+    const durStr = studyH > 0 ? `${studyH}h${studyM > 0 ? studyM + 'min' : ''}` : `${studyM}min`;
+    const card = document.createElement('div');
+    card.className = 'fs-card' + (i === 0 ? ' fs-best' : '');
+    card.innerHTML = `
+      <div class="fs-head">${i === 0 ? '✨ Recomendada' : `Opção ${i + 1}`}</div>
+      <div class="fs-stats">Pomo <strong>${s.pomo}</strong> · Pausa <strong>${s.short}</strong> · Longa <strong>${s.long}</strong></div>
+      <div class="fs-meta">${s.studyCount} estudos · ${durStr} efetivos · termina às ${minsToTime(s.lastEnd)}</div>
+      <button class="fs-apply" onclick="applyFitSuggestion(${s.pomo},${s.short},${s.long})">Aplicar</button>
+    `;
+    c.appendChild(card);
+  });
+}
+
+window.applyFitSuggestion = (pomo, short, long) => {
+  document.getElementById('cfg-pomo').value = pomo;
+  document.getElementById('cfg-short').value = short;
+  document.getElementById('cfg-long').value = long;
+  if (typeof updatePreview === 'function') updatePreview();
+  closeFitStudy();
+  showToast('Sugestão preenchida — clica em Salvar pra confirmar');
 };
 
 window.saveSettings = () => {
   // periodStart fica fixo: preserva o valor atual do state (não vem do form, input está disabled)
+  const visibleKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
+  const before = blocksForDay(visibleKey);
   const newCfg = readCfgForm();
   newCfg.periodStart = state.config.periodStart;
   state.config = newCfg;
@@ -2439,6 +2915,7 @@ window.saveSettings = () => {
   renderAll();
   endPromptShown = false;     // config mudou → permite o prompt aparecer com o novo horário
   scheduleEndOfDayPrompt();
+  notifyPlanDelta(visibleKey, before);
 };
 
 // ============================================================
@@ -2453,6 +2930,7 @@ window.closeCancelConfirm = () => {
 window.confirmCancelSession = () => {
   state.checks = {};
   state.events = {};
+  state.eventSeries = [];
   state.lunchOverrides = {};
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
@@ -2512,8 +2990,41 @@ window.finishOnboarding = () => {
 // ============================================================
 // EVENT PANEL
 // ============================================================
-window.openEventPanel = () => document.getElementById('event-panel').classList.add('open');
+window.openEventPanel = () => {
+  // Resetar os campos pra defaults sempre que abre
+  document.getElementById('ev-name').value = '';
+  document.getElementById('ev-start').value = '11:30';
+  document.getElementById('ev-end').value = '13:00';
+  document.getElementById('ev-counts').checked = true;
+  document.getElementById('ev-repeat').checked = false;
+  document.getElementById('ev-repeat-section').classList.remove('show');
+  document.getElementById('ev-until').value = '';
+  document.querySelectorAll('input[name="ev-freq"]').forEach(r => r.checked = (r.value === 'weekly'));
+  // Pré-seleciona o dia da semana atual (UI)
+  const todayDow = dateForWeekDay(state.uiWeek, state.uiDay).getDay();
+  document.querySelectorAll('#ev-weekdays .weekday-chip').forEach(chip => {
+    const isToday = parseInt(chip.dataset.dow, 10) === todayDow;
+    chip.classList.toggle('selected', isToday);
+  });
+  document.getElementById('event-panel').classList.add('open');
+};
 window.closeEventPanel = () => document.getElementById('event-panel').classList.remove('open');
+
+window.toggleRepeatSection = () => {
+  const on = document.getElementById('ev-repeat').checked;
+  document.getElementById('ev-repeat-section').classList.toggle('show', on);
+};
+
+window.clearEvUntil = () => {
+  document.getElementById('ev-until').value = '';
+};
+
+// Click nos chips de dia da semana toggla seleção
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest('#ev-weekdays .weekday-chip');
+  if (!chip) return;
+  chip.classList.toggle('selected');
+});
 
 window.saveEvent = () => {
   const name = document.getElementById('ev-name').value.trim() || 'Evento';
@@ -2524,21 +3035,49 @@ window.saveEvent = () => {
   }
   const date = dateForWeekDay(state.uiWeek, state.uiDay);
   const key = dk(date);
-  if (!state.events[key]) state.events[key] = [];
-  state.events[key].push({ name, start, end });
+  const repeat = document.getElementById('ev-repeat').checked;
+  const countsAsStudy = document.getElementById('ev-counts').checked;
+  const before = blocksForDay(key);
+
+  if (repeat) {
+    const weekdays = Array.from(document.querySelectorAll('#ev-weekdays .weekday-chip.selected'))
+      .map(c => parseInt(c.dataset.dow, 10));
+    if (weekdays.length === 0) {
+      alert('Escolha pelo menos um dia da semana pra repetição.'); return;
+    }
+    const freqEl = document.querySelector('input[name="ev-freq"]:checked');
+    const freq = freqEl ? freqEl.value : 'weekly';
+    const untilVal = document.getElementById('ev-until').value || null;
+    if (!state.eventSeries) state.eventSeries = [];
+    state.eventSeries.push({
+      id: 'ser_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      name, start, end,
+      weekdays, freq,
+      anchor: key,
+      until: untilVal,
+      exceptions: [],
+      countsAsStudy,
+    });
+  } else {
+    if (!state.events[key]) state.events[key] = [];
+    state.events[key].push({ name, start, end, countsAsStudy });
+  }
+
   closeEventPanel();
-  document.getElementById('ev-name').value = '';
   clearBlockCache();
   scheduleSave();
   renderAll();
+  notifyPlanDelta(key, before);
 };
 
 window.deleteEvent = (key, idx) => {
+  const before = blocksForDay(key);
   state.events[key].splice(idx, 1);
   if (state.events[key].length === 0) delete state.events[key];
   clearBlockCache();
   scheduleSave();
   renderAll();
+  notifyPlanDelta(key, before);
 };
 
 // ============================================================
@@ -2564,14 +3103,17 @@ window.resetLunchEdit = () => {
 };
 window.saveLunchEdit = () => {
   if (!editingLunchKey) return;
+  const before = blocksForDay(editingLunchKey);
   state.lunchOverrides[editingLunchKey] = {
     lunch: document.getElementById('lunch-edit-start').value,
     lunchDur: parseInt(document.getElementById('lunch-edit-dur').value),
   };
+  const changedKey = editingLunchKey;
   closeLunchPanel();
   clearBlockCache();
   scheduleSave();
   renderAll();
+  notifyPlanDelta(changedKey, before);
 };
 
 window.closeIfOutside = (e, id) => {
@@ -2898,7 +3440,7 @@ window.onWeekChange = () => {
   renderAll();
 };
 
-function renderAll() { renderTabs(); renderEvents(); renderBlocks(); renderFinishDay(); renderXP(); }
+function renderAll() { renderTabs(); renderBlocks(); renderFinishDay(); renderXP(); }
 
 // === FINISH DAY ===
 function renderFinishDay() {
@@ -3111,6 +3653,12 @@ window.endPromptSaveExtend = () => {
   const newEnd = document.getElementById('eop-new-end').value;
   if (!newEnd) return;
   state.config.end = newEnd;
+  // Estende a última janela de estudo até o novo horário
+  if (Array.isArray(state.config.studyWindows) && state.config.studyWindows.length > 0) {
+    const sorted = [...state.config.studyWindows].sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+    const last = sorted[sorted.length - 1];
+    last.end = newEnd;
+  }
   clearBlockCache();
   scheduleSave();
   closeEndOfDayPrompt();
@@ -3135,29 +3683,65 @@ function renderTabs() {
   });
 }
 
-function renderEvents() {
-  const date = dateForWeekDay(state.uiWeek, state.uiDay);
-  const key = dk(date);
-  const events = state.events[key] || [];
-  const listEl = document.getElementById('events-list');
-  const labelEl = document.getElementById('events-label');
-  listEl.innerHTML = '';
-  if (events.length === 0) { labelEl.textContent = 'Sem eventos especiais'; return; }
-  labelEl.textContent = `${events.length} evento${events.length>1?'s':''} hoje`;
-  events.forEach((ev, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'event-chip';
-    chip.innerHTML = `
-      <span class="ev-icon">📅</span>
-      <div class="ev-info">
-        <div class="ev-name">${ev.name}</div>
-        <div class="ev-time">${ev.start} – ${ev.end}</div>
-      </div>
-      <button class="ev-del" onclick="deleteEvent('${key}',${i})">✕</button>
-    `;
-    listEl.appendChild(chip);
-  });
-}
+let _eventToDelete = null;
+window.openEventDelete = (dateKey, block) => {
+  const seriesId = block && block._seriesId ? block._seriesId : null;
+  const cleanName = (block.name || '').replace(/^📅\s*/, '');
+  _eventToDelete = { key: dateKey, startTime: block.time, seriesId, name: cleanName };
+  document.getElementById('event-delete-name').textContent = cleanName;
+  const onceBtn = document.getElementById('event-delete-once-btn');
+  const mainBtn = document.getElementById('event-delete-main-btn');
+  const text = document.getElementById('event-delete-text');
+  if (seriesId) {
+    onceBtn.style.display = '';
+    mainBtn.textContent = 'Apagar a série';
+    text.innerHTML = `Este evento faz parte de uma série recorrente (<strong>${cleanName}</strong>). Quer apagar só este dia ou toda a série?`;
+  } else {
+    onceBtn.style.display = 'none';
+    mainBtn.textContent = 'Apagar';
+    text.innerHTML = `Vai apagar o evento <strong>${cleanName}</strong>. Os checks ligados a ele somem junto.`;
+  }
+  document.getElementById('event-delete-confirm').classList.add('open');
+};
+window.closeEventDeleteConfirm = () => {
+  _eventToDelete = null;
+  document.getElementById('event-delete-confirm').classList.remove('open');
+};
+window.confirmEventDeleteOnce = () => {
+  if (!_eventToDelete || !_eventToDelete.seriesId) return;
+  const { key, seriesId } = _eventToDelete;
+  const before = blocksForDay(key);
+  const s = (state.eventSeries || []).find(x => x.id === seriesId);
+  if (s) {
+    if (!Array.isArray(s.exceptions)) s.exceptions = [];
+    if (!s.exceptions.includes(key)) s.exceptions.push(key);
+  }
+  clearBlockCache();
+  scheduleSave();
+  renderAll();
+  closeEventDeleteConfirm();
+  notifyPlanDelta(key, before);
+};
+window.confirmEventDelete = () => {
+  if (!_eventToDelete) return;
+  const { key, startTime, seriesId } = _eventToDelete;
+  const before = blocksForDay(key);
+  if (seriesId) {
+    state.eventSeries = (state.eventSeries || []).filter(x => x.id !== seriesId);
+  } else {
+    const events = state.events[key] || [];
+    const idx = events.findIndex(ev => ev.start === startTime);
+    if (idx >= 0) {
+      events.splice(idx, 1);
+      if (events.length === 0) delete state.events[key];
+    }
+  }
+  clearBlockCache();
+  scheduleSave();
+  renderAll();
+  closeEventDeleteConfirm();
+  notifyPlanDelta(key, before);
+};
 
 function renderBlocks() {
   const date = dateForWeekDay(state.uiWeek, state.uiDay);
@@ -3182,6 +3766,7 @@ function renderBlocks() {
   blocks.forEach(b => {
     const isE = b.type === 'estudo', isP = b.type === 'pausa';
     const isA = b.type === 'almoco', isEv = b.type === 'event';
+    const isI = b.type === 'intervalo';
     if (isE) eT++; else if (isP) pT++;
     const done = isChecked(key, b.time);
     if (done) { if (isE) eD++; else if (isP) pD++; }
@@ -3192,7 +3777,7 @@ function renderBlocks() {
     const [eh, em] = b.endTime.split(':').map(Number);
     const bStart = new Date(); bStart.setHours(sh, sm, 0, 0);
     const bEnd = new Date(); bEnd.setHours(eh, em, 0, 0);
-    const isNow = isToday && (isE || isP || isA) && now >= bStart && now < bEnd;
+    const isNow = isToday && (isE || isP || isA || isI) && now >= bStart && now < bEnd;
 
     // Session divider
     if ((isE || isP) && b.session !== undefined && b.session !== lastSession) {
@@ -3212,31 +3797,44 @@ function renderBlocks() {
     }
 
     const row = document.createElement('div');
-    const sessionClass = (isE || isP) ? ` session-block s${sIdx}` : '';
+    const sessionClass = (isE || isP || isEv) ? ` session-block s${sIdx}` : '';
     const nowClass = isNow ? ' now-block' : '';
     const timerClass = (timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime) ? ' timer-active' : '';
     const closedClass = isDayClosed(key) ? ' day-closed' : '';
     const futureClass = isFutureDay(key) ? ' day-future' : '';
-    row.className = 'block-row' + (isP?' pausa-row':'') + (isA?' almoco-row':'') + (isEv?' event-row':'')
-      + (done && (isE || isP) ? ' done' : '') + sessionClass + nowClass + timerClass + closedClass + futureClass;
+    row.className = 'block-row' + (isP?' pausa-row':'') + ((isA || isI)?' almoco-row':'') + (isEv?' event-row':'')
+      + (done && (isE || isP || isEv) ? ' done' : '') + sessionClass + nowClass + timerClass + closedClass + futureClass;
 
     let xpLabel = '';
     if (isE || isP) xpLabel = `<span class="block-xp session-xp">+${b.xp} XP</span>`;
     else if (isA) xpLabel = `<span class="block-xp almoco-xp" style="cursor:pointer">${state.lunchOverrides[key]?'✏️ editado':'✏️ editar'}</span>`;
-    else xpLabel = `<span class="block-xp event-xp">evento</span>`;
+    else if (isI) xpLabel = `<span class="block-xp almoco-xp">livre</span>`;
+    else xpLabel = `<span class="block-xp event-xp">+${b.xp} XP</span>`;
 
-    const checkHtml = (isA || isEv) ? '' : `<div class="check ${done?'checked':''}">${checkSvg}</div>`;
+    const checkHtml = (isA || isI) ? '' : `<div class="check ${done?'checked':''}">${checkSvg}</div>`;
     row.innerHTML = `${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
 
-    if (isE || isP) {
+    if (isE || isP || isEv || isI) {
       const dayClosed = isDayClosed(key);
       const dayFuture = isFutureDay(key);
-      row.onclick = (e) => {
-        if (e.target.closest('.check')) return;
-        if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
-        if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
-        tryStartTimer(b);
-      };
+      if (isE || isP) {
+        row.onclick = (e) => {
+          if (e.target.closest('.check')) return;
+          if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
+          if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
+          tryStartTimer(b);
+        };
+      } else if (isEv || isI) {
+        // Intervalo vem de evento sem countsAsStudy. Click apaga igual evento.
+        row.style.cursor = 'pointer';
+        row.title = 'Clique pra apagar este evento';
+        row.onclick = (e) => {
+          if (e.target.closest('.check')) return;
+          if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
+          if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
+          openEventDelete(key, b);
+        };
+      }
       const checkEl = row.querySelector('.check');
       if (checkEl) {
         checkEl.onclick = (e) => {
@@ -3247,7 +3845,8 @@ function renderBlocks() {
           if (!wasChecked) {
             // Captura a posição ANTES do renderAll (que destrói o nó)
             const rect = checkEl.getBoundingClientRect();
-            const coins = b.type === 'estudo' ? coinsForStudyBlock(state.config.pomo) : 0;
+            const dur = timeToMins(b.endTime) - timeToMins(b.time);
+            const coins = coinsForBlock(b, dur);
             // XP efetivo já considerando bônus (decidido agora pelas regras de skill)
             const eligibleBonus = noturnoBonusEligible(b, key) ? 0.05 : 0;
             const effXP = Math.round(b.xp * (1 + eligibleBonus));

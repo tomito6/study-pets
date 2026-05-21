@@ -109,11 +109,15 @@ INIT (no final)
 ## Conceitos do app
 
 - **Sessões**: pomodoros separados por pausa longa, evento ou almoço viram "sessões" coloridas (classes `.s0` a `.s5`).
+- **Janelas de estudo** (`config.studyWindows`): lista de intervalos `[{start, end}]` durante o dia em que o usuário estuda. UI na aba Rotina = cards verticais (borda esquerda verde, horários + duração + ✕), botão "+ Adicionar". Permite N janelas (caso de uso clássico: estuda 9-12 e 15-20, com gap de 3h no meio onde o app não gera pomos). `generateBlocks` itera as janelas em ordem; entre janelas, bloqueios (almoço/eventos) aparecem visíveis no plano. `cfg.start` / `cfg.end` viraram **campos derivados** (primeira janela / última janela) — mantidos no schema só pra retrocompat. Migração: `migrateConfig(cfg)` cria `studyWindows: [{start, end}]` a partir do antigo `start`/`end` se ausente. Pra estender o dia via "Prolongar estudos" do end-of-day prompt: ajusta `end` da última janela.
+- **Eventos**: blocos representam compromissos (aulas, consultas, treino). Schema `{name, start, end, countsAsStudy}` (default `true` pra retrocompat). Quando `countsAsStudy=true`: tipo `'event'` no resultado de `generateBlocks` — herda cor da sessão (borda dashed), tem check, dá XP/moedas pela duração real, alimenta streak + pet XP. Quando `countsAsStudy=false`: tipo `'intervalo'` — bloqueia o tempo no plano (cinza, dashed, sem check, sem XP). Ambos clicáveis pra apagar. Painel `#event-panel` tem checkbox "Conta como estudo (dá XP e moedas)" default marcado. Pra editar: criar evento de novo (não tem edit ainda). **`'intervalo'` agora vem APENAS de evento sem countsAsStudy** — `extraBreaks` na config foi removido.
+- **Eventos recorrentes**: ao criar evento, o checkbox "Repetir este evento" expande seção com chips de dia da semana (multi-select, pré-seleciona o dia atual), radio de frequência (toda semana / a cada 2 semanas / mensalmente) e input "Até" opcional. Série fica em `state.eventSeries` (array paralelo a `state.events`); avulsos continuam em `state.events`. Helper `getEventsForDate(dateKey)` une as duas fontes — ocorrências de série ganham `_seriesId` no objeto. **`blocksForDay` e `applyPendingPetXP` chamam `getEventsForDate`**, então stats/check/XP-do-pet funcionam transparentemente. Biweekly conta paridade pela semana da `anchor` (`mondayOf(anchor)` vs `mondayOf(date)` em weeks); monthly bate `date.getDate() === anchor.getDate()` (dias 29-31 podem pular meses curtos — by design). Apagar evento de série abre modal com 2 opções: "Só este dia" (empurra `dateKey` em `series.exceptions`) ou "Apagar a série" (remove a entrada de `state.eventSeries`). Avulsos mantêm botão único "Apagar".
 - **Bloco atual**: o que está acontecendo no horário real ganha destaque visual.
 - **Gap antes de eventos/almoço**: se sobrar tempo menor que um pomodoro, preenche inteligentemente (mini-estudo ou estica o último).
 - **Datas**: WEEKS construído dinamicamente. Sem `periodEnd` (modo "sempre"): até 31 de dezembro do ano atual (mínimo de hoje+8 semanas, pra cobrir virada de ano); expande pra frente se houver dados futuros. Com `periodEnd` definido: cobre **exatamente** o intervalo escolhido — limite real, sem expansão pra frente (dados fora do período ficam guardados no Firestore mas não aparecem na UI; reabrir o período os traz de volta). Em ambos os casos, expansão pra trás se houver dados antigos.
 - **Onboarding**: na primeira vez que um usuário loga (Firestore doc não existe), abre modal perguntando período de uso + se pula fins de semana. Usuários existentes não veem (defaults preservam comportamento anterior). Config é editável depois em Configurações. "Usar sempre" preserva `periodStart` (= hoje) como marco inicial; só `periodEnd` fica null.
 - **Settings em 2 abas**: "Rotina" (horários, almoço, pomodoro, pausa longa — coisas do ritmo do dia, com preview) e "Geral" (período de uso, pular fins de semana, mínimo diário de estudo). Abre sempre em "Rotina". O id interno da aba continua `day` por compatibilidade.
+- **Botão "🎯 Encaixar estudo"**: na aba Rotina, acima do field-group Pomodoro. Abre o modal `#fit-study-panel` (wizard). Usuário diz pomo/pausa curta/pausa longa **ideais** e flexibilidade (±5/10/15min). Algoritmo varia cada parâmetro dentro da flex (pomo passo 5, short passo 1, long passo 5), simula `generateBlocks` pra cada combinação no **dia visível** (respeitando start/end/almoço/eventos), ranqueia por `studyTotal - penalty*0.5` onde penalty cresce com desvio do ideal (pomo peso 1, short 0.5, long 0.3), e mostra top 3. Clicar "Aplicar" preenche os inputs do form `#cfg-pomo/#cfg-short/#cfg-long` (não salva direto — usuário confirma com "Salvar" no settings, mantendo o fluxo padrão). Sem mexer em `start`/`end`/`lunch` — só nos parâmetros do pomodoro.
 - **`periodStart` é fixo por sessão**: na aba Geral, o input "Início" fica `disabled`. Só `periodEnd` e `skipWeekends` são editáveis. `resetSettings` e `clearPeriod` preservam o `periodStart`. Pra mudar o início, o usuário precisa **cancelar a sessão**.
 - **Cancelar sessão**: botão "Zona de perigo" na aba Geral. Modal de confirmação lista o que vai apagar. Ao confirmar: zera `checks`, `events`, `lunchOverrides`, `pets`, `coinsSpent`, e reseta `config` pro `DEFAULT_CFG`. Em seguida abre o onboarding (equivalente a uma conta nova). É a única forma de redefinir o `periodStart`.
 - **Dia vazio**: se `blocksForDay()` retorna `[]` (fim de semana com `skipWeekends`), `renderBlocks` mostra "🌴 Dia livre".
@@ -149,16 +153,16 @@ A aba responde "tô fazendo o que planejei?" — diagnóstico, não vitrine. Est
 - `dayMetGoal: { "YYYY-MM-DD": bool }` — `dayStudyDoneMins[key] >= dailyStudyMin`.
 - `sessionStats: { N: {done, total} }` — só dias fechados (`isPast`), só blocos de estudo, agrupados por `b.session`.
 
-**Importante**: `dayStudyMins` (campo antigo) **continua existindo intocado**, ainda calcula com `cfg.pomo` fixo e ainda alimenta streak + bônus de moedas. Os campos novos usam **duração real** (`endTime-time`) pra mini-estudos contarem certo. Não mudar `dayStudyMins` foi decisão consciente: economia e streak não devem ser afetadas por refator de UI. Helpers novos: `monthKey(d)`, `currentWeekDayKeys()`, `aggregateMins(doneObj, plannedObj, keys)`.
+**Importante**: `dayStudyMins` (streak/bônus) e `stats.coins`/`stats.studyMins` (totais) agora usam **duração real** (`endTime-time`) — não mais `cfg.pomo` fixo. Eventos checked contam junto com estudo. Mini-estudos contam pela duração real (não inflados pra pomo cheio). Helpers novos: `monthKey(d)`, `currentWeekDayKeys()`, `aggregateMins(doneObj, plannedObj, keys)`.
 
 ## Sistema de gamificação
 
 Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqui só o conceito:
 
-- **XP**: ganho por bloco concluído, mais por estudos que por pausas. Valor depende da duração.
-- **Níveis**: lista ordenada definida em `LEVELS` com thresholds e nomes.
-- **Moedas**: duas fontes. (a) Por bloco de estudo concluído: `coinsForStudyBlock(pomo)` — proporcional ao tempo com multiplicador crescente (×1 até 30min, ×1.5 até 60, ×2 até 90, ×2.5 até 120, ×3 acima). (b) Bônus diário por faixa de streak: `DAILY_BONUS_TIERS` (5/8/12/18/25 moedas nos marcos 1/3/7/14/30 dias). O bônus só conta no dia se total de estudo concluído ≥ `config.dailyStudyMin`. Saldo = total − `coinsSpent`.
-- **Streak**: dia entra no streak só se `dayStudyMins ≥ config.dailyStudyMin` (padrão 60min, editável em Configurações → Geral). Pausas sozinhas não contam. Mudar o mínimo recalcula retroativamente.
+- **XP**: ganho por bloco concluído. Fórmula simples: `calcXP(minutes) = minutes * 2`. Estudo de 25min → 50 XP; estudo de 60min → 120 XP. Pausa usa `bxp = max(1, breakDur)` (~1 XP por minuto), mantendo a proporção estudo:pausa de 2:1. Evento checked também vale `calcXP(duração)` — pra eventos contarem como aulas/compromissos legítimos que rendem progresso.
+- **Níveis**: lista ordenada definida em `LEVELS` com thresholds e nomes. Calibrado pra escala nova (`calcXP=min*2`): 0/250/750/1500/2500/4000/6000/10000.
+- **Moedas**: duas fontes. (a) Por bloco de estudo OU evento concluído: **1 moeda por minuto** (`coinsForBlock(b, dur) = dur`). Estudo de 25min → 25 moedas; evento de 90min → 90 moedas. Sem multiplicador progressivo — XP é 2× e moeda é 1×, sempre, exceto bônus de skill/streak (que podem somar em cima). (b) Bônus diário por faixa de streak: `DAILY_BONUS_TIERS` (5/8/12/18/25 moedas nos marcos 1/3/7/14/30 dias). O bônus só conta no dia se total de estudo concluído ≥ `config.dailyStudyMin`. Saldo = total − `coinsSpent`.
+- **Streak**: dia entra no streak só se `dayStudyMins ≥ config.dailyStudyMin` (padrão 60min, editável em Configurações → Geral). `dayStudyMins` soma duração real de **estudos e eventos** checked — pausas não contam. Mudar o mínimo recalcula retroativamente.
 - **Sons**: Web Audio API (sem arquivos externos), diferentes por tipo.
 - **Notificações**: Web Notifications API quando timer acaba.
 
@@ -194,7 +198,7 @@ A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo bot
 
 Removido: grade inline `#my-pets-grid-profile` e header "Meus pets" inline. O id `my-pets-count` foi reaproveitado pro contador no botão.
 
-**Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: petId | null }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada estudo done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera `state.pets.xp` e marca `yesterday` como processado (sem aplicar retroativamente). Level usa as mesmas thresholds do usuário (`LEVELS` + `getLevelIdx`). Pausa não conta (só estudo). Pet null no momento do check = ninguém ganha XP.
+**Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: petId | null }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada **estudo ou evento** done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera `state.pets.xp` e marca `yesterday` como processado (sem aplicar retroativamente). Level usa as mesmas thresholds do usuário (`LEVELS` + `getLevelIdx`). Pausa não conta (só estudo+evento). Pet null no momento do check = ninguém ganha XP.
 
 **XP/moedas do usuário também só refletem dias fechados**: `computeStats()` itera todos os dias, mas só agrega `totalXP/totalChecks/coins/studyMins/hourCounts/weekXP/weekChecks/bestDay/activeWeeks` quando o dia está fechado (`isPast = key !== todayKey || isDayClosed(key)`). Stats específicos de hoje (`todayXP`, `todayCoins`, `estudosToday`, `pausasToday`, `dayStudyMins[today]`) continuam refletindo o dia atual. Streak ainda usa `dayStudyMins` incluindo hoje (você "está em sequência" se atingiu o mínimo), mas o **bônus de moedas** do streak só entra quando o dia fechou. Motivo: evitar exploit de marcar/desmarcar pra ganhar XP/moedas; também garante consistência com o XP do pet.
 
@@ -241,7 +245,9 @@ Skills opcionais por pet — ficam visíveis e ativáveis dentro do modal "Meus 
 ```
 users/{uid} {
   checks,        // { "YYYY-MM-DD": { "HH:MM": { pet: petId|null, bonus: number } } }   bonus = multiplicador aditivo de XP salvo no check (0 ou 0.05 hoje)
-  events, lunchOverrides,
+  events,        // { "YYYY-MM-DD": [{name, start, end, countsAsStudy}] } — eventos avulsos por dia. countsAsStudy: true=tipo 'event' (XP), false=tipo 'intervalo' (só bloqueia)
+  eventSeries,   // [{id, name, start, end, weekdays[], freq, anchor, until, exceptions[], countsAsStudy}] — séries recorrentes
+  lunchOverrides,
   closedDays: { "YYYY-MM-DD": true, ... },   // dias encerrados manualmente via botão "Encerrar o dia"
   pets: {
     owned: [petId, ...],
@@ -255,7 +261,10 @@ users/{uid} {
   },
   coinsSpent,
   config: {
-    start, lunch, lunchDur, end, pomo, shortBreak, longBreak, hasLunch,
+    studyWindows,   // [{start:"HH:MM", end:"HH:MM"}, ...] — janelas de estudo do dia (fonte da verdade)
+    start, end,     // derivados de studyWindows (primeira/última) — mantidos só pra retrocompat
+    lunch, lunchDur, hasLunch,                              // almoço (separado das janelas)
+    pomo, shortBreak, longBreak,
     periodStart,    // "YYYY-MM-DD" | null (null = "sempre", sem fim)
     periodEnd,      // "YYYY-MM-DD" | null
     skipWeekends,   // boolean (true = sáb/dom sem blocos nem stats)

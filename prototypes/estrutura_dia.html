@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protótipos — Estrutura do Dia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0d;
+    --bg2: #131318;
+    --bg3: #1c1c24;
+    --text: #e4e4e7;
+    --muted: #6b7280;
+    --accent: #a3e635;
+    --accent2: #65a30d;
+    --green-bg: rgba(163,230,53,0.08);
+    --orange: #fb923c;
+    --orange-bg: rgba(251,146,60,0.08);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.08);
+    --border: #2a2a32;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+    margin:0;
+    padding:40px 20px 80px;
+    min-height:100vh;
+  }
+  .page-header{
+    max-width:560px;
+    margin:0 auto 32px;
+    text-align:center;
+  }
+  .page-header h1{
+    font-size:22px;
+    margin:0 0 8px;
+    font-weight:700;
+  }
+  .page-header p{
+    font-size:13px;
+    color:var(--muted);
+    margin:0;
+    line-height:1.6;
+  }
+  .proto-toggle{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:24px;
+  }
+  .proto-toggle button{
+    padding:8px 18px;
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:99px;
+    color:var(--muted);
+    font-family:'DM Sans',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .proto-toggle button.active{
+    background:var(--green-bg);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  /* ===== Container principal (simula o settings-panel) ===== */
+  .settings-mock{
+    max-width:480px;
+    margin:0 auto;
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:24px 20px;
+  }
+  .settings-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .settings-header h2{
+    font-size:17px;
+    margin:0;
+    font-weight:600;
+  }
+  .settings-header .close{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:18px;
+    cursor:pointer;
+  }
+  .settings-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .settings-tab{
+    padding:8px 12px;
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-family:'DM Sans',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .settings-tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+
+  /* ===== Campos genéricos ===== */
+  .field-group{margin-bottom:18px;}
+  .field-group > label{
+    display:block;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .field-row{display:flex;gap:10px;}
+  .field-row > div{flex:1;}
+  .field-sublabel{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  input[type="time"], input[type="number"], select{
+    width:100%;
+    padding:8px 10px;
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    color:var(--text);
+    font-family:'DM Mono',monospace;
+    font-size:13px;
+  }
+  input[type="checkbox"]{accent-color:var(--accent);}
+  .checkbox-row{display:flex;align-items:center;gap:8px;}
+  .checkbox-row label{font-size:13px;color:var(--text);margin:0;}
+
+  .config-preview{
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    margin-bottom:18px;
+    font-size:12px;
+    color:var(--muted);
+    font-family:'DM Mono',monospace;
+    line-height:1.6;
+  }
+  .config-preview span{color:var(--accent);}
+
+  /* ===== Lunch fixed block (modo separado) ===== */
+  .lunch-fixed{
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px;
+    margin-bottom:18px;
+  }
+  .lunch-fixed .lunch-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .lunch-fixed .lunch-head .label{
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+  }
+
+  /* ===== Lista de blocos (estrutura nova) ===== */
+  .blocks-section{
+    margin-bottom:18px;
+  }
+  .blocks-section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .blocks-section-head h3{
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    margin:0;
+  }
+  .add-block-btn{
+    font-size:11px;
+    padding:5px 12px;
+    background:var(--green-bg);
+    color:var(--accent);
+    border:1px solid var(--accent);
+    border-radius:99px;
+    cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+    font-weight:600;
+    transition:filter .15s;
+  }
+  .add-block-btn:hover{filter:brightness(1.15);}
+
+  .block-card{
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px 14px;
+    margin-bottom:8px;
+    display:grid;
+    grid-template-columns:18px 1fr auto auto;
+    gap:12px;
+    align-items:center;
+    transition:background .15s, border-color .15s, opacity .15s;
+  }
+  .block-card.dragging{
+    opacity:.45;
+    border-style:dashed;
+  }
+  .block-card.drop-target{
+    border-color:var(--accent);
+    background:var(--green-bg);
+  }
+  .block-card.disabled{
+    opacity:.35;
+  }
+  /* Cor por tipo */
+  .block-card[data-type="estudo"]{
+    border-left:3px solid var(--accent);
+  }
+  .block-card[data-type="comer"]{
+    border-left:3px solid var(--orange);
+  }
+  .block-card[data-type="intervalo"]{
+    border-left:3px solid var(--blue);
+  }
+
+  .drag-handle{
+    color:var(--muted);
+    cursor:grab;
+    user-select:none;
+    font-size:14px;
+    text-align:center;
+  }
+  .drag-handle:active{cursor:grabbing;}
+
+  .block-body{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .block-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .block-type-select{
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:5px 8px;
+    font-size:12px;
+    font-family:'DM Sans',sans-serif;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .block-times{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'DM Mono',monospace;
+    font-size:12px;
+  }
+  .block-times input{
+    width:75px;
+    padding:4px 6px;
+    background:var(--bg2);
+    font-size:12px;
+  }
+  .block-times .sep{color:var(--muted);}
+  .block-dur{
+    font-size:11px;
+    color:var(--muted);
+    font-family:'DM Mono',monospace;
+    align-self:flex-end;
+  }
+
+  .block-toggle{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:32px;
+    height:18px;
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:99px;
+    cursor:pointer;
+    position:relative;
+    transition:all .2s;
+  }
+  .block-toggle .knob{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:var(--muted);
+    position:absolute;
+    left:2px;
+    transition:all .2s;
+  }
+  .block-toggle.on{
+    background:var(--green-bg);
+    border-color:var(--accent);
+  }
+  .block-toggle.on .knob{
+    left:16px;
+    background:var(--accent);
+  }
+
+  .block-delete{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:14px;
+    padding:4px 6px;
+    border-radius:4px;
+    transition:color .15s, background .15s;
+  }
+  .block-delete:hover{
+    color:#ef4444;
+    background:rgba(239,68,68,.1);
+  }
+
+  /* ===== Pomodoro/Pausa fields (continuam embaixo) ===== */
+  .pomo-fields{
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px;
+    margin-bottom:14px;
+  }
+
+  /* ===== Helper text ===== */
+  .helper{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:10px;
+    line-height:1.5;
+  }
+
+  /* ===== Footer buttons (apenas mock) ===== */
+  .footer-row{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+  }
+  .footer-row button{
+    flex:1;
+    padding:10px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border);
+    background:var(--bg3);
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .footer-row .primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:var(--bg);
+    font-weight:600;
+  }
+
+  /* Esconde proto não-ativo */
+  .proto{display:none;}
+  .proto.active{display:block;}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>📐 Protótipos — Estrutura do Dia</h1>
+  <p>2 versões do novo layout de configuração de blocos. Use o toggle pra alternar e comparar.</p>
+</div>
+
+<div class="proto-toggle">
+  <button class="active" data-mode="integrado">Almoço integrado</button>
+  <button data-mode="separado">Almoço separado</button>
+</div>
+
+<!-- ===== PROTÓTIPO 1: ALMOÇO INTEGRADO ===== -->
+<div class="proto active" data-mode="integrado">
+  <div class="settings-mock">
+    <div class="settings-header">
+      <h2>⚙️ Configurações</h2>
+      <button class="close">✕</button>
+    </div>
+
+    <div class="settings-tabs">
+      <button class="settings-tab active">Rotina</button>
+      <button class="settings-tab">Geral</button>
+    </div>
+
+    <div class="config-preview">
+      Pomodoros: <span>8</span> · Estudo: <span>3h 20min</span> · XP/dia: <span>~400</span>
+    </div>
+
+    <div class="blocks-section">
+      <div class="blocks-section-head">
+        <h3>Estrutura do dia</h3>
+        <button class="add-block-btn" onclick="addBlock(this, 'integrado')">+ Adicionar bloco</button>
+      </div>
+      <div class="helper">Arrasta os cards (☰) pra reordenar. Tudo aqui — estudo, refeição, intervalo.</div>
+      <div class="blocks-list" id="list-integrado">
+        <!-- preenchido por JS -->
+      </div>
+    </div>
+
+    <div class="pomo-fields">
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:8px;">Pomodoro</label>
+      <div class="field-row" style="margin-bottom:8px;">
+        <div><div class="field-sublabel">Estudo (min)</div><input type="number" value="25"></div>
+        <div><div class="field-sublabel">Pausa curta (min)</div><input type="number" value="5"></div>
+      </div>
+      <div><div class="field-sublabel">Pausa longa (a cada 4 pomos)</div><input type="number" value="20"></div>
+    </div>
+
+    <button class="add-block-btn" style="width:100%;padding:10px;border-radius:var(--radius-sm);">🎯 Encaixar estudo nos meus horários</button>
+
+    <div class="footer-row">
+      <button>↺ Padrão</button>
+      <button class="primary">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROTÓTIPO 2: ALMOÇO SEPARADO ===== -->
+<div class="proto" data-mode="separado">
+  <div class="settings-mock">
+    <div class="settings-header">
+      <h2>⚙️ Configurações</h2>
+      <button class="close">✕</button>
+    </div>
+
+    <div class="settings-tabs">
+      <button class="settings-tab active">Rotina</button>
+      <button class="settings-tab">Geral</button>
+    </div>
+
+    <div class="config-preview">
+      Pomodoros: <span>8</span> · Estudo: <span>3h 20min</span> · XP/dia: <span>~400</span>
+    </div>
+
+    <div class="lunch-fixed">
+      <div class="lunch-head">
+        <div class="checkbox-row">
+          <input type="checkbox" id="has-lunch-sep" checked>
+          <label for="has-lunch-sep" class="label">🍽️ Almoço</label>
+        </div>
+      </div>
+      <div class="field-row">
+        <div><div class="field-sublabel">Horário</div><input type="time" value="13:00"></div>
+        <div><div class="field-sublabel">Duração (min)</div><input type="number" value="60"></div>
+      </div>
+    </div>
+
+    <div class="blocks-section">
+      <div class="blocks-section-head">
+        <h3>Estrutura do dia</h3>
+        <button class="add-block-btn" onclick="addBlock(this, 'separado')">+ Adicionar bloco</button>
+      </div>
+      <div class="helper">Almoço fica no campo acima. Aqui só estudos e intervalos (treino, descanso, etc).</div>
+      <div class="blocks-list" id="list-separado">
+        <!-- preenchido por JS -->
+      </div>
+    </div>
+
+    <div class="pomo-fields">
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:8px;">Pomodoro</label>
+      <div class="field-row" style="margin-bottom:8px;">
+        <div><div class="field-sublabel">Estudo (min)</div><input type="number" value="25"></div>
+        <div><div class="field-sublabel">Pausa curta (min)</div><input type="number" value="5"></div>
+      </div>
+      <div><div class="field-sublabel">Pausa longa (a cada 4 pomos)</div><input type="number" value="20"></div>
+    </div>
+
+    <button class="add-block-btn" style="width:100%;padding:10px;border-radius:var(--radius-sm);">🎯 Encaixar estudo nos meus horários</button>
+
+    <div class="footer-row">
+      <button>↺ Padrão</button>
+      <button class="primary">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== Toggle entre modos =====
+  document.querySelectorAll('.proto-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      document.querySelectorAll('.proto-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.proto').forEach(p => p.classList.toggle('active', p.dataset.mode === mode));
+    });
+  });
+
+  // ===== Tipos disponíveis por modo =====
+  const TIPOS_INTEGRADO = [
+    { value:'estudo',     label:'📖 Estudo' },
+    { value:'comer',      label:'🍽️ Refeição' },
+    { value:'intervalo',  label:'⏸️ Intervalo' },
+  ];
+  const TIPOS_SEPARADO = [
+    { value:'estudo',     label:'📖 Estudo' },
+    { value:'intervalo',  label:'⏸️ Intervalo' },
+  ];
+
+  // ===== Mock data =====
+  const initialData = {
+    integrado: [
+      { type:'estudo',    start:'09:00', end:'12:00', enabled:true },
+      { type:'comer',     start:'12:00', end:'13:00', enabled:true },
+      { type:'intervalo', start:'13:00', end:'15:00', enabled:true },
+      { type:'estudo',    start:'15:00', end:'20:00', enabled:true },
+    ],
+    separado: [
+      { type:'estudo',    start:'09:00', end:'12:00', enabled:true },
+      { type:'intervalo', start:'13:00', end:'15:00', enabled:true },
+      { type:'estudo',    start:'15:00', end:'20:00', enabled:true },
+    ],
+  };
+
+  function durStr(start, end) {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    let mins = (eh*60+em) - (sh*60+sm);
+    if (mins < 0) return '—';
+    const h = Math.floor(mins/60);
+    const m = mins%60;
+    if (h === 0) return `${m}min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
+  }
+
+  function renderBlock(b, mode, idx) {
+    const tipos = mode === 'integrado' ? TIPOS_INTEGRADO : TIPOS_SEPARADO;
+    const opts = tipos.map(t => `<option value="${t.value}" ${t.value===b.type?'selected':''}>${t.label}</option>`).join('');
+    const card = document.createElement('div');
+    card.className = 'block-card' + (b.enabled ? '' : ' disabled');
+    card.dataset.type = b.type;
+    card.dataset.idx = idx;
+    card.draggable = true;
+    card.innerHTML = `
+      <div class="drag-handle">☰</div>
+      <div class="block-body">
+        <div class="block-top">
+          <select class="block-type-select">${opts}</select>
+          <div class="block-times">
+            <input type="time" value="${b.start}">
+            <span class="sep">→</span>
+            <input type="time" value="${b.end}">
+          </div>
+        </div>
+        <div class="block-dur">${durStr(b.start, b.end)}</div>
+      </div>
+      <div class="block-toggle ${b.enabled?'on':''}" title="Ativar/desativar este bloco neste dia">
+        <div class="knob"></div>
+      </div>
+      <button class="block-delete" title="Apagar bloco">✕</button>
+    `;
+    // Toggle
+    card.querySelector('.block-toggle').addEventListener('click', () => {
+      b.enabled = !b.enabled;
+      card.querySelector('.block-toggle').classList.toggle('on', b.enabled);
+      card.classList.toggle('disabled', !b.enabled);
+    });
+    // Type change
+    card.querySelector('.block-type-select').addEventListener('change', e => {
+      b.type = e.target.value;
+      card.dataset.type = b.type;
+    });
+    // Time change
+    const inputs = card.querySelectorAll('.block-times input');
+    inputs[0].addEventListener('input', e => { b.start = e.target.value; card.querySelector('.block-dur').textContent = durStr(b.start, b.end); });
+    inputs[1].addEventListener('input', e => { b.end = e.target.value; card.querySelector('.block-dur').textContent = durStr(b.start, b.end); });
+    // Delete
+    card.querySelector('.block-delete').addEventListener('click', () => {
+      const data = initialData[mode];
+      const i = data.indexOf(b);
+      if (i >= 0) { data.splice(i, 1); renderList(mode); }
+    });
+    // Drag & drop
+    card.addEventListener('dragstart', e => {
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', idx);
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.block-card.drop-target').forEach(c => c.classList.remove('drop-target'));
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      card.classList.add('drop-target');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = parseInt(card.dataset.idx);
+      if (isNaN(fromIdx) || isNaN(toIdx) || fromIdx === toIdx) return;
+      const data = initialData[mode];
+      const [moved] = data.splice(fromIdx, 1);
+      data.splice(toIdx, 0, moved);
+      renderList(mode);
+    });
+    return card;
+  }
+
+  function renderList(mode) {
+    const list = document.getElementById('list-' + mode);
+    list.innerHTML = '';
+    initialData[mode].forEach((b, i) => list.appendChild(renderBlock(b, mode, i)));
+  }
+
+  function addBlock(btn, mode) {
+    const defaultType = mode === 'integrado' ? 'intervalo' : 'estudo';
+    initialData[mode].push({ type: defaultType, start: '14:00', end: '15:00', enabled: true });
+    renderList(mode);
+  }
+
+  // Init
+  renderList('integrado');
+  renderList('separado');
+</script>
+
+</body>
+</html>
