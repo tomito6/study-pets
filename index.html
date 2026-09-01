@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pomodoro">
-<title>Plano de Estudos</title>
+<meta name="apple-mobile-web-app-title" content="Study Pets">
+<title>Study Pets</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -79,34 +79,6 @@
   .add-event-btn{font-size:12px;color:var(--accent);background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .add-event-btn:hover{background:var(--green-bg);}
 
-  /* STUDY WINDOWS LIST */
-  .study-window-card{
-    background:var(--bg2);
-    border:1px solid var(--border);
-    border-left:3px solid var(--accent);
-    border-radius:var(--radius-sm);
-    padding:10px 12px;
-    margin-bottom:8px;
-    display:grid;
-    grid-template-columns:1fr auto;
-    gap:8px;
-    align-items:center;
-  }
-  .study-window-card .swc-times{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .study-window-card .swc-times input{
-    width:88px;padding:5px 8px;font-size:13px;
-    background:var(--bg3);border:1px solid var(--border);
-    border-radius:var(--radius-sm);color:var(--text);
-    font-family:'DM Mono',monospace;
-  }
-  .study-window-card .swc-sep{color:var(--muted);font-family:'DM Mono',monospace;}
-  .study-window-card .swc-dur{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:6px;}
-  .study-window-card .swc-del{
-    background:transparent;border:none;color:var(--muted);
-    cursor:pointer;padding:4px 8px;font-size:14px;border-radius:4px;
-    transition:color .15s,background .15s;
-  }
-  .study-window-card .swc-del:hover{color:#ef4444;background:rgba(239,68,68,.1);}
   .add-block-btn{
     font-size:11px;padding:5px 12px;
     background:var(--green-bg);color:var(--accent);
@@ -180,7 +152,6 @@
   .panel-overlay.open{display:flex;}
   .panel-overlay.center{align-items:center;padding:20px;}
   .panel-overlay.center .panel-sheet{border-radius:var(--radius);border-bottom:1px solid var(--border);max-width:420px;max-height:90vh;padding:24px 20px;}
-  #settings-panel.center .panel-sheet{max-width:560px;padding:28px 28px;}
   .panel-sheet{background:var(--bg2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border);border-bottom:none;width:100%;max-width:480px;padding:24px 20px 40px;max-height:85vh;overflow-y:auto;}
   .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
   .panel-header h2{font-size:16px;font-weight:600;}
@@ -197,10 +168,6 @@
   .field-group input:focus{border-color:var(--accent2);}
   .field-group input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(4) hue-rotate(50deg);cursor:pointer;opacity:.8;}
   .field-group input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1;}
-  .config-preview{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:18px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.9;}
-  .config-preview span{color:var(--text);}
-  .config-preview .warn{color:var(--orange);}
-  .config-preview .ok{color:var(--accent);}
   .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .save-btn{width:100%;background:var(--accent);color:#0e0e0f;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .save-btn:hover{opacity:.9;}
@@ -209,17 +176,15 @@
   .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
   .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}
-  .settings-tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--bg3);border-radius:var(--radius-sm);padding:4px;}
-  .settings-tab{flex:1;background:transparent;border:none;color:var(--muted);font-size:12px;font-weight:500;padding:8px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
-  .settings-tab:hover{color:var(--text);}
-  .settings-tab.active{background:var(--bg2);color:var(--accent);font-weight:600;}
   .settings-tab-content{display:none;}
   .settings-tab-content.active{display:block;}
-  .danger-zone{margin-top:24px;padding-top:18px;border-top:1px dashed var(--border);}
-  .danger-zone-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
-  .danger-zone-desc{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
   .danger-btn{width:100%;background:transparent;color:#ef4444;border:1px solid #ef4444;border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .danger-btn:hover{background:#ef4444;color:#fff;}
+  .danger-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .danger-btn:disabled:hover{background:transparent;color:#ef4444;}
+  .del-acc-input{width:100%;background:var(--bg3);border:1px solid #ef4444;border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:9px 12px;outline:none;margin-bottom:12px;}
+  .del-acc-input:focus{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.15);}
+  .del-acc-status{font-size:12px;color:var(--orange);line-height:1.5;margin-bottom:10px;}
   input[type=date]:disabled,input[type=time]:disabled,input[type=number]:disabled{opacity:.5;cursor:not-allowed;}
 
   /* EVENT PANEL */
@@ -602,6 +567,93 @@
   /* SAVE INDICATOR */
   #save-indicator{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
   #save-indicator.show{opacity:1;}
+
+  /* ============================================================
+     SETTINGS — página inteira (não é modal)
+     ============================================================ */
+  .settings-page{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;}
+  #settings-panel.open{display:flex;}
+  .st-topbar{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(14,14,15,.92);backdrop-filter:blur(12px);}
+  .st-back{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .st-back:hover{border-color:#555;color:var(--text);}
+  .st-title{font-size:15px;font-weight:600;}
+  .st-tabs-wrap{flex-shrink:0;border-bottom:1px solid var(--border);padding:0 20px;}
+  .st-tabs{max-width:620px;margin:0 auto;display:flex;gap:26px;}
+  .st-tabs .settings-tab{flex:none;background:transparent;border:none;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);font-size:13px;font-weight:500;padding:13px 2px 11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .15s,border-color .15s;}
+  .st-tabs .settings-tab:hover{color:var(--text);}
+  .st-tabs .settings-tab.active{background:transparent;color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+  .st-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .st-body{max-width:620px;margin:0 auto;padding:26px 20px 40px;}
+  .st-section{margin-bottom:30px;}
+  .st-section:last-child{margin-bottom:0;}
+  .st-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px;min-height:26px;}
+  .st-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
+  .st-section-title.danger{color:#ef4444;}
+  .st-section-desc{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px;}
+  .st-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .st-field-label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+  .st-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .st-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .st-card input[type=time],.st-card input[type=number],.st-card input[type=date]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;padding:9px 10px;outline:none;color-scheme:dark;transition:border-color .15s;}
+  .st-card input:focus{border-color:var(--accent);}
+  .st-card input:disabled{opacity:.45;cursor:not-allowed;}
+  .st-card input[type=date]::-webkit-calendar-picker-indicator,.st-card input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(4) hue-rotate(50deg);cursor:pointer;opacity:.75;}
+  .st-hint{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.5;}
+  .st-divider{height:1px;background:var(--border);margin:15px 0;}
+  .st-card .fit-study-btn{margin-bottom:0;}
+  .st-card .ghost-btn{margin-top:10px;}
+
+  /* resumo do dia */
+  .st-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .sts-tile{background:var(--bg3);border-radius:var(--radius-sm);padding:11px 6px;text-align:center;}
+  .sts-num{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text);line-height:1.2;}
+  .sts-tile.accent .sts-num{color:var(--accent);}
+  .sts-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;}
+  .sts-note{font-size:12px;line-height:1.5;margin-top:12px;}
+  .sts-note.ok{color:var(--accent);}
+  .sts-note.warn{color:var(--orange);}
+
+  /* janelas de estudo — uma linha por janela */
+  .sw-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .sw-row:first-child{padding-top:0;}
+  .sw-row:last-child{border-bottom:none;padding-bottom:0;}
+  .sw-row input[type=time]{width:100px;flex:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px;outline:none;color-scheme:dark;transition:border-color .15s;}
+  .sw-row input[type=time]:focus{border-color:var(--accent);}
+  .sw-arrow{color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;}
+  .sw-dur{margin-left:auto;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .sw-dur.bad{color:var(--orange);}
+  .sw-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:5px 7px;border-radius:4px;line-height:1;transition:all .15s;}
+  .sw-del:hover{color:#ef4444;background:rgba(239,68,68,.1);}
+
+  /* linha com switch (almoço, pular fds) */
+  .st-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .st-toggle-txt{font-size:13px;color:var(--text);}
+  .st-toggle-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45;}
+  .st-switch{position:relative;display:inline-flex;flex:none;cursor:pointer;}
+  .st-switch input{position:absolute;opacity:0;width:0;height:0;}
+  .st-switch-track{width:40px;height:22px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;padding:2px;transition:background .18s,border-color .18s;}
+  .st-switch-knob{width:16px;height:16px;border-radius:50%;background:var(--muted);transition:transform .18s,background .18s;}
+  .st-switch input:checked + .st-switch-track{background:var(--green-bg);border-color:var(--accent);}
+  .st-switch input:checked + .st-switch-track .st-switch-knob{transform:translateX(18px);background:var(--accent);}
+  .st-switch input:focus-visible + .st-switch-track{border-color:var(--accent);}
+
+  /* zona de perigo */
+  .st-card.st-danger{border-color:rgba(239,68,68,.35);}
+  .st-danger-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .st-danger-row .dr-txt{flex:1;min-width:190px;}
+  .st-danger-row .dr-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .st-danger-row .dr-desc{font-size:11.5px;color:var(--muted);line-height:1.5;}
+  .st-danger .danger-btn{width:auto;flex:none;padding:8px 14px;font-size:12px;white-space:nowrap;}
+
+  /* barra de ações fixa */
+  .st-actions{flex-shrink:0;border-top:1px solid var(--border);background:rgba(14,14,15,.94);backdrop-filter:blur(12px);padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom));}
+  .st-actions-inner{max-width:620px;margin:0 auto;display:grid;grid-template-columns:1fr 2fr;gap:10px;}
+
+  @media (max-width:520px){
+    .st-summary{grid-template-columns:repeat(2,1fr);}
+    .st-grid-3{grid-template-columns:1fr;}
+    .st-danger .danger-btn{width:100%;}
+  }
 </style>
 </head>
 <body>
@@ -703,7 +755,7 @@
 <div class="ls-content">
   <img class="ls-char" src="idle/user/0.png" alt="Personagem" id="ls-char-sprite">
   <div class="ls-eyebrow">✦ SISTEMA DE ESTUDOS ✦</div>
-  <div class="ls-title">ESTUDO<br><span>RPG</span></div>
+  <div class="ls-title">STUDY<br><span>PETS</span></div>
   <div class="ls-sub">Transforme sua rotina de estudos<br>numa aventura. Suba de nível. Evolua.</div>
   <div class="ls-features">
     <div class="ls-feat"><span class="lf-icon">⚡</span>Pomodoro<br>inteligente</div>
@@ -855,90 +907,144 @@
   </div>
 </div>
 
-<!-- SETTINGS PANEL -->
-<div class="panel-overlay center" id="settings-panel" onclick="closeIfOutside(event,'settings-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>⚙️ Configurações</h2>
-      <button class="panel-close" onclick="closeSettings()">✕</button>
-    </div>
+<!-- SETTINGS — página inteira -->
+<div class="settings-page" id="settings-panel">
+  <div class="st-topbar">
+    <button type="button" class="st-back" onclick="closeSettings()">← Voltar</button>
+    <div class="st-title">Configurações</div>
+  </div>
 
-    <div class="settings-tabs">
+  <div class="st-tabs-wrap">
+    <div class="st-tabs">
       <button type="button" class="settings-tab active" data-tab="day" onclick="switchSettingsTab('day')">Rotina</button>
       <button type="button" class="settings-tab" data-tab="general" onclick="switchSettingsTab('general')">Geral</button>
     </div>
+  </div>
 
-    <div class="settings-tab-content active" data-tab-content="day">
-      <div class="config-preview" id="config-preview">Calculando...</div>
+  <div class="st-scroll">
+    <div class="st-body">
 
-      <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0;">📖 Janelas de estudo</label>
-          <button type="button" class="add-block-btn" onclick="addStudyWindow()">+ Adicionar</button>
+      <div class="settings-tab-content active" data-tab-content="day">
+
+        <div class="st-section">
+          <div class="st-section-head"><div class="st-section-title">Resumo do dia</div></div>
+          <div class="st-section-desc">Como fica um dia cheio com a configuração abaixo.</div>
+          <div class="st-card" id="config-preview">Calculando...</div>
         </div>
-        <div class="field-sublabel" style="margin-bottom:10px;">Quando você estuda no dia. Vale todo dia. Pra compromissos pontuais use Eventos.</div>
-        <div id="cfg-windows" class="study-windows-list"></div>
-      </div>
 
-      <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
-        <div class="checkbox-row" style="margin-bottom:10px;">
-          <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
-          <label for="cfg-has-lunch" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">🍽️ Almoço</label>
+        <div class="st-section">
+          <div class="st-section-head">
+            <div class="st-section-title">Janelas de estudo</div>
+            <button type="button" class="add-block-btn" onclick="addStudyWindow()">+ Adicionar</button>
+          </div>
+          <div class="st-section-desc">Os intervalos do dia em que você estuda. Valem para todos os dias — para compromissos pontuais, use Eventos.</div>
+          <div class="st-card"><div id="cfg-windows"></div></div>
         </div>
-        <div id="lunch-fields">
-          <div class="field-row" style="margin-bottom:8px;">
-            <div><div class="field-sublabel">Horário</div><input type="time" id="cfg-lunch" value="13:00" oninput="updatePreview()"></div>
-            <div><div class="field-sublabel">Duração (min)</div><input type="number" id="cfg-lunch-dur" value="60" min="15" max="180" step="5" oninput="updatePreview()"></div>
+
+        <div class="st-section">
+          <div class="st-section-head"><div class="st-section-title">Almoço</div></div>
+          <div class="st-section-desc">Fica reservado todo dia, e o plano se organiza em volta dele.</div>
+          <div class="st-card">
+            <div class="st-toggle-row">
+              <div>
+                <div class="st-toggle-txt">Reservar horário de almoço</div>
+                <div class="st-toggle-sub">Desligue se você prefere almoçar em horários variáveis.</div>
+              </div>
+              <label class="st-switch">
+                <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
+                <span class="st-switch-track"><span class="st-switch-knob"></span></span>
+              </label>
+            </div>
+            <div id="lunch-fields">
+              <div class="st-divider"></div>
+              <div class="st-grid-2">
+                <div><div class="st-field-label">Começa às</div><input type="time" id="cfg-lunch" value="13:00" oninput="updatePreview()"></div>
+                <div><div class="st-field-label">Duração (min)</div><input type="number" id="cfg-lunch-dur" value="60" min="15" max="180" step="5" oninput="updatePreview()"></div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <button type="button" class="fit-study-btn" onclick="openFitStudy()">🎯 Encaixar estudo nos meus horários</button>
-
-      <div class="field-group">
-        <label>Pomodoro</label>
-        <div class="field-row">
-          <div><div class="field-sublabel">Estudo (min)</div><input type="number" id="cfg-pomo" value="25" min="10" max="90" step="5" oninput="updatePreview()"></div>
-          <div><div class="field-sublabel">Pausa curta (min)</div><input type="number" id="cfg-short" value="5" min="1" max="30" step="1" oninput="updatePreview()"></div>
+        <div class="st-section">
+          <div class="st-section-head"><div class="st-section-title">Ritmo do pomodoro</div></div>
+          <div class="st-section-desc">A duração de cada bloco. A pausa longa entra a cada 4 pomodoros.</div>
+          <div class="st-card">
+            <div class="st-grid-3">
+              <div><div class="st-field-label">Estudo (min)</div><input type="number" id="cfg-pomo" value="25" min="10" max="90" step="5" oninput="updatePreview()"></div>
+              <div><div class="st-field-label">Pausa curta (min)</div><input type="number" id="cfg-short" value="5" min="1" max="30" step="1" oninput="updatePreview()"></div>
+              <div><div class="st-field-label">Pausa longa (min)</div><input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()"></div>
+            </div>
+            <div class="st-divider"></div>
+            <button type="button" class="fit-study-btn" onclick="openFitStudy()">🎯 Encaixar estudo nos meus horários</button>
+            <div class="st-hint">Testa combinações de duração e mostra as que melhor preenchem suas janelas, sem sobrar tempo morto.</div>
+          </div>
         </div>
+
       </div>
-      <div class="field-group">
-        <label>Pausa longa — a cada 4 pomodoros (min)</label>
-        <input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()">
+
+      <div class="settings-tab-content" data-tab-content="general">
+
+        <div class="st-section">
+          <div class="st-section-head"><div class="st-section-title">Período de uso</div></div>
+          <div class="st-section-desc">O intervalo em que você quer ganhar XP e acompanhar seu progresso.</div>
+          <div class="st-card">
+            <div class="st-grid-2">
+              <div><div class="st-field-label">Início</div><input type="date" id="cfg-period-start" disabled title="O início da sessão é fixo. Use Cancelar sessão pra recomeçar."></div>
+              <div><div class="st-field-label">Fim</div><input type="date" id="cfg-period-end"></div>
+            </div>
+            <div class="st-hint">O início é fixo — só muda cancelando a sessão.</div>
+            <button type="button" class="ghost-btn" onclick="clearPeriod()">Usar sem data de fim</button>
+            <div class="st-divider"></div>
+            <div class="st-toggle-row">
+              <div>
+                <div class="st-toggle-txt">Pular finais de semana</div>
+                <div class="st-toggle-sub">Sábado e domingo ficam livres, sem blocos e sem cobrança de meta.</div>
+              </div>
+              <label class="st-switch">
+                <input type="checkbox" id="cfg-skip-weekends">
+                <span class="st-switch-track"><span class="st-switch-knob"></span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="st-section">
+          <div class="st-section-head"><div class="st-section-title">Meta diária</div></div>
+          <div class="st-section-desc">Quanto você precisa estudar num dia para manter a sequência e ganhar o bônus de moedas.</div>
+          <div class="st-card">
+            <div class="st-field-label">Minutos por dia (15–240)</div>
+            <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15">
+          </div>
+        </div>
+
+        <div class="st-section">
+          <div class="st-section-head"><div class="st-section-title danger">Zona de perigo</div></div>
+          <div class="st-card st-danger">
+            <div class="st-danger-row">
+              <div class="dr-txt">
+                <div class="dr-title">Cancelar sessão</div>
+                <div class="dr-desc">Apaga checks, eventos, pets e configurações, e reabre o onboarding. Sua conta continua existindo.</div>
+              </div>
+              <button type="button" class="danger-btn" onclick="openCancelConfirm()">Cancelar sessão</button>
+            </div>
+            <div class="st-divider"></div>
+            <div class="st-danger-row">
+              <div class="dr-txt">
+                <div class="dr-title">Apagar minha conta</div>
+                <div class="dr-desc">Remove a conta e todos os dados do servidor. Você é desconectado e nada pode ser recuperado.</div>
+              </div>
+              <button type="button" class="danger-btn" onclick="openDeleteAccount()">Apagar conta</button>
+            </div>
+          </div>
+        </div>
+
       </div>
+
     </div>
+  </div>
 
-    <div class="settings-tab-content" data-tab-content="general">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
-        Defina o período em que você quer ganhar XP e ver seu progresso.
-      </p>
-      <div class="field-group">
-        <label>Período de uso</label>
-        <div class="field-row">
-          <div><div class="field-sublabel">Início (fixo)</div><input type="date" id="cfg-period-start" disabled title="O início da sessão é fixo. Use Cancelar sessão pra recomeçar."></div>
-          <div><div class="field-sublabel">Fim</div><input type="date" id="cfg-period-end"></div>
-        </div>
-        <button type="button" class="ghost-btn" onclick="clearPeriod()" style="margin-top:8px;">Sem data fim</button>
-        <div class="checkbox-row" style="margin-top:14px;">
-          <input type="checkbox" id="cfg-skip-weekends">
-          <label for="cfg-skip-weekends" style="font-size:13px;">Pular finais de semana</label>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label>Mínimo diário de estudo</label>
-        <div class="field-sublabel">Minutos por dia pra contar streak e ganhar bônus de moedas (15–240).</div>
-        <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15">
-      </div>
-
-      <div class="danger-zone">
-        <div class="danger-zone-label">Zona de perigo</div>
-        <div class="danger-zone-desc">Cancela sua sessão atual e apaga tudo (checks, eventos, pets, configurações). Vai abrir o onboarding pra você começar uma nova sessão.</div>
-        <button type="button" class="danger-btn" onclick="openCancelConfirm()">Cancelar sessão</button>
-      </div>
-    </div>
-
-    <div class="btn-row">
+  <div class="st-actions">
+    <div class="st-actions-inner">
       <button class="reset-btn" onclick="resetSettings()">↺ Padrão</button>
       <button class="save-btn" onclick="saveSettings()">Salvar</button>
     </div>
@@ -967,6 +1073,35 @@
     <div class="btn-row">
       <button class="reset-btn" onclick="closeCancelConfirm()">Voltar</button>
       <button class="danger-btn" onclick="confirmCancelSession()">Sim, cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT CONFIRM -->
+<div class="panel-overlay center" id="delete-account-panel" onclick="closeIfOutside(event,'delete-account-panel')">
+  <div class="panel-sheet">
+    <div class="panel-header">
+      <h2>🗑️ Apagar sua conta?</h2>
+      <button class="panel-close" onclick="closeDeleteAccount()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;">
+      Isso apaga <strong>a conta inteira</strong>, não só a sessão:
+    </p>
+    <ul style="font-size:13px;color:var(--muted);margin:0 0 16px 18px;line-height:1.7;">
+      <li>Todo o histórico de checks, XP e moedas</li>
+      <li>Eventos, séries recorrentes e ajustes de almoço</li>
+      <li>Pets adotados e skills</li>
+      <li>Seu acesso — você será desconectado</li>
+    </ul>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
+      Nada disso pode ser recuperado. Se você só quer recomeçar do zero mantendo a conta, use <strong>Cancelar sessão</strong>.
+    </p>
+    <div class="field-sublabel">Digite <strong>APAGAR</strong> pra confirmar</div>
+    <input type="text" class="del-acc-input" id="del-acc-input" placeholder="APAGAR" autocomplete="off" oninput="onDeleteAccountInput()">
+    <div class="del-acc-status" id="del-acc-status"></div>
+    <div class="btn-row">
+      <button class="reset-btn" onclick="closeDeleteAccount()">Voltar</button>
+      <button class="danger-btn" id="del-acc-btn" onclick="confirmDeleteAccount()" disabled>Apagar para sempre</button>
     </div>
   </div>
 </div>
@@ -1412,16 +1547,16 @@
 
 <script type="module">
 // ============================================================
-// PLANO DE ESTUDOS — refatorado
+// STUDY PETS — refatorado
 // ============================================================
 
 // ============================================================
 // FIREBASE
 // ============================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc }
+import { getFirestore, doc, getDoc, setDoc, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1561,6 +1696,7 @@ const PETS = {
 
 let WEEKS = [];
 let saveTimeout = null;
+let accountDeleted = false;   // true depois que a conta foi apagada — impede save pendente de recriar o doc
 
 // ============================================================
 // DATE / TIME HELPERS
@@ -2200,10 +2336,11 @@ function showSaveIndicator(msg = 'Salvando...', done = false) {
 }
 
 function scheduleSave() {
+  if (accountDeleted) return;
   showSaveIndicator('Salvando...');
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
-    if (!state.user) return;
+    if (!state.user || accountDeleted) return;
     try {
       await setDoc(doc(db, 'users', state.user.uid), {
         checks: state.checks,
@@ -2235,6 +2372,7 @@ window.logoutUser = async () => { await signOut(auth); };
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
+    accountDeleted = false;
     state.user = user;
     const isNew = await loadData(user.uid);
     document.getElementById('login-screen').style.display = 'none';
@@ -2647,24 +2785,22 @@ window.addStudyWindow = (start = '09:00', end = '12:00') => {
       end = `${String(Math.floor(endMins / 60)).padStart(2,'0')}:${String(endMins % 60).padStart(2,'0')}`;
     }
   }
-  const card = document.createElement('div');
-  card.className = 'study-window-card';
-  card.innerHTML = `
-    <div class="swc-times">
-      <input type="time" value="${start}" class="swc-start" oninput="updateSwDur(this);updatePreview()">
-      <span class="swc-sep">→</span>
-      <input type="time" value="${end}" class="swc-end" oninput="updateSwDur(this);updatePreview()">
-      <span class="swc-dur"></span>
-    </div>
-    <button type="button" class="swc-del" title="Remover janela" onclick="removeStudyWindow(this)">✕</button>
+  const row = document.createElement('div');
+  row.className = 'sw-row';
+  row.innerHTML = `
+    <input type="time" value="${start}" class="swc-start" aria-label="Início da janela" oninput="updateSwDur(this);updatePreview()">
+    <span class="sw-arrow">→</span>
+    <input type="time" value="${end}" class="swc-end" aria-label="Fim da janela" oninput="updateSwDur(this);updatePreview()">
+    <span class="swc-dur sw-dur"></span>
+    <button type="button" class="sw-del" title="Remover janela" onclick="removeStudyWindow(this)">✕</button>
   `;
-  c.appendChild(card);
-  updateSwDur(card.querySelector('.swc-start'));
+  c.appendChild(row);
+  updateSwDur(row.querySelector('.swc-start'));
   updatePreview();
 };
 
 window.removeStudyWindow = (btn) => {
-  const card = btn.closest('.study-window-card');
+  const card = btn.closest('.sw-row');
   if (!card) return;
   const c = document.getElementById('cfg-windows');
   if (c.children.length <= 1) {
@@ -2676,16 +2812,17 @@ window.removeStudyWindow = (btn) => {
 };
 
 window.updateSwDur = (input) => {
-  const card = input.closest('.study-window-card');
-  if (!card) return;
-  const s = card.querySelector('.swc-start').value;
-  const e = card.querySelector('.swc-end').value;
-  const durEl = card.querySelector('.swc-dur');
+  const row = input.closest('.sw-row');
+  if (!row) return;
+  const s = row.querySelector('.swc-start').value;
+  const e = row.querySelector('.swc-end').value;
+  const durEl = row.querySelector('.swc-dur');
+  durEl.classList.remove('bad');
   if (!s || !e) { durEl.textContent = ''; return; }
   const [sh, sm] = s.split(':').map(Number);
   const [eh, em] = e.split(':').map(Number);
   const mins = (eh * 60 + em) - (sh * 60 + sm);
-  if (mins <= 0) { durEl.textContent = '⚠ fim antes do início'; return; }
+  if (mins <= 0) { durEl.textContent = 'fim antes do início'; durEl.classList.add('bad'); return; }
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   durEl.textContent = h > 0 ? (m > 0 ? `${h}h ${m}min` : `${h}h`) : `${m}min`;
@@ -2698,6 +2835,8 @@ window.switchSettingsTab = (tab) => {
   document.querySelectorAll('.settings-tab-content').forEach(c => {
     c.classList.toggle('active', c.dataset.tabContent === tab);
   });
+  const sc = document.querySelector('#settings-panel .st-scroll');
+  if (sc) sc.scrollTop = 0;
 };
 window.closeSettings = () => document.getElementById('settings-panel').classList.remove('open');
 
@@ -2736,7 +2875,7 @@ window.clearPeriod = () => {
 function readCfgForm() {
   const pStart = document.getElementById('cfg-period-start').value;
   const pEnd = document.getElementById('cfg-period-end').value;
-  const studyWindows = Array.from(document.querySelectorAll('#cfg-windows .study-window-card'))
+  const studyWindows = Array.from(document.querySelectorAll('#cfg-windows .sw-row'))
     .map(card => ({
       start: card.querySelector('.swc-start').value,
       end: card.querySelector('.swc-end').value,
@@ -2764,23 +2903,16 @@ function readCfgForm() {
 }
 
 window.updatePreview = () => {
+  const el = document.getElementById('config-preview');
+  const warn = (msg) => { el.innerHTML = `<div class="sts-note warn">${msg}</div>`; };
   const cfg = readCfgForm();
-  if ([cfg.pomo, cfg.shortBreak, cfg.longBreak, cfg.lunchDur].some(isNaN)) {
-    document.getElementById('config-preview').innerHTML = '⚠️ Preencha todos os campos.';
-    return;
-  }
+  if ([cfg.pomo, cfg.shortBreak, cfg.longBreak, cfg.lunchDur].some(isNaN)) return warn('Preencha todos os campos para ver o resumo.');
   const validWindows = (cfg.studyWindows || []).filter(w =>
     w.start && w.end && timeToMins(w.end) > timeToMins(w.start)
   );
-  if (validWindows.length === 0) {
-    document.getElementById('config-preview').innerHTML = '⚠️ Adicione pelo menos uma janela de estudo válida.';
-    return;
-  }
+  if (validWindows.length === 0) return warn('Adicione pelo menos uma janela de estudo válida.');
   const blocks = generateBlocks(cfg, []);
-  if (blocks.length === 0) {
-    document.getElementById('config-preview').innerHTML = '⚠️ Configuração inválida.';
-    return;
-  }
+  if (blocks.length === 0) return warn('Essa combinação não gera nenhum bloco. Ajuste as janelas ou as durações.');
   const studyBlocks = blocks.filter(b => b.type === 'estudo');
   const pauseBlocks = blocks.filter(b => b.type === 'pausa');
   const studyMins = studyBlocks.reduce((s, b) => s + (timeToMins(b.endTime) - timeToMins(b.time)), 0);
@@ -2791,17 +2923,25 @@ window.updatePreview = () => {
     const h = Math.floor(mins / 60), m = mins % 60;
     if (h === 0) return `${m}min`;
     if (m === 0) return `${h}h`;
-    return `${h}h${m}min`;
+    return `${h}h${m}`;
   };
   const actualEnd = calcActualEnd(cfg);
   const diff = timeToMins(actualEnd) - timeToMins(cfg.end);
-  let timing = '';
-  if (diff === 0) timing = `<span class="ok">✅ Termina às ${actualEnd}</span>`;
-  else if (diff > 0) timing = `<span class="warn">⚠️ Estende ${diff}min além das ${cfg.end}</span>`;
-  else timing = `<span class="warn">⚠️ Para ${Math.abs(diff)}min antes das ${cfg.end}</span>`;
-  const winInfo = validWindows.length > 1 ? ` em <span>${validWindows.length}</span> janelas` : '';
-  document.getElementById('config-preview').innerHTML =
-    `<span>${studyBlocks.length}</span> pomos${winInfo} · Estudo: <span>${fmt(studyMins)}</span> · Pausa: <span>${fmt(pauseMins)}</span><br>XP/dia: <span>~${totalXP}</span> · ${timing}`;
+  let noteCls = 'ok', note = `Fecha o dia às ${actualEnd}, certinho no fim da última janela.`;
+  if (diff > 0) { noteCls = 'warn'; note = `Passa ${diff}min das ${cfg.end} — o último bloco vaza da janela.`; }
+  else if (diff < 0) { noteCls = 'warn'; note = `Para às ${actualEnd}, ${Math.abs(diff)}min antes das ${cfg.end} — sobra um tempo sem bloco.`; }
+  const tile = (num, lbl, cls) => `<div class="sts-tile ${cls || ''}"><div class="sts-num">${num}</div><div class="sts-lbl">${lbl}</div></div>`;
+  const winLine = validWindows.length > 1
+    ? `<div class="st-hint">Distribuídos em ${validWindows.length} janelas de estudo.</div>` : '';
+  el.innerHTML =
+    `<div class="st-summary">` +
+      tile(studyBlocks.length, 'pomos') +
+      tile(fmt(studyMins), 'estudo') +
+      tile(fmt(pauseMins), 'pausas') +
+      tile('~' + totalXP, 'XP/dia', 'accent') +
+    `</div>` +
+    winLine +
+    `<div class="sts-note ${noteCls}">${note}</div>`;
 };
 
 // ============================================================
@@ -2945,6 +3085,75 @@ window.confirmCancelSession = () => {
   renderAll();
   openOnboarding();
   showToast('Sessão cancelada — começando do zero');
+};
+
+// ============================================================
+// DELETE ACCOUNT
+// ============================================================
+window.openDeleteAccount = () => {
+  document.getElementById('del-acc-input').value = '';
+  document.getElementById('del-acc-btn').disabled = true;
+  document.getElementById('del-acc-status').textContent = '';
+  document.getElementById('delete-account-panel').classList.add('open');
+};
+window.closeDeleteAccount = () => {
+  document.getElementById('delete-account-panel').classList.remove('open');
+};
+window.onDeleteAccountInput = () => {
+  const v = (document.getElementById('del-acc-input').value || '').trim().toUpperCase();
+  document.getElementById('del-acc-btn').disabled = (v !== 'APAGAR');
+};
+
+// Apaga o doc do Firestore E o usuário do Auth. A ordem importa: o doc primeiro,
+// porque depois do deleteUser não sobra credencial pra passar nas rules do Firestore.
+window.confirmDeleteAccount = async () => {
+  const btn = document.getElementById('del-acc-btn');
+  const status = document.getElementById('del-acc-status');
+  const user = auth.currentUser;
+  if (!user) { showToast('Ninguém logado'); return; }
+
+  btn.disabled = true;
+  status.textContent = 'Apagando...';
+  accountDeleted = true;        // trava saves pendentes pra não recriar o doc
+  clearTimeout(saveTimeout);
+  stopTimer();
+
+  try {
+    await deleteDoc(doc(db, 'users', user.uid));
+  } catch (e) {
+    console.error('Delete doc failed:', e);
+    accountDeleted = false;
+    btn.disabled = false;
+    status.textContent = '⚠️ Não deu pra apagar seus dados. Tenta de novo.';
+    return;
+  }
+
+  try {
+    await deleteUser(user);
+  } catch (e) {
+    // Firebase exige login recente pra apagar conta — reautentica e tenta de novo.
+    if (e && e.code === 'auth/requires-recent-login') {
+      status.textContent = 'Confirme com o Google pra finalizar...';
+      try {
+        await reauthenticateWithPopup(user, provider);
+        await deleteUser(user);
+      } catch (e2) {
+        console.error('Reauth/delete failed:', e2);
+        status.textContent = '⚠️ Seus dados foram apagados, mas a conta continua. Entre de novo e repita pra concluir.';
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      console.error('Delete user failed:', e);
+      status.textContent = '⚠️ Seus dados foram apagados, mas não deu pra remover a conta. Tenta de novo.';
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  closeDeleteAccount();
+  closeSettings();
+  showToast('Conta apagada. Até mais 👋');
 };
 
 // ============================================================
