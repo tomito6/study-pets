@@ -1,1451 +1,28 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Study Pets">
-<title>Study Pets [TESTE]</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:#0e0e0f; --bg2:#18181b; --bg3:#232328; --border:#2e2e35;
-    --text:#f0f0f0; --muted:#888; --accent:#a3e635; --accent2:#65a30d;
-    --blue:#60a5fa; --blue-bg:#1e2d40; --green-bg:#1a2e1a;
-    --orange:#fb923c; --orange-bg:#2d1e0f;
-    --radius:10px; --radius-sm:6px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-  /* TOPBAR */
-  .topbar{position:sticky;top:0;z-index:100;background:rgba(14,14,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
-  .topbar-left h1{font-size:15px;font-weight:600;}
-  .topbar-left .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:'DM Mono',monospace;}
-  .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .xp-badge{background:var(--green-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;}
-  .xp-badge .level-tag{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;}
-  .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
-  .icon-btn:hover{border-color:#555;color:var(--text);}
-  .test-badge{background:var(--orange-bg);border:1px solid var(--orange);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--orange);}
-
-  /* MAIN */
-  .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
-
-  /* XP CARD */
-  .xp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
-  .xp-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;}
-  .xp-num{font-size:32px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);line-height:1;}
-  .xp-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-  .xp-right{text-align:right;}
-  .xp-right .week-xp{font-size:13px;font-family:'DM Mono',monospace;color:var(--muted);}
-  .xp-right .today-xp{font-size:11px;color:var(--muted);margin-top:6px;display:inline-block;transition:transform .2s;}
-  .xp-right .today-xp.today-pending{color:var(--orange);background:linear-gradient(135deg,var(--orange-bg),rgba(251,146,60,.2));border:1px solid var(--orange);border-radius:99px;padding:4px 12px;font-family:'DM Mono',monospace;font-weight:600;font-size:12.5px;letter-spacing:.02em;box-shadow:0 0 14px rgba(251,146,60,.32),inset 0 0 8px rgba(251,146,60,.12);}
-  .xp-right .today-xp.today-closed{color:var(--accent);font-weight:600;font-size:12px;}
-  .xp-right .today-xp.flash{animation:pulse-pending .55s cubic-bezier(.34,1.56,.64,1);}
-  @keyframes pulse-pending{0%{transform:scale(1);}35%{transform:scale(1.22);background:var(--orange);color:#0e0e0f;box-shadow:0 0 28px rgba(251,146,60,.75);}100%{transform:scale(1);}}
-
-  /* FLOAT GAIN (dopamina ao marcar check) */
-  .float-gain{position:fixed;pointer-events:none;z-index:9999;font-family:'DM Mono',monospace;font-weight:700;will-change:transform,opacity;}
-  .float-gain .fg-xp{font-size:17px;color:var(--accent);text-shadow:0 0 14px rgba(163,230,53,.85),0 0 4px rgba(163,230,53,1);animation:gain-fly-xp 1.15s cubic-bezier(.2,.7,.3,1) forwards;}
-  .float-gain .fg-coin{font-size:14px;color:var(--orange);text-shadow:0 0 12px rgba(251,146,60,.85),0 0 3px rgba(251,146,60,1);margin-top:3px;opacity:0;animation:gain-fly-coin 1.25s cubic-bezier(.2,.7,.3,1) .12s forwards;}
-  @keyframes gain-fly-xp{0%{opacity:0;transform:translate(0,6px) scale(.55);}18%{opacity:1;transform:translate(4px,-8px) scale(1.2);}40%{transform:translate(8px,-20px) scale(1);}100%{opacity:0;transform:translate(16px,-56px) scale(.92);}}
-  @keyframes gain-fly-coin{0%{opacity:0;transform:translate(0,6px) scale(.55);}22%{opacity:1;transform:translate(6px,-6px) scale(1.2);}100%{opacity:0;transform:translate(20px,-50px) scale(.92);}}
-  .check-ripple{position:fixed;pointer-events:none;z-index:9998;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,rgba(163,230,53,.65),transparent 70%);transform:translate(-50%,-50%);animation:check-ripple .6s ease-out forwards;}
-  @keyframes check-ripple{0%{transform:translate(-50%,-50%) scale(.5);opacity:1;}100%{transform:translate(-50%,-50%) scale(4.2);opacity:0;}}
-  .bar-track{height:4px;background:var(--bg3);border-radius:99px;overflow:hidden;}
-  .bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);}
-
-  /* STATS */
-  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
-  .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;}
-  .stat-box .s-label{font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
-  .stat-box .s-val{font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
-
-  /* WEEK SELECT */
-  .week-row{margin-bottom:12px;}
-  .week-row select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;padding:9px 12px;appearance:none;cursor:pointer;outline:none;}
-
-  /* DAY TABS */
-  .day-tabs{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;}
-  .day-tabs::-webkit-scrollbar{display:none;}
-  .day-tab{flex-shrink:0;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;position:relative;transition:all .15s;}
-  .day-tab:hover{border-color:#444;color:var(--text);}
-  .day-tab.active{background:var(--accent);border-color:var(--accent);color:#0e0e0f;font-weight:600;}
-  .day-tab .dot{position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--accent);display:none;}
-  .day-tab.has-progress:not(.active) .dot{display:block;}
-
-  /* DAY EVENTS BAR */
-  .day-events-bar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;}
-  .add-event-btn{font-size:12px;color:var(--accent);background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
-  .add-event-btn:hover{background:var(--green-bg);}
-
-  .add-block-btn{
-    font-size:11px;padding:5px 12px;
-    background:var(--green-bg);color:var(--accent);
-    border:1px solid var(--accent);border-radius:99px;
-    cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;
-    transition:filter .15s;
-  }
-  .add-block-btn:hover{filter:brightness(1.15);}
-
-  /* FIT STUDY (suggestions wizard) */
-  .fit-study-btn{width:100%;padding:11px 12px;font-size:13px;color:var(--accent);background:var(--green-bg);border:1px solid var(--accent);border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:14px;transition:filter .15s;}
-  .fit-study-btn:hover{filter:brightness(1.15);}
-  .fs-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;}
-  .fs-card.fs-best{border-color:var(--accent);background:var(--green-bg);}
-  .fs-head{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;}
-  .fs-card.fs-best .fs-head{color:var(--accent);}
-  .fs-stats{font-size:14px;color:var(--text);margin-bottom:4px;font-family:'DM Mono',monospace;}
-  .fs-stats strong{color:var(--accent);}
-  .fs-meta{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
-  .fs-card .fs-apply{width:100%;padding:8px;font-size:12px;background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;}
-  .fs-card .fs-apply:hover{filter:brightness(1.1);}
-
-  /* RECURRENCE PICKER */
-  .recurrence-section{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-top:10px;}
-  .recurrence-section.show{display:block;}
-  .weekday-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
-  .weekday-chip{padding:6px 11px;border-radius:99px;border:1px solid var(--border);background:var(--bg2);font-size:11px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;transition:all .15s;}
-  .weekday-chip:hover{border-color:var(--accent2);}
-  .weekday-chip.selected{background:var(--green-bg);border-color:var(--accent);color:var(--accent);}
-  .freq-row{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
-  .freq-row label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;}
-  .freq-row input[type="radio"]{margin:0;}
-
-  /* EVENT CHIPS */
-  .events-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
-  .event-chip{display:flex;align-items:center;gap:8px;background:var(--orange-bg);border:1px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;}
-  .event-chip .ev-icon{font-size:14px;}
-  .event-chip .ev-info{flex:1;}
-  .event-chip .ev-name{font-weight:500;color:var(--text);}
-  .event-chip .ev-time{color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;}
-  .event-chip .ev-lunch{color:var(--blue);font-size:10px;margin-top:2px;}
-  .event-chip .ev-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;}
-  .event-chip .ev-del:hover{color:var(--text);}
-
-  /* BLOCKS */
-  .blocks-list{display:flex;flex-direction:column;gap:3px;}
-  .block-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);cursor:pointer;transition:background .12s;user-select:none;-webkit-tap-highlight-color:transparent;}
-  .block-row:active{transform:scale(.99);}
-  .block-row:hover{background:var(--bg3);}
-  .block-row.done{opacity:.5;}
-  .block-row.done .block-name{text-decoration:line-through;text-decoration-color:var(--muted);}
-  .block-row.pausa-row{background:transparent;border-color:transparent;padding:7px 12px;}
-  .block-row.pausa-row:hover{background:var(--bg3);border-color:var(--border);}
-  .block-row.almoco-row{background:var(--bg3);border-color:var(--border);border-style:dashed;cursor:default;}
-  .block-row.event-row{background:var(--orange-bg);border-color:var(--orange);cursor:default;opacity:.85;}
-  .block-row.event-row.session-block{border-style:dashed !important;opacity:.9;}
-  .check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
-  .check.checked{background:var(--accent);border-color:var(--accent);}
-  .check svg{width:10px;height:10px;display:none;}
-  .check.checked svg{display:block;}
-  .block-time{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;min-width:95px;}
-  .block-name{font-size:13px;color:var(--text);flex:1;}
-  .block-xp{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:99px;white-space:nowrap;}
-  .block-xp.estudo-xp{color:var(--accent);background:var(--green-bg);}
-  .block-xp.pausa-xp{color:var(--blue);background:var(--blue-bg);}
-  .block-xp.almoco-xp{color:var(--muted);background:var(--bg3);}
-  .block-xp.event-xp{color:var(--orange);background:var(--orange-bg);}
-
-  /* SETTINGS PANEL */
-  .panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;}
-  .panel-overlay.open{display:flex;}
-  .panel-overlay.center{align-items:center;padding:20px;}
-  .panel-overlay.center .panel-sheet{border-radius:var(--radius);border-bottom:1px solid var(--border);max-width:420px;max-height:90vh;padding:24px 20px;}
-  .panel-sheet{background:var(--bg2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--border);border-bottom:none;width:100%;max-width:480px;padding:24px 20px 40px;max-height:85vh;overflow-y:auto;}
-  .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-  .panel-header h2{font-size:16px;font-weight:600;}
-  .panel-close{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
-  .field-group{margin-bottom:18px;}
-  .field-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
-  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .field-row.three{grid-template-columns:1fr 1fr 1fr;}
-  .field-sublabel{font-size:11px;color:var(--muted);margin-bottom:4px;}
-  .field-group input[type=time],
-  .field-group input[type=number],
-  .field-group input[type=text],
-  .field-group input[type=date]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;padding:9px 12px;outline:none;color-scheme:dark;}
-  .field-group input:focus{border-color:var(--accent2);}
-  .field-group input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(4) hue-rotate(50deg);cursor:pointer;opacity:.8;}
-  .field-group input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1;}
-  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
-  .save-btn{width:100%;background:var(--accent);color:#0e0e0f;border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-  .save-btn:hover{opacity:.9;}
-  .reset-btn{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
-  .reset-btn:hover{border-color:#555;color:var(--text);}
-  .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
-  .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}
-  .settings-tab-content{display:none;}
-  .settings-tab-content.active{display:block;}
-  .danger-btn{width:100%;background:transparent;color:#ef4444;border:1px solid #ef4444;border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
-  .danger-btn:hover{background:#ef4444;color:#fff;}
-  .danger-btn:disabled{opacity:.4;cursor:not-allowed;}
-  .danger-btn:disabled:hover{background:transparent;color:#ef4444;}
-  .del-acc-input{width:100%;background:var(--bg3);border:1px solid #ef4444;border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:9px 12px;outline:none;margin-bottom:12px;}
-  .del-acc-input:focus{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.15);}
-  .del-acc-status{font-size:12px;color:var(--orange);line-height:1.5;margin-bottom:10px;}
-  input[type=date]:disabled,input[type=time]:disabled,input[type=number]:disabled{opacity:.5;cursor:not-allowed;}
-
-  /* EVENT PANEL */
-  .checkbox-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
-  .checkbox-row input[type=checkbox]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;background:var(--bg3);cursor:pointer;flex-shrink:0;margin:0;padding:0;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
-  .checkbox-row input[type=checkbox]:hover{border-color:var(--accent);}
-  .checkbox-row input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent);}
-  .checkbox-row input[type=checkbox]:checked::after{content:'';width:3px;height:7px;border:solid #0e0e0f;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-1px);}
-  .checkbox-row label{font-size:13px;color:var(--muted);cursor:pointer;margin:0;padding:0;line-height:16px;display:flex;align-items:center;}
-
-  /* NAV TABS */
-  .nav-tabs { display:flex; gap:4px; margin-bottom:2px; }
-  .nav-tab { background:transparent; border:1px solid transparent; color:var(--muted); font-size:13px; font-weight:500; padding:6px 14px; border-radius:var(--radius-sm); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; letter-spacing:.01em; }
-  .nav-tab:hover { color:var(--text); border-color:var(--border); }
-  .nav-tab.active { background:var(--accent); border-color:var(--accent); color:#0e0e0f; font-weight:600; }
-
-  /* ANALYTICS */
-  .analytics-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
-  .analytics-page.visible { display:block; }
-  .profile-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
-  .profile-top { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
-  .profile-avatar { width:52px; height:52px; border-radius:50%; background:var(--green-bg); border:2px solid var(--accent2); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
-  .profile-info h2 { font-size:17px; font-weight:600; }
-  .profile-info .profile-level { font-size:12px; color:var(--accent); margin-top:2px; }
-  .profile-xp-row { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px; }
-  .an-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-  .an-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; text-align:center; }
-  .an-stat .as-val { font-size:20px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); }
-  .an-stat .as-label { font-size:10px; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.05em; }
-  .section-title { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
-  .chart-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
-  .bar-chart { display:flex; align-items:flex-end; gap:3px; height:80px; margin-bottom:6px; }
-  .bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
-  .bar-fill-an { border-radius:3px 3px 0 0; width:100%; background:var(--accent); transition:height .4s ease; min-height:2px; opacity:.85; }
-  .bar-fill-an.empty { background:var(--bg3); opacity:1; min-height:3px; }
-  .bar-label { font-size:9px; color:var(--muted); font-family:'DM Mono',monospace; }
-  .heatmap-grid { display:grid; grid-template-columns:repeat(18,1fr); gap:2px; margin-bottom:6px; }
-  .heatmap-cell { aspect-ratio:1; border-radius:2px; }
-  .heatmap-legend { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); justify-content:flex-end; }
-  .heatmap-legend .lc { width:10px; height:10px; border-radius:2px; }
-  .heatmap-gh { display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; grid-auto-columns:1fr; gap:2px; margin-bottom:6px; }
-  .heatmap-gh .heatmap-cell.future { background:transparent; border:1px dashed var(--border); }
-  .heatmap-gh .heatmap-cell.weekend-off { background:rgba(46,46,53,.3); }
-
-  /* Realizado (cumprido vs planejado) */
-  .adh-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-  .adh-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:16px; }
-  .adh-card .adh-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
-  .adh-card .adh-val { font-size:13px; font-weight:600; font-family:'DM Mono',monospace; color:var(--text); margin-bottom:2px; }
-  .adh-card .adh-sub { font-size:10px; color:var(--muted); margin-bottom:8px; min-height:12px; }
-  .adh-card .bar-track { height:5px; }
-  .adh-card .adh-pct { font-size:11px; color:var(--accent); font-family:'DM Mono',monospace; margin-top:6px; text-align:right; }
-  .adh-card.low .bar-fill { background:var(--orange,#f59e0b); }
-  .adh-card.zero .bar-fill { background:var(--bg3); }
-  .adh-card.zero .adh-pct { color:var(--muted); }
-  .adh-card.adh-big { padding:20px; }
-  .adh-card.adh-big .adh-label { font-size:11px; }
-  .adh-card.adh-big .adh-val { font-size:24px; margin-bottom:4px; }
-  .adh-card.adh-big .adh-sub { font-size:12px; margin-bottom:14px; }
-  .adh-card.adh-big .bar-track { height:8px; }
-  .adh-card.adh-big .adh-pct { font-size:15px; margin-top:10px; }
-
-  /* Sub-nav da aba Análise */
-  .subnav { display:flex; gap:6px; margin-bottom:18px; padding:4px 0; }
-  .subnav-chip { flex:1; background:var(--bg2); border:1px solid var(--border); border-radius:99px; padding:8px 6px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap; font-family:'DM Sans',sans-serif; transition:all .15s; text-align:center; }
-  .subnav-chip:hover { color:var(--text); border-color:#555; }
-  .subnav-chip.active { background:var(--accent); border-color:var(--accent); color:#0e0e0f; font-weight:600; }
-  .subview { display:none; }
-  .subview.active { display:block; animation:subview-in .2s ease; }
-  @keyframes subview-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
-  .historic-tag { font-size:9px; color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; margin-left:6px; }
-
-  /* Meta diária — 7 dots */
-  .goal-week-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
-  .goal-week-headline { font-size:13px; color:var(--text); margin-bottom:12px; }
-  .goal-week-headline strong { color:var(--accent); }
-  .goal-week-dots { display:flex; gap:6px; justify-content:space-between; }
-  .goal-dot { flex:1; aspect-ratio:1; max-width:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-family:'DM Mono',monospace; color:var(--muted); }
-  .goal-dot.met { background:var(--accent); color:#0e0e0f; font-weight:600; }
-  .goal-dot.miss { background:var(--bg3); color:var(--muted); opacity:.7; }
-  .goal-dot.future { background:transparent; border:1px dashed var(--border); color:var(--muted); }
-  .goal-dot.weekend { background:rgba(46,46,53,.25); color:var(--muted); opacity:.5; }
-  .goal-dot.today { outline:2px solid var(--accent); outline-offset:2px; }
-
-  /* Sparkline */
-  .sparkline-wrap { display:flex; align-items:center; gap:8px; margin-top:10px; }
-  .sparkline-wrap svg { flex:1; height:24px; max-width:140px; overflow:visible; }
-  .sparkline-label { font-size:10px; color:var(--muted); }
-
-  /* Drop-off por sessão */
-  .dropoff-row { display:grid; grid-template-columns:64px 1fr 38px 56px; gap:8px; align-items:center; padding:5px 0; }
-  .dropoff-row .do-label { font-size:11px; color:var(--muted); }
-  .dropoff-row .do-bar { height:6px; background:var(--bg3); border-radius:99px; overflow:hidden; }
-  .dropoff-row .do-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s; }
-  .dropoff-row .do-fill.low { background:var(--orange,#f59e0b); }
-  .dropoff-row .do-pct { font-size:11px; color:var(--text); font-family:'DM Mono',monospace; text-align:right; }
-  .dropoff-row .do-count { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; text-align:right; }
-  .dropoff-empty { font-size:11px; color:var(--muted); text-align:center; padding:14px 0; }
-  .streak-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
-  .streak-row:last-child { border-bottom:none; }
-  .streak-label { font-size:13px; color:var(--text); }
-  .streak-val { font-size:15px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); }
-
-  /* PROFILE PAGE */
-  .profile-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
-  .profile-page.visible { display:block; }
-
-  /* HERO (personagem + pet ativo) */
-  .profile-hero { background:linear-gradient(180deg, #22262e 0%, #1f232a 100%); border:1px solid var(--border); border-radius:var(--radius); padding:20px 16px 14px; margin-bottom:16px; }
-  .profile-hero-stage { position:relative; height:150px; display:flex; align-items:flex-end; justify-content:center; gap:28px; }
-  .profile-hero-divider { height:1px; background:rgba(255,255,255,.06); margin:8px -16px 12px; }
-  .profile-hero-row { display:flex; justify-content:space-between; align-items:flex-end; padding:0 4px 10px; }
-  .profile-hero-left { display:flex; flex-direction:column; }
-  .profile-hero-name { display:flex; align-items:center; gap:8px; }
-  .profile-hero-name span:first-child { font-size:16px; font-weight:600; color:var(--text); }
-  .hero-lv-badge { background:var(--accent); color:#1a3a08; font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px; font-family:'DM Mono',monospace; }
-  .profile-hero-sub { font-size:12px; color:var(--muted); margin-top:2px; }
-  .profile-hero-right { text-align:right; }
-  .profile-hero-right .phr-label { font-size:11px; color:var(--muted); }
-  .profile-hero-right .phr-val { font-size:13px; font-weight:500; color:var(--text); font-family:'DM Mono',monospace; }
-  .profile-hero-bar { background:rgba(255,255,255,.08); height:6px; border-radius:99px; margin:0 4px; overflow:hidden; }
-  .profile-hero-bar .bar-fill { background:var(--accent); height:100%; border-radius:99px; transition:width .5s cubic-bezier(.4,0,.2,1); }
-  .char-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:120px; height:120px; object-fit:contain; }
-  .pet-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:96px; height:96px; object-fit:contain; margin-bottom:8px; filter:url(#pet-remove-white); }
-  .shop-item-sprite { filter:url(#pet-remove-white); }
-
-  /* STATS 4-col */
-  .profile-stats-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
-  .profile-stat-mini { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 6px; text-align:center; }
-  .profile-stat-mini .psm-val { font-size:16px; font-weight:600; font-family:'DM Mono',monospace; color:var(--text); }
-  .profile-stat-mini .psm-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
-  .profile-stat-mini.coins-stat { background:linear-gradient(135deg,#3a2f12 0%,#2a2510 100%); border-color:rgba(245,179,66,.25); }
-  .profile-stat-mini.coins-stat .psm-val { color:#f5b342; }
-  .profile-stat-mini.coins-stat .psm-label { color:#b89968; }
-
-  /* HEADER da seção "Meus pets" inline */
-  .my-pets-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 2px; }
-  .my-pets-header-title { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:600; }
-  .my-pets-header-count { font-size:11px; color:var(--muted); }
-  .coming-soon-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; opacity:.6; }
-  .coming-soon-card .cs-icon { font-size:32px; margin-bottom:8px; }
-  .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
-  .coming-soon-card .cs-sub { font-size:12px; color:var(--muted); }
-  .shop-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
-  .shop-open-btn { display:flex; align-items:center; gap:12px; width:100%; padding:16px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); cursor:pointer; font-family:inherit; margin-bottom:12px; transition:border-color .15s, background .15s; }
-  .shop-open-btn:hover { border-color:var(--accent); background:var(--bg3); }
-  .shop-open-btn .shop-open-icon { font-size:24px; }
-  .shop-open-btn .shop-open-label { flex:1; text-align:left; font-size:14px; font-weight:600; }
-  .shop-open-btn .shop-open-arrow { color:var(--muted); font-size:20px; }
-  .shop-open-btn .shop-open-count { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; }
-
-  /* Card "Pet ativo" destacado (substitui a grade inline antiga) */
-  .active-pet-card {
-    background:linear-gradient(135deg, #1f2618 0%, #1a1f15 100%);
-    border:1px solid var(--accent2);
-    border-radius:var(--radius);
-    padding:14px 16px;
-    margin-bottom:12px;
-    display:flex;
-    align-items:center;
-    gap:14px;
-  }
-  .active-pet-card .ap-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:54px; height:54px; object-fit:contain; flex-shrink:0; }
-  .active-pet-card .ap-info { flex:1; min-width:0; }
-  .active-pet-card .ap-tag { font-size:9px; color:var(--accent2); text-transform:uppercase; letter-spacing:.1em; font-weight:600; margin-bottom:3px; }
-  .active-pet-card .ap-name-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-  .active-pet-card .ap-name { font-size:15px; font-weight:600; color:var(--text); }
-  .active-pet-card .ap-lv { background:linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%); color:#0e0e0f; font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px; font-family:'DM Mono',monospace; }
-  .active-pet-card .ap-bar-track { height:5px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
-  .active-pet-card .ap-bar-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .5s cubic-bezier(.4,0,.2,1); }
-  .active-pet-card .ap-xp { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:4px; }
-  .no-active-pet { background:var(--bg2); border:1px dashed var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; text-align:center; font-size:12px; color:var(--muted); }
-  .shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .shop-item { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 10px; background:var(--bg3); border-radius:var(--radius-sm); border:1px solid var(--border); }
-  .shop-item-img { width:64px; height:64px; image-rendering:pixelated; image-rendering:crisp-edges; object-fit:contain; }
-  .shop-item-emoji { width:64px; height:64px; display:flex; align-items:center; justify-content:center; font-size:44px; line-height:1; }
-  .shop-item-name { font-size:13px; font-weight:600; text-align:center; }
-  .shop-item-price { font-size:12px; color:var(--accent); font-family:'DM Mono',monospace; font-weight:600; }
-  .shop-btn { font-size:11px; padding:6px 12px; border-radius:6px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-weight:600; font-family:inherit; transition:background .15s, color .15s; }
-  .shop-btn:hover { background:var(--accent); color:#0e0e0f; }
-  .shop-btn.active { background:var(--accent); color:#0e0e0f; }
-  .shop-btn.owned { border-color:var(--border); color:var(--muted); }
-  .shop-btn.owned:hover { background:var(--bg3); color:var(--text); }
-  .shop-btn.locked { border-color:var(--border); color:var(--muted); opacity:.5; cursor:not-allowed; }
-  .shop-btn.locked:hover { background:transparent; color:var(--muted); }
-
-  /* Card de pet com info extra (level + ativa badge) */
-  .shop-item { position:relative; }
-  .shop-item.active-pet { border-color:rgba(163,230,53,.35); }
-  .shop-item-active-badge { position:absolute; top:8px; right:8px; background:var(--accent); color:#1a3a08; font-size:9px; font-weight:600; padding:2px 6px; border-radius:99px; text-transform:uppercase; letter-spacing:.05em; }
-  .shop-item-name-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
-  .shop-item-lv { background:rgba(163,230,53,.15); color:var(--accent); font-size:10px; padding:1px 6px; border-radius:99px; font-family:'DM Mono',monospace; }
-
-  /* Skills no card do pet (dentro do modal "Meus pets") */
-  .pet-skills-wrap { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
-  .pet-skills-header { font-size:9px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:2px; }
-  .pet-skill-row {
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm);
-    padding:8px 10px; cursor:pointer; font-family:'DM Sans',sans-serif;
-    color:var(--text); text-align:left; transition:border-color .15s, background .15s;
-  }
-  .pet-skill-row:hover { border-color:#555; }
-  .pet-skill-row.active { border-color:var(--accent); background:rgba(163,230,53,.08); }
-  .pet-skill-row .ps-info { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
-  .pet-skill-row .ps-name { font-size:12px; font-weight:600; color:var(--text); }
-  .pet-skill-row .ps-desc { font-size:10px; color:var(--muted); line-height:1.3; }
-  .pet-skill-row.active .ps-name { color:var(--accent); }
-  .pet-skill-row .ps-toggle {
-    flex-shrink:0; width:30px; height:16px; background:var(--bg2); border:1px solid var(--border);
-    border-radius:99px; position:relative; transition:background .2s, border-color .2s;
-  }
-  .pet-skill-row .ps-toggle.on { background:var(--accent); border-color:var(--accent); }
-  .pet-skill-row .ps-knob {
-    position:absolute; top:1px; left:1px; width:12px; height:12px; background:var(--text);
-    border-radius:50%; transition:transform .2s; box-shadow:0 1px 2px rgba(0,0,0,.3);
-  }
-  .pet-skill-row .ps-toggle.on .ps-knob { transform:translateX(14px); background:#0e0e0f; }
-
-  /* MEUS PETS empty state (no modal) */
-  .my-pets-empty { grid-column:1/-1; text-align:center; padding:18px 8px; font-size:13px; color:var(--muted); line-height:1.5; }
-  .my-pets-empty .mpe-icon { font-size:24px; margin-bottom:6px; }
-
-  /* FINISH DAY */
-  .finish-day-wrap { margin:14px 0 4px; }
-  .finish-day-btn { width:100%; padding:14px; background:var(--accent); color:#0e0e0f; border:none; border-radius:var(--radius); font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:filter .15s; }
-  .finish-day-btn:hover { filter:brightness(1.08); }
-  .finish-day-banner { width:100%; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--muted); font-size:13px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .finish-day-banner .fdb-check { color:var(--accent); font-size:16px; }
-  .block-row.day-closed { opacity:.55; }
-  .block-row.day-closed .check { cursor:default; }
-  .block-row.day-future { opacity:.45; cursor:default; }
-  .block-row.day-future .check { cursor:default; pointer-events:none; }
-
-  /* DAY SUMMARY */
-  .ds-hero { display:flex; gap:14px; justify-content:center; padding:14px 0 18px; }
-  .ds-stat { flex:1; max-width:140px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:14px 10px; text-align:center; }
-  .ds-stat .ds-val { font-size:24px; font-weight:700; font-family:'DM Mono',monospace; line-height:1; }
-  .ds-stat.xp .ds-val { color:var(--accent); }
-  .ds-stat.coins .ds-val { color:#f5b342; }
-  .ds-stat .ds-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:6px; }
-  .ds-levelup { background:linear-gradient(135deg,#1a3a08 0%,#2d5a18 100%); border:1px solid var(--accent); border-radius:var(--radius); padding:12px 14px; text-align:center; margin-bottom:12px; font-size:13px; color:var(--accent); font-weight:600; }
-  .ds-levelup .ds-lu-icon { font-size:18px; margin-right:6px; }
-  .ds-pet-row { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; }
-  .ds-pet-row img { width:40px; height:40px; image-rendering:pixelated; object-fit:contain; }
-  .ds-pet-row .ds-pet-name { font-size:13px; font-weight:600; flex:1; }
-  .ds-pet-row .ds-pet-gain { color:var(--accent); font-family:'DM Mono',monospace; font-size:12px; }
-  .ds-pet-row .ds-pet-lv { font-size:10px; color:var(--muted); margin-top:2px; }
-  .ds-pet-row .ds-pet-lv.up { color:var(--accent); }
-  .ds-empty-msg { text-align:center; padding:14px; color:var(--muted); font-size:13px; line-height:1.5; }
-
-  /* END-OF-DAY PROMPT (auto) */
-  .eop-choice { width:100%; padding:14px 16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; margin-bottom:10px; text-align:left; transition:border-color .15s, background .15s; display:flex; gap:12px; align-items:center; font-family:inherit; color:var(--text); }
-  .eop-choice:hover { border-color:var(--accent); background:var(--bg2); }
-  .eop-choice .eop-icon { font-size:22px; }
-  .eop-choice .eop-text { flex:1; }
-  .eop-choice .eop-title { font-size:14px; font-weight:600; }
-  .eop-choice .eop-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-  .eop-extend-form { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-top:8px; }
-  .eop-extend-form label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em; }
-  .eop-extend-form input[type=time] { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; padding:9px 12px; outline:none; color-scheme:dark; margin-bottom:10px; }
-
-  /* FOCUS MODE (tela cheia, escala com a viewport) */
-  .focus-overlay { display:none; position:fixed; inset:0; z-index:300; background:var(--bg); overflow-y:auto; }
-  .focus-overlay.open { display:block; }
-  .focus-inner { max-width:min(95vw, 720px); margin:0 auto; padding:clamp(12px, 2.5vmin, 28px) clamp(16px, 4vmin, 40px) clamp(20px, 4vmin, 40px); }
-  .focus-topbar { display:flex; justify-content:space-between; align-items:center; padding:6px 4px 18px; font-family:'DM Mono',monospace; font-size:clamp(11px, 1.6vmin, 14px); color:#555; }
-  .focus-exit { background:transparent; border:1px solid var(--border); color:var(--muted); font-size:clamp(10px, 1.5vmin, 13px); padding:clamp(4px, .8vmin, 7px) clamp(10px, 1.8vmin, 16px); border-radius:99px; cursor:pointer; font-family:inherit; }
-  .focus-exit:hover { border-color:#555; color:var(--text); }
-  .focus-header { text-align:center; margin-bottom:clamp(14px, 2.5vmin, 28px); }
-  .focus-chip { display:inline-flex; align-items:center; gap:6px; background:var(--green-bg); border:1px solid var(--accent2); padding:clamp(4px, .7vmin, 6px) clamp(10px, 1.6vmin, 16px); border-radius:99px; font-size:clamp(10px, 1.4vmin, 13px); font-family:'DM Mono',monospace; color:var(--accent); text-transform:uppercase; letter-spacing:.08em; }
-  .focus-chip.pausa { background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
-  .focus-chip .fc-dot { width:6px; height:6px; background:currentColor; border-radius:50%; display:inline-block; }
-  .focus-block-name { color:var(--text); font-size:clamp(16px, 2.6vmin, 22px); font-weight:600; margin-top:10px; }
-  .focus-pomo-label { color:var(--muted); font-size:clamp(12px, 1.8vmin, 15px); margin-top:2px; }
-  .focus-timer-wrap { position:relative; width:clamp(220px, 55vmin, 380px); height:clamp(220px, 55vmin, 380px); margin:0 auto 4px; }
-  .focus-timer-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
-  .focus-timer-track { fill:none; stroke:#1a1a1c; stroke-width:3; }
-  .focus-timer-fill { fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset .5s linear; }
-  .focus-timer-fill.pausa { stroke:var(--blue); }
-  .focus-timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .focus-time-big { font-family:'DM Mono',monospace; font-size:clamp(44px, 11vmin, 88px); font-weight:600; color:var(--text); line-height:1; letter-spacing:-.02em; }
-  .focus-time-big.ending { color:var(--orange); }
-  .focus-time-sub { font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); margin-top:8px; font-family:'DM Mono',monospace; }
-  .focus-scene { background:linear-gradient(180deg, transparent 0%, var(--bg2) 60%); border-radius:16px; padding:clamp(16px, 2.5vmin, 28px) clamp(16px, 2.5vmin, 28px) clamp(12px, 2vmin, 20px); margin:clamp(12px, 2vmin, 24px) 0 clamp(14px, 2.5vmin, 28px); position:relative; overflow:hidden; }
-  .focus-scene-stage { display:flex; align-items:flex-end; justify-content:center; gap:12px; height:clamp(100px, 14vmin, 160px); margin-bottom:10px; }
-  .focus-scene-foot { text-align:center; font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); font-family:'DM Mono',monospace; }
-  .focus-scene-xp { color:var(--accent); }
-  .focus-scene-coins { color:#fbbf24; }
-  .focus-next { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:clamp(10px, 1.6vmin, 16px) clamp(14px, 2vmin, 20px); display:flex; align-items:center; gap:10px; }
-  .focus-next-label { font-size:clamp(10px, 1.4vmin, 13px); color:var(--muted); font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.06em; }
-  .focus-next-sep { width:4px; height:4px; background:#555; border-radius:50%; }
-  .focus-next-name { flex:1; color:var(--text); font-size:clamp(12px, 1.8vmin, 15px); }
-  .focus-next-dur { color:#555; font-family:'DM Mono',monospace; font-size:clamp(11px, 1.6vmin, 14px); }
-
-  /* BUY CONFIRM */
-  .buy-confirm-body { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:18px; }
-  .buy-confirm-img { width:80px; height:80px; image-rendering:pixelated; image-rendering:crisp-edges; object-fit:contain; }
-  .buy-confirm-emoji { font-size:56px; line-height:1; }
-  .buy-confirm-text { font-size:14px; text-align:center; color:var(--text); line-height:1.5; }
-  .buy-confirm-text b { color:var(--accent); font-family:'DM Mono',monospace; }
-
-  /* FAB */
-  .fab-config {
-    position:fixed;
-    bottom:24px;
-    right:24px;
-    width:52px;
-    height:52px;
-    border-radius:50%;
-    background:var(--accent);
-    color:#0e0e0f;
-    border:none;
-    font-size:20px;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    box-shadow:0 4px 16px rgba(0,0,0,.4), 0 0 0 4px rgba(163,230,53,.15);
-    transition:all .2s ease;
-    z-index:90;
-  }
-  .fab-config:hover {
-    transform:translateY(-2px);
-    box-shadow:0 6px 24px rgba(0,0,0,.5), 0 0 0 6px rgba(163,230,53,.2);
-  }
-  .fab-config:active { transform:translateY(0); }
-  .fab-config.hidden { display:none; }
-
-  /* TIMER */
-  .timer-bar { position:sticky; top:57px; z-index:99; background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 20px; display:none; align-items:center; gap:12px; }
-  .timer-bar.active { display:flex; }
-  .timer-block-name { font-size:12px; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .timer-time { font-size:22px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); min-width:60px; text-align:right; }
-  .timer-time.ending { color:#f87171; }
-  .timer-stop { background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--muted); font-size:11px; padding:4px 8px; cursor:pointer; font-family:'DM Sans',sans-serif; }
-  .timer-stop:hover { border-color:#555; color:var(--text); }
-  .volume-wrap { display:flex; align-items:center; gap:6px; }
-  .vol-btn { background:transparent; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0; }
-  .vol-slider { -webkit-appearance:none; appearance:none; width:60px; height:3px; border-radius:99px; background:var(--border); outline:none; cursor:pointer; }
-  .vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:var(--accent); cursor:pointer; }
-  .block-row.timer-active { border-color:var(--accent) !important; box-shadow:0 0 0 1px var(--accent2); }
-  .block-row.timer-active .block-name { color:var(--accent); }
-
-  /* CURRENT BLOCK HIGHLIGHT */
-  .block-row.now-block { filter: brightness(1.35); position:relative; }
-  .block-row.now-block::before {
-    content:'▶';
-    position:absolute;
-    left:-14px;
-    font-size:8px;
-    color:var(--sc, var(--accent));
-    top:50%;
-    transform:translateY(-50%);
-    opacity:0.8;
-  }
-  .session-divider.now-session .sd-label { opacity:1 !important; }
-
-  /* BIGGER CHECKBOX */
-  .check { width:22px !important; height:22px !important; border-radius:5px !important; border:2px solid #555 !important; flex-shrink:0; }
-  .check.checked { background:var(--accent) !important; border-color:var(--accent) !important; }
-  .check svg { width:12px !important; height:12px !important; }
-
-  /* SESSION COLORS */
-  .s0 { --sc:#a3e635; --sc-bg:#1a2e1a; --sc-border:#65a30d; }
-  .s1 { --sc:#60a5fa; --sc-bg:#1e2d40; --sc-border:#2563eb; }
-  .s2 { --sc:#f472b6; --sc-bg:#2d1a2a; --sc-border:#db2777; }
-  .s3 { --sc:#fb923c; --sc-bg:#2d1e0f; --sc-border:#ea580c; }
-  .s4 { --sc:#34d399; --sc-bg:#0f2922; --sc-border:#059669; }
-  .s5 { --sc:#a78bfa; --sc-bg:#1e1a2e; --sc-border:#7c3aed; }
-  .block-row.session-block { border-color: var(--sc-border) !important; background: var(--sc-bg) !important; }
-  .block-row.session-block:hover { filter: brightness(1.1); }
-  .block-row.session-block.done { opacity: .45; }
-  .block-row.session-block .block-name { color: var(--sc); }
-  .block-row.session-block .block-time { color: var(--sc-border); }
-  .block-xp.session-xp { color: var(--sc) !important; background: var(--sc-bg) !important; }
-  .session-divider { display:flex; align-items:center; gap:8px; margin: 10px 0 4px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
-  .session-divider .sd-line { flex:1; height:1px; background: var(--sc-border); opacity:.4; }
-  .session-divider .sd-label { color: var(--sc); }
-
-  /* SAVE INDICATOR */
-  #save-indicator{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
-  #save-indicator.show{opacity:1;}
-
-  /* ============================================================
-     SETTINGS — página inteira (não é modal)
-     ============================================================ */
-  .settings-page{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;}
-  #settings-panel.open{display:flex;}
-  .st-topbar{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(14,14,15,.92);backdrop-filter:blur(12px);}
-  .st-back{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
-  .st-back:hover{border-color:#555;color:var(--text);}
-  .st-title{font-size:15px;font-weight:600;}
-  .st-tabs-wrap{flex-shrink:0;border-bottom:1px solid var(--border);padding:0 20px;}
-  .st-tabs{max-width:620px;margin:0 auto;display:flex;gap:26px;}
-  .st-tabs .settings-tab{flex:none;background:transparent;border:none;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);font-size:13px;font-weight:500;padding:13px 2px 11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .15s,border-color .15s;}
-  .st-tabs .settings-tab:hover{color:var(--text);}
-  .st-tabs .settings-tab.active{background:transparent;color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
-  .st-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  .st-body{max-width:620px;margin:0 auto;padding:26px 20px 40px;}
-  .st-section{margin-bottom:30px;}
-  .st-section:last-child{margin-bottom:0;}
-  .st-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px;min-height:26px;}
-  .st-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
-  .st-section-title.danger{color:#ef4444;}
-  .st-section-desc{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px;}
-  .st-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-  .st-field-label{font-size:11px;color:var(--muted);margin-bottom:6px;}
-  .st-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .st-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .st-card input[type=time],.st-card input[type=number],.st-card input[type=date]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Mono',monospace;padding:9px 10px;outline:none;color-scheme:dark;transition:border-color .15s;}
-  .st-card input:focus{border-color:var(--accent);}
-  .st-card input:disabled{opacity:.45;cursor:not-allowed;}
-  .st-card input[type=date]::-webkit-calendar-picker-indicator,.st-card input[type=time]::-webkit-calendar-picker-indicator{filter:invert(.7) sepia(1) saturate(4) hue-rotate(50deg);cursor:pointer;opacity:.75;}
-  .st-hint{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.5;}
-  .st-divider{height:1px;background:var(--border);margin:15px 0;}
-  .st-card .fit-study-btn{margin-bottom:0;}
-  .st-card .ghost-btn{margin-top:10px;}
-
-  /* resumo do dia */
-  .st-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-  .sts-tile{background:var(--bg3);border-radius:var(--radius-sm);padding:11px 6px;text-align:center;}
-  .sts-num{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text);line-height:1.2;}
-  .sts-tile.accent .sts-num{color:var(--accent);}
-  .sts-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;}
-  .sts-note{font-size:12px;line-height:1.5;margin-top:12px;}
-  .sts-note.ok{color:var(--accent);}
-  .sts-note.warn{color:var(--orange);}
-
-  /* janelas de estudo — uma linha por janela */
-  .sw-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
-  .sw-row:first-child{padding-top:0;}
-  .sw-row:last-child{border-bottom:none;padding-bottom:0;}
-  .sw-row input[type=time]{width:100px;flex:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px;outline:none;color-scheme:dark;transition:border-color .15s;}
-  .sw-row input[type=time]:focus{border-color:var(--accent);}
-  .sw-arrow{color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;}
-  .sw-dur{margin-left:auto;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
-  .sw-dur.bad{color:var(--orange);}
-  .sw-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:5px 7px;border-radius:4px;line-height:1;transition:all .15s;}
-  .sw-del:hover{color:#ef4444;background:rgba(239,68,68,.1);}
-
-  /* linha com switch (almoço, pular fds) */
-  .st-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}
-  .st-toggle-txt{font-size:13px;color:var(--text);}
-  .st-toggle-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45;}
-  .st-switch{position:relative;display:inline-flex;flex:none;cursor:pointer;}
-  .st-switch input{position:absolute;opacity:0;width:0;height:0;}
-  .st-switch-track{width:40px;height:22px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;padding:2px;transition:background .18s,border-color .18s;}
-  .st-switch-knob{width:16px;height:16px;border-radius:50%;background:var(--muted);transition:transform .18s,background .18s;}
-  .st-switch input:checked + .st-switch-track{background:var(--green-bg);border-color:var(--accent);}
-  .st-switch input:checked + .st-switch-track .st-switch-knob{transform:translateX(18px);background:var(--accent);}
-  .st-switch input:focus-visible + .st-switch-track{border-color:var(--accent);}
-
-  /* zona de perigo */
-  .st-card.st-danger{border-color:rgba(239,68,68,.35);}
-  .st-danger-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-  .st-danger-row .dr-txt{flex:1;min-width:190px;}
-  .st-danger-row .dr-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
-  .st-danger-row .dr-desc{font-size:11.5px;color:var(--muted);line-height:1.5;}
-  .st-danger .danger-btn{width:auto;flex:none;padding:8px 14px;font-size:12px;white-space:nowrap;}
-
-  /* barra de ações fixa */
-  .st-actions{flex-shrink:0;border-top:1px solid var(--border);background:rgba(14,14,15,.94);backdrop-filter:blur(12px);padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom));}
-  .st-actions-inner{max-width:620px;margin:0 auto;display:grid;grid-template-columns:1fr 2fr;gap:10px;}
-
-  @media (max-width:520px){
-    .st-summary{grid-template-columns:repeat(2,1fr);}
-    .st-grid-3{grid-template-columns:1fr;}
-    .st-danger .danger-btn{width:100%;}
-  }
-</style>
-</head>
-<body>
-
-<!-- SVG filter: makes near-white pixels of pet sprites transparent -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <filter id="pet-remove-white" color-interpolation-filters="sRGB">
-      <feColorMatrix type="matrix" values="
-        1 0 0 0 0
-        0 1 0 0 0
-        0 0 1 0 0
-        -10 -10 -10 30 0"/>
-    </filter>
-  </defs>
-</svg>
-
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="nav-tabs">
-      <button class="nav-tab active" id="tab-plano" onclick="switchTab('plano')">📚 Plano</button>
-      <button class="nav-tab" id="tab-analise" onclick="switchTab('analise')">📊 Análise</button>
-      <button class="nav-tab" id="tab-perfil" onclick="switchTab('perfil')">🧑 Perfil</button>
-    </div>
-    <div class="sub" id="today-label"></div>
-  </div>
-  <div class="topbar-right">
-    <span class="test-badge">MODO TESTE</span>
-    <div class="xp-badge"><span id="top-xp">0 XP</span><span class="level-tag" id="top-level">Zero</span></div>
-
-  </div>
-</div>
-
-<div class="timer-bar" id="timer-bar">
-  <div>
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Em andamento</div>
-    <div class="timer-block-name" id="timer-block-name">—</div>
-  </div>
-  <div class="timer-time" id="timer-display">00:00</div>
-  <div class="volume-wrap">
-    <button class="vol-btn" id="vol-btn" onclick="toggleMute()">🔔</button>
-    <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVolume(this.value)">
-  </div>
-  <button class="timer-stop" onclick="stopTimer()">✕ Parar</button>
-</div>
-
-<div class="main">
-  <div class="xp-card">
-    <div class="xp-row">
-      <div><div class="xp-sub">XP Total</div><div class="xp-num" id="xp-total">0</div></div>
-      <div class="xp-right">
-        <div class="week-xp" id="week-xp-val">Semana: 0 XP</div>
-        <div class="today-xp" id="today-xp-val">Hoje: 0 XP</div>
-      </div>
-    </div>
-    <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat-box"><div class="s-label">Estudos</div><div class="s-val" id="stat-e">0/0</div></div>
-    <div class="stat-box"><div class="s-label">Pausas</div><div class="s-val" id="stat-p">0/0</div></div>
-    <div class="stat-box"><div class="s-label">Semana</div><div class="s-val" id="stat-w">0 ✓</div></div>
-  </div>
-
-  <div class="week-row"><select id="week-select" onchange="onWeekChange()"></select></div>
-  <div class="day-tabs" id="day-tabs"></div>
-
-  <div class="day-events-bar">
-    <button class="add-event-btn" onclick="openEventPanel()">+ Evento</button>
-  </div>
-  <div class="blocks-list" id="blocks-list"></div>
-  <div class="finish-day-wrap" id="finish-day-wrap"></div>
-</div>
-
-<!-- FINISH DAY CONFIRM -->
-<div class="panel-overlay center" id="finish-day-confirm" onclick="closeIfOutside(event,'finish-day-confirm')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>Encerrar o dia?</h2>
-      <button class="panel-close" onclick="closeFinishDay()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.6;">
-      Isso vai <strong>creditar o XP</strong> dos blocos marcados de hoje (no usuário e no pet equipado) e <strong>travar os checks</strong> deste dia.
-    </p>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.5;">
-      Decisão final — não dá pra reabrir o dia depois.
-    </p>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="closeFinishDay()">Cancelar</button>
-      <button class="save-btn" onclick="confirmFinishDay()">Encerrar dia</button>
-    </div>
-  </div>
-</div>
-
-<!-- DAY SUMMARY -->
-<div class="panel-overlay center" id="day-summary-panel" onclick="closeIfOutside(event,'day-summary-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🎉 Dia encerrado</h2>
-      <button class="panel-close" onclick="closeDaySummary()">✕</button>
-    </div>
-    <div id="day-summary-body"></div>
-    <div class="btn-row" style="grid-template-columns:1fr">
-      <button class="save-btn" onclick="closeDaySummary()">Continuar</button>
-    </div>
-  </div>
-</div>
-
-<!-- END-OF-DAY PROMPT (auto) -->
-<div class="panel-overlay center" id="day-end-prompt" onclick="closeIfOutside(event,'day-end-prompt')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🌙 Passou do horário</h2>
-      <button class="panel-close" onclick="closeEndOfDayPrompt()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;" id="eop-intro">
-      O fim do dia configurado já passou. O que você quer fazer?
-    </p>
-    <button class="eop-choice" onclick="endPromptFinish()">
-      <span class="eop-icon">✓</span>
-      <div class="eop-text">
-        <div class="eop-title">Encerrar o dia</div>
-        <div class="eop-sub">Creditar XP, travar checks. Decisão final.</div>
-      </div>
-    </button>
-    <button class="eop-choice" onclick="endPromptShowExtend()">
-      <span class="eop-icon">⏰</span>
-      <div class="eop-text">
-        <div class="eop-title">Prolongar estudos</div>
-        <div class="eop-sub">Mudar o horário de fim do dia.</div>
-      </div>
-    </button>
-    <div id="eop-extend-form" class="eop-extend-form" style="display:none">
-      <label>Novo horário de fim</label>
-      <input type="time" id="eop-new-end">
-      <div class="btn-row">
-        <button class="reset-btn" onclick="endPromptHideExtend()">Voltar</button>
-        <button class="save-btn" onclick="endPromptSaveExtend()">Prolongar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS — página inteira -->
-<div class="settings-page" id="settings-panel">
-  <div class="st-topbar">
-    <button type="button" class="st-back" onclick="closeSettings()">← Voltar</button>
-    <div class="st-title">Configurações</div>
-  </div>
-
-  <div class="st-tabs-wrap">
-    <div class="st-tabs">
-      <button type="button" class="settings-tab active" data-tab="day" onclick="switchSettingsTab('day')">Rotina</button>
-      <button type="button" class="settings-tab" data-tab="general" onclick="switchSettingsTab('general')">Geral</button>
-    </div>
-  </div>
-
-  <div class="st-scroll">
-    <div class="st-body">
-
-      <div class="settings-tab-content active" data-tab-content="day">
-
-        <div class="st-section">
-          <div class="st-section-head"><div class="st-section-title">Resumo do dia</div></div>
-          <div class="st-section-desc">Como fica um dia cheio com a configuração abaixo.</div>
-          <div class="st-card" id="config-preview">Calculando...</div>
-        </div>
-
-        <div class="st-section">
-          <div class="st-section-head">
-            <div class="st-section-title">Janelas de estudo</div>
-            <button type="button" class="add-block-btn" onclick="addStudyWindow()">+ Adicionar</button>
-          </div>
-          <div class="st-section-desc">Os intervalos do dia em que você estuda. Valem para todos os dias — para compromissos pontuais, use Eventos.</div>
-          <div class="st-card"><div id="cfg-windows"></div></div>
-        </div>
-
-        <div class="st-section">
-          <div class="st-section-head"><div class="st-section-title">Almoço</div></div>
-          <div class="st-section-desc">Fica reservado todo dia, e o plano se organiza em volta dele.</div>
-          <div class="st-card">
-            <div class="st-toggle-row">
-              <div>
-                <div class="st-toggle-txt">Reservar horário de almoço</div>
-                <div class="st-toggle-sub">Desligue se você prefere almoçar em horários variáveis.</div>
-              </div>
-              <label class="st-switch">
-                <input type="checkbox" id="cfg-has-lunch" checked onchange="toggleLunchFields();updatePreview()">
-                <span class="st-switch-track"><span class="st-switch-knob"></span></span>
-              </label>
-            </div>
-            <div id="lunch-fields">
-              <div class="st-divider"></div>
-              <div class="st-grid-2">
-                <div><div class="st-field-label">Começa às</div><input type="time" id="cfg-lunch" value="13:00" oninput="updatePreview()"></div>
-                <div><div class="st-field-label">Duração (min)</div><input type="number" id="cfg-lunch-dur" value="60" min="15" max="180" step="5" oninput="updatePreview()"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="st-section">
-          <div class="st-section-head"><div class="st-section-title">Ritmo do pomodoro</div></div>
-          <div class="st-section-desc">A duração de cada bloco. A pausa longa entra a cada 4 pomodoros.</div>
-          <div class="st-card">
-            <div class="st-grid-3">
-              <div><div class="st-field-label">Estudo (min)</div><input type="number" id="cfg-pomo" value="25" min="10" max="90" step="5" oninput="updatePreview()"></div>
-              <div><div class="st-field-label">Pausa curta (min)</div><input type="number" id="cfg-short" value="5" min="1" max="30" step="1" oninput="updatePreview()"></div>
-              <div><div class="st-field-label">Pausa longa (min)</div><input type="number" id="cfg-long" value="20" min="5" max="60" step="5" oninput="updatePreview()"></div>
-            </div>
-            <div class="st-divider"></div>
-            <button type="button" class="fit-study-btn" onclick="openFitStudy()">🎯 Encaixar estudo nos meus horários</button>
-            <div class="st-hint">Testa combinações de duração e mostra as que melhor preenchem suas janelas, sem sobrar tempo morto.</div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="settings-tab-content" data-tab-content="general">
-
-        <div class="st-section">
-          <div class="st-section-head"><div class="st-section-title">Período de uso</div></div>
-          <div class="st-section-desc">O intervalo em que você quer ganhar XP e acompanhar seu progresso.</div>
-          <div class="st-card">
-            <div class="st-grid-2">
-              <div><div class="st-field-label">Início</div><input type="date" id="cfg-period-start" disabled title="O início da sessão é fixo. Use Cancelar sessão pra recomeçar."></div>
-              <div><div class="st-field-label">Fim</div><input type="date" id="cfg-period-end"></div>
-            </div>
-            <div class="st-hint">O início é fixo — só muda cancelando a sessão.</div>
-            <button type="button" class="ghost-btn" onclick="clearPeriod()">Usar sem data de fim</button>
-            <div class="st-divider"></div>
-            <div class="st-toggle-row">
-              <div>
-                <div class="st-toggle-txt">Pular finais de semana</div>
-                <div class="st-toggle-sub">Sábado e domingo ficam livres, sem blocos e sem cobrança de meta.</div>
-              </div>
-              <label class="st-switch">
-                <input type="checkbox" id="cfg-skip-weekends">
-                <span class="st-switch-track"><span class="st-switch-knob"></span></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="st-section">
-          <div class="st-section-head"><div class="st-section-title">Meta diária</div></div>
-          <div class="st-section-desc">Quanto você precisa estudar num dia para manter a sequência e ganhar o bônus de moedas.</div>
-          <div class="st-card">
-            <div class="st-field-label">Minutos por dia (15–240)</div>
-            <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15">
-          </div>
-        </div>
-
-        <div class="st-section">
-          <div class="st-section-head"><div class="st-section-title danger">Zona de perigo</div></div>
-          <div class="st-card st-danger">
-            <div class="st-danger-row">
-              <div class="dr-txt">
-                <div class="dr-title">Cancelar sessão</div>
-                <div class="dr-desc">Apaga checks, eventos, pets e configurações, e reabre o onboarding. Sua conta continua existindo.</div>
-              </div>
-              <button type="button" class="danger-btn" onclick="openCancelConfirm()">Cancelar sessão</button>
-            </div>
-            <div class="st-divider"></div>
-            <div class="st-danger-row">
-              <div class="dr-txt">
-                <div class="dr-title">Apagar minha conta</div>
-                <div class="dr-desc">Remove a conta e todos os dados do servidor. Você é desconectado e nada pode ser recuperado.</div>
-              </div>
-              <button type="button" class="danger-btn" onclick="openDeleteAccount()">Apagar conta</button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-
-  <div class="st-actions">
-    <div class="st-actions-inner">
-      <button class="reset-btn" onclick="resetSettings()">↺ Padrão</button>
-      <button class="save-btn" onclick="saveSettings()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- CANCEL SESSION CONFIRM -->
-<div class="panel-overlay center" id="cancel-confirm-panel" onclick="closeIfOutside(event,'cancel-confirm-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>⚠️ Cancelar sessão?</h2>
-      <button class="panel-close" onclick="closeCancelConfirm()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;">
-      Isso vai apagar <strong>tudo</strong>:
-    </p>
-    <ul style="font-size:13px;color:var(--muted);margin:0 0 16px 18px;line-height:1.7;">
-      <li>Todos os checks feitos</li>
-      <li>Eventos e ajustes de almoço</li>
-      <li>Pets adotados e moedas</li>
-      <li>Configurações personalizadas</li>
-    </ul>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;">
-      Depois você vai começar do zero, como uma conta nova. <strong>Esta ação não pode ser desfeita.</strong>
-    </p>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="closeCancelConfirm()">Voltar</button>
-      <button class="danger-btn" onclick="confirmCancelSession()">Sim, cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- DELETE ACCOUNT CONFIRM -->
-<div class="panel-overlay center" id="delete-account-panel" onclick="closeIfOutside(event,'delete-account-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🗑️ Apagar sua conta?</h2>
-      <button class="panel-close" onclick="closeDeleteAccount()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;">
-      Isso apaga <strong>a conta inteira</strong>, não só a sessão:
-    </p>
-    <ul style="font-size:13px;color:var(--muted);margin:0 0 16px 18px;line-height:1.7;">
-      <li>Todo o histórico de checks, XP e moedas</li>
-      <li>Eventos, séries recorrentes e ajustes de almoço</li>
-      <li>Pets adotados e skills</li>
-      <li>Seu acesso — você será desconectado</li>
-    </ul>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
-      Nada disso pode ser recuperado. Se você só quer recomeçar do zero mantendo a conta, use <strong>Cancelar sessão</strong>.
-    </p>
-    <div class="field-sublabel">Digite <strong>APAGAR</strong> pra confirmar</div>
-    <input type="text" class="del-acc-input" id="del-acc-input" placeholder="APAGAR" autocomplete="off" oninput="onDeleteAccountInput()">
-    <div class="del-acc-status" id="del-acc-status"></div>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="closeDeleteAccount()">Voltar</button>
-      <button class="danger-btn" id="del-acc-btn" onclick="confirmDeleteAccount()" disabled>Apagar para sempre</button>
-    </div>
-  </div>
-</div>
-
-<!-- PETS SHOP PANEL -->
-<div class="panel-overlay center" id="pets-shop-panel" onclick="closeIfOutside(event,'pets-shop-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🛒 Loja de pets</h2>
-      <button class="panel-close" onclick="closePetsShop()">✕</button>
-    </div>
-    <div class="shop-grid" id="pets-shop"></div>
-  </div>
-</div>
-
-<!-- FOCUS MODE -->
-<div class="focus-overlay" id="focus-overlay">
-  <div class="focus-inner">
-    <div class="focus-topbar">
-      <span id="focus-clock">--:--</span>
-      <button class="focus-exit" onclick="closeFocusMode()">← Sair do foco</button>
-    </div>
-    <div class="focus-header">
-      <div class="focus-chip" id="focus-chip">
-        <span class="fc-dot"></span>
-        <span id="focus-chip-text">—</span>
-      </div>
-      <div class="focus-block-name" id="focus-block-name">—</div>
-      <div class="focus-pomo-label" id="focus-pomo-label">—</div>
-    </div>
-    <div class="focus-timer-wrap">
-      <svg viewBox="0 0 100 100">
-        <circle class="focus-timer-track" cx="50" cy="50" r="45"/>
-        <circle class="focus-timer-fill" id="focus-timer-fill" cx="50" cy="50" r="45"
-          stroke-dasharray="282.7" stroke-dashoffset="0"/>
-      </svg>
-      <div class="focus-timer-center">
-        <div class="focus-time-big" id="focus-time-big">00:00</div>
-        <div class="focus-time-sub" id="focus-time-sub">completou · 0%</div>
-      </div>
-    </div>
-    <div class="focus-scene">
-      <div class="focus-scene-stage" id="focus-scene-stage"></div>
-      <div class="focus-scene-foot" id="focus-scene-foot">—</div>
-    </div>
-    <div class="focus-next" id="focus-next">
-      <div class="focus-next-label">Em seguida</div>
-      <div class="focus-next-sep"></div>
-      <div class="focus-next-name" id="focus-next-name">—</div>
-      <div class="focus-next-dur" id="focus-next-dur">—</div>
-    </div>
-  </div>
-</div>
-
-<!-- MEUS PETS PANEL -->
-<div class="panel-overlay center" id="my-pets-panel" onclick="closeIfOutside(event,'my-pets-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🐾 Meus pets</h2>
-      <button class="panel-close" onclick="closeMyPets()">✕</button>
-    </div>
-    <div class="shop-grid" id="my-pets-grid"></div>
-  </div>
-</div>
-
-<!-- PET BUY CONFIRM -->
-<div class="panel-overlay center" id="pet-buy-confirm" onclick="closeIfOutside(event,'pet-buy-confirm')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>Adotar pet?</h2>
-      <button class="panel-close" onclick="closeBuyConfirm()">✕</button>
-    </div>
-    <div class="buy-confirm-body" id="buy-confirm-body"></div>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="closeBuyConfirm()">Cancelar</button>
-      <button class="save-btn" onclick="confirmBuy()">Adotar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ONBOARDING PANEL -->
-<div class="panel-overlay center" id="onboarding-panel">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>👋 Bem-vindo!</h2>
-    </div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;">
-      Vamos configurar quando você quer usar o app. Você pode mudar isso depois nas configurações.
-    </p>
-    <div class="field-group">
-      <label>Período de uso</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="date" id="onb-start"></div>
-        <div><div class="field-sublabel">Fim</div><input type="date" id="onb-end"></div>
-      </div>
-      <button type="button" class="ghost-btn" onclick="onbUseAlways()" style="margin-top:8px;">Usar sempre (sem data fim)</button>
-    </div>
-    <div class="field-group">
-      <div class="checkbox-row">
-        <input type="checkbox" id="onb-skip-weekends">
-        <label for="onb-skip-weekends" style="font-size:13px;">Pular finais de semana (sáb e dom)</label>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="save-btn" onclick="finishOnboarding()" style="width:100%;">Começar</button>
-    </div>
-  </div>
-</div>
-
-<!-- LUNCH EDIT PANEL -->
-<div class="panel-overlay center" id="lunch-panel" onclick="closeIfOutside(event,'lunch-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🍽️ Editar Almoço</h2>
-      <button class="panel-close" onclick="closeLunchPanel()">✕</button>
-    </div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Alteração válida só para este dia.</p>
-    <div class="field-group">
-      <label>Horário e duração</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="time" id="lunch-edit-start" value="13:00"></div>
-        <div><div class="field-sublabel">Duração (min)</div><input type="number" id="lunch-edit-dur" value="60" min="15" max="180" step="5"></div>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="resetLunchEdit()">↺ Padrão</button>
-      <button class="save-btn" onclick="saveLunchEdit()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- EVENT PANEL -->
-<!-- FIT STUDY WIZARD -->
-<div class="panel-overlay center" id="fit-study-panel" onclick="closeIfOutside(event,'fit-study-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🎯 Encaixar estudo</h2>
-      <button class="panel-close" onclick="closeFitStudy()">✕</button>
-    </div>
-    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
-      💡 Diz como você gosta de estudar e eu sugiro 3 combinações que melhor encaixam nas janelas livres do dia visível (respeita início, fim, almoço e eventos).
-    </div>
-    <div class="field-group">
-      <label>Pomodoro ideal (min)</label>
-      <input type="number" id="fs-pomo" value="25" min="15" max="90" step="5">
-    </div>
-    <div class="field-group">
-      <label>Pausa curta ideal (min)</label>
-      <input type="number" id="fs-short" value="5" min="3" max="20" step="1">
-    </div>
-    <div class="field-group">
-      <label>Pausa longa ideal (min)</label>
-      <input type="number" id="fs-long" value="20" min="10" max="60" step="5">
-    </div>
-    <div class="field-group">
-      <label>Aceito flexibilidade de</label>
-      <div class="freq-row">
-        <label><input type="radio" name="fs-flex" value="5"> ±5 min</label>
-        <label><input type="radio" name="fs-flex" value="10" checked> ±10 min</label>
-        <label><input type="radio" name="fs-flex" value="15"> ±15 min</label>
-      </div>
-    </div>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="reset-btn" onclick="closeFitStudy()">Cancelar</button>
-      <button class="save-btn" onclick="runFitStudy()">Calcular sugestões</button>
-    </div>
-    <div id="fs-suggestions" style="margin-top:20px"></div>
-  </div>
-</div>
-
-<!-- EVENT DELETE CONFIRM -->
-<div class="panel-overlay center" id="event-delete-confirm" onclick="closeIfOutside(event,'event-delete-confirm')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>📅 Apagar evento?</h2>
-      <button class="panel-close" onclick="closeEventDeleteConfirm()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;" id="event-delete-text">
-      Vai apagar o evento <strong id="event-delete-name">—</strong>. Os checks ligados a ele somem junto.
-    </p>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="reset-btn" onclick="closeEventDeleteConfirm()">Cancelar</button>
-      <button class="reset-btn" id="event-delete-once-btn" onclick="confirmEventDeleteOnce()" style="display:none;">Só este dia</button>
-      <button class="danger-btn" id="event-delete-main-btn" onclick="confirmEventDelete()">Apagar</button>
-    </div>
-  </div>
-</div>
-
-<div class="panel-overlay center" id="event-panel" onclick="closeIfOutside(event,'event-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>📅 Novo Evento</h2>
-      <button class="panel-close" onclick="closeEventPanel()">✕</button>
-    </div>
-    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
-      💡 <strong style="color:var(--text);">Considere o deslocamento até a aula.</strong> Antes de qualquer compromisso você precisa sair da sala de estudo e ir até o lugar do evento — isso leva tempo. Se a aula começa às 11:30 e o caminho leva uns 15 minutos, defina o evento a partir das 11:15. Assim os pomodoros param na hora certa e você não fica no meio de um bloco quando precisar sair.
-      <br><br>
-      ⏱️ <strong style="color:var(--text);">E o tempo depois também.</strong> Quando o evento acaba, geralmente tem um intervalo até você voltar a estudar. Considere adicionar 15 minutos ao fim do evento.
-    </div>
-    <div class="field-group">
-      <label>Nome do evento</label>
-      <input type="text" id="ev-name" placeholder="Ex: Aula de Álgebra, Consulta...">
-    </div>
-    <div class="field-group">
-      <label>Horário</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="time" id="ev-start" value="11:30"></div>
-        <div><div class="field-sublabel">Fim</div><input type="time" id="ev-end" value="13:00"></div>
-      </div>
-    </div>
-    <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
-      <div class="checkbox-row">
-        <input type="checkbox" id="ev-counts" checked>
-        <label for="ev-counts" style="font-size:13px;">Conta como estudo (dá XP e moedas)</label>
-      </div>
-      <div class="field-sublabel" style="margin-top:6px;line-height:1.5;">Marca pra aula, prova, palestra etc. (vira bloco de estudo, com check e XP). Desliga pra consulta, reunião, evento social etc. (bloqueia o tempo, sem XP).</div>
-    </div>
-    <div class="field-group">
-      <div class="checkbox-row">
-        <input type="checkbox" id="ev-repeat" onchange="toggleRepeatSection()">
-        <label for="ev-repeat" style="font-size:13px;">Repetir este evento</label>
-      </div>
-      <div class="recurrence-section" id="ev-repeat-section">
-        <div class="field-sublabel">Dias da semana</div>
-        <div class="weekday-row" id="ev-weekdays">
-          <button type="button" class="weekday-chip" data-dow="1">Seg</button>
-          <button type="button" class="weekday-chip" data-dow="2">Ter</button>
-          <button type="button" class="weekday-chip" data-dow="3">Qua</button>
-          <button type="button" class="weekday-chip" data-dow="4">Qui</button>
-          <button type="button" class="weekday-chip" data-dow="5">Sex</button>
-          <button type="button" class="weekday-chip" data-dow="6">Sáb</button>
-          <button type="button" class="weekday-chip" data-dow="0">Dom</button>
-        </div>
-        <div class="field-sublabel" style="margin-top:12px;">Frequência</div>
-        <div class="freq-row">
-          <label><input type="radio" name="ev-freq" value="weekly" checked> Toda semana</label>
-          <label><input type="radio" name="ev-freq" value="biweekly"> A cada 2 semanas</label>
-          <label><input type="radio" name="ev-freq" value="monthly"> Mensalmente</label>
-        </div>
-        <div class="field-sublabel" style="margin-top:12px;">Até</div>
-        <div class="field-row" style="align-items:center;">
-          <input type="date" id="ev-until">
-          <button type="button" class="ghost-btn" onclick="clearEvUntil()">Sem fim</button>
-        </div>
-      </div>
-    </div>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="reset-btn" onclick="closeEventPanel()">Cancelar</button>
-      <button class="save-btn" onclick="saveEvent()">Adicionar</button>
-    </div>
-  </div>
-</div>
-
-<div class="analytics-page" id="analytics-page">
-
-  <!-- PROFILE CARD (sempre visível) -->
-  <div class="profile-card">
-    <div class="profile-top">
-      <div class="profile-avatar">🎓</div>
-      <div class="profile-info">
-        <h2 id="an-level-name">Zero</h2>
-        <div class="profile-level" id="an-level-sub">Nível 0 · Continua assim!</div>
-      </div>
-    </div>
-    <div class="profile-xp-row">
-      <span id="an-xp-label">0 XP</span>
-      <span id="an-xp-next"></span>
-    </div>
-    <div class="bar-track"><div class="bar-fill" id="an-xp-bar" style="width:0%"></div></div>
-    <div class="sparkline-wrap">
-      <span class="sparkline-label">Tendência (8 sem)</span>
-      <svg id="an-sparkline" viewBox="0 0 120 24" preserveAspectRatio="none"></svg>
-    </div>
-  </div>
-
-  <!-- SUB-NAV -->
-  <div class="subnav" id="an-subnav">
-    <button class="subnav-chip active" data-view="hoje">Hoje</button>
-    <button class="subnav-chip" data-view="semana">Semana</button>
-    <button class="subnav-chip" data-view="geral">Geral</button>
-    <button class="subnav-chip" data-view="recordes">Recordes</button>
-  </div>
-
-  <!-- HOJE -->
-  <div class="subview active" data-view="hoje">
-    <div class="adh-card adh-big" id="adherence-today">
-      <div class="adh-label">Realizado hoje</div>
-      <div class="adh-val">—</div>
-      <div class="adh-sub">—</div>
-      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
-      <div class="adh-pct">0%</div>
-    </div>
-    <div class="goal-week-card">
-      <div class="goal-week-headline" id="goal-week-headline-h">Meta diária</div>
-      <div class="goal-week-dots" id="goal-week-dots-h"></div>
-    </div>
-  </div>
-
-  <!-- SEMANA -->
-  <div class="subview" data-view="semana">
-    <div class="adh-card" id="adherence-week">
-      <div class="adh-label">Realizado na semana</div>
-      <div class="adh-val">—</div>
-      <div class="adh-sub">—</div>
-      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
-      <div class="adh-pct">0%</div>
-    </div>
-    <div class="goal-week-card">
-      <div class="goal-week-headline" id="goal-week-headline">Meta diária</div>
-      <div class="goal-week-dots" id="goal-week-dots"></div>
-    </div>
-    <div class="chart-card">
-      <div class="section-title">Conclusão por sessão <span class="historic-tag">(histórico)</span></div>
-      <div id="dropoff-chart"></div>
-    </div>
-  </div>
-
-  <!-- GERAL -->
-  <div class="subview" data-view="geral">
-    <div class="adh-card" id="adherence-geral">
-      <div class="adh-label">Realizado no geral</div>
-      <div class="adh-val">—</div>
-      <div class="adh-sub">—</div>
-      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
-      <div class="adh-pct">0%</div>
-    </div>
-    <div class="chart-card">
-      <div class="section-title">Plano cumprido — 16 semanas</div>
-      <div class="heatmap-gh" id="heatmap-grid-gh"></div>
-      <div class="heatmap-legend">
-        <span>0%</span>
-        <div class="lc" style="background:var(--bg3)"></div>
-        <div class="lc" style="background:#1a3a20"></div>
-        <div class="lc" style="background:#2d6b35"></div>
-        <div class="lc" style="background:#65a30d"></div>
-        <div class="lc" style="background:#a3e635"></div>
-        <span>100%+</span>
-      </div>
-    </div>
-    <div class="chart-card">
-      <div class="section-title">Horários onde mais estuda</div>
-      <div class="bar-chart" id="hour-bar-chart"></div>
-      <div style="display:flex;justify-content:space-between;padding:0 2px;">
-        <span style="font-size:9px;color:var(--muted);">09h</span>
-        <span style="font-size:9px;color:var(--muted);">12h</span>
-        <span style="font-size:9px;color:var(--muted);">15h</span>
-        <span style="font-size:9px;color:var(--muted);">18h</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- RECORDES -->
-  <div class="subview" data-view="recordes">
-    <div class="an-stats">
-      <div class="an-stat"><div class="as-val" id="an-total-checks">0</div><div class="as-label">Blocos feitos</div></div>
-      <div class="an-stat"><div class="as-val" id="an-streak">0</div><div class="as-label">Dias seguidos</div></div>
-      <div class="an-stat"><div class="as-val" id="an-best-week">0</div><div class="as-label">Melhor semana</div></div>
-    </div>
-    <div class="chart-card">
-      <div class="streak-row"><span class="streak-label">🔥 Sequência atual</span><span class="streak-val" id="an-cur-streak">0 dias</span></div>
-      <div class="streak-row"><span class="streak-label">🏆 Maior sequência</span><span class="streak-val" id="an-best-streak">0 dias</span></div>
-      <div class="streak-row"><span class="streak-label">📖 Melhor dia (blocos)</span><span class="streak-val" id="an-best-day">—</span></div>
-      <div class="streak-row"><span class="streak-label">⚡ XP num único dia</span><span class="streak-val" id="an-best-xp">0 XP</span></div>
-    </div>
-  </div>
-
-</div>
-
-<div class="profile-page" id="profile-page">
-
-  <!-- HERO SCENE -->
-  <div class="profile-hero">
-    <div class="profile-hero-stage">
-      <img id="char-sprite" class="char-sprite" src="public/idle/user/0.png" alt="Personagem">
-      <img id="pet-sprite" class="pet-sprite" alt="Pet" style="display:none">
-    </div>
-    <div class="profile-hero-divider"></div>
-    <div class="profile-hero-row">
-      <div class="profile-hero-left">
-        <div class="profile-hero-name">
-          <span id="char-name">Estudante</span>
-          <span class="hero-lv-badge" id="char-level-badge">Lv.1</span>
-        </div>
-        <div class="profile-hero-sub" id="char-title-sub">Zero</div>
-      </div>
-      <div class="profile-hero-right">
-        <div class="phr-label">próximo nível</div>
-        <div class="phr-val" id="char-xp-next-val">— XP</div>
-      </div>
-    </div>
-    <div class="profile-hero-bar">
-      <div class="bar-fill" id="char-xp-bar" style="width:0%"></div>
-    </div>
-  </div>
-
-  <!-- STATS 4-col -->
-  <div class="profile-stats-4">
-    <div class="profile-stat-mini"><div class="psm-val" id="ps-xp">0</div><div class="psm-label">XP total</div></div>
-    <div class="profile-stat-mini"><div class="psm-val" id="ps-blocks">0</div><div class="psm-label">Blocos</div></div>
-    <div class="profile-stat-mini"><div class="psm-val" id="ps-hours">0h</div><div class="psm-label">Estudo</div></div>
-    <div class="profile-stat-mini coins-stat"><div class="psm-val" id="char-coins">0</div><div class="psm-label">Moedas</div></div>
-  </div>
-
-  <!-- PET ATIVO (card destacado) -->
-  <div class="active-pet-card" id="active-pet-card" style="display:none">
-    <img class="ap-sprite" id="ap-sprite" alt="">
-    <div class="ap-info">
-      <div class="ap-tag">Pet ativo</div>
-      <div class="ap-name-row">
-        <span class="ap-name" id="ap-name">—</span>
-        <span class="ap-lv" id="ap-lv">Lv. 1</span>
-      </div>
-      <div class="ap-bar-track"><div class="ap-bar-fill" id="ap-bar-fill" style="width:0%"></div></div>
-      <div class="ap-xp" id="ap-xp">— XP</div>
-    </div>
-  </div>
-  <div class="no-active-pet" id="no-active-pet">
-    Nenhum pet equipado. Adote um na loja e equipe em "🐾 Meus pets".
-  </div>
-
-  <!-- MEUS PETS BUTTON -->
-  <button type="button" class="shop-open-btn" onclick="openMyPets()">
-    <span class="shop-open-icon">🐾</span>
-    <span class="shop-open-label">Meus pets</span>
-    <span class="shop-open-count" id="my-pets-count">0 ✨</span>
-    <span class="shop-open-arrow">›</span>
-  </button>
-
-  <!-- PETS SHOP BUTTON -->
-  <button type="button" class="shop-open-btn" onclick="openPetsShop()">
-    <span class="shop-open-icon">🛒</span>
-    <span class="shop-open-label">Loja de pets</span>
-    <span class="shop-open-arrow">›</span>
-  </button>
-
-</div>
-
-<button id="fab-config" class="fab-config" onclick="openSettings()" aria-label="Configurações">⚙️</button>
-
-<div id="save-indicator">💾 Modo teste</div>
-
-<script>
 // ============================================================
 // STUDY PETS — refatorado
 // ============================================================
 
 // ============================================================
-// TEST MODE — no Firebase, in-memory state
+// FIREBASE
 // ============================================================
-window.loginGoogle = () => {};
-window.logoutUser = () => {};
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyABZ4DR7v94YyKaswY8FR7T8tOVQkIR7B0",
+  authDomain: "plano-estudos-bf51d.firebaseapp.com",
+  projectId: "plano-estudos-bf51d",
+  storageBucket: "plano-estudos-bf51d.firebasestorage.app",
+  messagingSenderId: "807419074503",
+  appId: "1:807419074503:web:905534d0f0ef64edf26be2"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
 
 // ============================================================
 // CONSTANTS
@@ -1495,10 +72,9 @@ function coinsForBlock(b, durMin) {
 }
 
 // Saldo de moedas = total ganho - gasto. Nunca negativo.
-// TEST MODE: +500 moedas de bônus pra testar adoção de pets sem precisar estudar (não existe no index.html de produção).
 function getCoinBalance() {
   const stats = computeStats();
-  return Math.max(0, stats.coins + 500 - (state.coinsSpent || 0));
+  return Math.max(0, stats.coins - (state.coinsSpent || 0));
 }
 
 // ============================================================
@@ -1512,11 +88,9 @@ function noturnoBonusEligible(b, dateKey) {
   if (!state.skills || state.skills.owl !== 'noturno') return false;
   const hour = parseInt(b.time.split(':')[0]);
   if (hour < 18) return false;
-  // Só vale pra bloco do dia corrente (precisamos do início real do bloco em ms)
   if (dateKey !== dk(new Date())) return false;
   const [bh, bm] = b.time.split(':').map(Number);
   const blockStartMs = new Date().setHours(bh, bm, 0, 0);
-  // Skill precisa ter sido ativada antes do bloco começar
   if ((state.skills.activatedAt || 0) > blockStartMs) return false;
   return true;
 }
@@ -1561,19 +135,20 @@ const state = {
 // PETS REGISTRY
 // ============================================================
 const PETS = {
-  cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `public/idle/pets/cat/${i}.png` },
-  cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `public/idle/pets/cow/${i}.png` },
-  snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `public/idle/pets/snake/${i}.png` },
-  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `public/idle/pets/owl/${i}.png`,
+  cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `idle/pets/cat/${i}.png` },
+  cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `idle/pets/cow/${i}.png` },
+  snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `idle/pets/snake/${i}.png` },
+  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `idle/pets/owl/${i}.png`,
            skills: [
              { id: 'noturno', name: 'Noturno', desc: '+5% XP em estudos a partir das 18h' },
              { id: 'voo',     name: 'Voo',     desc: 'Permite o usuário voar (placeholder)' },
            ] },
-  dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `public/idle/pets/dog/${i}.png` },
+  dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `idle/pets/dog/${i}.png` },
 };
 
 let WEEKS = [];
 let saveTimeout = null;
+let accountDeleted = false;   // true depois que a conta foi apagada — impede save pendente de recriar o doc
 
 // ============================================================
 // DATE / TIME HELPERS
@@ -1681,7 +256,7 @@ function forEachDay(callback) {
   const skip = state.config.skipWeekends === true;
   for (let wi = 0; wi < WEEKS.length; wi++) {
     for (let di = 0; di < 7; di++) {
-      if (skip && di >= 5) continue;
+      if (skip && di >= 5) continue; // 5 = sáb, 6 = dom (segunda = di 0)
       const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
       callback(dk(d), d, wi, di);
     }
@@ -1736,6 +311,7 @@ function generateBlocks(cfg, events = []) {
   const blocks = [];
   let sessionN = 0;
 
+  // Emite um bloqueio como block (almoço/evento/intervalo) preservando metadados úteis.
   function emitBlocked(b) {
     const out = {
       time: minsToTime(b.start),
@@ -1749,6 +325,8 @@ function generateBlocks(cfg, events = []) {
     blocks.push(out);
   }
 
+  // Pra cada janela, gera pomos+pausas e respeita bloqueios internos.
+  // Antes de cada janela, emite bloqueios que estão entre a anterior e esta (ou antes da primeira).
   for (let wi = 0; wi < windows.length; wi++) {
     const win = windows[wi];
     const gapStart = wi === 0 ? -Infinity : windows[wi - 1].end;
@@ -1764,6 +342,7 @@ function generateBlocks(cfg, events = []) {
     const MAX = 300; let iter = 0;
 
     while (cur < winEnd && iter++ < MAX) {
+      // Dentro de bloqueio que cruza/cai nesta janela?
       const inBlock = blocked.find(b => cur >= b.start && cur < b.end);
       if (inBlock) {
         emitBlocked(inBlock);
@@ -1773,10 +352,12 @@ function generateBlocks(cfg, events = []) {
         continue;
       }
 
+      // Próximo bloqueio dentro desta janela
       const nextBlock = blocked.find(b => b.start > cur && b.start < winEnd);
       const nextBlockStart = nextBlock ? nextBlock.start : winEnd;
       const gap = nextBlockStart - cur;
 
+      // Gap menor que pomo: mini ou stretch
       if (gap < cfg.pomo && gap > 0) {
         const half = cfg.pomo / 2;
         const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
@@ -1795,6 +376,7 @@ function generateBlocks(cfg, events = []) {
         continue;
       }
 
+      // Pomodoro normal
       const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
       blocks.push({
         time: minsToTime(cur), endTime: minsToTime(cur + cfg.pomo),
@@ -1831,12 +413,15 @@ function generateBlocks(cfg, events = []) {
       }
     }
 
+    // Próxima janela = nova sessão (separação visual)
     sessionN++;
   }
 
+  // Bloqueios depois da última janela — emite pra não esconder do plano
   const lastWinEnd = windows[windows.length - 1].end;
   blocked.filter(b => b.start >= lastWinEnd).forEach(b => emitBlocked(b));
 
+  // Último bloco deve ser sempre um estudo (limpa pausas finais)
   while (blocks.length > 0 && blocks[blocks.length - 1].type === 'pausa') {
     blocks.pop();
   }
@@ -1887,7 +472,7 @@ function getEventsForDate(dateKey) {
 
 function blocksForDay(dateKey) {
   if (state.config.skipWeekends) {
-    const dow = new Date(dateKey + 'T12:00:00').getDay();
+    const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
     if (dow === 0 || dow === 6) return [];
   }
   const events = getEventsForDate(dateKey);
@@ -2155,9 +740,43 @@ function getLevelPct(xp) {
 // FIREBASE LOAD / SAVE
 // ============================================================
 async function loadData(uid) {
-  // Test mode: no-op
+  let isNew = false;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      state.checks = d.checks || {};
+      state.events = d.events || {};
+      state.eventSeries = Array.isArray(d.eventSeries) ? d.eventSeries : [];
+      state.lunchOverrides = d.lunchOverrides || {};
+      state.config = migrateConfig({ ...DEFAULT_CFG, ...(d.config || {}) });
+      state.pets = {
+        owned: (d.pets && Array.isArray(d.pets.owned)) ? d.pets.owned : [],
+        active: (d.pets && d.pets.active) || null,
+        xp: (d.pets && d.pets.xp && typeof d.pets.xp === 'object') ? d.pets.xp : {},
+        xpProcessedUntil: (d.pets && typeof d.pets.xpProcessedUntil === 'string') ? d.pets.xpProcessedUntil : null,
+      };
+      state.closedDays = (d.closedDays && typeof d.closedDays === 'object') ? d.closedDays : {};
+      state.skills = (d.skills && typeof d.skills === 'object')
+        ? { owl: d.skills.owl || null, activatedAt: d.skills.activatedAt || 0 }
+        : { owl: null, activatedAt: 0 };
+      state.coinsSpent = (typeof d.coinsSpent === 'number') ? d.coinsSpent : 0;
+    } else {
+      isNew = true;
+      state.checks = {}; state.events = {}; state.eventSeries = []; state.lunchOverrides = {};
+      state.closedDays = {};
+      state.config = { ...DEFAULT_CFG };
+      state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
+      state.skills = { owl: null, activatedAt: 0 };
+      state.coinsSpent = 0;
+    }
+  } catch (e) {
+    console.error('Load failed:', e);
+    showToast('⚠️ Erro ao carregar dados');
+  }
   buildWeeks();
   clearBlockCache();
+  return isNew;
 }
 
 function showSaveIndicator(msg = 'Salvando...', done = false) {
@@ -2169,18 +788,60 @@ function showSaveIndicator(msg = 'Salvando...', done = false) {
 }
 
 function scheduleSave() {
-  // Test mode: just show indicator briefly
-  showSaveIndicator('💾 Modo teste (não salva)', true);
+  if (accountDeleted) return;
+  showSaveIndicator('Salvando...');
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    if (!state.user || accountDeleted) return;
+    try {
+      await setDoc(doc(db, 'users', state.user.uid), {
+        checks: state.checks,
+        events: state.events,
+        eventSeries: state.eventSeries || [],
+        lunchOverrides: state.lunchOverrides,
+        closedDays: state.closedDays || {},
+        config: state.config,
+        pets: state.pets,
+        skills: state.skills || { owl: null, activatedAt: 0 },
+        coinsSpent: state.coinsSpent || 0,
+      }, { merge: true });
+      showSaveIndicator('Salvo ✓', true);
+    } catch (e) {
+      console.error('Save failed:', e);
+      showSaveIndicator('⚠️ Erro ao salvar', true);
+    }
+  }, 800);
 }
 
 // ============================================================
 // AUTH
 // ============================================================
-// Test mode: stubbed
-window.loginGoogle = () => {};
-window.logoutUser = () => {};
+window.loginGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch (e) { console.error(e); }
+};
+window.logoutUser = async () => { await signOut(auth); };
 
-// (init moved to end)
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    accountDeleted = false;
+    state.user = user;
+    const isNew = await loadData(user.uid);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+    if (isNew) openOnboarding();
+  } else {
+    state.user = null;
+    state.checks = {}; state.events = {}; state.lunchOverrides = {};
+    state.closedDays = {};
+    state.config = { ...DEFAULT_CFG };
+    state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
+    state.coinsSpent = 0;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
 
 // ============================================================
 // TOAST
@@ -2651,6 +1312,7 @@ window.resetSettings = () => {
   document.getElementById('cfg-period-end').value = '';
   document.getElementById('cfg-skip-weekends').checked = false;
   document.getElementById('cfg-daily-study-min').value = DEFAULT_CFG.dailyStudyMin;
+  // Reseta janelas pra default (1 janela 09:00→18:00)
   document.getElementById('cfg-windows').innerHTML = '';
   DEFAULT_CFG.studyWindows.forEach(w => addStudyWindow(w.start, w.end));
   toggleLunchFields();
@@ -2671,6 +1333,7 @@ function readCfgForm() {
       end: card.querySelector('.swc-end').value,
     }))
     .filter(w => w.start && w.end && timeToMins(w.end) > timeToMins(w.start));
+  // start/end derivados (retrocompat com código que ainda lê cfg.start/cfg.end)
   const sortedW = [...studyWindows].sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
   const startDerived = sortedW.length > 0 ? sortedW[0].start : '09:00';
   const endDerived = sortedW.length > 0 ? sortedW[sortedW.length - 1].end : '18:00';
@@ -2754,6 +1417,7 @@ window.runFitStudy = () => {
   const flexEl = document.querySelector('input[name="fs-flex"]:checked');
   const flex = parseInt(flexEl ? flexEl.value : 10);
 
+  // Dia visível (ou hoje, se uiWeek/uiDay batem)
   const dateKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
   const events = getEventsForDate(dateKey);
   // Lê do form de settings (não do state) — assim respeita start/end/almoço que o usuário
@@ -2776,6 +1440,7 @@ window.runFitStudy = () => {
         const studyBlocks = blocks.filter(b => b.type === 'estudo');
         const studyTotal = studyBlocks.reduce((s, b) => s + (timeToMins(b.endTime) - timeToMins(b.time)), 0);
         const lastEnd = blocks.length > 0 ? timeToMins(blocks[blocks.length - 1].endTime) : 0;
+        // Penalidade por desvio do ideal — pomo pesa mais que pausas
         const penalty = Math.abs(pomo - idealPomo) + Math.abs(short - idealShort) * 0.5 + Math.abs(long - idealLong) * 0.3;
         const score = studyTotal - penalty * 0.5;
         candidates.push({ pomo, short, long, studyTotal, lastEnd, studyCount: studyBlocks.length, score });
@@ -2829,6 +1494,7 @@ window.applyFitSuggestion = (pomo, short, long) => {
 };
 
 window.saveSettings = () => {
+  // periodStart fica fixo: preserva o valor atual do state (não vem do form, input está disabled)
   const visibleKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
   const before = blocksForDay(visibleKey);
   const newCfg = readCfgForm();
@@ -2858,8 +1524,9 @@ window.confirmCancelSession = () => {
   state.events = {};
   state.eventSeries = [];
   state.lunchOverrides = {};
+  state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
-  state.pets = { owned: [], active: null };
+  state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
   state.skills = { owl: null, activatedAt: 0 };
   if ('coinsSpent' in state) state.coinsSpent = 0;
   closeCancelConfirm();
@@ -2889,25 +1556,56 @@ window.onDeleteAccountInput = () => {
   document.getElementById('del-acc-btn').disabled = (v !== 'APAGAR');
 };
 
-// Test mode: não há Firebase nem Auth — simula a exclusão zerando tudo em memória.
-window.confirmDeleteAccount = () => {
-  state.checks = {};
-  state.events = {};
-  state.eventSeries = [];
-  state.lunchOverrides = {};
-  state.closedDays = {};
-  state.config = { ...DEFAULT_CFG };
-  state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
-  state.skills = { owl: null, activatedAt: 0 };
-  if ('coinsSpent' in state) state.coinsSpent = 0;
+// Apaga o doc do Firestore E o usuário do Auth. A ordem importa: o doc primeiro,
+// porque depois do deleteUser não sobra credencial pra passar nas rules do Firestore.
+window.confirmDeleteAccount = async () => {
+  const btn = document.getElementById('del-acc-btn');
+  const status = document.getElementById('del-acc-status');
+  const user = auth.currentUser;
+  if (!user) { showToast('Ninguém logado'); return; }
+
+  btn.disabled = true;
+  status.textContent = 'Apagando...';
+  accountDeleted = true;        // trava saves pendentes pra não recriar o doc
+  clearTimeout(saveTimeout);
   stopTimer();
+
+  try {
+    await deleteDoc(doc(db, 'users', user.uid));
+  } catch (e) {
+    console.error('Delete doc failed:', e);
+    accountDeleted = false;
+    btn.disabled = false;
+    status.textContent = '⚠️ Não deu pra apagar seus dados. Tenta de novo.';
+    return;
+  }
+
+  try {
+    await deleteUser(user);
+  } catch (e) {
+    // Firebase exige login recente pra apagar conta — reautentica e tenta de novo.
+    if (e && e.code === 'auth/requires-recent-login') {
+      status.textContent = 'Confirme com o Google pra finalizar...';
+      try {
+        await reauthenticateWithPopup(user, provider);
+        await deleteUser(user);
+      } catch (e2) {
+        console.error('Reauth/delete failed:', e2);
+        status.textContent = '⚠️ Seus dados foram apagados, mas a conta continua. Entre de novo e repita pra concluir.';
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      console.error('Delete user failed:', e);
+      status.textContent = '⚠️ Seus dados foram apagados, mas não deu pra remover a conta. Tenta de novo.';
+      btn.disabled = false;
+      return;
+    }
+  }
+
   closeDeleteAccount();
   closeSettings();
-  buildWeeks();
-  clearBlockCache();
-  renderAll();
-  openOnboarding();
-  showToast('Conta apagada (modo teste) 👋');
+  showToast('Conta apagada. Até mais 👋');
 };
 
 // ============================================================
@@ -2930,6 +1628,7 @@ window.onbUseAlways = () => {
 window.finishOnboarding = () => {
   const pStart = document.getElementById('onb-start').value;
   const pEnd = document.getElementById('onb-end').value;
+  // periodStart sempre marca o início (pra preservar progresso). periodEnd null = "sempre" (até fim do ano).
   let periodStart = pStart || dk(new Date());
   let periodEnd = pEnd || null;
   if (periodEnd && periodEnd < periodStart) {
@@ -2953,6 +1652,7 @@ window.finishOnboarding = () => {
 // EVENT PANEL
 // ============================================================
 window.openEventPanel = () => {
+  // Resetar os campos pra defaults sempre que abre
   document.getElementById('ev-name').value = '';
   document.getElementById('ev-start').value = '11:30';
   document.getElementById('ev-end').value = '13:00';
@@ -2961,6 +1661,7 @@ window.openEventPanel = () => {
   document.getElementById('ev-repeat-section').classList.remove('show');
   document.getElementById('ev-until').value = '';
   document.querySelectorAll('input[name="ev-freq"]').forEach(r => r.checked = (r.value === 'weekly'));
+  // Pré-seleciona o dia da semana atual (UI)
   const todayDow = dateForWeekDay(state.uiWeek, state.uiDay).getDay();
   document.querySelectorAll('#ev-weekdays .weekday-chip').forEach(chip => {
     const isToday = parseInt(chip.dataset.dow, 10) === todayDow;
@@ -2979,6 +1680,7 @@ window.clearEvUntil = () => {
   document.getElementById('ev-until').value = '';
 };
 
+// Click nos chips de dia da semana toggla seleção
 document.addEventListener('click', (e) => {
   const chip = e.target.closest('#ev-weekdays .weekday-chip');
   if (!chip) return;
@@ -3107,7 +1809,7 @@ function startCharAnim() {
   charInterval = setInterval(() => {
     charFrame = (charFrame + 1) % CHAR_FRAMES;
     const img = document.getElementById('char-sprite');
-    if (img) img.src = `public/idle/user/${charFrame}.png`;
+    if (img) img.src = `idle/user/${charFrame}.png`;
   }, 180);
 }
 
@@ -3249,10 +1951,8 @@ function buildPetCard(pet, { showPrice }) {
       row.onclick = () => {
         if (!state.skills) state.skills = { activatedAt: 0 };
         if (state.skills[pet.id] === skill.id) {
-          // Desativa
           state.skills[pet.id] = null;
         } else {
-          // Ativa (exclusivo por pet — substitui outra que tava ativa)
           state.skills[pet.id] = skill.id;
         }
         state.skills.activatedAt = Date.now();
@@ -3614,6 +2314,7 @@ window.endPromptSaveExtend = () => {
   const newEnd = document.getElementById('eop-new-end').value;
   if (!newEnd) return;
   state.config.end = newEnd;
+  // Estende a última janela de estudo até o novo horário
   if (Array.isArray(state.config.studyWindows) && state.config.studyWindows.length > 0) {
     const sorted = [...state.config.studyWindows].sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
     const last = sorted[sorted.length - 1];
@@ -4007,7 +2708,6 @@ function renderHeatmapGH(stats) {
   const grid = document.getElementById('heatmap-grid-gh');
   grid.innerHTML = '';
   grid.style.gridTemplateColumns = `repeat(${N_WEEKS}, 1fr)`;
-  // grid-auto-flow:column + 7 rows -> precisa preencher col-by-col
   for (let col = 0; col < N_WEEKS; col++) {
     for (let row = 0; row < 7; row++) {
       const d = new Date(startMon);
@@ -4015,7 +2715,7 @@ function renderHeatmapGH(stats) {
       const key = dk(d);
       const cell = document.createElement('div');
       cell.className = 'heatmap-cell';
-      const dow = d.getDay(); // 0=dom, 6=sáb
+      const dow = d.getDay();
       if (d > todayDate) {
         cell.classList.add('future');
         cell.title = `${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} — futuro`;
@@ -4090,7 +2790,6 @@ function renderDropoffChart(stats) {
 function renderSparkline(stats) {
   const svg = document.getElementById('an-sparkline');
   if (!svg) return;
-  // Agrega minutos por semana (chave = dk(monday(d)))
   const byWeek = {};
   Object.entries(stats.dayStudyDoneMins).forEach(([key, mins]) => {
     if (!mins) return;
@@ -4098,7 +2797,6 @@ function renderSparkline(stats) {
     const wk = dk(mondayOf(d));
     byWeek[wk] = (byWeek[wk] || 0) + mins;
   });
-  // Pega últimas 8 semanas até a semana atual (inclusive), preenchendo com 0
   const todayMon = mondayOf(new Date());
   const series = [];
   for (let i = 7; i >= 0; i--) {
@@ -4185,7 +2883,6 @@ function renderActivePetCard() {
   const lvl = getPetLevel(activeId);
   document.getElementById('ap-lv').textContent = 'Lv. ' + lvl;
 
-  // Calcula faixa de XP do nível atual e progresso
   const lvlIdx = lvl - 1;
   const curThreshold = LEVELS[lvlIdx] ? LEVELS[lvlIdx][0] : 0;
   const nextEntry = LEVELS[lvlIdx + 1];
@@ -4204,12 +2901,3 @@ function renderActivePetCard() {
   }
 }
 
-
-// ============================================================
-// INIT (test mode — runs after all declarations)
-// ============================================================
-buildWeeks();
-initApp();
-</script>
-</body>
-</html>

@@ -44,25 +44,32 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Stack & deploy
 
-- Frontend: HTML/CSS/JS vanilla, arquivo único (sem build/bundler)
+- Frontend: HTML/CSS/JS vanilla, agora com build (Vite). O JS saiu do `<script>` inline pra `src/main.js` — mesmo código, sem mudança de comportamento. Migração pra TypeScript/React em andamento (ver `plans/2026-09-02_1552_migracao-vite-ts.md`)
+- Build/testes: Vite + TypeScript + Vitest. `vercel.json` declara build e output explicitamente — não depender da detecção automática da Vercel
 - Backend: Firebase (Auth via Google + Firestore)
 - Hosting: Vercel (deploy automático no push pra `main`)
-- Repo: github.com/tomito6/plano-estudos (slug antigo — o app se chama Study Pets desde 2026-09-01, o repo ainda não foi renomeado)
-- URL: plano-estudos-one.vercel.app (idem — slug antigo)
+- Repo: github.com/tomito6/study-pets
+- URL: plano-estudos-one.vercel.app — o projeto no Vercel ainda se chama `plano-estudos`, e é o nome do projeto que gera essa URL. **Não renomear o projeto**: mudaria o domínio, que teria de ser re-autorizado no Firebase Auth (Authorized domains) pro login com Google continuar funcionando.
 
 ## Arquivos
 
-- `index.html` — versão real com Firebase (deployada no Vercel)
-- `index_teste.html` — versão sem Firebase pra testar localmente, no `.gitignore`
-- `idle/` — sprites do personagem principal
-- `idle/pets/{nome}/` — convenção pra sprites de pets
+- `index.html` — o HTML do app (entry do Vite). Só markup e CSS; o JS mora em `src/main.js`
+- `src/main.js` — todo o script do app, extraído verbatim do `<script type="module">` antigo
+- `index_teste.html` — versão sem Firebase pra testar localmente (é versionado). **Some na Fase 4**, quando um adapter de persistência escolhido por env substituir a cópia manual
+- `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`. **Exceção**: `index_teste.html` é aberto direto do disco, sem servidor, então ele aponta pra `public/idle/...`
+- `public/idle/pets/{nome}/` — convenção pra sprites de pets
 - Sprites são frames sequenciais nomeados `0.png`, `1.png`, ...
+- `firestore.rules` — regras de acesso (só o dono lê/escreve `users/{uid}`)
+- `scripts/backup-firestore-console.js` — snippet pra baixar seu doc do Firestore pelo DevTools
+- `dist/` — saída do build, não versionada
 
 ## Workflow
 
-1. Mudanças devem ser replicadas em `index.html` e `index_teste.html`
-2. Testar abrindo `index_teste.html` no browser
-3. Commit + push → Vercel atualiza sozinho
+1. `npm run dev` sobe o app em `http://localhost:5173` com Firebase real (`localhost` já é domínio autorizado no Firebase Auth). É o jeito principal de testar agora
+2. Mudanças de UI/lógica ainda precisam ser replicadas em `index_teste.html` — até a Fase 4 matar essa cópia
+3. `npm test` (Vitest) e `npm run typecheck` antes de commitar
+4. `npm run build` gera o `dist/`
+5. Commit + push → Vercel builda e publica sozinho
 
 ## Princípios arquiteturais
 
@@ -296,7 +303,7 @@ Schema flat funciona pro volume atual. Quando ficar lento, considerar subcollect
 
 ## Decisões adiadas conscientemente
 
-- Não separar em múltiplos arquivos (reavaliar quando passar de ~3000 linhas)
+- ~~Não separar em múltiplos arquivos~~ → o limite foi ultrapassado (o script tinha 2903 linhas dentro de um HTML de 4454). Migração em curso: ver `plans/2026-09-02_1552_migracao-vite-ts.md`
 - Não migrar Firestore pra subcollection (reavaliar quando salvar virar lento)
 
 ## Sempre
