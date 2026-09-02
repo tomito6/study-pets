@@ -62,6 +62,9 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `planner.ts` — `generateBlocks` (a memoização ficou no `main.js`) e `calcActualEnd`
   - `events.ts` — `expandEventsForDate`, com semanal/quinzenal/mensal e exceções
   - `progression.ts` — XP, moedas, `LEVELS`, skills e o bônus da Noturno
+  - `checks.ts` — quem pode ser marcado (`canToggleCheck`: dia fechado é read-only, dia futuro não
+    chegou) e `computePendingPetXP`, que calcula o XP dos pets de forma idempotente
+  - `stats.ts` — `computeStats` (uma passada só) e `calcStreaks`
 - `tests/` — Vitest sobre o domínio
 - `index_teste.html` — versão sem Firebase pra testar localmente (é versionado). **Some na Fase 4**, quando um adapter de persistência escolhido por env substituir a cópia manual
 - `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`. **Exceção**: `index_teste.html` é aberto direto do disco, sem servidor, então ele aponta pra `public/idle/...`

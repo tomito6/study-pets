@@ -34,6 +34,11 @@ import {
 } from './domain/progression';
 import { expandEventsForDate } from './domain/events';
 import { generateBlocks as generateBlocksPure, calcActualEnd } from './domain/planner';
+import {
+  canToggleCheck, computePendingPetXP,
+  isChecked as isCheckedPure, isDayClosed as isDayClosedPure, isFutureDay as isFutureDayPure,
+} from './domain/checks';
+import { computeStats as computeStatsPure, calcStreaks as calcStreaksPure } from './domain/stats';
 
 // ============================================================
 // CONSTANTS
@@ -251,21 +256,22 @@ function blocksForDay(dateKey) {
 // ============================================================
 // CHECKS — by time string, not index
 // ============================================================
+// As regras estão em src/domain/checks.ts; aqui só ligamos ao state.
 function isChecked(dateKey, blockTime) {
-  return !!(state.checks[dateKey] && state.checks[dateKey][blockTime]);
+  return isCheckedPure(state.checks, dateKey, blockTime);
 }
 
 function isDayClosed(dateKey) {
-  return !!(state.closedDays && state.closedDays[dateKey]);
+  return isDayClosedPure(state.closedDays, dateKey);
 }
 
 function isFutureDay(dateKey) {
-  return dateKey > dk(new Date());
+  return isFutureDayPure(dateKey, new Date());
 }
 
 function toggleCheck(dateKey, blockTime, block) {
-  if (isDayClosed(dateKey)) return;   // dia encerrado: read-only
-  if (isFutureDay(dateKey)) return;   // dia futuro: ainda não chegou
+  // Dia encerrado é read-only; dia futuro ainda não chegou. (src/domain/checks.ts)
+  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now: new Date() })) return;
   if (!state.checks[dateKey]) state.checks[dateKey] = {};
   if (state.checks[dateKey][blockTime]) {
     delete state.checks[dateKey][blockTime];
@@ -299,38 +305,24 @@ function applyPendingPetXP() {
   if (!state.pets) state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
   const today = dk(new Date());
   const yest = new Date(); yest.setDate(yest.getDate() - 1);
-  const yesterday = dk(yest);
 
-  // Inclui hoje no processamento se foi encerrado manualmente
-  const endKey = isDayClosed(today) ? today : yesterday;
-
-  // Primeira execução depois da mudança: zera XP antigo e marca yesterday como processado.
-  if (state.pets.xpProcessedUntil == null) {
-    state.pets.xp = {};
-    state.pets.xpProcessedUntil = yesterday;
-    scheduleSave();
-    // Se hoje também já tá fechado (edge case), continua pra processá-lo abaixo
-  }
-  if (state.pets.xpProcessedUntil >= endKey) return;
-
-  const dayKeys = Object.keys(state.checks).filter(k =>
-    k > state.pets.xpProcessedUntil && k <= endKey
-  ).sort();
-
-  dayKeys.forEach(dayKey => {
-    const blocks = generateBlocks(state.config, getEventsForDate(dayKey));
-    blocks.forEach(b => {
-      if (b.type !== 'estudo' && b.type !== 'event') return;
-      if (!isChecked(dayKey, b.time)) return;
-      const petId = checkPet(dayKey, b.time);
-      if (!petId) return;
-      if (!state.pets.xp) state.pets.xp = {};
-      const check = state.checks[dayKey] && state.checks[dayKey][b.time];
-      state.pets.xp[petId] = (state.pets.xp[petId] || 0) + (xpFromCheck(b, check) || 0);
-    });
+  // O cálculo (e a idempotência) vive em src/domain/checks.ts.
+  const pending = computePendingPetXP({
+    checks: state.checks,
+    xpProcessedUntil: state.pets.xpProcessedUntil,
+    todayKey: today,
+    yesterdayKey: dk(yest),
+    dayClosed: isDayClosed,
+    getBlocks: dayKey => generateBlocks(state.config, getEventsForDate(dayKey)),
   });
+  if (!pending) return;
 
-  state.pets.xpProcessedUntil = endKey;
+  if (pending.resetXp) state.pets.xp = {};
+  if (!state.pets.xp) state.pets.xp = {};
+  for (const petId of Object.keys(pending.gains)) {
+    state.pets.xp[petId] = (state.pets.xp[petId] || 0) + pending.gains[petId];
+  }
+  state.pets.xpProcessedUntil = pending.processedUntil;
   scheduleSave();
 }
 
@@ -341,142 +333,27 @@ function dayCheckCount(dateKey) {
 // ============================================================
 // STATS — single computation
 // ============================================================
+// O cálculo em si vive em src/domain/stats.ts (uma passada só sobre os dias).
+// Aqui montamos a lista de dias a partir de WEEKS e passamos o resto do contexto.
 function computeStats() {
-  const stats = {
-    totalXP: 0, totalChecks: 0,
-    weekXP: {}, weekChecks: {},
-    todayXP: 0, todayChecks: 0, todayCoins: 0,
-    hourCounts: {},
-    bestWeekChecks: 0,
-    bestDayChecks: 0, bestDayLabel: '—', bestDayXP: 0,
-    studyMins: 0, coins: 0,
-    activeWeeks: 0,
-    estudosToday: { done: 0, total: 0 },
-    pausasToday: { done: 0, total: 0 },
-    weekChecksOfCurrent: 0,
-    dayCheckCounts: {},
-    dayStudyMins: {},
-    dayStudyPlanned: {},
-    dayStudyDoneMins: {},
-    dayMetGoal: {},
-    sessionStats: {},
-  };
-
-  const todayKey = dk(new Date());
-  const curDateKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
-  const minDailyMins = state.config.dailyStudyMin || 60;
-  let runningStreak = 0;
-
-  forEachDay((key, d, wi) => {
-    // Dia "fechado" entra nos totais: dia passado OU encerrado manualmente hoje
-    const isPast = (key !== todayKey) || isDayClosed(key);
-    const blocks = blocksForDay(key);
-    let dayXP = 0, dayChecks = 0, dayStudyMins = 0, weekHasCheck = false;
-    let dayPlanned = 0, dayDone = 0;
-    stats.weekXP[wi] = stats.weekXP[wi] || 0;
-    stats.weekChecks[wi] = stats.weekChecks[wi] || 0;
-
-    blocks.forEach(b => {
-      const isStudyLike = b.type === 'estudo' || b.type === 'event';
-      if (isStudyLike) {
-        const dur = timeToMins(b.endTime) - timeToMins(b.time);
-        dayPlanned += dur;
-        if (isChecked(key, b.time)) dayDone += dur;
-        if (isPast) {
-          const s = b.session ?? 0;
-          if (!stats.sessionStats[s]) stats.sessionStats[s] = { done: 0, total: 0 };
-          stats.sessionStats[s].total++;
-          if (isChecked(key, b.time)) stats.sessionStats[s].done++;
-        }
-      }
-      if (!isStudyLike && b.type !== 'pausa') return;
-      if (key === curDateKey) {
-        if (isStudyLike) stats.estudosToday.total++;
-        else stats.pausasToday.total++;
-      }
-      if (isChecked(key, b.time)) {
-        const dur = timeToMins(b.endTime) - timeToMins(b.time);
-        // Counters do próprio dia (incluindo hoje) — usados pra streak/melhor dia
-        dayChecks++;
-        if (isStudyLike) dayStudyMins += dur;
-
-        // XP efetivo do check (aplica bônus salvo no momento da marcação)
-        const check = state.checks[key] && state.checks[key][b.time];
-        const effXP = xpFromCheck(b, check);
-
-        if (isPast) {
-          // Agregados só de dias fechados (XP/moedas/horas/etc.)
-          stats.totalChecks++;
-          stats.totalXP += effXP;
-          dayXP += effXP;
-          weekHasCheck = true;
-          stats.weekXP[wi] += effXP;
-          stats.weekChecks[wi]++;
-          if (isStudyLike) {
-            stats.coins += coinsForBlock(b, dur);
-            stats.studyMins += dur;
-          }
-          const hour = parseInt(b.time.split(':')[0]);
-          stats.hourCounts[hour] = (stats.hourCounts[hour] || 0) + 1;
-        }
-
-        if (key === todayKey) {
-          stats.todayXP += effXP;
-          stats.todayChecks++;
-          if (isStudyLike) stats.todayCoins += coinsForBlock(b, dur);
-        }
-        if (key === curDateKey) {
-          if (isStudyLike) stats.estudosToday.done++;
-          else stats.pausasToday.done++;
-        }
-      }
-    });
-
-    stats.dayCheckCounts[key] = dayChecks;
-    stats.dayStudyMins[key] = dayStudyMins;
-    stats.dayStudyPlanned[key] = dayPlanned;
-    stats.dayStudyDoneMins[key] = dayDone;
-    stats.dayMetGoal[key] = dayDone >= minDailyMins;
-    if (dayStudyMins >= minDailyMins) {
-      runningStreak++;
-      // Bônus de streak só conta nas moedas se o dia já fechou
-      if (isPast) stats.coins += dailyBonusForStreak(runningStreak);
-      // Pra hoje (ainda aberto), expõe o bônus como pendente
-      else if (key === todayKey) stats.todayCoins += dailyBonusForStreak(runningStreak);
-    } else {
-      runningStreak = 0;
-    }
-    if (dayChecks > stats.bestDayChecks) {
-      stats.bestDayChecks = dayChecks;
-      stats.bestDayLabel = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
-    }
-    if (dayXP > stats.bestDayXP) stats.bestDayXP = dayXP;
-    if (weekHasCheck) stats.activeWeeks++;
-    if (stats.weekChecks[wi] > stats.bestWeekChecks) stats.bestWeekChecks = stats.weekChecks[wi];
+  const days = [];
+  forEachDay((key, d, wi) => days.push({ key, date: d, weekIdx: wi }));
+  return computeStatsPure({
+    days,
+    getBlocks: blocksForDay,
+    checks: state.checks,
+    dayClosed: isDayClosed,
+    todayKey: dk(new Date()),
+    currentDayKey: dk(dateForWeekDay(state.uiWeek, state.uiDay)),
+    currentWeekIdx: state.uiWeek - 1,
+    dailyStudyMin: state.config.dailyStudyMin || 60,
   });
-
-  stats.weekChecksOfCurrent = stats.weekChecks[state.uiWeek - 1] || 0;
-  return stats;
 }
 
 function calcStreaks(dayStudyMins) {
-  const today = dk(new Date());
-  const minMins = state.config.dailyStudyMin || 60;
-  let cur = 0, best = 0, temp = 0;
   const allKeys = [];
   forEachDay(key => allKeys.push(key));
-  allKeys.forEach(k => {
-    if ((dayStudyMins[k] || 0) >= minMins) { temp++; if (temp > best) best = temp; }
-    else temp = 0;
-  });
-  const idx = allKeys.indexOf(today);
-  if (idx >= 0) {
-    for (let i = idx; i >= 0; i--) {
-      if ((dayStudyMins[allKeys[i]] || 0) >= minMins) cur++;
-      else break;
-    }
-  }
-  return { cur, best };
+  return calcStreaksPure(dayStudyMins, allKeys, dk(new Date()), state.config.dailyStudyMin || 60);
 }
 
 // ============================================================

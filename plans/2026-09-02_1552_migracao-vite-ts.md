@@ -90,11 +90,13 @@ disso; Fase 2 em diante sim.
   **não publicado** no console do Firebase; até lá o risco segue aberto.
 - **Fase 2 — feita** (commit `ebeafc1`). Script inline → `src/main.js`, `idle/` → `public/idle/`,
   Vite 8 + TypeScript 7 + Vitest 4, `vercel.json` explícito.
-- **Fase 3 — feita em parte** (branch `refactor/fase-3-dominio`). Extraídos pro domínio: tipos,
-  helpers de data, config/migração, planner, eventos recorrentes, XP/moedas/níveis/skills.
-  90 testes. Equivalência com o gerador antigo provada em 8064 combinações.
-  **Falta**: `computeStats` (~140 linhas, o pedaço mais entrelaçado com `state`) e as regras de
-  check (`toggleCheck`, `applyPendingPetXP`, dia fechado/futuro) — vão na próxima fatia.
+- **Fase 3 — feita** (branch `refactor/fase-3-dominio`). Extraídos pro domínio: tipos, helpers de
+  data, config/migração, planner, eventos recorrentes, XP/moedas/níveis/skills, regras de check e
+  estatísticas. `main.js` foi de 2903 pra 2529 linhas. 143 testes.
+  Equivalência com o código antigo provada duas vezes: `generateBlocks` em 8064 combinações, e
+  `computeStats`/`calcStreaks` em 40 cenários aleatórios (14–28 dias, com eventos, dias encerrados
+  e os três formatos de check que aparecem em dados reais).
+  Sobrou no `main.js` só o que é efeito: memoização, leitura de `state`, render e persistência.
 - **Fase 4 em diante — não começou.**
 
 ## Achados que viraram pendência
