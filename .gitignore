@@ -1,0 +1,34 @@
+# Dependências e build (a partir da Fase 2 — Vite)
+node_modules/
+dist/
+.vite/
+
+# Variáveis de ambiente (os valores públicos do Firebase ficam em .env.example)
+.env
+.env.local
+.env.*.local
+
+# Firebase CLI / emuladores
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.log
+
+# Backups locais do Firestore — dados pessoais, não versionar
+study-pets-backup-*.json
+backups/
+
+# Testes
+coverage/
+test-results/
+playwright-report/
+.playwright/
+
+# Sistema operacional / editores
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

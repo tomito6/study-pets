@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Study Pets — regras do Firestore
+//
+// Modelo de dados: cada usuário tem UM documento em users/{uid}.
+// O app só toca esse caminho (getDoc / setDoc / deleteDoc em 'users', uid).
+//
+// Princípio: ninguém lê nem escreve nada que não seja o próprio documento.
+// Tudo que não estiver explicitamente liberado abaixo é negado por padrão.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // O documento do próprio usuário — leitura, escrita e exclusão.
+    // A exclusão importa: o fluxo "Apagar conta" faz deleteDoc antes de
+    // deleteUser, justamente porque depois não sobra credencial pra passar aqui.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Sem subcoleções hoje. Se um dia o doc virar subcoleção por dia
+      // (decisão adiada no CLAUDE.md), a mesma regra de dono se aplica.
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}
