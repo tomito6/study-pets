@@ -7,27 +7,29 @@
 // ============================================================
 // O main.js não conhece o Firebase: fala com as portas de src/infrastructure/ports.ts.
 // VITE_PERSISTENCE=memory (npm run dev:teste) troca tudo por versões em memória.
-import { auth, users, persistenceMode, DeleteAccountError } from './infrastructure';
-import { hydrateUserDoc, serializeState, emptyPersistedState } from './domain/persistence';
+import { auth, users, persistenceMode, DeleteAccountError } from '../infrastructure';
+import { hydrateUserDoc, serializeState, emptyPersistedState } from '../domain/persistence';
+// Estado compartilhado com o React (mesmo objeto). Depois de mutar, notify().
+import { state, notify, subscribe, setTab, publishStats, markAuthReady } from '../store/store';
 if (persistenceMode === 'memory') {
   console.info('%cStudy Pets em MODO TESTE — sem Firebase; os dados vivem só nesta aba.', 'color:#c8f542');
 }
 
 // ---- Domínio puro (sem DOM, sem Firebase, testado em tests/) ----
-import { DEFAULT_CFG, migrateConfig } from './domain/config';
-import { dk, timeToMins, minsToTime, mondayOf, aggregateMins } from './domain/time';
+import { DEFAULT_CFG, migrateConfig } from '../domain/config';
+import { dk, timeToMins, minsToTime, mondayOf, aggregateMins } from '../domain/time';
 import {
   LEVELS, calcXP, coinsForBlock, coinsForStudyBlock, dailyBonusForStreak,
   getLevel, getLevelIdx, getLevelPct, xpFromCheck, checkPetOf,
   noturnoBonusEligible as noturnoBonusEligiblePure,
-} from './domain/progression';
-import { expandEventsForDate } from './domain/events';
-import { generateBlocks as generateBlocksPure, calcActualEnd } from './domain/planner';
+} from '../domain/progression';
+import { expandEventsForDate } from '../domain/events';
+import { generateBlocks as generateBlocksPure, calcActualEnd } from '../domain/planner';
 import {
   canToggleCheck, computePendingPetXP,
   isChecked as isCheckedPure, isDayClosed as isDayClosedPure, isFutureDay as isFutureDayPure,
-} from './domain/checks';
-import { computeStats as computeStatsPure, calcStreaks as calcStreaksPure } from './domain/stats';
+} from '../domain/checks';
+import { computeStats as computeStatsPure, calcStreaks as calcStreaksPure } from '../domain/stats';
 
 // ============================================================
 // CONSTANTS
@@ -69,23 +71,7 @@ const NUM_SESSIONS = 6;
 // ============================================================
 // STATE — single source of truth
 // ============================================================
-const state = {
-  user: null,
-  checks: {},          // { "2026-05-07": { "09:00": { pet: petId | null } } }   (true antigo é tratado como { pet: null })
-  events: {},          // { "2026-05-07": [{name, start, end}] } — eventos avulsos por dia
-  eventSeries: [],     // séries recorrentes; veja getEventsForDate. shape: {id, name, start, end, weekdays[], freq, anchor, until, exceptions[]}
-  lunchOverrides: {},  // { "2026-05-07": {lunch, lunchDur} }
-  closedDays: {},      // { "2026-05-07": true } — dias encerrados manualmente pelo usuário
-  config: {...DEFAULT_CFG},
-  pets: { owned: [], active: null, xp: {}, xpProcessedUntil: null },   // xp/level por pet. xpProcessedUntil = último dia já creditado (YYYY-MM-DD | null = "ainda não inicializado")
-  skills: { owl: null, activatedAt: 0 },   // skill ativa por pet (exclusivo — só uma por pet). activatedAt = ms da última troca, usado p/ evitar exploit "ativa no final"
-  coinsSpent: 0,       // total de moedas gastas (em pets, etc). Saldo = ganho - gasto.
-
-  // UI state (not persisted)
-  uiTab: 'plano',
-  uiWeek: 1,
-  uiDay: 0,
-};
+// `state` agora vem de src/store/store.ts — mesmo objeto, mesmos campos.
 
 // ============================================================
 // PETS REGISTRY
@@ -383,6 +369,7 @@ function showSaveIndicator(msg = 'Salvando...', done = false) {
 
 function scheduleSave() {
   if (accountDeleted) return;
+  notify();
   showSaveIndicator('Salvando...');
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
@@ -400,18 +387,15 @@ function scheduleSave() {
 // ============================================================
 // AUTH
 // ============================================================
-window.loginGoogle = async () => {
-  try { await auth.signIn(); }
-  catch (e) { console.error(e); }
-};
-window.logoutUser = async () => { await auth.signOut(); };
+// Entrar/sair viraram casos de uso em src/application/session.ts, chamados pelo React.
 
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     accountDeleted = false;
     state.user = user;
+    markAuthReady();
+    notify();
     const isNew = await loadData(user.uid);
-    document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     initApp();
     if (isNew) openOnboarding();
@@ -422,8 +406,9 @@ auth.onAuthStateChanged(async (user) => {
     state.config = { ...DEFAULT_CFG };
     state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
     state.coinsSpent = 0;
-    document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
+    markAuthReady();
+    notify();
   }
 });
 
@@ -1362,11 +1347,14 @@ window.closeIfOutside = (e, id) => {
 // ============================================================
 // TAB SWITCHING
 // ============================================================
-window.switchTab = (tab) => {
-  state.uiTab = tab;
-  ['plano','analise','perfil'].forEach(t => {
-    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-  });
+// A aba ativa vive no store; o cabeçalho React muda o store. Aqui só aplicamos
+// no DOM legado o que cada aba mostra/esconde, quando ela muda.
+window.switchTab = (tab) => setTab(tab);
+
+// Começa com a aba atual como "já aplicada": só reage a MUDANÇA, como o switchTab antigo.
+// (Aplicar na carga gravava display:none inline na timer-bar e escondia o timer pra sempre.)
+let appliedTab = state.uiTab;
+function applyTab(tab) {
   const isPlano = tab === 'plano';
   document.querySelector('.main').style.display = isPlano ? '' : 'none';
   document.getElementById('timer-bar').style.display = isPlano && timerBlock ? 'flex' : 'none';
@@ -1375,7 +1363,12 @@ window.switchTab = (tab) => {
   document.getElementById('fab-config').classList.toggle('hidden', !isPlano);
   if (tab === 'analise') renderAnalytics();
   if (tab === 'perfil') renderProfile();
-};
+}
+subscribe(() => {
+  if (state.uiTab === appliedTab) return;
+  appliedTab = state.uiTab;
+  applyTab(state.uiTab);
+});
 
 // ============================================================
 // CHARACTER ANIMATION (profile tab)
@@ -1639,8 +1632,6 @@ function initApp() {
   applyPendingPetXP();   // credita XP de dias passados nos pets equipados na hora de cada check
   setTimeout(scheduleEndOfDayPrompt, 600);   // agenda o prompt pro horário exato do último bloco de estudo
   const today = new Date();
-  document.getElementById('today-label').textContent =
-    today.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
   state.uiWeek = findWeek(today);
 
   const sel = document.getElementById('week-select');
@@ -1679,7 +1670,7 @@ window.onWeekChange = () => {
   renderAll();
 };
 
-function renderAll() { renderTabs(); renderBlocks(); renderFinishDay(); renderXP(); }
+function renderAll() { renderTabs(); renderBlocks(); renderFinishDay(); renderXP(); notify(); }
 
 // === FINISH DAY ===
 function renderFinishDay() {
@@ -2113,9 +2104,8 @@ function renderBlocks() {
 let _prevPendingToday = null;
 function renderXP() {
   const stats = computeStats();
+  publishStats(stats);   // o cabeçalho (React) lê daqui
   document.getElementById('xp-total').textContent = stats.totalXP;
-  document.getElementById('top-xp').textContent = stats.totalXP + ' XP';
-  document.getElementById('top-level').textContent = getLevel(stats.totalXP);
   document.getElementById('xp-bar').style.width = getLevelPct(stats.totalXP) + '%';
   document.getElementById('week-xp-val').textContent = 'Semana: ' + (stats.weekXP[state.uiWeek - 1] || 0) + ' XP';
   renderTodayPending(stats);

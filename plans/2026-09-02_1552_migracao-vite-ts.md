@@ -122,7 +122,22 @@ disso; Fase 2 em diante sim.
   sistema lançado pelo Playwright — e fechando as abas reais do Tomi junto. Browser padrão agora é o
   Chromium do próprio Playwright em headless (`headless_shell.exe`, que o Cold Turkey não reconhece);
   `PW_CHANNEL` só como override. Com isso: 27/27 em três rodadas seguidas, sem repetição.
-- **Fase 5 (React) — não começou.** A rede de segurança pra ela (smoke test) já existe.
+- **Fase 5 (React) — em curso.** Estratégia: **ilhas**. Cada pedaço migrado monta num host fixo do
+  `index.html` (`flushSync`, antes de o legado carregar) e mantém os mesmos ids/classes; o legado
+  continua dono do resto. Ponte: `src/store/store.ts` — o mesmo objeto `state` que o legado muta,
+  `notify()` nos pontos onde ele já re-renderizava (`renderAll`, `scheduleSave`, callback de auth),
+  `useAppState` no React, `derived.stats` publicado pelo `renderXP` (transitório).
+  - **Fatia 1 — feita**: estrutura + auth. `src/main.tsx`, `LoginScreen` (estrelas e sprite viraram
+    hooks; os dois `<script>` inline sumiram), `Header` (abas, data, XP/nível, Sair), `strings.ts`,
+    `application/session.ts`, CSS extraído pra `src/styles/`. `index.html`: 1553 → 774 linhas.
+    Legado renomeado pra `src/legacy/app.js` (resolução do TS confundia `main.js` com `main.tsx`).
+    Regressão pega pelo smoke test e corrigida: o assinante de aba aplicava `display:none` na
+    `timer-bar` na carga; agora só reage a mudança, como o `switchTab` antigo. 18/18 em 2 rodadas.
+  - **Próximas fatias**, nesta ordem: Plano (blocos, semana/dia, timer-bar), Timer + modo foco,
+    Eventos, Configurações, Análise, Perfil + Pets, Onboarding + Encerrar o dia. A cada uma: o legado
+    para de tocar naqueles ids, e o `computeStats` sai do `renderXP` pra camada de aplicação assim
+    que o Plano migrar (aí `derived.stats` some).
+  - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência
 

@@ -1,0 +1,71 @@
+#login-screen {
+    min-height:100vh; background:#0a0a0b;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px 20px; position:relative; overflow:hidden;
+  }
+  .ls-bg {
+    position:absolute; inset:0; overflow:hidden; pointer-events:none;
+  }
+  .ls-grid {
+    position:absolute; inset:0;
+    background-image: linear-gradient(rgba(163,230,53,.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(163,230,53,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .ls-glow {
+    position:absolute; width:600px; height:600px; border-radius:50%;
+    background: radial-gradient(circle, rgba(163,230,53,.08) 0%, transparent 70%);
+    top:50%; left:50%; transform:translate(-50%,-50%);
+    animation: glow-pulse 4s ease-in-out infinite;
+  }
+  .ls-star { position:absolute; width:2px; height:2px; background:rgba(163,230,53,.5); border-radius:50%; animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s); }
+  @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
+  @keyframes glow-pulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+  .ls-scanline {
+    position:absolute; left:0; right:0; height:2px;
+    background:linear-gradient(transparent, rgba(163,230,53,.08), transparent);
+    animation:scanline 6s linear infinite; pointer-events:none;
+  }
+  .ls-content { position:relative; z-index:1; text-align:center; max-width:340px; width:100%; }
+  .ls-char {
+    image-rendering:pixelated; width:96px; height:96px; object-fit:contain;
+    animation:float 2.4s ease-in-out infinite; margin-bottom:24px;
+    filter: drop-shadow(0 0 16px rgba(163,230,53,.5));
+  }
+  .ls-eyebrow {
+    font-family:'Press Start 2P',monospace; font-size:9px;
+    color:var(--accent); letter-spacing:.15em; margin-bottom:12px;
+    text-shadow: 0 0 12px rgba(163,230,53,.6);
+  }
+  .ls-title {
+    font-family:'Press Start 2P',monospace; font-size:20px; line-height:1.4;
+    color:#f0f0f0; margin-bottom:6px;
+    text-shadow: 0 0 20px rgba(163,230,53,.3), 2px 2px 0 rgba(0,0,0,.8);
+  }
+  .ls-title span { color:var(--accent); }
+  .ls-sub {
+    font-family:'DM Sans',sans-serif; font-size:13px; color:#666;
+    line-height:1.7; margin-bottom:36px; margin-top:16px;
+  }
+  .ls-features {
+    display:flex; gap:16px; justify-content:center; margin-bottom:36px;
+  }
+  .ls-feat {
+    background:rgba(163,230,53,.06); border:1px solid rgba(163,230,53,.15);
+    border-radius:8px; padding:10px 12px; font-size:11px;
+    color:#888; font-family:'DM Sans',sans-serif; text-align:center; line-height:1.5;
+  }
+  .ls-feat .lf-icon { font-size:18px; display:block; margin-bottom:4px; }
+  .ls-google-btn {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    width:100%; padding:15px 24px; border:none; border-radius:12px;
+    background:white; color:#1a1a1a; font-size:15px; font-weight:600;
+    font-family:'DM Sans',sans-serif; cursor:pointer;
+    box-shadow:0 4px 24px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.1);
+    transition:all .2s; position:relative; overflow:hidden;
+  }
+  .ls-google-btn:hover { transform:translateY(-1px); box-shadow:0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.15); }
+  .ls-google-btn:active { transform:translateY(0); }
+  .ls-fine-print { font-size:11px; color:#444; margin-top:16px; line-height:1.6; font-family:'DM Sans',sans-serif; }

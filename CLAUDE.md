@@ -44,7 +44,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Stack & deploy
 
-- Frontend: HTML/CSS/JS vanilla, agora com build (Vite). O JS saiu do `<script>` inline pra `src/main.js` — mesmo código, sem mudança de comportamento. Migração pra TypeScript/React em andamento (ver `plans/2026-09-02_1552_migracao-vite-ts.md`)
+- Frontend: React + TypeScript (Vite), **em migração** a partir de um app vanilla. Hoje o React vive em **ilhas** (login, cabeçalho) e o resto ainda é o legado `src/legacy/app.js` mexendo no DOM por id. Os dois compartilham o store. Ver `plans/2026-09-02_1552_migracao-vite-ts.md`
 - Build/testes: Vite + TypeScript + Vitest. `vercel.json` declara build e output explicitamente — não depender da detecção automática da Vercel
 - Backend: Firebase (Auth via Google + Firestore)
 - Hosting: Vercel (deploy automático no push pra `main`)
@@ -53,8 +53,15 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Arquivos
 
-- `index.html` — o HTML do app (entry do Vite). Só markup e CSS; o JS mora em `src/main.js`
-- `src/main.js` — o script do app: DOM, estado, render. Chama o domínio e fala com auth/persistência só pelas portas de `src/infrastructure` — não conhece o Firebase
+- `index.html` — só markup (774 linhas). Tem dois **hosts de ilha** React (`#login-root`, `#header-root`) e o markup legado do resto (`#app`, abas, modais). Sem `<style>` nem `<script>` inline
+- `src/main.tsx` — entry. Monta as ilhas React (síncrono, `flushSync`) e **depois** importa o legado — ele procura elementos por id em runtime
+- `src/app/` — casca do app em React (`Header.tsx`: abas, data, XP, Sair)
+- `src/features/<feature>/` — UI React por feature (hoje só `auth/LoginScreen.tsx`)
+- `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` guarda o que o legado calcula e o React só lê (`stats`) — transitório
+- `src/application/` — casos de uso (hoje `session.ts`: entrar/sair). UI chama isto; isto chama infra
+- `src/shared/strings.ts` — textos da UI React. Tudo que migrar pro React escreve texto aqui, não inline
+- `src/styles/app.css` e `login.css` — o CSS que estava no `index.html`, sem mudança
+- `src/legacy/app.js` — o app vanilla (era `src/main.js`): DOM, render, timer, modais. Chama o domínio, fala com auth/persistência pelas portas de `src/infrastructure`, e usa o `state` do store. **Não cresce mais**: feature nova ou mexida vai pro React
 - `src/infrastructure/` — o mundo externo, atrás de interfaces (`ports.ts`: `AuthPort`, `UserRepository`):
   - `firebase/` — `config.ts` (config pública, sobrescrevível por `VITE_FIREBASE_*`), `auth.ts` (Google, com reautenticação ao apagar conta), `userRepository.ts` (`users/{uid}`)
   - `memory/` — as mesmas portas sem rede: usuário fixo já logado, documento no `sessionStorage` da aba (sobrevive a reload/HMR, some ao fechar a aba; aba nova = conta nova). É o **modo teste**
@@ -95,8 +102,9 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 Mais importantes que valores concretos. Estes você protege ao mexer no código:
 
-- **Regra pura mora em `src/domain/`**: se uma função só transforma dados em dados, ela vai pro domínio, é tipada e ganha teste. O domínio **não pode** tocar DOM, Firebase, `state`, áudio, notificação ou `new Date()` implícito — quando precisa do "agora", recebe como parâmetro (ver `SkillContext` em `progression.ts`). O `main.js` fica com o que é efeito: render, estado, persistência, e wrappers finos que ligam um ao outro (`getEventsForDate`, `noturnoBonusEligible`, a memoização de `generateBlocks`).
-- **Estado centralizado**: tudo em um único objeto `state`. Não criar globais soltas.
+- **Regra pura mora em `src/domain/`**: se uma função só transforma dados em dados, ela vai pro domínio, é tipada e ganha teste. O domínio **não pode** tocar DOM, Firebase, `state`, áudio, notificação ou `new Date()` implícito — quando precisa do "agora", recebe como parâmetro (ver `SkillContext` em `progression.ts`). O `src/legacy/app.js` fica com o que é efeito: render, estado, persistência, e wrappers finos que ligam um ao outro (`getEventsForDate`, `noturnoBonusEligible`, a memoização de `generateBlocks`).
+- **Estado centralizado**: tudo em um único objeto `state`, que vive em `src/store/store.ts`. Não criar globais soltas. Nada de UI efêmera (modal aberto) no store — isso é estado local de componente.
+- **Ilhas React durante a migração**: cada pedaço migrado monta num host fixo do `index.html` e mantém **os mesmos ids e classes** do markup antigo — CSS, legado e smoke test dependem desse contrato. O legado escuta o store (`subscribe`) pra reagir ao que o React muda (ex.: aba ativa → `applyTab`), e o React re-renderiza a cada `notify()` do legado. Quando um pedaço migra, o legado **para** de tocar naqueles ids (senão os dois brigam pelo DOM).
 - **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null, bonus: number }` — `pet` = equipado no momento do check; `bonus` = multiplicador aditivo de XP (0 ou 0.05) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
 - **Memoization em `generateBlocks`**: a função tem cache. Sempre que alterar config ou eventos, chamar `clearBlockCache()`.
 - **Stats em uma passada**: `computeStats()` calcula tudo de uma vez iterando os dias uma única vez. Não criar funções separadas que reiteram.
@@ -106,9 +114,9 @@ Mais importantes que valores concretos. Estes você protege ao mexer no código:
 - **Firebase só atrás de porta**: nada fora de `src/infrastructure/firebase/` importa `firebase/*`. O app fala com `auth` e `users` (ver `ports.ts`); é isso que permite o modo teste em memória e, no futuro, emulador ou outro backend sem tocar na UI.
 - **Todo formato antigo do Firestore passa por `hydrateUserDoc`**: campo novo no doc = default ali + teste em `tests/persistence.test.ts` com o doc sem o campo. `serializeState` é o único lugar que monta o documento salvo.
 
-## Estrutura do JS
+## Estrutura do legado (`src/legacy/app.js`)
 
-O `<script>` segue seções comentadas com cabeçalhos. Manter essa ordem evita Temporal Dead Zone:
+O arquivo segue seções comentadas com cabeçalhos. Manter essa ordem evita Temporal Dead Zone. As seções FIREBASE, CONSTANTS, STATE, DATE/TIME e STATS hoje são quase só comentários apontando pra `src/domain`, `src/infrastructure` e `src/store` — o que sobrou é efeito:
 
 ```
 FIREBASE / TEST MODE

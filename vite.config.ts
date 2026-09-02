@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  plugins: [react()],
   // index.html na raiz continua sendo o entry point.
   // Os sprites vivem em public/idle/ e são copiados pro dist como estão,
   // então os caminhos no código (`idle/user/0.png`) seguem valendo.
