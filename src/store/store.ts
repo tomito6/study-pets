@@ -8,7 +8,8 @@
 import { useSyncExternalStore } from 'react';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
-import type { Stats } from '../domain/stats';
+import type { StudyBlock } from '../domain/types';
+import type { Week } from '../domain/weeks';
 import type { AuthUser } from '../infrastructure/ports';
 
 export type Tab = 'plano' | 'analise' | 'perfil';
@@ -18,6 +19,7 @@ export const TABS: readonly Tab[] = ['plano', 'analise', 'perfil'];
 export interface AppState extends PersistedState {
   user: AuthUser | null;
   uiTab: Tab;
+  /** Semana visível (1-based) e dia (0 = segunda). */
   uiWeek: number;
   uiDay: number;
 }
@@ -30,17 +32,30 @@ export const state: AppState = {
   uiDay: 0,
 };
 
+export interface SaveStatus {
+  text: string;
+  visible: boolean;
+}
+
 /**
- * Derivados que o legado calcula e o React só lê. Transitório: `stats` some daqui
- * quando o cálculo do plano migrar pra camada de aplicação e o React puder calcular.
+ * Derivados e estado de runtime que não são persistidos. `weeks` é calculado por
+ * `rebuildWeeks` (application/plan); `timerBlock` ainda é publicado pelo legado
+ * até o timer migrar.
  */
 export interface Derived {
-  stats: Stats | null;
+  weeks: Week[];
+  timerBlock: StudyBlock | null;
+  save: SaveStatus;
   /** O provedor de auth já respondeu pelo menos uma vez (logado ou não). */
   authReady: boolean;
 }
 
-export const derived: Derived = { stats: null, authReady: false };
+export const derived: Derived = {
+  weeks: [],
+  timerBlock: null,
+  save: { text: '', visible: false },
+  authReady: false,
+};
 
 let version = 0;
 const listeners = new Set<() => void>();
@@ -74,9 +89,20 @@ export function setTab(tab: Tab): void {
   notify();
 }
 
-/** Chamado pelo legado depois de calcular as estatísticas. O `notify` vem do renderAll. */
-export function publishStats(stats: Stats): void {
-  derived.stats = stats;
+export function setView(week: number, day: number): void {
+  if (state.uiWeek === week && state.uiDay === day) return;
+  state.uiWeek = week;
+  state.uiDay = day;
+  notify();
+}
+
+export function setDay(day: number): void {
+  setView(state.uiWeek, day);
+}
+
+/** Legado (timer) avisa qual bloco está rodando. Some quando o timer migrar. */
+export function publishTimerBlock(block: StudyBlock | null): void {
+  derived.timerBlock = block;
 }
 
 export function markAuthReady(): void {

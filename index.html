@@ -33,34 +33,7 @@
   <button class="timer-stop" onclick="stopTimer()">✕ Parar</button>
 </div>
 
-<div class="main">
-  <div class="xp-card">
-    <div class="xp-row">
-      <div><div class="xp-sub">XP Total</div><div class="xp-num" id="xp-total">0</div></div>
-      <div class="xp-right">
-        <div class="week-xp" id="week-xp-val">Semana: 0 XP</div>
-        <div class="today-xp" id="today-xp-val">Hoje: 0 XP</div>
-      </div>
-    </div>
-    <div class="bar-track"><div class="bar-fill" id="xp-bar" style="width:0%"></div></div>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat-box"><div class="s-label">Estudos</div><div class="s-val" id="stat-e">0/0</div></div>
-    <div class="stat-box"><div class="s-label">Pausas</div><div class="s-val" id="stat-p">0/0</div></div>
-    <div class="stat-box"><div class="s-label">Semana</div><div class="s-val" id="stat-w">0 ✓</div></div>
-  </div>
-
-  <div class="week-row"><select id="week-select" onchange="onWeekChange()"></select></div>
-  <div class="day-tabs" id="day-tabs"></div>
-
-  <div class="day-events-bar">
-    <button class="add-event-btn" onclick="openEventPanel()">+ Evento</button>
-  </div>
-  <div class="blocks-list" id="blocks-list"></div>
-  <div class="finish-day-wrap" id="finish-day-wrap"></div>
-</div>
-
+<div class="main" id="plan-root"></div>
 <!-- FINISH DAY CONFIRM -->
 <div class="panel-overlay center" id="finish-day-confirm" onclick="closeIfOutside(event,'finish-day-confirm')">
   <div class="panel-sheet">
@@ -766,7 +739,7 @@
 
 <button id="fab-config" class="fab-config" onclick="openSettings()" aria-label="Configurações">⚙️</button>
 
-<div id="save-indicator">Salvando...</div>
+<div id="save-root"></div>
 
 <script type="module" src="/src/main.tsx"></script>
 </body>

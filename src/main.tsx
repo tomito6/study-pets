@@ -15,6 +15,8 @@ import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { Header } from './app/Header';
 import { LoginScreen } from './features/auth/LoginScreen';
+import { PlanTab } from './features/plan/PlanTab';
+import { SaveIndicator } from './features/shell/SaveIndicator';
 
 function mountIsland(hostId: string, element: ReactElement): void {
   const host = document.getElementById(hostId);
@@ -26,6 +28,8 @@ function mountIsland(hostId: string, element: ReactElement): void {
 
 mountIsland('login-root', <LoginScreen />);
 mountIsland('header-root', <Header />);
+mountIsland('plan-root', <PlanTab />);
+mountIsland('save-root', <SaveIndicator />);
 
 // Legado por último. Ele registra o listener de auth (assíncrono) e daí em diante
 // renderiza as partes ainda não migradas.

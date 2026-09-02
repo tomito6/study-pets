@@ -10,7 +10,15 @@
 import { auth, users, persistenceMode, DeleteAccountError } from '../infrastructure';
 import { hydrateUserDoc, serializeState, emptyPersistedState } from '../domain/persistence';
 // Estado compartilhado com o React (mesmo objeto). Depois de mutar, notify().
-import { state, notify, subscribe, setTab, publishStats, markAuthReady } from '../store/store';
+import { state, derived, notify, subscribe, setTab, markAuthReady, publishTimerBlock } from '../store/store';
+// O plano (semanas, blocos do dia, stats) e o save saíram daqui. Ver src/application.
+import {
+  rebuildWeeks, forEachDay, dateForWeekDay, findWeek,
+  blocksForDay, getEventsForDate, generateBlocks, clearBlockCache,
+  computeStatsNow as computeStats, calcStreaksNow as calcStreaks,
+} from '../application/plan';
+import { scheduleSave, blockSaves, cancelPendingSave } from '../application/save';
+import { showToast } from '../shared/toast';
 if (persistenceMode === 'memory') {
   console.info('%cStudy Pets em MODO TESTE — sem Firebase; os dados vivem só nesta aba.', 'color:#c8f542');
 }
@@ -62,7 +70,6 @@ function noturnoBonusEligible(b, dateKey) {
 }
 // xpFromCheck vem do domínio (importado no topo).
 
-const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
 const NUM_SESSIONS = 6;
@@ -88,25 +95,13 @@ const PETS = {
   dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `idle/pets/dog/${i}.png` },
 };
 
-let WEEKS = [];
-let saveTimeout = null;
-let accountDeleted = false;   // true depois que a conta foi apagada — impede save pendente de recriar o doc
 
 // ============================================================
 // DATE / TIME HELPERS
 // ============================================================
 // dk, timeToMins, minsToTime e mondayOf vêm de src/domain/time.ts (importados no topo).
 
-function dateForWeekDay(weekN, dayIdx) {
-  const d = new Date(WEEKS[weekN-1].start);
-  d.setDate(d.getDate() + dayIdx);
-  return d;
-}
 
-function findWeek(date) {
-  for (const w of WEEKS) if (date >= w.start && date <= w.end) return w.n;
-  return 1;
-}
 
 function currentWeekDayKeys() {
   const mon = mondayOf(new Date());
@@ -121,110 +116,21 @@ function currentWeekDayKeys() {
 // aggregateMins vem de src/domain/time.ts (importado no topo).
 
 // ============================================================
-// WEEKS — dynamic, no hardcoded dates
+// derived.weeks — dynamic, no hardcoded dates
 // ============================================================
-function buildWeeks() {
-  const today = new Date();
-  let startDate = mondayOf(today);
 
-  // If user has data from earlier, expand backwards to include it
-  const allKeys = [
-    ...Object.keys(state.checks),
-    ...Object.keys(state.events),
-    ...Object.keys(state.lunchOverrides),
-  ];
-  if (allKeys.length > 0) {
-    allKeys.sort();
-    const earliestDate = new Date(allKeys[0] + 'T12:00:00');
-    const earliestMon = mondayOf(earliestDate);
-    if (earliestMon < startDate) startDate = earliestMon;
-  }
-
-  // periodStart pode empurrar startDate pra trás (mas nunca pra frente — preserva dados anteriores)
-  const { periodStart, periodEnd } = state.config;
-  if (periodStart) {
-    const ps = mondayOf(new Date(periodStart + 'T12:00:00'));
-    if (ps < startDate) startDate = ps;
-  }
-
-  // endDate: periodEnd é limite REAL (respeitado exatamente). Senão, até 31/12 do ano atual.
-  let endDate;
-  if (periodEnd) {
-    const pe = new Date(periodEnd + 'T12:00:00');
-    endDate = mondayOf(pe); endDate.setDate(endDate.getDate() + 6);
-    const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 7);
-    if (endDate < minEnd) endDate = minEnd;
-    // Sem expansão pra frente: user definiu o limite, app respeita.
-  } else {
-    const yearEnd = new Date(today.getFullYear(), 11, 31, 12, 0, 0);
-    const minEnd = new Date(today); minEnd.setDate(minEnd.getDate() + 8*7);
-    endDate = yearEnd > minEnd ? yearEnd : minEnd;
-    // Modo "sempre": se há dados futuros, expande pra preservá-los na UI
-    if (allKeys.length > 0) {
-      const latestDate = new Date(allKeys[allKeys.length - 1] + 'T12:00:00');
-      const latestMon = mondayOf(latestDate); latestMon.setDate(latestMon.getDate() + 6);
-      if (latestMon > endDate) endDate = latestMon;
-    }
-  }
-
-  const totalWeeks = Math.max(1, Math.round((endDate - startDate) / (7 * 86400000)) + 1);
-
-  WEEKS = [];
-  for (let i = 0; i < totalWeeks; i++) {
-    const s = new Date(startDate); s.setDate(s.getDate() + i*7);
-    const e = new Date(s); e.setDate(e.getDate() + 6);
-    WEEKS.push({ n: i+1, start: s, end: e });
-  }
-}
-
-function forEachDay(callback) {
-  const skip = state.config.skipWeekends === true;
-  for (let wi = 0; wi < WEEKS.length; wi++) {
-    for (let di = 0; di < 7; di++) {
-      if (skip && di >= 5) continue; // 5 = sáb, 6 = dom (segunda = di 0)
-      const d = new Date(WEEKS[wi].start); d.setDate(d.getDate() + di);
-      callback(dk(d), d, wi, di);
-    }
-  }
-}
 
 // ============================================================
 // BLOCK GENERATOR — with memoization
 // ============================================================
-const blockCache = new Map();
 
 // A geração em si vive em src/domain/planner.ts (pura). Aqui fica só a memoização,
 // que é preocupação de performance da UI, não regra de domínio.
-function generateBlocks(cfg, events = []) {
-  const cacheKey = JSON.stringify({ cfg, events });
-  if (blockCache.has(cacheKey)) return blockCache.get(cacheKey);
-  const blocks = generateBlocksPure(cfg, events);
-  blockCache.set(cacheKey, blocks);
-  if (blockCache.size > 500) {
-    const toDelete = [...blockCache.keys()].slice(0, 250);
-    toDelete.forEach(k => blockCache.delete(k));
-  }
-  return blocks;
-}
 
-function clearBlockCache() { blockCache.clear(); }
 
 // Eventos do dia: une avulsos em state.events[dateKey] + ocorrências expandidas de state.eventSeries.
 // Cada ocorrência de série herda o id da série em `_seriesId`, usado pra delete granular.
-function getEventsForDate(dateKey) {
-  return expandEventsForDate(dateKey, state.events, state.eventSeries || []);
-}
 
-function blocksForDay(dateKey) {
-  if (state.config.skipWeekends) {
-    const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
-    if (dow === 0 || dow === 6) return [];
-  }
-  const events = getEventsForDate(dateKey);
-  const lunchOv = state.lunchOverrides[dateKey];
-  const cfg = lunchOv ? { ...state.config, ...lunchOv } : state.config;
-  return generateBlocks(cfg, events);
-}
 
 // calcActualEnd vem de src/domain/planner.ts (importado no topo).
 
@@ -244,23 +150,6 @@ function isFutureDay(dateKey) {
   return isFutureDayPure(dateKey, new Date());
 }
 
-function toggleCheck(dateKey, blockTime, block) {
-  // Dia encerrado é read-only; dia futuro ainda não chegou. (src/domain/checks.ts)
-  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now: new Date() })) return;
-  if (!state.checks[dateKey]) state.checks[dateKey] = {};
-  if (state.checks[dateKey][blockTime]) {
-    delete state.checks[dateKey][blockTime];
-    if (Object.keys(state.checks[dateKey]).length === 0) delete state.checks[dateKey];
-  } else {
-    // Guarda o pet equipado no momento do check (null se nenhum).
-    // No fim do dia, applyPendingPetXP() credita o XP no pet certo.
-    // bonus: multiplicador aditivo (ex: 0.05 = +5%) decidido no momento, baseado em skills ativas.
-    let bonus = 0;
-    if (block && noturnoBonusEligible(block, dateKey)) bonus = 0.05;
-    state.checks[dateKey][blockTime] = { pet: state.pets.active || null, bonus };
-  }
-  scheduleSave();
-}
 
 function getPetXP(petId) {
   return (state.pets.xp && state.pets.xp[petId]) || 0;
@@ -309,27 +198,8 @@ function dayCheckCount(dateKey) {
 // STATS — single computation
 // ============================================================
 // O cálculo em si vive em src/domain/stats.ts (uma passada só sobre os dias).
-// Aqui montamos a lista de dias a partir de WEEKS e passamos o resto do contexto.
-function computeStats() {
-  const days = [];
-  forEachDay((key, d, wi) => days.push({ key, date: d, weekIdx: wi }));
-  return computeStatsPure({
-    days,
-    getBlocks: blocksForDay,
-    checks: state.checks,
-    dayClosed: isDayClosed,
-    todayKey: dk(new Date()),
-    currentDayKey: dk(dateForWeekDay(state.uiWeek, state.uiDay)),
-    currentWeekIdx: state.uiWeek - 1,
-    dailyStudyMin: state.config.dailyStudyMin || 60,
-  });
-}
+// Aqui montamos a lista de dias a partir de derived.weeks e passamos o resto do contexto.
 
-function calcStreaks(dayStudyMins) {
-  const allKeys = [];
-  forEachDay(key => allKeys.push(key));
-  return calcStreaksPure(dayStudyMins, allKeys, dk(new Date()), state.config.dailyStudyMin || 60);
-}
 
 // ============================================================
 // LEVEL HELPERS
@@ -354,35 +224,12 @@ async function loadData(uid) {
     console.error('Load failed:', e);
     showToast('⚠️ Erro ao carregar dados');
   }
-  buildWeeks();
+  rebuildWeeks();
   clearBlockCache();
   return isNew;
 }
 
-function showSaveIndicator(msg = 'Salvando...', done = false) {
-  const ind = document.getElementById('save-indicator');
-  if (!ind) return;
-  ind.textContent = msg;
-  ind.classList.add('show');
-  if (done) setTimeout(() => ind.classList.remove('show'), 1500);
-}
 
-function scheduleSave() {
-  if (accountDeleted) return;
-  notify();
-  showSaveIndicator('Salvando...');
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    if (!state.user || accountDeleted) return;
-    try {
-      await users.save(state.user.uid, serializeState(state));
-      showSaveIndicator(users.ephemeral ? '💾 Modo teste (só nesta aba)' : 'Salvo ✓', true);
-    } catch (e) {
-      console.error('Save failed:', e);
-      showSaveIndicator('⚠️ Erro ao salvar', true);
-    }
-  }, 800);
-}
 
 // ============================================================
 // AUTH
@@ -391,7 +238,7 @@ function scheduleSave() {
 
 auth.onAuthStateChanged(async (user) => {
   if (user) {
-    accountDeleted = false;
+    blockSaves(false);
     state.user = user;
     markAuthReady();
     notify();
@@ -416,45 +263,9 @@ auth.onAuthStateChanged(async (user) => {
 // TOAST
 // ============================================================
 // Spawn floating "+X XP +Y 🪙" near an element (dopamina ao marcar check)
-function spawnFloatGain(anchorEl, xp, coins) {
-  if (!anchorEl) return;
-  const rect = anchorEl.getBoundingClientRect();
-  const wrap = document.createElement('div');
-  wrap.className = 'float-gain';
-  wrap.style.left = (rect.right + 8) + 'px';
-  wrap.style.top = (rect.top - 6) + 'px';
-  let html = '<div class="fg-xp">+' + xp + ' XP</div>';
-  if (coins > 0) html += '<div class="fg-coin">+' + coins + ' 🪙</div>';
-  wrap.innerHTML = html;
-  document.body.appendChild(wrap);
-  setTimeout(() => wrap.remove(), 1400);
-}
 
 // Ripple verde expandindo a partir do check
-function spawnCheckRipple(rect) {
-  if (!rect) return;
-  const r = document.createElement('div');
-  r.className = 'check-ripple';
-  r.style.left = (rect.left + rect.width / 2) + 'px';
-  r.style.top = (rect.top + rect.height / 2) + 'px';
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 650);
-}
 
-let toastTimeout = null;
-function showToast(msg) {
-  let toast = document.getElementById('toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'toast';
-    toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => toast.style.opacity = '0', 2500);
-}
 
 // Dispara um toast com o delta entre o plano antigo (capturado antes da mudança) e o novo,
 // pro dia indicado. Silencioso se nada relevante mudou.
@@ -574,7 +385,7 @@ let timerBlock = null;
 
 function startTimer(block) {
   if (timerInterval) clearInterval(timerInterval);
-  timerBlock = block;
+  timerBlock = block; publishTimerBlock(block);
   document.getElementById('timer-bar').classList.add('active');
   document.getElementById('timer-block-name').textContent =
     block.name.replace(/📖|🧘|☕/g, '').trim();
@@ -627,14 +438,14 @@ function onTimerEnd() {
     });
   }
   document.getElementById('timer-bar').classList.remove('active');
-  timerBlock = null;
+  timerBlock = null; publishTimerBlock(null);
   closeFocusMode();
   renderAll();
 }
 
 window.stopTimer = () => {
   if (timerInterval) clearInterval(timerInterval);
-  timerInterval = null; timerBlock = null;
+  timerInterval = null; timerBlock = null; publishTimerBlock(null);
   document.getElementById('timer-bar').classList.remove('active');
   closeFocusMode();
   renderAll();
@@ -1070,7 +881,7 @@ window.saveSettings = () => {
   newCfg.periodStart = state.config.periodStart;
   state.config = newCfg;
   closeSettings();
-  buildWeeks();
+  rebuildWeeks();
   clearBlockCache();
   scheduleSave();
   renderAll();
@@ -1100,7 +911,7 @@ window.confirmCancelSession = () => {
   if ('coinsSpent' in state) state.coinsSpent = 0;
   closeCancelConfirm();
   closeSettings();
-  buildWeeks();
+  rebuildWeeks();
   clearBlockCache();
   scheduleSave();
   renderAll();
@@ -1135,15 +946,15 @@ window.confirmDeleteAccount = async () => {
 
   btn.disabled = true;
   status.textContent = 'Apagando...';
-  accountDeleted = true;        // trava saves pendentes pra não recriar o doc
-  clearTimeout(saveTimeout);
+  blockSaves(true);        // trava saves pendentes pra não recriar o doc
+  cancelPendingSave();
   stopTimer();
 
   try {
     await users.delete(user.uid);
   } catch (e) {
     console.error('Delete doc failed:', e);
-    accountDeleted = false;
+    blockSaves(false);
     btn.disabled = false;
     status.textContent = '⚠️ Não deu pra apagar seus dados. Tenta de novo.';
     return;
@@ -1205,7 +1016,7 @@ window.finishOnboarding = () => {
     skipWeekends: document.getElementById('onb-skip-weekends').checked,
   };
   document.getElementById('onboarding-panel').classList.remove('open');
-  buildWeeks();
+  rebuildWeeks();
   clearBlockCache();
   if (typeof scheduleSave === 'function') scheduleSave();
   renderAll();
@@ -1628,68 +1439,28 @@ window.confirmBuy = () => {
 // RENDERING
 // ============================================================
 function initApp() {
-  buildWeeks();
+  rebuildWeeks();
   applyPendingPetXP();   // credita XP de dias passados nos pets equipados na hora de cada check
   setTimeout(scheduleEndOfDayPrompt, 600);   // agenda o prompt pro horário exato do último bloco de estudo
   const today = new Date();
   state.uiWeek = findWeek(today);
 
-  const sel = document.getElementById('week-select');
-  sel.innerHTML = '';
-  WEEKS.forEach(w => {
-    const o = document.createElement('option');
-    o.value = w.n;
-    o.textContent = `Semana ${w.n}  ·  ${w.start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} – ${w.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`;
-    if (w.n === state.uiWeek) o.selected = true;
-    sel.appendChild(o);
-  });
 
   state.uiDay = Math.min(6, Math.max(0,
-    Math.floor((today - WEEKS[state.uiWeek - 1].start) / 86400000)
+    Math.floor((today - derived.weeks[state.uiWeek - 1].start) / 86400000)
   ));
   renderAll();
-  startNowTick();
 }
 
 // Re-renderiza a aba Plano a cada virada de minuto, pra manter o destaque "agora" alinhado com o relógio real.
-let nowTickInterval = null;
-function startNowTick() {
-  if (nowTickInterval) return;
-  const tick = () => {
-    if (state.uiTab === 'plano' && document.getElementById('app').style.display !== 'none') {
-      renderBlocks();
-    }
-  };
-  const msToNextMinute = 60000 - (Date.now() % 60000);
-  setTimeout(() => { tick(); nowTickInterval = setInterval(tick, 60000); }, msToNextMinute);
-}
 
-window.onWeekChange = () => {
-  state.uiWeek = parseInt(document.getElementById('week-select').value);
-  state.uiDay = 0;
-  renderAll();
-};
 
-function renderAll() { renderTabs(); renderBlocks(); renderFinishDay(); renderXP(); notify(); }
+// O Plano é React: qualquer mudança só precisa avisar o store.
+function renderAll() { notify(); }
+function renderBlocks() { notify(); }
+function renderXP() { notify(); }
 
 // === FINISH DAY ===
-function renderFinishDay() {
-  const wrap = document.getElementById('finish-day-wrap');
-  if (!wrap) return;
-  const viewKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
-  const todayKey = dk(new Date());
-  wrap.innerHTML = '';
-  if (viewKey !== todayKey) return;          // só mostra hoje
-  if (isDayClosed(viewKey)) {
-    wrap.innerHTML = `<div class="finish-day-banner"><span class="fdb-check">✓</span>Dia encerrado</div>`;
-    return;
-  }
-  const btn = document.createElement('button');
-  btn.className = 'finish-day-btn';
-  btn.innerHTML = '<span>✓</span><span>Encerrar o dia</span>';
-  btn.onclick = openFinishDay;
-  wrap.appendChild(btn);
-}
 
 window.openFinishDay = () => {
   document.getElementById('finish-day-confirm').classList.add('open');
@@ -1898,20 +1669,6 @@ window.endPromptSaveExtend = () => {
   showToast(`Fim do dia: ${newEnd} ⏰`);
 };
 
-function renderTabs() {
-  const c = document.getElementById('day-tabs');
-  c.innerHTML = '';
-  DAYS.forEach((label, i) => {
-    const date = new Date(WEEKS[state.uiWeek - 1].start);
-    date.setDate(date.getDate() + i);
-    const done = dayCheckCount(dk(date));
-    const btn = document.createElement('button');
-    btn.className = 'day-tab' + (i === state.uiDay ? ' active' : '') + (done > 0 ? ' has-progress' : '');
-    btn.innerHTML = label + '<span class="dot"></span>';
-    btn.onclick = () => { state.uiDay = i; renderAll(); };
-    c.appendChild(btn);
-  });
-}
 
 let _eventToDelete = null;
 window.openEventDelete = (dateKey, block) => {
@@ -1973,171 +1730,8 @@ window.confirmEventDelete = () => {
   notifyPlanDelta(key, before);
 };
 
-function renderBlocks() {
-  const date = dateForWeekDay(state.uiWeek, state.uiDay);
-  const key = dk(date);
-  const blocks = blocksForDay(key);
-  const c = document.getElementById('blocks-list');
-  c.innerHTML = '';
 
-  if (blocks.length === 0) {
-    c.innerHTML = '<div class="empty-day">🌴 Dia livre</div>';
-    document.getElementById('stat-e').textContent = '0/0';
-    document.getElementById('stat-p').textContent = '0/0';
-    return;
-  }
 
-  let eD=0, eT=0, pD=0, pT=0;
-  const checkSvg = `<svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>`;
-  const now = new Date();
-  const isToday = key === dk(now);
-  let lastSession = -1;
-
-  blocks.forEach(b => {
-    const isE = b.type === 'estudo', isP = b.type === 'pausa';
-    const isA = b.type === 'almoco', isEv = b.type === 'event';
-    const isI = b.type === 'intervalo';
-    if (isE) eT++; else if (isP) pT++;
-    const done = isChecked(key, b.time);
-    if (done) { if (isE) eD++; else if (isP) pD++; }
-    const sIdx = b.session !== undefined ? b.session % NUM_SESSIONS : 0;
-
-    // Is this block currently happening?
-    const [sh, sm] = b.time.split(':').map(Number);
-    const [eh, em] = b.endTime.split(':').map(Number);
-    const bStart = new Date(); bStart.setHours(sh, sm, 0, 0);
-    const bEnd = new Date(); bEnd.setHours(eh, em, 0, 0);
-    const isNow = isToday && (isE || isP || isA || isI) && now >= bStart && now < bEnd;
-
-    // Session divider
-    if ((isE || isP) && b.session !== undefined && b.session !== lastSession) {
-      lastSession = b.session;
-      const sessionHasNow = isToday && blocks.some(bl => {
-        if (bl.session !== b.session || (bl.type !== 'estudo' && bl.type !== 'pausa')) return false;
-        const [bsh, bsm] = bl.time.split(':').map(Number);
-        const [beh, bem] = bl.endTime.split(':').map(Number);
-        const s2 = new Date(); s2.setHours(bsh, bsm, 0, 0);
-        const e2 = new Date(); e2.setHours(beh, bem, 0, 0);
-        return now >= s2 && now < e2;
-      });
-      const div = document.createElement('div');
-      div.className = `session-divider s${sIdx}` + (sessionHasNow ? ' now-session' : '');
-      div.innerHTML = `<div class="sd-line"></div><span class="sd-label">${SESSION_NAMES[sIdx] || 'Sessão'}</span><div class="sd-line"></div>`;
-      c.appendChild(div);
-    }
-
-    const row = document.createElement('div');
-    const sessionClass = (isE || isP || isEv) ? ` session-block s${sIdx}` : '';
-    const nowClass = isNow ? ' now-block' : '';
-    const timerClass = (timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime) ? ' timer-active' : '';
-    const closedClass = isDayClosed(key) ? ' day-closed' : '';
-    const futureClass = isFutureDay(key) ? ' day-future' : '';
-    row.className = 'block-row' + (isP?' pausa-row':'') + ((isA || isI)?' almoco-row':'') + (isEv?' event-row':'')
-      + (done && (isE || isP || isEv) ? ' done' : '') + sessionClass + nowClass + timerClass + closedClass + futureClass;
-
-    let xpLabel = '';
-    if (isE || isP) xpLabel = `<span class="block-xp session-xp">+${b.xp} XP</span>`;
-    else if (isA) xpLabel = `<span class="block-xp almoco-xp" style="cursor:pointer">${state.lunchOverrides[key]?'✏️ editado':'✏️ editar'}</span>`;
-    else if (isI) xpLabel = `<span class="block-xp almoco-xp">livre</span>`;
-    else xpLabel = `<span class="block-xp event-xp">+${b.xp} XP</span>`;
-
-    const checkHtml = (isA || isI) ? '' : `<div class="check ${done?'checked':''}">${checkSvg}</div>`;
-    row.innerHTML = `${checkHtml}<span class="block-time">${b.time}–${b.endTime}</span><span class="block-name">${b.name}</span>${xpLabel}`;
-
-    if (isE || isP || isEv || isI) {
-      const dayClosed = isDayClosed(key);
-      const dayFuture = isFutureDay(key);
-      if (isE || isP) {
-        row.onclick = (e) => {
-          if (e.target.closest('.check')) return;
-          if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
-          if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
-          tryStartTimer(b);
-        };
-      } else if (isEv || isI) {
-        // Intervalo vem de evento sem countsAsStudy. Click apaga igual evento.
-        row.style.cursor = 'pointer';
-        row.title = 'Clique pra apagar este evento';
-        row.onclick = (e) => {
-          if (e.target.closest('.check')) return;
-          if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
-          if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
-          openEventDelete(key, b);
-        };
-      }
-      const checkEl = row.querySelector('.check');
-      if (checkEl) {
-        checkEl.onclick = (e) => {
-          e.stopPropagation();
-          if (dayFuture) { showToast('Ainda não chegou 🔮'); return; }
-          if (dayClosed) { showToast('Dia encerrado 🔒'); return; }
-          const wasChecked = isChecked(key, b.time);
-          if (!wasChecked) {
-            // Captura a posição ANTES do renderAll (que destrói o nó)
-            const rect = checkEl.getBoundingClientRect();
-            const dur = timeToMins(b.endTime) - timeToMins(b.time);
-            const coins = coinsForBlock(b, dur);
-            // XP efetivo já considerando bônus (decidido agora pelas regras de skill)
-            const eligibleBonus = noturnoBonusEligible(b, key) ? 0.05 : 0;
-            const effXP = Math.round(b.xp * (1 + eligibleBonus));
-            playSound('check');
-            spawnCheckRipple(rect);
-            spawnFloatGain(checkEl, effXP, coins);
-          }
-          toggleCheck(key, b.time, b);
-          renderAll();
-        };
-      }
-    }
-    if (isA) {
-      row.style.cursor = 'pointer';
-      row.title = 'Clique para editar o almoço de hoje';
-      row.onclick = () => openLunchPanel(key);
-    }
-    c.appendChild(row);
-  });
-
-  document.getElementById('stat-e').textContent = eD + '/' + eT;
-  document.getElementById('stat-p').textContent = pD + '/' + pT;
-}
-
-let _prevPendingToday = null;
-function renderXP() {
-  const stats = computeStats();
-  publishStats(stats);   // o cabeçalho (React) lê daqui
-  document.getElementById('xp-total').textContent = stats.totalXP;
-  document.getElementById('xp-bar').style.width = getLevelPct(stats.totalXP) + '%';
-  document.getElementById('week-xp-val').textContent = 'Semana: ' + (stats.weekXP[state.uiWeek - 1] || 0) + ' XP';
-  renderTodayPending(stats);
-  document.getElementById('stat-w').textContent = stats.weekChecksOfCurrent + ' ✓';
-}
-
-function renderTodayPending(stats) {
-  const el = document.getElementById('today-xp-val');
-  if (!el) return;
-  const todayKey = dk(new Date());
-  if (isDayClosed(todayKey)) {
-    el.textContent = '✓ Hoje encerrado';
-    el.className = 'today-xp today-closed';
-    _prevPendingToday = null;
-    return;
-  }
-  if (stats.todayXP > 0 || stats.todayCoins > 0) {
-    el.textContent = 'Hoje: +' + stats.todayXP + ' XP · +' + stats.todayCoins + ' 🪙';
-    el.className = 'today-xp today-pending';
-    const cur = stats.todayXP * 1000 + stats.todayCoins;
-    if (_prevPendingToday !== null && cur > _prevPendingToday) {
-      el.classList.remove('flash');
-      void el.offsetWidth; // reinicia animação
-      el.classList.add('flash');
-    }
-    _prevPendingToday = cur;
-  } else {
-    el.textContent = 'Hoje: —';
-    el.className = 'today-xp';
-    _prevPendingToday = 0;
-  }
-}
 
 // ============================================================
 // ANALYTICS RENDER
@@ -2469,3 +2063,7 @@ function renderActivePetCard() {
   }
 }
 
+// ============================================================
+// PONTE PRO REACT — some conforme as features migram (ver src/legacy/bridge.ts)
+// ============================================================
+window.__legacy = { tryStartTimer, playSound };

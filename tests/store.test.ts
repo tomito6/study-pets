@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { derived, getVersion, markAuthReady, notify, publishStats, setTab, state, subscribe } from '../src/store/store';
-import type { Stats } from '../src/domain/stats';
+import { derived, getVersion, markAuthReady, notify, publishTimerBlock, setDay, setTab, setView, state, subscribe } from '../src/store/store';
 
 describe('store — o objeto compartilhado com o legado', () => {
   it('começa como conta nova, na aba Plano, sem usuário', () => {
@@ -34,12 +33,26 @@ describe('store — o objeto compartilhado com o legado', () => {
     off();
   });
 
-  it('publishStats guarda o derivado sem notificar (quem notifica é o renderAll)', () => {
+  it('setView/setDay mudam semana e dia visíveis', () => {
     const cb = vi.fn();
     const off = subscribe(cb);
-    publishStats({ totalXP: 120 } as Stats);
-    expect(derived.stats?.totalXP).toBe(120);
+    setView(3, 4);
+    expect([state.uiWeek, state.uiDay]).toEqual([3, 4]);
+    setDay(1);
+    expect([state.uiWeek, state.uiDay]).toEqual([3, 1]);
+    setDay(1);
+    expect(cb).toHaveBeenCalledTimes(2);
+    setView(1, 0);
+    off();
+  });
+
+  it('publishTimerBlock guarda o bloco sem notificar (o legado notifica no render)', () => {
+    const cb = vi.fn();
+    const off = subscribe(cb);
+    publishTimerBlock({ time: '09:00', endTime: '09:25', name: 'x', type: 'estudo', xp: 50 });
+    expect(derived.timerBlock?.time).toBe('09:00');
     expect(cb).not.toHaveBeenCalled();
+    publishTimerBlock(null);
     off();
   });
 

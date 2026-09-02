@@ -3,6 +3,7 @@
 // A aba ativa vive no store; o legado escuta o store e mostra o conteúdo certo.
 
 import { useMemo } from 'react';
+import { computeStatsNow } from '../application/plan';
 import { signOut } from '../application/session';
 import { getLevel } from '../domain/progression';
 import { strings } from '../shared/strings';
@@ -13,7 +14,8 @@ function todayLabel(): string {
 }
 
 export function Header() {
-  const { tab, totalXP } = useAppState((s, d) => ({ tab: s.uiTab, totalXP: d.stats?.totalXP ?? 0 }));
+  // computeStatsNow é memoizado por versão do store: o Plano e o cabeçalho pagam uma passada só.
+  const { tab, totalXP } = useAppState((s) => ({ tab: s.uiTab, totalXP: computeStatsNow().totalXP }));
   const today = useMemo(todayLabel, []);
 
   return (

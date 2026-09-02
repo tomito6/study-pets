@@ -133,10 +133,17 @@ disso; Fase 2 em diante sim.
     Legado renomeado pra `src/legacy/app.js` (resolução do TS confundia `main.js` com `main.tsx`).
     Regressão pega pelo smoke test e corrigida: o assinante de aba aplicava `display:none` na
     `timer-bar` na carga; agora só reage a mudança, como o `switchTab` antigo. 18/18 em 2 rodadas.
-  - **Próximas fatias**, nesta ordem: Plano (blocos, semana/dia, timer-bar), Timer + modo foco,
-    Eventos, Configurações, Análise, Perfil + Pets, Onboarding + Encerrar o dia. A cada uma: o legado
-    para de tocar naqueles ids, e o `computeStats` sai do `renderXP` pra camada de aplicação assim
-    que o Plano migrar (aí `derived.stats` some).
+  - **Fatia 2 — feita**: o Plano. `src/domain/weeks.ts` (semanas, puro, testado),
+    `src/application/plan.ts` (`blocksForDay`, memoização, `computeStatsNow` memoizado por versão —
+    `derived.stats` sumiu), `application/checks.ts` (`toggleBlockCheck`), `application/save.ts`
+    (debounce + indicador React), `features/plan/` (PlanTab, BlockList, feedback, tick de minuto),
+    `legacy/bridge.ts` (ponte tipada pro timer e modais). Legado: 2472 → 2070 linhas; `index.html`
+    774 → 747. Smoke 9/9 de primeira; 198 unitários. Achado: o `periodEnd` pode sobrar uma semana
+    além do fim por arredondamento — comportamento original, agora documentado no teste.
+  - **Próximas fatias**, nesta ordem: Timer + modo foco (leva `playSound` e `tryStartTimer` da ponte),
+    Eventos (leva `openEventDelete`/`openEventPanel`/`openLunchPanel`), Configurações, Análise,
+    Perfil + Pets, Onboarding + Encerrar o dia (leva `openFinishDay`). A cada uma: o legado para de
+    tocar naqueles ids e a entrada correspondente some da ponte.
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência

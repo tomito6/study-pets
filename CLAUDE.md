@@ -56,10 +56,19 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `index.html` — só markup (774 linhas). Tem dois **hosts de ilha** React (`#login-root`, `#header-root`) e o markup legado do resto (`#app`, abas, modais). Sem `<style>` nem `<script>` inline
 - `src/main.tsx` — entry. Monta as ilhas React (síncrono, `flushSync`) e **depois** importa o legado — ele procura elementos por id em runtime
 - `src/app/` — casca do app em React (`Header.tsx`: abas, data, XP, Sair)
-- `src/features/<feature>/` — UI React por feature (hoje só `auth/LoginScreen.tsx`)
-- `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` guarda o que o legado calcula e o React só lê (`stats`) — transitório
-- `src/application/` — casos de uso (hoje `session.ts`: entrar/sair). UI chama isto; isto chama infra
+- `src/features/<feature>/` — UI React por feature:
+  - `auth/LoginScreen.tsx`
+  - `plan/` — a aba Plano inteira: `PlanTab.tsx` (XP card, stats do dia, semana/dia, "Encerrar o dia"), `BlockList.tsx` (sessões e linhas com check — a lógica de clique do `renderBlocks` antigo mora aqui), `feedback.ts` (ripple + "+X XP" flutuante), `useMinuteTick.ts` (re-render na virada do minuto, pro destaque "agora")
+  - `shell/SaveIndicator.tsx` — "Salvando… / Salvo ✓"
+- `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` (publicado pelo legado até o timer migrar), `save` (status), `authReady`
+- `src/application/` — casos de uso e leituras do estado. UI chama isto; isto chama domínio/infra:
+  - `plan.ts` — `rebuildWeeks`, `blocksForDay` (com a memoização do gerador), `computeStatsNow` (memoizado por versão do store: cabeçalho, Plano e legado pagam uma passada só), `dateForWeekDay`/`findWeek`/`forEachDay`
+  - `checks.ts` — `toggleBlockCheck` (marca/desmarca, decide bônus e pet, devolve XP/moedas pro feedback)
+  - `save.ts` — `scheduleSave` com debounce, `blockSaves` (apagar conta), status pro indicador
+  - `session.ts` — entrar/sair
+- `src/legacy/bridge.ts` — a ponte tipada pro que ainda é legado (`tryStartTimer`, `playSound`, modais de evento/almoço/encerrar). React chama isto, nunca `window.*` solto. Cada entrada some quando a feature migra
 - `src/shared/strings.ts` — textos da UI React. Tudo que migrar pro React escreve texto aqui, não inline
+- `src/shared/toast.ts` — o toast, compartilhado por React e legado
 - `src/styles/app.css` e `login.css` — o CSS que estava no `index.html`, sem mudança
 - `src/legacy/app.js` — o app vanilla (era `src/main.js`): DOM, render, timer, modais. Chama o domínio, fala com auth/persistência pelas portas de `src/infrastructure`, e usa o `state` do store. **Não cresce mais**: feature nova ou mexida vai pro React
 - `src/infrastructure/` — o mundo externo, atrás de interfaces (`ports.ts`: `AuthPort`, `UserRepository`):
@@ -145,6 +154,8 @@ INIT (no final)
 ⚠️ **Cuidado com TDZ**: `let timerBlock = null` no meio do script não pode ser acessado por código que roda antes da declaração. `initApp()` precisa rodar no fim ou via callback assíncrono.
 
 ## Conceitos do app
+
+> Nota da migração: as seções abaixo citam funções pelo nome que tinham no app vanilla (`renderBlocks`, `toggleCheck`, `renderXP`…). Quando a feature já migrou, o equivalente vive em `src/features/<feature>` e `src/application` — a **regra** descrita continua valendo; só o lugar mudou. Plano, cabeçalho e login já migraram.
 
 - **Sessões**: pomodoros separados por pausa longa, evento ou almoço viram "sessões" coloridas (classes `.s0` a `.s5`).
 - **Janelas de estudo** (`config.studyWindows`): lista de intervalos `[{start, end}]` durante o dia em que o usuário estuda. UI na aba Rotina = uma linha por janela dentro de um card (`.sw-row`: início → fim, duração alinhada à direita, ✕ pra remover), botão "+ Adicionar" no cabeçalho da seção. Permite N janelas (caso de uso clássico: estuda 9-12 e 15-20, com gap de 3h no meio onde o app não gera pomos). `generateBlocks` itera as janelas em ordem; entre janelas, bloqueios (almoço/eventos) aparecem visíveis no plano. `cfg.start` / `cfg.end` viraram **campos derivados** (primeira janela / última janela) — mantidos no schema só pra retrocompat. Migração: `migrateConfig(cfg)` cria `studyWindows: [{start, end}]` a partir do antigo `start`/`end` se ausente. Pra estender o dia via "Prolongar estudos" do end-of-day prompt: ajusta `end` da última janela.
