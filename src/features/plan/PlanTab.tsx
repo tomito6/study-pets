@@ -7,12 +7,23 @@ import { isDayClosed } from '../../domain/checks';
 import { getLevelPct } from '../../domain/progression';
 import { dk } from '../../domain/time';
 import type { Stats } from '../../domain/stats';
+import type { DateKey } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
 import { legacy } from '../../legacy/bridge';
 import { strings } from '../../shared/strings';
 import { setDay, setView, useAppState } from '../../store/store';
+import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal';
+import { EventPanel } from '../events/EventPanel';
+import { LunchPanel } from '../events/LunchPanel';
 import { BlockList, dayProgress } from './BlockList';
 import { useMinuteTick } from './useMinuteTick';
+
+/** Qual modal do Plano está aberto. Estado local: quem abre é sempre um clique aqui dentro. */
+type PlanModal =
+  | { kind: 'none' }
+  | { kind: 'event' }
+  | { kind: 'delete'; target: EventToDelete }
+  | { kind: 'lunch'; dateKey: DateKey };
 
 const t = strings.plan;
 const fmtDay = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -116,6 +127,8 @@ export function PlanTab() {
     day: s.uiDay,
     timerBlock: d.timerBlock,
   }));
+  const [modal, setModal] = useState<PlanModal>({ kind: 'none' });
+  const closeModal = () => setModal({ kind: 'none' });
   if (weeks.length === 0) return null; // antes de carregar
 
   const now = new Date();
@@ -135,12 +148,23 @@ export function PlanTab() {
       </div>
       <WeekDayPicker weeks={weeks} week={week} day={day} />
       <div className="day-events-bar">
-        <button className="add-event-btn" onClick={() => legacy.openEventPanel()}>{t.addEvent}</button>
+        <button className="add-event-btn" onClick={() => setModal({ kind: 'event' })}>{t.addEvent}</button>
       </div>
       <div className="blocks-list" id="blocks-list">
-        <BlockList dateKey={viewKey} blocks={blocks} now={now} timerBlock={timerBlock} />
+        <BlockList
+          dateKey={viewKey}
+          blocks={blocks}
+          now={now}
+          timerBlock={timerBlock}
+          onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
+          onEditLunch={(dateKey) => setModal({ kind: 'lunch', dateKey })}
+        />
       </div>
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
+
+      <EventPanel open={modal.kind === 'event'} dateKey={viewKey} onClose={closeModal} />
+      <EventDeleteModal target={modal.kind === 'delete' ? modal.target : null} onClose={closeModal} />
+      <LunchPanel dateKey={modal.kind === 'lunch' ? modal.dateKey : null} onClose={closeModal} />
     </>
   );
 }

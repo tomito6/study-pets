@@ -358,29 +358,6 @@
   </div>
 </div>
 
-<!-- LUNCH EDIT PANEL -->
-<div class="panel-overlay center" id="lunch-panel" onclick="closeIfOutside(event,'lunch-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🍽️ Editar Almoço</h2>
-      <button class="panel-close" onclick="closeLunchPanel()">✕</button>
-    </div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Alteração válida só para este dia.</p>
-    <div class="field-group">
-      <label>Horário e duração</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="time" id="lunch-edit-start" value="13:00"></div>
-        <div><div class="field-sublabel">Duração (min)</div><input type="number" id="lunch-edit-dur" value="60" min="15" max="180" step="5"></div>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="resetLunchEdit()">↺ Padrão</button>
-      <button class="save-btn" onclick="saveLunchEdit()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- EVENT PANEL -->
 <!-- FIT STUDY WIZARD -->
 <div class="panel-overlay center" id="fit-study-panel" onclick="closeIfOutside(event,'fit-study-panel')">
   <div class="panel-sheet">
@@ -416,89 +393,6 @@
       <button class="save-btn" onclick="runFitStudy()">Calcular sugestões</button>
     </div>
     <div id="fs-suggestions" style="margin-top:20px"></div>
-  </div>
-</div>
-
-<!-- EVENT DELETE CONFIRM -->
-<div class="panel-overlay center" id="event-delete-confirm" onclick="closeIfOutside(event,'event-delete-confirm')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>📅 Apagar evento?</h2>
-      <button class="panel-close" onclick="closeEventDeleteConfirm()">✕</button>
-    </div>
-    <p style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;" id="event-delete-text">
-      Vai apagar o evento <strong id="event-delete-name">—</strong>. Os checks ligados a ele somem junto.
-    </p>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="reset-btn" onclick="closeEventDeleteConfirm()">Cancelar</button>
-      <button class="reset-btn" id="event-delete-once-btn" onclick="confirmEventDeleteOnce()" style="display:none;">Só este dia</button>
-      <button class="danger-btn" id="event-delete-main-btn" onclick="confirmEventDelete()">Apagar</button>
-    </div>
-  </div>
-</div>
-
-<div class="panel-overlay center" id="event-panel" onclick="closeIfOutside(event,'event-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>📅 Novo Evento</h2>
-      <button class="panel-close" onclick="closeEventPanel()">✕</button>
-    </div>
-    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
-      💡 <strong style="color:var(--text);">Considere o deslocamento até a aula.</strong> Antes de qualquer compromisso você precisa sair da sala de estudo e ir até o lugar do evento — isso leva tempo. Se a aula começa às 11:30 e o caminho leva uns 15 minutos, defina o evento a partir das 11:15. Assim os pomodoros param na hora certa e você não fica no meio de um bloco quando precisar sair.
-      <br><br>
-      ⏱️ <strong style="color:var(--text);">E o tempo depois também.</strong> Quando o evento acaba, geralmente tem um intervalo até você voltar a estudar. Considere adicionar 15 minutos ao fim do evento.
-    </div>
-    <div class="field-group">
-      <label>Nome do evento</label>
-      <input type="text" id="ev-name" placeholder="Ex: Aula de Álgebra, Consulta...">
-    </div>
-    <div class="field-group">
-      <label>Horário</label>
-      <div class="field-row">
-        <div><div class="field-sublabel">Início</div><input type="time" id="ev-start" value="11:30"></div>
-        <div><div class="field-sublabel">Fim</div><input type="time" id="ev-end" value="13:00"></div>
-      </div>
-    </div>
-    <div class="field-group" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
-      <div class="checkbox-row">
-        <input type="checkbox" id="ev-counts" checked>
-        <label for="ev-counts" style="font-size:13px;">Conta como estudo (dá XP e moedas)</label>
-      </div>
-      <div class="field-sublabel" style="margin-top:6px;line-height:1.5;">Marca pra aula, prova, palestra etc. (vira bloco de estudo, com check e XP). Desliga pra consulta, reunião, evento social etc. (bloqueia o tempo, sem XP).</div>
-    </div>
-    <div class="field-group">
-      <div class="checkbox-row">
-        <input type="checkbox" id="ev-repeat" onchange="toggleRepeatSection()">
-        <label for="ev-repeat" style="font-size:13px;">Repetir este evento</label>
-      </div>
-      <div class="recurrence-section" id="ev-repeat-section">
-        <div class="field-sublabel">Dias da semana</div>
-        <div class="weekday-row" id="ev-weekdays">
-          <button type="button" class="weekday-chip" data-dow="1">Seg</button>
-          <button type="button" class="weekday-chip" data-dow="2">Ter</button>
-          <button type="button" class="weekday-chip" data-dow="3">Qua</button>
-          <button type="button" class="weekday-chip" data-dow="4">Qui</button>
-          <button type="button" class="weekday-chip" data-dow="5">Sex</button>
-          <button type="button" class="weekday-chip" data-dow="6">Sáb</button>
-          <button type="button" class="weekday-chip" data-dow="0">Dom</button>
-        </div>
-        <div class="field-sublabel" style="margin-top:12px;">Frequência</div>
-        <div class="freq-row">
-          <label><input type="radio" name="ev-freq" value="weekly" checked> Toda semana</label>
-          <label><input type="radio" name="ev-freq" value="biweekly"> A cada 2 semanas</label>
-          <label><input type="radio" name="ev-freq" value="monthly"> Mensalmente</label>
-        </div>
-        <div class="field-sublabel" style="margin-top:12px;">Até</div>
-        <div class="field-row" style="align-items:center;">
-          <input type="date" id="ev-until">
-          <button type="button" class="ghost-btn" onclick="clearEvUntil()">Sem fim</button>
-        </div>
-      </div>
-    </div>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="reset-btn" onclick="closeEventPanel()">Cancelar</button>
-      <button class="save-btn" onclick="saveEvent()">Adicionar</button>
-    </div>
   </div>
 </div>
 

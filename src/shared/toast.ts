@@ -3,6 +3,7 @@
 let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function showToast(msg: string): void {
+  if (typeof document === 'undefined') return; // testes em Node: sem DOM, sem toast
   let toast = document.getElementById('toast');
   if (!toast) {
     toast = document.createElement('div');

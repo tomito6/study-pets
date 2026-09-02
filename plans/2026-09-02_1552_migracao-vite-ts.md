@@ -147,9 +147,15 @@ disso; Fase 2 em diante sim.
     FocusOverlay derivando o relógio a cada segundo sem `notify()`). A ponte perdeu `tryStartTimer` e
     `playSound`; `window.__legacy` sumiu. Legado 2070 → 1789; `index.html` 747 → 697. Smoke 9/9 de
     primeira; 217 unitários. Validado antes pelo Tomi: login real, doc preexistente e apagar conta.
-  - **Próximas fatias**, nesta ordem: Eventos (leva `openEventDelete`/`openEventPanel`/
-    `openLunchPanel` da ponte), Configurações, Análise, Perfil + Pets, Onboarding + Encerrar o dia
-    (leva `openFinishDay`). A cada uma: o legado para de tocar naqueles ids e a entrada some da ponte.
+  - **Fatia 4 — feita**: Eventos. `domain/planDelta.ts` (a frase "Plano reajustado"), `application/events.ts`
+    (avulso, série, apagar só este dia/série/avulso, almoço do dia; validações com motivo),
+    `features/events/` (três modais como filhos do `PlanTab`, estado local) e `shell/Modal.tsx`.
+    A ponte ficou só com `openFinishDay`. Legado 1789 → 1576; `index.html` 697 → 591. Smoke 9/9 de
+    primeira (o teste 9 cria evento pelo painel React); 230 unitários. Decisão mantida: validação
+    ainda usa `alert()`, como o original — trocar por mensagem inline é design, não migração.
+  - **Próximas fatias**, nesta ordem: Configurações (a página inteira + "Encaixar estudo" + cancelar
+    sessão + apagar conta), Análise, Perfil + Pets, Onboarding + Encerrar o dia (leva `openFinishDay`
+    e fecha a ponte).
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência

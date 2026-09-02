@@ -12,6 +12,7 @@ import { hydrateUserDoc, serializeState, emptyPersistedState } from '../domain/p
 // Estado compartilhado com o React (mesmo objeto). Depois de mutar, notify().
 import { state, derived, notify, subscribe, setTab, markAuthReady } from '../store/store';
 import { stopTimer } from '../application/timer';
+import { notifyPlanDelta } from '../application/events';
 // O plano (semanas, blocos do dia, stats) e o save saíram daqui. Ver src/application.
 import {
   rebuildWeeks, forEachDay, dateForWeekDay, findWeek,
@@ -268,32 +269,6 @@ auth.onAuthStateChanged(async (user) => {
 
 // Dispara um toast com o delta entre o plano antigo (capturado antes da mudança) e o novo,
 // pro dia indicado. Silencioso se nada relevante mudou.
-function notifyPlanDelta(dateKey, beforeBlocks) {
-  if (!beforeBlocks) return;
-  const after = blocksForDay(dateKey);
-  const studyCount = arr => arr.filter(b => b.type === 'estudo' || b.type === 'event').length;
-  const lastEnd = arr => {
-    for (let i = arr.length - 1; i >= 0; i--) {
-      const t = arr[i].type;
-      if (t === 'estudo' || t === 'pausa' || t === 'event') return arr[i].endTime;
-    }
-    return null;
-  };
-  const sDelta = studyCount(after) - studyCount(beforeBlocks);
-  const beforeEnd = lastEnd(beforeBlocks);
-  const afterEnd = lastEnd(after);
-  const parts = [];
-  if (sDelta !== 0) {
-    const sign = sDelta > 0 ? '+' : '';
-    const word = Math.abs(sDelta) === 1 ? 'estudo' : 'estudos';
-    parts.push(`${sign}${sDelta} ${word}`);
-  }
-  if (beforeEnd !== afterEnd && afterEnd) {
-    parts.push(`termina às ${afterEnd}`);
-  }
-  if (parts.length === 0) return;
-  showToast('Plano reajustado: ' + parts.join(' · '));
-}
 
 // ============================================================
 // AUDIO / TIMER / FOCO — migraram pra src/application/timer.ts e src/features/timer
@@ -750,132 +725,7 @@ window.finishOnboarding = () => {
 // ============================================================
 // EVENT PANEL
 // ============================================================
-window.openEventPanel = () => {
-  // Resetar os campos pra defaults sempre que abre
-  document.getElementById('ev-name').value = '';
-  document.getElementById('ev-start').value = '11:30';
-  document.getElementById('ev-end').value = '13:00';
-  document.getElementById('ev-counts').checked = true;
-  document.getElementById('ev-repeat').checked = false;
-  document.getElementById('ev-repeat-section').classList.remove('show');
-  document.getElementById('ev-until').value = '';
-  document.querySelectorAll('input[name="ev-freq"]').forEach(r => r.checked = (r.value === 'weekly'));
-  // Pré-seleciona o dia da semana atual (UI)
-  const todayDow = dateForWeekDay(state.uiWeek, state.uiDay).getDay();
-  document.querySelectorAll('#ev-weekdays .weekday-chip').forEach(chip => {
-    const isToday = parseInt(chip.dataset.dow, 10) === todayDow;
-    chip.classList.toggle('selected', isToday);
-  });
-  document.getElementById('event-panel').classList.add('open');
-};
-window.closeEventPanel = () => document.getElementById('event-panel').classList.remove('open');
-
-window.toggleRepeatSection = () => {
-  const on = document.getElementById('ev-repeat').checked;
-  document.getElementById('ev-repeat-section').classList.toggle('show', on);
-};
-
-window.clearEvUntil = () => {
-  document.getElementById('ev-until').value = '';
-};
-
-// Click nos chips de dia da semana toggla seleção
-document.addEventListener('click', (e) => {
-  const chip = e.target.closest('#ev-weekdays .weekday-chip');
-  if (!chip) return;
-  chip.classList.toggle('selected');
-});
-
-window.saveEvent = () => {
-  const name = document.getElementById('ev-name').value.trim() || 'Evento';
-  const start = document.getElementById('ev-start').value;
-  const end = document.getElementById('ev-end').value;
-  if (timeToMins(end) <= timeToMins(start)) {
-    alert('O horário de fim deve ser depois do início.'); return;
-  }
-  const date = dateForWeekDay(state.uiWeek, state.uiDay);
-  const key = dk(date);
-  const repeat = document.getElementById('ev-repeat').checked;
-  const countsAsStudy = document.getElementById('ev-counts').checked;
-  const before = blocksForDay(key);
-
-  if (repeat) {
-    const weekdays = Array.from(document.querySelectorAll('#ev-weekdays .weekday-chip.selected'))
-      .map(c => parseInt(c.dataset.dow, 10));
-    if (weekdays.length === 0) {
-      alert('Escolha pelo menos um dia da semana pra repetição.'); return;
-    }
-    const freqEl = document.querySelector('input[name="ev-freq"]:checked');
-    const freq = freqEl ? freqEl.value : 'weekly';
-    const untilVal = document.getElementById('ev-until').value || null;
-    if (!state.eventSeries) state.eventSeries = [];
-    state.eventSeries.push({
-      id: 'ser_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-      name, start, end,
-      weekdays, freq,
-      anchor: key,
-      until: untilVal,
-      exceptions: [],
-      countsAsStudy,
-    });
-  } else {
-    if (!state.events[key]) state.events[key] = [];
-    state.events[key].push({ name, start, end, countsAsStudy });
-  }
-
-  closeEventPanel();
-  clearBlockCache();
-  scheduleSave();
-  renderAll();
-  notifyPlanDelta(key, before);
-};
-
-window.deleteEvent = (key, idx) => {
-  const before = blocksForDay(key);
-  state.events[key].splice(idx, 1);
-  if (state.events[key].length === 0) delete state.events[key];
-  clearBlockCache();
-  scheduleSave();
-  renderAll();
-  notifyPlanDelta(key, before);
-};
-
-// ============================================================
-// LUNCH OVERRIDE PANEL
-// ============================================================
-let editingLunchKey = null;
-
-function getLunchForDay(key) {
-  return state.lunchOverrides[key] || { lunch: state.config.lunch, lunchDur: state.config.lunchDur };
-}
-
-window.openLunchPanel = (key) => {
-  editingLunchKey = key;
-  const ov = getLunchForDay(key);
-  document.getElementById('lunch-edit-start').value = ov.lunch;
-  document.getElementById('lunch-edit-dur').value = ov.lunchDur;
-  document.getElementById('lunch-panel').classList.add('open');
-};
-window.closeLunchPanel = () => document.getElementById('lunch-panel').classList.remove('open');
-window.resetLunchEdit = () => {
-  document.getElementById('lunch-edit-start').value = state.config.lunch;
-  document.getElementById('lunch-edit-dur').value = state.config.lunchDur;
-};
-window.saveLunchEdit = () => {
-  if (!editingLunchKey) return;
-  const before = blocksForDay(editingLunchKey);
-  state.lunchOverrides[editingLunchKey] = {
-    lunch: document.getElementById('lunch-edit-start').value,
-    lunchDur: parseInt(document.getElementById('lunch-edit-dur').value),
-  };
-  const changedKey = editingLunchKey;
-  closeLunchPanel();
-  clearBlockCache();
-  scheduleSave();
-  renderAll();
-  notifyPlanDelta(changedKey, before);
-};
-
+// (almoço do dia, eventos e apagar evento migraram pra src/application/events.ts e src/features/events)
 window.closeIfOutside = (e, id) => {
   if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('open');
 };
@@ -1392,69 +1242,6 @@ window.endPromptSaveExtend = () => {
   scheduleEndOfDayPrompt();        // reagenda pro novo horário do último bloco
   showToast(`Fim do dia: ${newEnd} ⏰`);
 };
-
-
-let _eventToDelete = null;
-window.openEventDelete = (dateKey, block) => {
-  const seriesId = block && block._seriesId ? block._seriesId : null;
-  const cleanName = (block.name || '').replace(/^📅\s*/, '');
-  _eventToDelete = { key: dateKey, startTime: block.time, seriesId, name: cleanName };
-  document.getElementById('event-delete-name').textContent = cleanName;
-  const onceBtn = document.getElementById('event-delete-once-btn');
-  const mainBtn = document.getElementById('event-delete-main-btn');
-  const text = document.getElementById('event-delete-text');
-  if (seriesId) {
-    onceBtn.style.display = '';
-    mainBtn.textContent = 'Apagar a série';
-    text.innerHTML = `Este evento faz parte de uma série recorrente (<strong>${cleanName}</strong>). Quer apagar só este dia ou toda a série?`;
-  } else {
-    onceBtn.style.display = 'none';
-    mainBtn.textContent = 'Apagar';
-    text.innerHTML = `Vai apagar o evento <strong>${cleanName}</strong>. Os checks ligados a ele somem junto.`;
-  }
-  document.getElementById('event-delete-confirm').classList.add('open');
-};
-window.closeEventDeleteConfirm = () => {
-  _eventToDelete = null;
-  document.getElementById('event-delete-confirm').classList.remove('open');
-};
-window.confirmEventDeleteOnce = () => {
-  if (!_eventToDelete || !_eventToDelete.seriesId) return;
-  const { key, seriesId } = _eventToDelete;
-  const before = blocksForDay(key);
-  const s = (state.eventSeries || []).find(x => x.id === seriesId);
-  if (s) {
-    if (!Array.isArray(s.exceptions)) s.exceptions = [];
-    if (!s.exceptions.includes(key)) s.exceptions.push(key);
-  }
-  clearBlockCache();
-  scheduleSave();
-  renderAll();
-  closeEventDeleteConfirm();
-  notifyPlanDelta(key, before);
-};
-window.confirmEventDelete = () => {
-  if (!_eventToDelete) return;
-  const { key, startTime, seriesId } = _eventToDelete;
-  const before = blocksForDay(key);
-  if (seriesId) {
-    state.eventSeries = (state.eventSeries || []).filter(x => x.id !== seriesId);
-  } else {
-    const events = state.events[key] || [];
-    const idx = events.findIndex(ev => ev.start === startTime);
-    if (idx >= 0) {
-      events.splice(idx, 1);
-      if (events.length === 0) delete state.events[key];
-    }
-  }
-  clearBlockCache();
-  scheduleSave();
-  renderAll();
-  closeEventDeleteConfirm();
-  notifyPlanDelta(key, before);
-};
-
-
 
 
 // ============================================================

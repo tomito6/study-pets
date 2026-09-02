@@ -7,7 +7,6 @@ import { playSound, tryStartTimer } from '../../application/timer';
 import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { dk, timeToMins } from '../../domain/time';
 import type { DateKey, StudyBlock } from '../../domain/types';
-import { legacy } from '../../legacy/bridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state } from '../../store/store';
@@ -37,7 +36,13 @@ function CheckIcon() {
   );
 }
 
-interface RowProps {
+/** O que o Plano faz quando uma linha pede um modal. */
+export interface BlockActions {
+  onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
+  onEditLunch: (dateKey: DateKey) => void;
+}
+
+interface RowProps extends BlockActions {
   dateKey: DateKey;
   block: StudyBlock;
   now: Date;
@@ -45,7 +50,7 @@ interface RowProps {
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, now, isToday, timerBlock }: RowProps) {
+function BlockRow({ dateKey, block: b, now, isToday, timerBlock, onDeleteEvent, onEditLunch }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -74,7 +79,7 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock }: RowProps) {
   const onRowClick = (e: MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('.check')) return;
     if (isA) {
-      legacy.openLunchPanel(dateKey);
+      onEditLunch(dateKey);
       return;
     }
     const why = refusal(dateKey, now);
@@ -85,7 +90,7 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock }: RowProps) {
     if (isE || isP) {
       const r = tryStartTimer(b, now);
       if (!r.ok) showToast(strings.timer.refusal(r));
-    } else if (isEv || isI) legacy.openEventDelete(dateKey, b);
+    } else if (isEv || isI) onDeleteEvent(dateKey, b);
   };
 
   const onCheckClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -140,14 +145,14 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock }: RowProps) {
   );
 }
 
-interface ListProps {
+interface ListProps extends BlockActions {
   dateKey: DateKey;
   blocks: StudyBlock[];
   now: Date;
   timerBlock: StudyBlock | null;
 }
 
-export function BlockList({ dateKey, blocks, now, timerBlock }: ListProps) {
+export function BlockList({ dateKey, blocks, now, timerBlock, onDeleteEvent, onEditLunch }: ListProps) {
   if (blocks.length === 0) return <div className="empty-day">{strings.plan.freeDay}</div>;
 
   const isToday = dateKey === dk(now);
@@ -169,7 +174,16 @@ export function BlockList({ dateKey, blocks, now, timerBlock }: ListProps) {
       );
     }
     items.push(
-      <BlockRow key={`${b.type}-${b.time}-${b.endTime}`} dateKey={dateKey} block={b} now={now} isToday={isToday} timerBlock={timerBlock} />,
+      <BlockRow
+        key={`${b.type}-${b.time}-${b.endTime}`}
+        dateKey={dateKey}
+        block={b}
+        now={now}
+        isToday={isToday}
+        timerBlock={timerBlock}
+        onDeleteEvent={onDeleteEvent}
+        onEditLunch={onEditLunch}
+      />,
     );
   });
 
