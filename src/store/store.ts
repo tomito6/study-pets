@@ -10,6 +10,7 @@ import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
 import type { StudyBlock } from '../domain/types';
 import type { Week } from '../domain/weeks';
+import type { AudioSettings } from '../infrastructure/audio/sounds';
 import type { AuthUser } from '../infrastructure/ports';
 
 export type Tab = 'plano' | 'analise' | 'perfil';
@@ -39,12 +40,18 @@ export interface SaveStatus {
 
 /**
  * Derivados e estado de runtime que não são persistidos. `weeks` é calculado por
- * `rebuildWeeks` (application/plan); `timerBlock` ainda é publicado pelo legado
- * até o timer migrar.
+ * `rebuildWeeks` (application/plan); o timer é gerido por application/timer.
  */
 export interface Derived {
   weeks: Week[];
+  /** Bloco com timer rodando. O restante é derivado do relógio, não guardado. */
   timerBlock: StudyBlock | null;
+  /**
+   * Overlay de foco aberto. É a exceção à regra "modal não vai no store": quem
+   * abre é um caso de uso (iniciar timer), não um clique local.
+   */
+  focusOpen: boolean;
+  audio: AudioSettings;
   save: SaveStatus;
   /** O provedor de auth já respondeu pelo menos uma vez (logado ou não). */
   authReady: boolean;
@@ -53,6 +60,8 @@ export interface Derived {
 export const derived: Derived = {
   weeks: [],
   timerBlock: null,
+  focusOpen: false,
+  audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,
 };
@@ -98,11 +107,6 @@ export function setView(week: number, day: number): void {
 
 export function setDay(day: number): void {
   setView(state.uiWeek, day);
-}
-
-/** Legado (timer) avisa qual bloco está rodando. Some quando o timer migrar. */
-export function publishTimerBlock(block: StudyBlock | null): void {
-  derived.timerBlock = block;
 }
 
 export function markAuthReady(): void {

@@ -3,6 +3,7 @@
 
 import type { MouseEvent } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
+import { playSound, tryStartTimer } from '../../application/timer';
 import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { dk, timeToMins } from '../../domain/time';
 import type { DateKey, StudyBlock } from '../../domain/types';
@@ -81,8 +82,10 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock }: RowProps) {
       showToast(why);
       return;
     }
-    if (isE || isP) legacy.tryStartTimer(b);
-    else if (isEv || isI) legacy.openEventDelete(dateKey, b);
+    if (isE || isP) {
+      const r = tryStartTimer(b, now);
+      if (!r.ok) showToast(strings.timer.refusal(r));
+    } else if (isEv || isI) legacy.openEventDelete(dateKey, b);
   };
 
   const onCheckClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -96,7 +99,7 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock }: RowProps) {
     const rect = e.currentTarget.getBoundingClientRect();
     const result = toggleBlockCheck(dateKey, b, now);
     if (result?.checked) {
-      legacy.playSound('check');
+      playSound('check');
       spawnCheckRipple(rect);
       spawnFloatGain(rect, result.xp, result.coins);
     }

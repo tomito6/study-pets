@@ -52,4 +52,30 @@ export const strings = {
     floatXp: (xp: number) => `+${xp} XP`,
     floatCoins: (coins: number) => `+${coins} 🪙`,
   },
+  timer: {
+    inProgress: 'Em andamento',
+    stop: '✕ Parar',
+    mute: 'Silenciar',
+    refusal: (r: { reason: 'not-today' } | { reason: 'ended' } | { reason: 'not-started'; minutesUntil: number }) =>
+      r.reason === 'not-today'
+        ? 'Só dá pra iniciar timer em blocos de hoje 📅'
+        : r.reason === 'ended'
+          ? 'Este bloco já terminou ⏎'
+          : `Este bloco começa em ${r.minutesUntil} min ⏳`,
+    notification: {
+      study: '📖 Estudo concluído! Hora da pausa.',
+      break: '🧘 Pausa concluída! Hora de estudar.',
+    },
+    focus: {
+      exit: '← Sair do foco',
+      chip: (session: string, n: number) => `${session} · Bloco ${n}`,
+      pomodoroOf: (min: number) => `Pomodoro de ${min} min`,
+      breakOf: (min: number) => `Pausa de ${min} min`,
+      completed: (pct: number) => `completou · ${pct}%`,
+      onComplete: ' ao concluir',
+      next: 'Em seguida',
+      endOfDay: 'Fim do dia 🌙',
+      minutes: (min: number) => `${min} min`,
+    },
+  },
 } as const;

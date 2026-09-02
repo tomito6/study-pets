@@ -59,14 +59,18 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `src/features/<feature>/` — UI React por feature:
   - `auth/LoginScreen.tsx`
   - `plan/` — a aba Plano inteira: `PlanTab.tsx` (XP card, stats do dia, semana/dia, "Encerrar o dia"), `BlockList.tsx` (sessões e linhas com check — a lógica de clique do `renderBlocks` antigo mora aqui), `feedback.ts` (ripple + "+X XP" flutuante), `useMinuteTick.ts` (re-render na virada do minuto, pro destaque "agora")
+  - `timer/` — `TimerBar.tsx` (barra "Em andamento", volume, ✕ Parar) e `FocusOverlay.tsx` (modo foco: anel que drena, próximo bloco, ganho ao concluir). Os dois **derivam** o restante do relógio a cada segundo com `useSecondTick` — o store só sabe qual bloco está rodando
   - `shell/SaveIndicator.tsx` — "Salvando… / Salvo ✓"
-- `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` (publicado pelo legado até o timer migrar), `save` (status), `authReady`
+- `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` + `focusOpen` + `audio` (geridos por `application/timer`), `save` (status), `authReady`
 - `src/application/` — casos de uso e leituras do estado. UI chama isto; isto chama domínio/infra:
   - `plan.ts` — `rebuildWeeks`, `blocksForDay` (com a memoização do gerador), `computeStatsNow` (memoizado por versão do store: cabeçalho, Plano e legado pagam uma passada só), `dateForWeekDay`/`findWeek`/`forEachDay`
   - `checks.ts` — `toggleBlockCheck` (marca/desmarca, decide bônus e pet, devolve XP/moedas pro feedback)
   - `save.ts` — `scheduleSave` com debounce, `blockSaves` (apagar conta), status pro indicador
+  - `timer.ts` — `tryStartTimer` (valida: só bloco de hoje que está rolando; devolve o motivo pra UI mostrar o toast), `startTimer`/`stopTimer`/`closeFocus`, o único `setInterval` do timer (detecta o fim → som + notificação), e o áudio (`playSound`, `toggleMute`, `setVolume`). **Não há `notify()` por segundo** — isso faria o app inteiro re-renderizar e recalcular stats
   - `session.ts` — entrar/sair
-- `src/legacy/bridge.ts` — a ponte tipada pro que ainda é legado (`tryStartTimer`, `playSound`, modais de evento/almoço/encerrar). React chama isto, nunca `window.*` solto. Cada entrada some quando a feature migra
+- `src/domain/timer.ts` — `timerProgress` (restante = fim − agora; é por isso que o timer sobrevive a reload), `canStartBlock`, `soundForBlock`, `blockNumberInSession`, `nextBlockAfter`
+- `src/infrastructure/audio/sounds.ts` (Web Audio, porte fiel, falha em silêncio) e `infrastructure/notifications/notifications.ts` (Web Notifications, guardadas)
+- `src/legacy/bridge.ts` — a ponte tipada pro que ainda é legado (modais de evento/almoço e "Encerrar o dia"). React chama isto, nunca `window.*` solto. Cada entrada some quando a feature migra
 - `src/shared/strings.ts` — textos da UI React. Tudo que migrar pro React escreve texto aqui, não inline
 - `src/shared/toast.ts` — o toast, compartilhado por React e legado
 - `src/styles/app.css` e `login.css` — o CSS que estava no `index.html`, sem mudança

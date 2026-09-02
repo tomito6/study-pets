@@ -17,6 +17,8 @@ import { Header } from './app/Header';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { PlanTab } from './features/plan/PlanTab';
 import { SaveIndicator } from './features/shell/SaveIndicator';
+import { FocusOverlay } from './features/timer/FocusOverlay';
+import { TimerBar } from './features/timer/TimerBar';
 
 function mountIsland(hostId: string, element: ReactElement): void {
   const host = document.getElementById(hostId);
@@ -29,6 +31,8 @@ function mountIsland(hostId: string, element: ReactElement): void {
 mountIsland('login-root', <LoginScreen />);
 mountIsland('header-root', <Header />);
 mountIsland('plan-root', <PlanTab />);
+mountIsland('timer-root', <TimerBar />);
+mountIsland('focus-root', <FocusOverlay />);
 mountIsland('save-root', <SaveIndicator />);
 
 // Legado por último. Ele registra o listener de auth (assíncrono) e daí em diante

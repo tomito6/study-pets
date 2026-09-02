@@ -140,10 +140,16 @@ disso; Fase 2 em diante sim.
     `legacy/bridge.ts` (ponte tipada pro timer e modais). Legado: 2472 → 2070 linhas; `index.html`
     774 → 747. Smoke 9/9 de primeira; 198 unitários. Achado: o `periodEnd` pode sobrar uma semana
     além do fim por arredondamento — comportamento original, agora documentado no teste.
-  - **Próximas fatias**, nesta ordem: Timer + modo foco (leva `playSound` e `tryStartTimer` da ponte),
-    Eventos (leva `openEventDelete`/`openEventPanel`/`openLunchPanel`), Configurações, Análise,
-    Perfil + Pets, Onboarding + Encerrar o dia (leva `openFinishDay`). A cada uma: o legado para de
-    tocar naqueles ids e a entrada correspondente some da ponte.
+  - **Fatia 3 — feita**: Timer + modo foco + áudio. `domain/timer.ts` (restante = fim − agora,
+    `canStartBlock` com motivo, som do bloco, número na sessão, próximo bloco), `infrastructure/audio`
+    e `infrastructure/notifications` (portes fiéis, guardados), `application/timer.ts` (estado do timer,
+    foco e volume; o único `setInterval`, só pra detectar o fim), `features/timer/` (TimerBar e
+    FocusOverlay derivando o relógio a cada segundo sem `notify()`). A ponte perdeu `tryStartTimer` e
+    `playSound`; `window.__legacy` sumiu. Legado 2070 → 1789; `index.html` 747 → 697. Smoke 9/9 de
+    primeira; 217 unitários. Validado antes pelo Tomi: login real, doc preexistente e apagar conta.
+  - **Próximas fatias**, nesta ordem: Eventos (leva `openEventDelete`/`openEventPanel`/
+    `openLunchPanel` da ponte), Configurações, Análise, Perfil + Pets, Onboarding + Encerrar o dia
+    (leva `openFinishDay`). A cada uma: o legado para de tocar naqueles ids e a entrada some da ponte.
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência

@@ -10,7 +10,8 @@
 import { auth, users, persistenceMode, DeleteAccountError } from '../infrastructure';
 import { hydrateUserDoc, serializeState, emptyPersistedState } from '../domain/persistence';
 // Estado compartilhado com o React (mesmo objeto). Depois de mutar, notify().
-import { state, derived, notify, subscribe, setTab, markAuthReady, publishTimerBlock } from '../store/store';
+import { state, derived, notify, subscribe, setTab, markAuthReady } from '../store/store';
+import { stopTimer } from '../application/timer';
 // O plano (semanas, blocos do dia, stats) e o save saíram daqui. Ver src/application.
 import {
   rebuildWeeks, forEachDay, dateForWeekDay, findWeek,
@@ -71,8 +72,6 @@ function noturnoBonusEligible(b, dateKey) {
 // xpFromCheck vem do domínio (importado no topo).
 
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
-const NUM_SESSIONS = 6;
 // LEVELS vem de src/domain/progression.ts (importado no topo).
 
 // ============================================================
@@ -297,282 +296,8 @@ function notifyPlanDelta(dateKey, beforeBlocks) {
 }
 
 // ============================================================
-// AUDIO
+// AUDIO / TIMER / FOCO — migraram pra src/application/timer.ts e src/features/timer
 // ============================================================
-let audioCtx = null;
-let timerMuted = false;
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-function playSound(type = 'estudo') {
-  try {
-    const ctx = getAudioCtx();
-    const slider = document.getElementById('vol-slider');
-    const vol = slider ? parseFloat(slider.value) : 0.7;
-    if (timerMuted || vol === 0) return;
-    const t = ctx.currentTime;
-
-    if (type === 'check') {
-      [880, 1100].forEach((freq, i) => {
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'square'; osc.frequency.value = freq;
-        g.gain.setValueAtTime(0, t + i * 0.1);
-        g.gain.linearRampToValueAtTime(vol * 0.3, t + i * 0.1 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.12);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t + i * 0.1); osc.stop(t + i * 0.1 + 0.13);
-      });
-    } else if (type === 'estudo') {
-      [110, 220, 330].forEach(freq => {
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'sawtooth'; osc.frequency.value = freq;
-        g.gain.setValueAtTime(vol * 0.5, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t); osc.stop(t + 0.4);
-      });
-      setTimeout(() => {
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'sawtooth'; osc.frequency.value = 80;
-        g.gain.setValueAtTime(vol * 0.8, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5);
-      }, 350);
-    } else if (type === 'pausa_curta') {
-      [523, 659].forEach((freq, i) => {
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'sine'; osc.frequency.value = freq;
-        g.gain.setValueAtTime(vol * 0.4, t + i * 0.25);
-        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.25 + 1.2);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t + i * 0.25); osc.stop(t + i * 0.25 + 1.2);
-      });
-    } else if (type === 'pausa_longa') {
-      [784, 784, 784].forEach((freq, i) => {
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'sine'; osc.frequency.value = freq;
-        g.gain.setValueAtTime(0, t + i * 0.28);
-        g.gain.linearRampToValueAtTime(vol * 0.5, t + i * 0.28 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.28 + 0.25);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t + i * 0.28); osc.stop(t + i * 0.28 + 0.26);
-      });
-    }
-  } catch (e) {}
-}
-
-window.toggleMute = () => {
-  timerMuted = !timerMuted;
-  document.getElementById('vol-btn').textContent = timerMuted ? '🔕' : '🔔';
-};
-window.setVolume = (v) => {
-  if (parseFloat(v) === 0) {
-    timerMuted = true;
-    document.getElementById('vol-btn').textContent = '🔕';
-  } else {
-    timerMuted = false;
-    document.getElementById('vol-btn').textContent = '🔔';
-  }
-};
-
-// ============================================================
-// TIMER
-// ============================================================
-let timerInterval = null;
-let timerBlock = null;
-
-function startTimer(block) {
-  if (timerInterval) clearInterval(timerInterval);
-  timerBlock = block; publishTimerBlock(block);
-  document.getElementById('timer-bar').classList.add('active');
-  document.getElementById('timer-block-name').textContent =
-    block.name.replace(/📖|🧘|☕/g, '').trim();
-  if (Notification && Notification.permission === 'default') Notification.requestPermission();
-  openFocusMode(block);
-  updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    if (updateTimerDisplay()) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      onTimerEnd();
-    }
-  }, 1000);
-}
-
-function updateTimerDisplay() {
-  if (!timerBlock) return true;
-  const now = new Date();
-  const [eh, em] = timerBlock.endTime.split(':').map(Number);
-  const end = new Date(); end.setHours(eh, em, 0, 0);
-  const diffSec = Math.floor((end - now) / 1000);
-  if (diffSec <= 0) {
-    document.getElementById('timer-display').textContent = '00:00';
-    updateFocusTimer();
-    return true;
-  }
-  const m = Math.floor(diffSec / 60), s = diffSec % 60;
-  const disp = document.getElementById('timer-display');
-  disp.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  disp.className = 'timer-time' + (diffSec <= 60 ? ' ending' : '');
-  updateFocusTimer();
-  return false;
-}
-
-function onTimerEnd() {
-  const soundType = timerBlock
-    ? (timerBlock.type === 'estudo' ? 'estudo'
-       : timerBlock.name.includes('longa') ? 'pausa_longa' : 'pausa_curta')
-    : 'estudo';
-  playSound(soundType);
-  if (Notification && Notification.permission === 'granted' && timerBlock) {
-    const emoji = timerBlock.type === 'estudo' ? '📖'
-                : timerBlock.name.includes('longa') ? '☕' : '🧘';
-    const label = timerBlock.type === 'estudo'
-      ? 'Estudo concluído! Hora da pausa.'
-      : 'Pausa concluída! Hora de estudar.';
-    new Notification(`${emoji} ${label}`, {
-      body: timerBlock.name.replace(/📖|🧘|☕/g, '').trim(),
-      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📚</text></svg>'
-    });
-  }
-  document.getElementById('timer-bar').classList.remove('active');
-  timerBlock = null; publishTimerBlock(null);
-  closeFocusMode();
-  renderAll();
-}
-
-window.stopTimer = () => {
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = null; timerBlock = null; publishTimerBlock(null);
-  document.getElementById('timer-bar').classList.remove('active');
-  closeFocusMode();
-  renderAll();
-};
-
-function tryStartTimer(b) {
-  const now = new Date();
-  const viewKey = dk(dateForWeekDay(state.uiWeek, state.uiDay));
-  const todayKey = dk(now);
-  if (viewKey !== todayKey) { showToast('Só dá pra iniciar timer em blocos de hoje 📅'); return; }
-  const [sh, sm] = b.time.split(':').map(Number);
-  const [eh, em] = b.endTime.split(':').map(Number);
-  const blockStart = new Date(); blockStart.setHours(sh, sm, 0, 0);
-  const blockEnd = new Date(); blockEnd.setHours(eh, em, 0, 0);
-  if (now >= blockEnd) { showToast('Este bloco já terminou ⏎'); return; }
-  if (now < blockStart) {
-    const diffMin = Math.round((blockStart - now) / 60000);
-    showToast(`Este bloco começa em ${diffMin} min ⏳`);
-    return;
-  }
-  startTimer(b);
-  renderAll();
-}
-
-// ============================================================
-// FOCUS MODE (tela cheia ao iniciar um bloco do momento)
-// ============================================================
-let focusOpen = false;
-
-function blockDurationMin(b) {
-  const [sh, sm] = b.time.split(':').map(Number);
-  const [eh, em] = b.endTime.split(':').map(Number);
-  return (eh * 60 + em) - (sh * 60 + sm);
-}
-
-function openFocusMode(block) {
-  populateFocusMode(block);
-  focusOpen = true;
-  document.getElementById('focus-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  updateFocusTimer();
-}
-
-window.closeFocusMode = () => {
-  focusOpen = false;
-  document.getElementById('focus-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-};
-
-function populateFocusMode(block) {
-  const isE = block.type === 'estudo';
-  const isP = block.type === 'pausa';
-  const key = dk(dateForWeekDay(state.uiWeek, state.uiDay));
-  const dayBlocks = blocksForDay(key);
-
-  // Número do bloco dentro da sessão atual (conta só estudo+pausa da mesma sessão)
-  let blockNumInSession = 0;
-  for (const b of dayBlocks) {
-    if (b.session === block.session && (b.type === 'estudo' || b.type === 'pausa')) {
-      blockNumInSession++;
-      if (b.time === block.time && b.endTime === block.endTime) break;
-    }
-  }
-  const sessionName = SESSION_NAMES[(block.session ?? 0) % NUM_SESSIONS] || 'Sessão';
-
-  // Chip (verde pra estudo, azul pra pausa)
-  const chip = document.getElementById('focus-chip');
-  chip.className = 'focus-chip' + (isP ? ' pausa' : '');
-  document.getElementById('focus-chip-text').textContent = `${sessionName} · Bloco ${blockNumInSession}`;
-
-  // Nome limpo + subtitulo de duração
-  document.getElementById('focus-block-name').textContent =
-    block.name.replace(/📖|🧘|☕/g, '').trim();
-  const durMin = blockDurationMin(block);
-  const tipo = isE ? 'Pomodoro' : 'Pausa';
-  document.getElementById('focus-pomo-label').textContent = `${tipo} de ${durMin} min`;
-
-  // Cor do anel do timer
-  document.getElementById('focus-timer-fill').classList.toggle('pausa', isP);
-
-  // XP e moedas ao concluir
-  const xp = block.xp || 0;
-  const coins = isE ? coinsForStudyBlock(durMin) : 0;
-  document.getElementById('focus-scene-foot').innerHTML =
-    `<span class="focus-scene-xp">+${xp} XP</span> · <span class="focus-scene-coins">+${coins} 🪙</span> ao concluir`;
-
-  // Próximo bloco no dia
-  const idx = dayBlocks.findIndex(b => b.time === block.time && b.endTime === block.endTime);
-  const next = idx >= 0 && idx + 1 < dayBlocks.length ? dayBlocks[idx + 1] : null;
-  const nextName = document.getElementById('focus-next-name');
-  const nextDur = document.getElementById('focus-next-dur');
-  if (next) {
-    nextName.textContent = next.name.replace(/📖|🧘|☕/g, '').trim();
-    nextDur.textContent = blockDurationMin(next) + ' min';
-  } else {
-    nextName.textContent = 'Fim do dia 🌙';
-    nextDur.textContent = '—';
-  }
-}
-
-const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7
-
-function updateFocusTimer() {
-  if (!focusOpen || !timerBlock) return;
-  const now = new Date();
-  document.getElementById('focus-clock').textContent =
-    String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-
-  const [eh, em] = timerBlock.endTime.split(':').map(Number);
-  const [sh, sm] = timerBlock.time.split(':').map(Number);
-  const end = new Date(); end.setHours(eh, em, 0, 0);
-  const start = new Date(); start.setHours(sh, sm, 0, 0);
-  const totalSec = Math.max(1, Math.floor((end - start) / 1000));
-  const remainingSec = Math.max(0, Math.floor((end - now) / 1000));
-  const m = Math.floor(remainingSec / 60), s = remainingSec % 60;
-
-  const big = document.getElementById('focus-time-big');
-  big.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  big.classList.toggle('ending', remainingSec <= 60);
-
-  const pct = Math.round((1 - remainingSec / totalSec) * 100);
-  document.getElementById('focus-time-sub').textContent = `completou · ${pct}%`;
-
-  // anel "drena" conforme o tempo passa: offset 0 = cheio, FOCUS_CIRC = vazio
-  const offset = FOCUS_CIRC * (1 - remainingSec / totalSec);
-  document.getElementById('focus-timer-fill').setAttribute('stroke-dashoffset', String(offset));
-}
 
 // ============================================================
 // SETTINGS PANEL
@@ -1168,7 +893,6 @@ let appliedTab = state.uiTab;
 function applyTab(tab) {
   const isPlano = tab === 'plano';
   document.querySelector('.main').style.display = isPlano ? '' : 'none';
-  document.getElementById('timer-bar').style.display = isPlano && timerBlock ? 'flex' : 'none';
   document.getElementById('analytics-page').classList.toggle('visible', tab === 'analise');
   document.getElementById('profile-page').classList.toggle('visible', tab === 'perfil');
   document.getElementById('fab-config').classList.toggle('hidden', !isPlano);
@@ -2062,8 +1786,3 @@ function renderActivePetCard() {
     xpLabel.textContent = `${petXP} / ${nextThreshold} XP · faltam ${nextThreshold - petXP} pro Lv. ${lvl + 1}`;
   }
 }
-
-// ============================================================
-// PONTE PRO REACT — some conforme as features migram (ver src/legacy/bridge.ts)
-// ============================================================
-window.__legacy = { tryStartTimer, playSound };

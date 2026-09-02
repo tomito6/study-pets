@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { derived, getVersion, markAuthReady, notify, publishTimerBlock, setDay, setTab, setView, state, subscribe } from '../src/store/store';
+import { derived, getVersion, markAuthReady, notify, setDay, setTab, setView, state, subscribe } from '../src/store/store';
 
 describe('store — o objeto compartilhado com o legado', () => {
   it('começa como conta nova, na aba Plano, sem usuário', () => {
@@ -46,14 +46,10 @@ describe('store — o objeto compartilhado com o legado', () => {
     off();
   });
 
-  it('publishTimerBlock guarda o bloco sem notificar (o legado notifica no render)', () => {
-    const cb = vi.fn();
-    const off = subscribe(cb);
-    publishTimerBlock({ time: '09:00', endTime: '09:25', name: 'x', type: 'estudo', xp: 50 });
-    expect(derived.timerBlock?.time).toBe('09:00');
-    expect(cb).not.toHaveBeenCalled();
-    publishTimerBlock(null);
-    off();
+  it('derived começa sem timer, sem foco e com áudio ligado', () => {
+    expect(derived.timerBlock).toBeNull();
+    expect(derived.focusOpen).toBe(false);
+    expect(derived.audio).toEqual({ volume: 0.7, muted: false });
   });
 
   it('markAuthReady notifica uma vez só', () => {

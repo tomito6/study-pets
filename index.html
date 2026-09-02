@@ -20,18 +20,7 @@
 <div id="app" style="display:none;">
 <div id="header-root"></div>
 
-<div class="timer-bar" id="timer-bar">
-  <div>
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Em andamento</div>
-    <div class="timer-block-name" id="timer-block-name">—</div>
-  </div>
-  <div class="timer-time" id="timer-display">00:00</div>
-  <div class="volume-wrap">
-    <button class="vol-btn" id="vol-btn" onclick="toggleMute()">🔔</button>
-    <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.05" value="0.7" oninput="setVolume(this.value)">
-  </div>
-  <button class="timer-stop" onclick="stopTimer()">✕ Parar</button>
-</div>
+<div id="timer-root"></div>
 
 <div class="main" id="plan-root"></div>
 <!-- FINISH DAY CONFIRM -->
@@ -313,46 +302,7 @@
   </div>
 </div>
 
-<!-- FOCUS MODE -->
-<div class="focus-overlay" id="focus-overlay">
-  <div class="focus-inner">
-    <div class="focus-topbar">
-      <span id="focus-clock">--:--</span>
-      <button class="focus-exit" onclick="closeFocusMode()">← Sair do foco</button>
-    </div>
-    <div class="focus-header">
-      <div class="focus-chip" id="focus-chip">
-        <span class="fc-dot"></span>
-        <span id="focus-chip-text">—</span>
-      </div>
-      <div class="focus-block-name" id="focus-block-name">—</div>
-      <div class="focus-pomo-label" id="focus-pomo-label">—</div>
-    </div>
-    <div class="focus-timer-wrap">
-      <svg viewBox="0 0 100 100">
-        <circle class="focus-timer-track" cx="50" cy="50" r="45"/>
-        <circle class="focus-timer-fill" id="focus-timer-fill" cx="50" cy="50" r="45"
-          stroke-dasharray="282.7" stroke-dashoffset="0"/>
-      </svg>
-      <div class="focus-timer-center">
-        <div class="focus-time-big" id="focus-time-big">00:00</div>
-        <div class="focus-time-sub" id="focus-time-sub">completou · 0%</div>
-      </div>
-    </div>
-    <div class="focus-scene">
-      <div class="focus-scene-stage" id="focus-scene-stage"></div>
-      <div class="focus-scene-foot" id="focus-scene-foot">—</div>
-    </div>
-    <div class="focus-next" id="focus-next">
-      <div class="focus-next-label">Em seguida</div>
-      <div class="focus-next-sep"></div>
-      <div class="focus-next-name" id="focus-next-name">—</div>
-      <div class="focus-next-dur" id="focus-next-dur">—</div>
-    </div>
-  </div>
-</div>
-
-
+<div id="focus-root"></div>
 <!-- MEUS PETS PANEL -->
 <div class="panel-overlay center" id="my-pets-panel" onclick="closeIfOutside(event,'my-pets-panel')">
   <div class="panel-sheet">
