@@ -3,26 +3,15 @@
 // ============================================================
 
 // ============================================================
-// FIREBASE
+// INFRAESTRUTURA — auth e persistência, escolhidas por ambiente
 // ============================================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyABZ4DR7v94YyKaswY8FR7T8tOVQkIR7B0",
-  authDomain: "plano-estudos-bf51d.firebaseapp.com",
-  projectId: "plano-estudos-bf51d",
-  storageBucket: "plano-estudos-bf51d.firebasestorage.app",
-  messagingSenderId: "807419074503",
-  appId: "1:807419074503:web:905534d0f0ef64edf26be2"
-};
-const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
-const provider = new GoogleAuthProvider();
+// O main.js não conhece o Firebase: fala com as portas de src/infrastructure/ports.ts.
+// VITE_PERSISTENCE=memory (npm run dev:teste) troca tudo por versões em memória.
+import { auth, users, persistenceMode, DeleteAccountError } from './infrastructure';
+import { hydrateUserDoc, serializeState, emptyPersistedState } from './domain/persistence';
+if (persistenceMode === 'memory') {
+  console.info('%cStudy Pets em MODO TESTE — sem Firebase, dados somem no reload.', 'color:#c8f542');
+}
 
 // ---- Domínio puro (sem DOM, sem Firebase, testado em tests/) ----
 import { DEFAULT_CFG, migrateConfig } from './domain/config';
@@ -367,33 +356,13 @@ function calcStreaks(dayStudyMins) {
 async function loadData(uid) {
   let isNew = false;
   try {
-    const snap = await getDoc(doc(db, 'users', uid));
-    if (snap.exists()) {
-      const d = snap.data();
-      state.checks = d.checks || {};
-      state.events = d.events || {};
-      state.eventSeries = Array.isArray(d.eventSeries) ? d.eventSeries : [];
-      state.lunchOverrides = d.lunchOverrides || {};
-      state.config = migrateConfig({ ...DEFAULT_CFG, ...(d.config || {}) });
-      state.pets = {
-        owned: (d.pets && Array.isArray(d.pets.owned)) ? d.pets.owned : [],
-        active: (d.pets && d.pets.active) || null,
-        xp: (d.pets && d.pets.xp && typeof d.pets.xp === 'object') ? d.pets.xp : {},
-        xpProcessedUntil: (d.pets && typeof d.pets.xpProcessedUntil === 'string') ? d.pets.xpProcessedUntil : null,
-      };
-      state.closedDays = (d.closedDays && typeof d.closedDays === 'object') ? d.closedDays : {};
-      state.skills = (d.skills && typeof d.skills === 'object')
-        ? { owl: d.skills.owl || null, activatedAt: d.skills.activatedAt || 0 }
-        : { owl: null, activatedAt: 0 };
-      state.coinsSpent = (typeof d.coinsSpent === 'number') ? d.coinsSpent : 0;
+    const raw = await users.load(uid);
+    if (raw) {
+      // Documento existente (em qualquer formato antigo): a migração vive em src/domain/persistence.ts.
+      Object.assign(state, hydrateUserDoc(raw));
     } else {
       isNew = true;
-      state.checks = {}; state.events = {}; state.eventSeries = []; state.lunchOverrides = {};
-      state.closedDays = {};
-      state.config = { ...DEFAULT_CFG };
-      state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
-      state.skills = { owl: null, activatedAt: 0 };
-      state.coinsSpent = 0;
+      Object.assign(state, emptyPersistedState());
     }
   } catch (e) {
     console.error('Load failed:', e);
@@ -419,18 +388,8 @@ function scheduleSave() {
   saveTimeout = setTimeout(async () => {
     if (!state.user || accountDeleted) return;
     try {
-      await setDoc(doc(db, 'users', state.user.uid), {
-        checks: state.checks,
-        events: state.events,
-        eventSeries: state.eventSeries || [],
-        lunchOverrides: state.lunchOverrides,
-        closedDays: state.closedDays || {},
-        config: state.config,
-        pets: state.pets,
-        skills: state.skills || { owl: null, activatedAt: 0 },
-        coinsSpent: state.coinsSpent || 0,
-      }, { merge: true });
-      showSaveIndicator('Salvo ✓', true);
+      await users.save(state.user.uid, serializeState(state));
+      showSaveIndicator(users.ephemeral ? '💾 Modo teste (não salva)' : 'Salvo ✓', true);
     } catch (e) {
       console.error('Save failed:', e);
       showSaveIndicator('⚠️ Erro ao salvar', true);
@@ -442,12 +401,12 @@ function scheduleSave() {
 // AUTH
 // ============================================================
 window.loginGoogle = async () => {
-  try { await signInWithPopup(auth, provider); }
+  try { await auth.signIn(); }
   catch (e) { console.error(e); }
 };
-window.logoutUser = async () => { await signOut(auth); };
+window.logoutUser = async () => { await auth.signOut(); };
 
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged(async (user) => {
   if (user) {
     accountDeleted = false;
     state.user = user;
@@ -1186,7 +1145,7 @@ window.onDeleteAccountInput = () => {
 window.confirmDeleteAccount = async () => {
   const btn = document.getElementById('del-acc-btn');
   const status = document.getElementById('del-acc-status');
-  const user = auth.currentUser;
+  const user = auth.currentUser();
   if (!user) { showToast('Ninguém logado'); return; }
 
   btn.disabled = true;
@@ -1196,7 +1155,7 @@ window.confirmDeleteAccount = async () => {
   stopTimer();
 
   try {
-    await deleteDoc(doc(db, 'users', user.uid));
+    await users.delete(user.uid);
   } catch (e) {
     console.error('Delete doc failed:', e);
     accountDeleted = false;
@@ -1206,26 +1165,20 @@ window.confirmDeleteAccount = async () => {
   }
 
   try {
-    await deleteUser(user);
+    await auth.deleteCurrentUser({
+      // Firebase exige login recente pra apagar conta — a infra reautentica; a UI só avisa.
+      onReauthRequired: () => { status.textContent = 'Confirme com o Google pra finalizar...'; },
+    });
   } catch (e) {
-    // Firebase exige login recente pra apagar conta — reautentica e tenta de novo.
-    if (e && e.code === 'auth/requires-recent-login') {
-      status.textContent = 'Confirme com o Google pra finalizar...';
-      try {
-        await reauthenticateWithPopup(user, provider);
-        await deleteUser(user);
-      } catch (e2) {
-        console.error('Reauth/delete failed:', e2);
-        status.textContent = '⚠️ Seus dados foram apagados, mas a conta continua. Entre de novo e repita pra concluir.';
-        btn.disabled = false;
-        return;
-      }
+    if (e instanceof DeleteAccountError && e.stage === 'reauth') {
+      console.error('Reauth/delete failed:', e.cause);
+      status.textContent = '⚠️ Seus dados foram apagados, mas a conta continua. Entre de novo e repita pra concluir.';
     } else {
-      console.error('Delete user failed:', e);
+      console.error('Delete user failed:', e instanceof DeleteAccountError ? e.cause : e);
       status.textContent = '⚠️ Seus dados foram apagados, mas não deu pra remover a conta. Tenta de novo.';
-      btn.disabled = false;
-      return;
     }
+    btn.disabled = false;
+    return;
   }
 
   closeDeleteAccount();

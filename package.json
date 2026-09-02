@@ -13,11 +13,15 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:teste": "vite --mode teste --port 5174"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "firebase": "^10.14.1"
   }
 }

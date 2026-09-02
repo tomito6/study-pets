@@ -1368,7 +1368,7 @@
   <!-- HERO SCENE -->
   <div class="profile-hero">
     <div class="profile-hero-stage">
-      <img id="char-sprite" class="char-sprite" src="public/idle/user/0.png" alt="Personagem">
+      <img id="char-sprite" class="char-sprite" src="../public/idle/user/0.png" alt="Personagem">
       <img id="pet-sprite" class="pet-sprite" alt="Pet" style="display:none">
     </div>
     <div class="profile-hero-divider"></div>
@@ -1561,15 +1561,15 @@ const state = {
 // PETS REGISTRY
 // ============================================================
 const PETS = {
-  cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `public/idle/pets/cat/${i}.png` },
-  cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `public/idle/pets/cow/${i}.png` },
-  snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `public/idle/pets/snake/${i}.png` },
-  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `public/idle/pets/owl/${i}.png`,
+  cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `../public/idle/pets/cat/${i}.png` },
+  cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `../public/idle/pets/cow/${i}.png` },
+  snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `../public/idle/pets/snake/${i}.png` },
+  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `../public/idle/pets/owl/${i}.png`,
            skills: [
              { id: 'noturno', name: 'Noturno', desc: '+5% XP em estudos a partir das 18h' },
              { id: 'voo',     name: 'Voo',     desc: 'Permite o usuário voar (placeholder)' },
            ] },
-  dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `public/idle/pets/dog/${i}.png` },
+  dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `../public/idle/pets/dog/${i}.png` },
 };
 
 let WEEKS = [];
@@ -3107,7 +3107,7 @@ function startCharAnim() {
   charInterval = setInterval(() => {
     charFrame = (charFrame + 1) % CHAR_FRAMES;
     const img = document.getElementById('char-sprite');
-    if (img) img.src = `public/idle/user/${charFrame}.png`;
+    if (img) img.src = `../public/idle/user/${charFrame}.png`;
   }, 180);
 }
 

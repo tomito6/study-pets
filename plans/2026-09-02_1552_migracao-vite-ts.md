@@ -97,7 +97,19 @@ disso; Fase 2 em diante sim.
   `computeStats`/`calcStreaks` em 40 cenários aleatórios (14–28 dias, com eventos, dias encerrados
   e os três formatos de check que aparecem em dados reais).
   Sobrou no `main.js` só o que é efeito: memoização, leitura de `state`, render e persistência.
-- **Fase 4 em diante — não começou.**
+- **Fase 4 — feita** (branch `refactor/fase-3-dominio`, mesmo branch da Fase 3 por continuidade).
+  `src/infrastructure/` com portas (`AuthPort`, `UserRepository`) e duas implementações: Firebase
+  (SDK npm 10.14.1, mesma major do CDN antigo) e memória. `VITE_PERSISTENCE=memory` liga o modo
+  teste — `npm run dev:teste` — que substitui o `index_teste.html` (movido pra `legacy/`).
+  `hydrateUserDoc`/`serializeState` em `src/domain/persistence.ts` são a migração explícita, com
+  `schemaVersion: 1` gravado a partir de agora. 170 testes.
+  **Bug de compatibilidade corrigido de propósito** (única mudança de comportamento da migração):
+  o `loadData` original espalhava `DEFAULT_CFG` antes de migrar, então um doc antigo sem
+  `studyWindows` perdia o `start`/`end` real pra janela padrão 09–18. Agora migra primeiro.
+  Bundle: 63 KB → 373 KB (114 KB gzip) porque o SDK do Firebase vem empacotado em vez do CDN.
+  Verificado no browser nos dois modos: Firebase (landing, zero requisições ao gstatic) e memória
+  (onboarding → plano → check com XP pendente → Análise → Perfil → loja, sem erro de console).
+- **Fase 5 (React) — não começou.** Antes dela: smoke test mínimo dos fluxos no modo teste.
 
 ## Achados que viraram pendência
 

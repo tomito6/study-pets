@@ -54,7 +54,14 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 ## Arquivos
 
 - `index.html` — o HTML do app (entry do Vite). Só markup e CSS; o JS mora em `src/main.js`
-- `src/main.js` — o script do app: DOM, estado, render, Firebase. Chama o domínio, não duplica regra
+- `src/main.js` — o script do app: DOM, estado, render. Chama o domínio e fala com auth/persistência só pelas portas de `src/infrastructure` — não conhece o Firebase
+- `src/infrastructure/` — o mundo externo, atrás de interfaces (`ports.ts`: `AuthPort`, `UserRepository`):
+  - `firebase/` — `config.ts` (config pública, sobrescrevível por `VITE_FIREBASE_*`), `auth.ts` (Google, com reautenticação ao apagar conta), `userRepository.ts` (`users/{uid}`)
+  - `memory/` — as mesmas portas em memória: usuário fixo já logado, dados somem no reload. É o **modo teste**
+  - `index.ts` — escolhe qual usar por `VITE_PERSISTENCE` (`memory` → teste; qualquer outra coisa → Firebase)
+- `src/domain/persistence.ts` — `hydrateUserDoc` (documento cru → estado; **é a função explícita de migração**, tolera todo formato antigo) e `serializeState` (estado → documento, com `schemaVersion`)
+- `.env.example` — variáveis suportadas (todas opcionais). `.env.teste` liga o modo memória pro `npm run dev:teste`
+- `legacy/index_teste.html` — o app antigo sem Firebase, **congelado**. Substituído por `npm run dev:teste`; some quando o modo teste estiver validado em todos os fluxos
 - `src/domain/` — regras puras em TypeScript, sem DOM/Firebase/estado global:
   - `types.ts` — tipos do domínio (`StudyBlock`, `UserConfig`, `RecurringEventSeries`, `CheckRecord`, ...)
   - `time.ts` — `dk`, `timeToMins`, `minsToTime`, `mondayOf`, `aggregateMins` (tudo em horário local)
@@ -66,8 +73,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
     chegou) e `computePendingPetXP`, que calcula o XP dos pets de forma idempotente
   - `stats.ts` — `computeStats` (uma passada só) e `calcStreaks`
 - `tests/` — Vitest sobre o domínio
-- `index_teste.html` — versão sem Firebase pra testar localmente (é versionado). **Some na Fase 4**, quando um adapter de persistência escolhido por env substituir a cópia manual
-- `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`. **Exceção**: `index_teste.html` é aberto direto do disco, sem servidor, então ele aponta pra `public/idle/...`
+- `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`
 - `public/idle/pets/{nome}/` — convenção pra sprites de pets
 - Sprites são frames sequenciais nomeados `0.png`, `1.png`, ...
 - `firestore.rules` — regras de acesso (só o dono lê/escreve `users/{uid}`)
@@ -76,11 +82,12 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Workflow
 
-1. `npm run dev` sobe o app em `http://localhost:5173` com Firebase real (`localhost` já é domínio autorizado no Firebase Auth). É o jeito principal de testar agora
-2. Mudanças de UI/lógica ainda precisam ser replicadas em `index_teste.html` — até a Fase 4 matar essa cópia
-3. `npm test` (Vitest) e `npm run typecheck` antes de commitar
-4. `npm run build` gera o `dist/`
-5. Commit + push → Vercel builda e publica sozinho
+1. `npm run dev:teste` sobe o app em `http://localhost:5174` em **modo teste**: sem Firebase, já logado num usuário fixo, começa como conta nova (onboarding aparece), dados somem no reload. É o jeito rápido de testar qualquer fluxo sem tocar em dados reais
+2. `npm run dev` sobe em `http://localhost:5173` com Firebase real (`localhost` já é domínio autorizado no Firebase Auth) — pra validar login e persistência de verdade
+3. Não existe mais cópia pra replicar: uma base só, dois modos por ambiente
+4. `npm test` (Vitest) e `npm run typecheck` antes de commitar
+5. `npm run build` gera o `dist/`
+6. Commit + push → Vercel builda e publica sozinho
 
 ## Princípios arquiteturais
 
@@ -94,6 +101,8 @@ Mais importantes que valores concretos. Estes você protege ao mexer no código:
 - **Datas dinâmicas**: sem dates hardcoded. As semanas são construídas a partir da semana atual.
 - **Último bloco do dia é sempre estudo** (nunca termina em pausa).
 - **Tratamento de erro do Firebase**: load/save dentro de try/catch.
+- **Firebase só atrás de porta**: nada fora de `src/infrastructure/firebase/` importa `firebase/*`. O app fala com `auth` e `users` (ver `ports.ts`); é isso que permite o modo teste em memória e, no futuro, emulador ou outro backend sem tocar na UI.
+- **Todo formato antigo do Firestore passa por `hydrateUserDoc`**: campo novo no doc = default ali + teste em `tests/persistence.test.ts` com o doc sem o campo. `serializeState` é o único lugar que monta o documento salvo.
 
 ## Estrutura do JS
 
@@ -265,6 +274,7 @@ Skills opcionais por pet — ficam visíveis e ativáveis dentro do modal "Meus 
 
 ```
 users/{uid} {
+  schemaVersion, // 1 a partir da Fase 4. Ausente = doc anterior à migração; hydrateUserDoc lê os dois
   checks,        // { "YYYY-MM-DD": { "HH:MM": { pet: petId|null, bonus: number } } }   bonus = multiplicador aditivo de XP salvo no check (0 ou 0.05 hoje)
   events,        // { "YYYY-MM-DD": [{name, start, end, countsAsStudy}] } — eventos avulsos por dia. countsAsStudy: true=tipo 'event' (XP), false=tipo 'intervalo' (só bloqueia)
   eventSeries,   // [{id, name, start, end, weekdays[], freq, anchor, until, exceptions[], countsAsStudy}] — séries recorrentes
@@ -321,5 +331,5 @@ Schema flat funciona pro volume atual. Quando ficar lento, considerar subcollect
 ## Sempre
 
 - Atualizar este arquivo quando uma decisão de design mudar
-- Testar em `index_teste.html` antes de commitar
+- Testar em `npm run dev:teste` antes de commitar (e `npm test` + `npm run typecheck`)
 - Quando notar algo aqui que não bate com o código, perguntar ao usuário antes de "corrigir" — pode ser que o design tenha evoluído de propósito
