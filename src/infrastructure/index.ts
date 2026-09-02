@@ -1,6 +1,6 @@
 // Escolhe a infraestrutura pelo ambiente. É o único lugar que sabe qual é qual.
 //
-//   VITE_PERSISTENCE=memory  → modo teste: sem Firebase, sem rede, dados só na sessão
+//   VITE_PERSISTENCE=memory  → modo teste: sem Firebase, sem rede, dados só na aba
 //   (qualquer outra coisa)   → Firebase real
 //
 // `npm run dev:teste` sobe com o modo memória (ver .env.teste).

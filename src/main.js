@@ -10,7 +10,7 @@
 import { auth, users, persistenceMode, DeleteAccountError } from './infrastructure';
 import { hydrateUserDoc, serializeState, emptyPersistedState } from './domain/persistence';
 if (persistenceMode === 'memory') {
-  console.info('%cStudy Pets em MODO TESTE — sem Firebase, dados somem no reload.', 'color:#c8f542');
+  console.info('%cStudy Pets em MODO TESTE — sem Firebase; os dados vivem só nesta aba.', 'color:#c8f542');
 }
 
 // ---- Domínio puro (sem DOM, sem Firebase, testado em tests/) ----
@@ -389,7 +389,7 @@ function scheduleSave() {
     if (!state.user || accountDeleted) return;
     try {
       await users.save(state.user.uid, serializeState(state));
-      showSaveIndicator(users.ephemeral ? '💾 Modo teste (não salva)' : 'Salvo ✓', true);
+      showSaveIndicator(users.ephemeral ? '💾 Modo teste (só nesta aba)' : 'Salvo ✓', true);
     } catch (e) {
       console.error('Save failed:', e);
       showSaveIndicator('⚠️ Erro ao salvar', true);

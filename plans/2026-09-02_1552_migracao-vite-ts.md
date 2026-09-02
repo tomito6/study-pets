@@ -109,7 +109,20 @@ disso; Fase 2 em diante sim.
   Bundle: 63 KB → 373 KB (114 KB gzip) porque o SDK do Firebase vem empacotado em vez do CDN.
   Verificado no browser nos dois modos: Firebase (landing, zero requisições ao gstatic) e memória
   (onboarding → plano → check com XP pendente → Análise → Perfil → loja, sem erro de console).
-- **Fase 5 (React) — não começou.** Antes dela: smoke test mínimo dos fluxos no modo teste.
+- **Smoke test — feito** (`e2e/smoke.spec.ts`, `npm run test:e2e`). Os dez fluxos do brief original,
+  cada um numa aba nova do modo teste com o relógio fixo via `page.clock.setFixedTime` (o plano e o
+  timer dependem de "agora"): abrir, entrar/sair, configurar rotina, iniciar pomodoro em modo foco,
+  concluir bloco, encerrar dia + progresso, comprar e equipar pet, criar evento, reload preservando.
+  Cada teste também falha em qualquer erro de console ou exceção da página. Pra isso o repositório
+  em memória passou a guardar o doc no `sessionStorage` da aba (reload preserva, aba nova zera).
+  Achados de passagem: `/favicon.ico` dava 404 em toda carga (ícone vazio `data:,` até existir um de
+  verdade); sprites de pet inexistentes caem no emoji por design e são ignorados na vigilância.
+  **Lição cara**: toda a flakiness inicial ("Target page, context or browser has been
+  closed", aleatório, sem crash no Event Log) eram o **Cold Turkey Blocker** matando o Chrome/Edge do
+  sistema lançado pelo Playwright — e fechando as abas reais do Tomi junto. Browser padrão agora é o
+  Chromium do próprio Playwright em headless (`headless_shell.exe`, que o Cold Turkey não reconhece);
+  `PW_CHANNEL` só como override. Com isso: 27/27 em três rodadas seguidas, sem repetição.
+- **Fase 5 (React) — não começou.** A rede de segurança pra ela (smoke test) já existe.
 
 ## Achados que viraram pendência
 

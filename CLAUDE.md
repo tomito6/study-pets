@@ -57,7 +57,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `src/main.js` — o script do app: DOM, estado, render. Chama o domínio e fala com auth/persistência só pelas portas de `src/infrastructure` — não conhece o Firebase
 - `src/infrastructure/` — o mundo externo, atrás de interfaces (`ports.ts`: `AuthPort`, `UserRepository`):
   - `firebase/` — `config.ts` (config pública, sobrescrevível por `VITE_FIREBASE_*`), `auth.ts` (Google, com reautenticação ao apagar conta), `userRepository.ts` (`users/{uid}`)
-  - `memory/` — as mesmas portas em memória: usuário fixo já logado, dados somem no reload. É o **modo teste**
+  - `memory/` — as mesmas portas sem rede: usuário fixo já logado, documento no `sessionStorage` da aba (sobrevive a reload/HMR, some ao fechar a aba; aba nova = conta nova). É o **modo teste**
   - `index.ts` — escolhe qual usar por `VITE_PERSISTENCE` (`memory` → teste; qualquer outra coisa → Firebase)
 - `src/domain/persistence.ts` — `hydrateUserDoc` (documento cru → estado; **é a função explícita de migração**, tolera todo formato antigo) e `serializeState` (estado → documento, com `schemaVersion`)
 - `.env.example` — variáveis suportadas (todas opcionais). `.env.teste` liga o modo memória pro `npm run dev:teste`
@@ -72,7 +72,8 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `checks.ts` — quem pode ser marcado (`canToggleCheck`: dia fechado é read-only, dia futuro não
     chegou) e `computePendingPetXP`, que calcula o XP dos pets de forma idempotente
   - `stats.ts` — `computeStats` (uma passada só) e `calcStreaks`
-- `tests/` — Vitest sobre o domínio
+- `tests/` — Vitest sobre o domínio e a infra em memória
+- `e2e/` + `playwright.config.ts` — smoke test de ponta a ponta no modo teste
 - `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`
 - `public/idle/pets/{nome}/` — convenção pra sprites de pets
 - Sprites são frames sequenciais nomeados `0.png`, `1.png`, ...
@@ -82,12 +83,13 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Workflow
 
-1. `npm run dev:teste` sobe o app em `http://localhost:5174` em **modo teste**: sem Firebase, já logado num usuário fixo, começa como conta nova (onboarding aparece), dados somem no reload. É o jeito rápido de testar qualquer fluxo sem tocar em dados reais
+1. `npm run dev:teste` sobe o app em `http://localhost:5174` em **modo teste**: sem Firebase, já logado num usuário fixo, cada aba nova começa como conta nova (onboarding aparece); os dados vivem na aba (sobrevivem a reload, somem ao fechar). É o jeito rápido de testar qualquer fluxo sem tocar em dados reais
 2. `npm run dev` sobe em `http://localhost:5173` com Firebase real (`localhost` já é domínio autorizado no Firebase Auth) — pra validar login e persistência de verdade
 3. Não existe mais cópia pra replicar: uma base só, dois modos por ambiente
 4. `npm test` (Vitest) e `npm run typecheck` antes de commitar
-5. `npm run build` gera o `dist/`
-6. Commit + push → Vercel builda e publica sozinho
+5. `npm run test:e2e` roda o smoke test (Playwright, `e2e/smoke.spec.ts`) contra o modo teste — os dez fluxos principais, cada um numa aba nova com o relógio fixo. Sobe o servidor sozinho. **Rodar antes de mexer em UI.** Usa o Chromium do próprio Playwright em headless (`npx playwright install chromium` uma vez). **Nunca o Chrome/Edge do sistema nesta máquina**: o Cold Turkey Blocker fecha qualquer `chrome.exe`/`msedge.exe` sem a extensão dele — levando as abas reais junto. `npm run test:e2e:ui` e `--headed` usam o Chromium completo, que ele pode pegar pelo nome; avisar antes
+6. `npm run build` gera o `dist/`
+7. Commit + push → Vercel builda e publica sozinho
 
 ## Princípios arquiteturais
 
