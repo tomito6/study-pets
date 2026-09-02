@@ -54,7 +54,15 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 ## Arquivos
 
 - `index.html` — o HTML do app (entry do Vite). Só markup e CSS; o JS mora em `src/main.js`
-- `src/main.js` — todo o script do app, extraído verbatim do `<script type="module">` antigo
+- `src/main.js` — o script do app: DOM, estado, render, Firebase. Chama o domínio, não duplica regra
+- `src/domain/` — regras puras em TypeScript, sem DOM/Firebase/estado global:
+  - `types.ts` — tipos do domínio (`StudyBlock`, `UserConfig`, `RecurringEventSeries`, `CheckRecord`, ...)
+  - `time.ts` — `dk`, `timeToMins`, `minsToTime`, `mondayOf`, `aggregateMins` (tudo em horário local)
+  - `config.ts` — `DEFAULT_CFG` e `migrateConfig`
+  - `planner.ts` — `generateBlocks` (a memoização ficou no `main.js`) e `calcActualEnd`
+  - `events.ts` — `expandEventsForDate`, com semanal/quinzenal/mensal e exceções
+  - `progression.ts` — XP, moedas, `LEVELS`, skills e o bônus da Noturno
+- `tests/` — Vitest sobre o domínio
 - `index_teste.html` — versão sem Firebase pra testar localmente (é versionado). **Some na Fase 4**, quando um adapter de persistência escolhido por env substituir a cópia manual
 - `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`. **Exceção**: `index_teste.html` é aberto direto do disco, sem servidor, então ele aponta pra `public/idle/...`
 - `public/idle/pets/{nome}/` — convenção pra sprites de pets
@@ -75,6 +83,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 Mais importantes que valores concretos. Estes você protege ao mexer no código:
 
+- **Regra pura mora em `src/domain/`**: se uma função só transforma dados em dados, ela vai pro domínio, é tipada e ganha teste. O domínio **não pode** tocar DOM, Firebase, `state`, áudio, notificação ou `new Date()` implícito — quando precisa do "agora", recebe como parâmetro (ver `SkillContext` em `progression.ts`). O `main.js` fica com o que é efeito: render, estado, persistência, e wrappers finos que ligam um ao outro (`getEventsForDate`, `noturnoBonusEligible`, a memoização de `generateBlocks`).
 - **Estado centralizado**: tudo em um único objeto `state`. Não criar globais soltas.
 - **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null, bonus: number }` — `pet` = equipado no momento do check; `bonus` = multiplicador aditivo de XP (0 ou 0.05) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
 - **Memoization em `generateBlocks`**: a função tem cache. Sempre que alterar config ou eventos, chamar `clearBlockCache()`.

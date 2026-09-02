@@ -24,52 +24,22 @@ const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
 
+// ---- Domínio puro (sem DOM, sem Firebase, testado em tests/) ----
+import { DEFAULT_CFG, migrateConfig } from './domain/config';
+import { dk, timeToMins, minsToTime, mondayOf, aggregateMins } from './domain/time';
+import {
+  LEVELS, calcXP, coinsForBlock, coinsForStudyBlock, dailyBonusForStreak,
+  getLevel, getLevelIdx, getLevelPct, xpFromCheck, checkPetOf,
+  noturnoBonusEligible as noturnoBonusEligiblePure,
+} from './domain/progression';
+import { expandEventsForDate } from './domain/events';
+import { generateBlocks as generateBlocksPure, calcActualEnd } from './domain/planner';
+
 // ============================================================
 // CONSTANTS
 // ============================================================
-const DEFAULT_CFG = {
-  // start/end mantidos só pra retrocompat (migração). studyWindows é a fonte da verdade.
-  start:'09:00', lunch:'13:00', lunchDur:60, end:'18:00',
-  studyWindows: [{ start:'09:00', end:'18:00' }],  // janelas de estudo do dia
-  pomo:25, shortBreak:5, longBreak:20, hasLunch:true,
-  periodStart: null, periodEnd: null, skipWeekends: false,
-  dailyStudyMin: 60,
-};
-
-// Migra cfg antigo (sem studyWindows) pra novo formato. Idempotente.
-function migrateConfig(cfg) {
-  if (!cfg) return cfg;
-  if (!Array.isArray(cfg.studyWindows) || cfg.studyWindows.length === 0) {
-    cfg.studyWindows = [{ start: cfg.start || '09:00', end: cfg.end || '18:00' }];
-  }
-  if (cfg.extraBreaks) delete cfg.extraBreaks;   // descontinuado
-  return cfg;
-}
-
-// Bônus diário por dia de streak. Ordem decrescente — primeiro match vence.
-const DAILY_BONUS_TIERS = [
-  [30, 25],
-  [14, 18],
-  [7,  12],
-  [3,  8],
-  [1,  5],
-];
-function dailyBonusForStreak(streakDay) {
-  for (const [min, coins] of DAILY_BONUS_TIERS) {
-    if (streakDay >= min) return coins;
-  }
-  return 0;
-}
-
-// Moedas por bloco "estudo-equivalente": 1 moeda por minuto (XP é 2×, moeda é 1×).
-// Vale pra estudo e evento igualmente. Skills/streak podem somar bônus em cima depois.
-function coinsForStudyBlock(pomoMins) {
-  return pomoMins;
-}
-function coinsForBlock(b, durMin) {
-  if (b.type === 'estudo' || b.type === 'event') return durMin;
-  return 0;
-}
+// DEFAULT_CFG, migrateConfig, dailyBonusForStreak, coinsForBlock e coinsForStudyBlock
+// agora vivem em src/domain/ (config.ts e progression.ts), importados no topo.
 
 // Saldo de moedas = total ganho - gasto. Nunca negativo.
 function getCoinBalance() {
@@ -82,33 +52,25 @@ function getCoinBalance() {
 // ============================================================
 // Skill Noturno: +5% XP em blocos de estudo a partir das 18h, com a coruja equipada
 // e a skill ativa DESDE ANTES do bloco começar (evita exploit de equipar no final).
+// A regra vive em src/domain/progression.ts. Aqui só ligamos ela ao estado atual.
+function skillContext() {
+  return {
+    activePet: state.pets.active || null,
+    owlSkill: (state.skills && state.skills.owl) || null,
+    activatedAt: (state.skills && state.skills.activatedAt) || 0,
+    now: new Date(),
+  };
+}
 function noturnoBonusEligible(b, dateKey) {
-  if (b.type !== 'estudo') return false;
-  if (state.pets.active !== 'owl') return false;
-  if (!state.skills || state.skills.owl !== 'noturno') return false;
-  const hour = parseInt(b.time.split(':')[0]);
-  if (hour < 18) return false;
-  if (dateKey !== dk(new Date())) return false;
-  const [bh, bm] = b.time.split(':').map(Number);
-  const blockStartMs = new Date().setHours(bh, bm, 0, 0);
-  if ((state.skills.activatedAt || 0) > blockStartMs) return false;
-  return true;
+  return noturnoBonusEligiblePure(b, dateKey, skillContext());
 }
-
-// XP efetivo de um check: base * (1 + bonus salvo no check). Sem check ou sem bonus = base.
-function xpFromCheck(b, check) {
-  if (!check || !check.bonus) return b.xp;
-  return Math.round(b.xp * (1 + check.bonus));
-}
+// xpFromCheck vem do domínio (importado no topo).
 
 const FUTURE_WEEKS = 24;       // how many weeks ahead from current Monday
 const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const SESSION_NAMES = ['Sessão 1','Sessão 2','Sessão 3','Sessão 4','Sessão 5','Sessão 6'];
 const NUM_SESSIONS = 6;
-const LEVELS = [
-  [0,'Zero'],[250,'Iniciante'],[750,'Focado'],[1500,'Dedicado'],
-  [2500,'Consistente'],[4000,'Avançado'],[6000,'Expert'],[10000,'Mestre']
-];
+// LEVELS vem de src/domain/progression.ts (importado no topo).
 
 // ============================================================
 // STATE — single source of truth
@@ -153,18 +115,7 @@ let accountDeleted = false;   // true depois que a conta foi apagada — impede 
 // ============================================================
 // DATE / TIME HELPERS
 // ============================================================
-const dk = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const timeToMins = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
-const minsToTime = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-
-function mondayOf(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0,0,0,0);
-  return d;
-}
+// dk, timeToMins, minsToTime e mondayOf vêm de src/domain/time.ts (importados no topo).
 
 function dateForWeekDay(weekN, dayIdx) {
   const d = new Date(WEEKS[weekN-1].start);
@@ -177,8 +128,6 @@ function findWeek(date) {
   return 1;
 }
 
-const monthKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-
 function currentWeekDayKeys() {
   const mon = mondayOf(new Date());
   const keys = [];
@@ -189,11 +138,7 @@ function currentWeekDayKeys() {
   return keys;
 }
 
-function aggregateMins(doneObj, plannedObj, keys) {
-  let done = 0, planned = 0;
-  keys.forEach(k => { done += doneObj[k]||0; planned += plannedObj[k]||0; });
-  return { done, planned, pct: planned > 0 ? Math.round(done/planned*100) : 0 };
-}
+// aggregateMins vem de src/domain/time.ts (importado no topo).
 
 // ============================================================
 // WEEKS — dynamic, no hardcoded dates
@@ -268,164 +213,12 @@ function forEachDay(callback) {
 // ============================================================
 const blockCache = new Map();
 
+// A geração em si vive em src/domain/planner.ts (pura). Aqui fica só a memoização,
+// que é preocupação de performance da UI, não regra de domínio.
 function generateBlocks(cfg, events = []) {
   const cacheKey = JSON.stringify({ cfg, events });
   if (blockCache.has(cacheKey)) return blockCache.get(cacheKey);
-
-  // Resolve janelas de estudo (fallback pra retrocompat se vier cfg antigo)
-  const rawWindows = Array.isArray(cfg.studyWindows) && cfg.studyWindows.length > 0
-    ? cfg.studyWindows
-    : [{ start: cfg.start, end: cfg.end }];
-  const windows = rawWindows
-    .filter(w => w && w.start && w.end)
-    .map(w => ({ start: timeToMins(w.start), end: timeToMins(w.end) }))
-    .filter(w => w.end > w.start)
-    .sort((a, b) => a.start - b.start);
-
-  if (windows.length === 0) {
-    blockCache.set(cacheKey, []);
-    return [];
-  }
-
-  // Bloqueios: eventos (countsAsStudy=true→'event', false→'intervalo') + almoço.
-  const blocked = [];
-  for (const ev of events) {
-    const counts = ev.countsAsStudy !== false;   // default true (retrocompat)
-    const entry = {
-      start: timeToMins(ev.start), end: timeToMins(ev.end),
-      name: ev.name,
-      type: counts ? 'event' : 'intervalo',
-    };
-    if (ev._seriesId) entry._seriesId = ev._seriesId;
-    blocked.push(entry);
-  }
-  if (cfg.hasLunch !== false) {
-    const lunchStart = timeToMins(cfg.lunch);
-    blocked.push({
-      start: lunchStart, end: lunchStart + cfg.lunchDur,
-      name: '🍽️ Almoço', type: 'almoco'
-    });
-  }
-  blocked.sort((a, b) => a.start - b.start);
-
-  const blocks = [];
-  let sessionN = 0;
-
-  // Emite um bloqueio como block (almoço/evento/intervalo) preservando metadados úteis.
-  function emitBlocked(b) {
-    const out = {
-      time: minsToTime(b.start),
-      endTime: minsToTime(b.end),
-      name: b.type === 'event' ? `📅 ${b.name}` : (b.type === 'intervalo' && b._seriesId ? `📅 ${b.name}` : b.name),
-      type: b.type,
-      xp: b.type === 'event' ? calcXP(b.end - b.start) : 0,
-      session: b.type === 'event' ? sessionN : undefined,
-    };
-    if (b._seriesId) out._seriesId = b._seriesId;
-    blocks.push(out);
-  }
-
-  // Pra cada janela, gera pomos+pausas e respeita bloqueios internos.
-  // Antes de cada janela, emite bloqueios que estão entre a anterior e esta (ou antes da primeira).
-  for (let wi = 0; wi < windows.length; wi++) {
-    const win = windows[wi];
-    const gapStart = wi === 0 ? -Infinity : windows[wi - 1].end;
-    const interGap = blocked.filter(b => b.start >= gapStart && b.end <= win.start);
-    for (const b of interGap) {
-      emitBlocked(b);
-      sessionN++;
-    }
-
-    let cur = win.start;
-    const winEnd = win.end;
-    let pomoCount = 0;
-    const MAX = 300; let iter = 0;
-
-    while (cur < winEnd && iter++ < MAX) {
-      // Dentro de bloqueio que cruza/cai nesta janela?
-      const inBlock = blocked.find(b => cur >= b.start && cur < b.end);
-      if (inBlock) {
-        emitBlocked(inBlock);
-        cur = inBlock.end;
-        pomoCount = 0;
-        sessionN++;
-        continue;
-      }
-
-      // Próximo bloqueio dentro desta janela
-      const nextBlock = blocked.find(b => b.start > cur && b.start < winEnd);
-      const nextBlockStart = nextBlock ? nextBlock.start : winEnd;
-      const gap = nextBlockStart - cur;
-
-      // Gap menor que pomo: mini ou stretch
-      if (gap < cfg.pomo && gap > 0) {
-        const half = cfg.pomo / 2;
-        const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
-        if (gap >= half) {
-          const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
-          blocks.push({
-            time: minsToTime(cur), endTime: minsToTime(cur + gap),
-            name: `📖 Estudo ${estudoN}`, type: 'estudo',
-            xp: calcXP(gap), session: sessionN, mini: true
-          });
-        } else if (lastStudy) {
-          lastStudy.endTime = minsToTime(timeToMins(lastStudy.endTime) + gap);
-          lastStudy.xp = calcXP(timeToMins(lastStudy.endTime) - timeToMins(lastStudy.time));
-        }
-        cur = nextBlockStart;
-        continue;
-      }
-
-      // Pomodoro normal
-      const estudoN = blocks.filter(b => b.type === 'estudo').length + 1;
-      blocks.push({
-        time: minsToTime(cur), endTime: minsToTime(cur + cfg.pomo),
-        name: `📖 Estudo ${estudoN}`, type: 'estudo',
-        xp: calcXP(cfg.pomo), session: sessionN
-      });
-      cur += cfg.pomo;
-      pomoCount++;
-
-      const isLong = pomoCount % 4 === 0;
-      if (isLong) sessionN++;
-      const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
-      const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
-      const bxp = Math.max(1, breakDur);
-      const afterBreak = cur + breakDur;
-      const nextBlockAfterBreak = blocked.find(b => b.start > cur && b.start < winEnd);
-      const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : winEnd;
-
-      if (afterBreak > nextStartAfterBreak) {
-        cur = nextStartAfterBreak;
-        continue;
-      }
-      const pausaExataAteBloqueio = afterBreak === nextStartAfterBreak;
-      if (pausaExataAteBloqueio || afterBreak + cfg.pomo <= nextStartAfterBreak) {
-        blocks.push({
-          time: minsToTime(cur), endTime: minsToTime(afterBreak),
-          name: breakName, type: 'pausa', xp: bxp, session: sessionN
-        });
-        cur = afterBreak;
-      } else if (nextStartAfterBreak < winEnd) {
-        continue;
-      } else {
-        break;
-      }
-    }
-
-    // Próxima janela = nova sessão (separação visual)
-    sessionN++;
-  }
-
-  // Bloqueios depois da última janela — emite pra não esconder do plano
-  const lastWinEnd = windows[windows.length - 1].end;
-  blocked.filter(b => b.start >= lastWinEnd).forEach(b => emitBlocked(b));
-
-  // Último bloco deve ser sempre um estudo (limpa pausas finais)
-  while (blocks.length > 0 && blocks[blocks.length - 1].type === 'pausa') {
-    blocks.pop();
-  }
-
+  const blocks = generateBlocksPure(cfg, events);
   blockCache.set(cacheKey, blocks);
   if (blockCache.size > 500) {
     const toDelete = [...blockCache.keys()].slice(0, 250);
@@ -434,40 +227,12 @@ function generateBlocks(cfg, events = []) {
   return blocks;
 }
 
-function calcXP(minutes) {
-  return minutes * 2;
-}
-
 function clearBlockCache() { blockCache.clear(); }
 
 // Eventos do dia: une avulsos em state.events[dateKey] + ocorrências expandidas de state.eventSeries.
 // Cada ocorrência de série herda o id da série em `_seriesId`, usado pra delete granular.
 function getEventsForDate(dateKey) {
-  const out = (state.events[dateKey] || []).slice();
-  const series = state.eventSeries || [];
-  if (series.length === 0) {
-    return out.sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
-  }
-  const date = new Date(dateKey + 'T12:00:00');
-  const dow = date.getDay();
-  for (const s of series) {
-    if (!s || !Array.isArray(s.weekdays) || s.weekdays.length === 0) continue;
-    if (s.anchor && dateKey < s.anchor) continue;
-    if (s.until && dateKey > s.until) continue;
-    if (Array.isArray(s.exceptions) && s.exceptions.includes(dateKey)) continue;
-    if (!s.weekdays.includes(dow)) continue;
-    if (s.freq === 'biweekly') {
-      const aMon = mondayOf(new Date((s.anchor || dateKey) + 'T12:00:00'));
-      const dMon = mondayOf(date);
-      const weeksDiff = Math.round((dMon - aMon) / (7 * 24 * 60 * 60 * 1000));
-      if (weeksDiff < 0 || weeksDiff % 2 !== 0) continue;
-    } else if (s.freq === 'monthly') {
-      const a = new Date((s.anchor || dateKey) + 'T12:00:00');
-      if (date.getDate() !== a.getDate()) continue;
-    }
-    out.push({ name: s.name, start: s.start, end: s.end, _seriesId: s.id, countsAsStudy: s.countsAsStudy !== false });
-  }
-  return out.sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+  return expandEventsForDate(dateKey, state.events, state.eventSeries || []);
 }
 
 function blocksForDay(dateKey) {
@@ -481,11 +246,7 @@ function blocksForDay(dateKey) {
   return generateBlocks(cfg, events);
 }
 
-function calcActualEnd(cfg) {
-  const blocks = generateBlocks(cfg, []);
-  const lastStudy = [...blocks].reverse().find(b => b.type === 'estudo');
-  return lastStudy ? lastStudy.endTime : cfg.end;
-}
+// calcActualEnd vem de src/domain/planner.ts (importado no topo).
 
 // ============================================================
 // CHECKS — by time string, not index
@@ -529,9 +290,7 @@ function getPetLevel(petId) {
 
 // Lê o petId associado a um check. Retrocompat: checks antigos eram `true` (sem pet).
 function checkPet(dateKey, blockTime) {
-  const v = state.checks[dateKey] && state.checks[dateKey][blockTime];
-  if (!v || v === true) return null;
-  return v.pet || null;
+  return checkPetOf(state.checks[dateKey] && state.checks[dateKey][blockTime]);
 }
 
 // Processa XP de dias fechados (anteriores a hoje OU hoje se encerrado manualmente)
@@ -723,18 +482,7 @@ function calcStreaks(dayStudyMins) {
 // ============================================================
 // LEVEL HELPERS
 // ============================================================
-function getLevel(xp) { let lv = LEVELS[0][1]; for (const [t, n] of LEVELS) { if (xp >= t) lv = n; } return lv; }
-function getLevelIdx(xp) {
-  for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i][0]) return i;
-  return 0;
-}
-function getLevelPct(xp) {
-  let lo = 0, hi = null;
-  for (let i = 0; i < LEVELS.length; i++) {
-    if (xp >= LEVELS[i][0]) { lo = LEVELS[i][0]; hi = LEVELS[i+1] ? LEVELS[i+1][0] : null; }
-  }
-  return hi ? Math.round(((xp - lo) / (hi - lo)) * 100) : 100;
-}
+// getLevel, getLevelIdx e getLevelPct vêm de src/domain/progression.ts (importados no topo).
 
 // ============================================================
 // FIREBASE LOAD / SAVE

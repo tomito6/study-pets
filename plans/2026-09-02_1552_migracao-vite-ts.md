@@ -81,3 +81,25 @@ disso; Fase 2 em diante sim.
 - Preview deploy por branch precisa de domínio autorizado no Firebase Auth. Prático: dar um alias fixo ao
   branch (ex. `study-pets-dev.vercel.app`) e autorizar só ele. `localhost` já vem autorizado.
 - **Não renomear o projeto no Vercel** (muda o domínio → quebra o login com Google até re-autorizar).
+
+---
+
+## Estado da migração
+
+- **Fase 1 — feita** (commit `da6949d`, branch `refactor/fase-1-seguranca`). `firestore.rules` ainda
+  **não publicado** no console do Firebase; até lá o risco segue aberto.
+- **Fase 2 — feita** (commit `ebeafc1`). Script inline → `src/main.js`, `idle/` → `public/idle/`,
+  Vite 8 + TypeScript 7 + Vitest 4, `vercel.json` explícito.
+- **Fase 3 — feita em parte** (branch `refactor/fase-3-dominio`). Extraídos pro domínio: tipos,
+  helpers de data, config/migração, planner, eventos recorrentes, XP/moedas/níveis/skills.
+  90 testes. Equivalência com o gerador antigo provada em 8064 combinações.
+  **Falta**: `computeStats` (~140 linhas, o pedaço mais entrelaçado com `state`) e as regras de
+  check (`toggleCheck`, `applyPendingPetXP`, dia fechado/futuro) — vão na próxima fatia.
+- **Fase 4 em diante — não começou.**
+
+## Achados que viraram pendência
+
+- Pausa curta sobreposta ao evento seguinte quando o pomo acaba na hora exata em que ele começa.
+  Bug antigo, travado por teste de caracterização. Ver `PENDENCIAS.md`.
+- `monthKey` estava declarado no `main.js` e nunca era chamado. Foi pro domínio (`time.ts`), onde
+  fica disponível pra quando a análise por mês precisar — mas segue sem uso.
