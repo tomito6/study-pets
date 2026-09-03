@@ -355,6 +355,63 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#group-panel')).toBeHidden();
   });
 
+  // Tela alta: a linha alvo precisa ficar longe da faixa de rolagem automática (64px do fundo),
+  // senão a página rola durante o arrasto e a alça vai parar uma linha além — de propósito.
+  test.describe('em tela alta', () => {
+    test.use({ viewport: { width: 480, height: 1400 } });
+
+  test('17. a alça de baixo estica e encolhe o trecho, e não invade outro grupo', async ({ page }) => {
+    await abrirApp(page);
+    const linhas = page.locator('.block-row');
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await linhas.nth(0).locator('.block-name').click();
+    await linhas.nth(4).locator('.block-name').click();
+    await page.locator('#grp-save').click();
+    const cabecalho = page.locator('.group-header');
+    await expect(cabecalho).toContainText('0/3');
+
+    // Alça de baixo até a linha 6 (10:30–10:55): 4 estudos, 7 linhas.
+    const alca = await page.locator('.gb-grip-bottom').boundingBox();
+    const alvo = await linhas.nth(6).boundingBox();
+    if (!alca || !alvo) throw new Error('sem posição na tela');
+    await page.mouse.move(alca.x + alca.width / 2, alca.y + alca.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(alvo.x + alvo.width / 2, alvo.y + alvo.height / 2, { steps: 8 });
+    await expect(page.locator('#group-hint')).toContainText('ajustar');
+    await expect(page.locator('.selection-rect')).toBeVisible();
+    await page.mouse.up();
+    await expect(cabecalho).toContainText('0/4');
+    await expect(page.locator('.block-row.in-group')).toHaveCount(7);
+
+    // De volta até a linha 2 (09:30–09:55): encolhe pra 2 estudos.
+    const alca2 = await page.locator('.gb-grip-bottom').boundingBox();
+    const volta = await linhas.nth(2).boundingBox();
+    if (!alca2 || !volta) throw new Error('sem posição na tela');
+    await page.mouse.move(alca2.x + alca2.width / 2, alca2.y + alca2.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(volta.x + volta.width / 2, volta.y + volta.height / 2, { steps: 8 });
+    await page.mouse.up();
+    await expect(cabecalho).toContainText('0/2');
+    await expect(page.locator('.block-row.in-group')).toHaveCount(3);
+
+    // Um segundo grupo logo abaixo; a alça do primeiro não passa por cima dele.
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await linhas.nth(4).locator('.block-name').click();
+    await linhas.nth(6).locator('.block-name').click();
+    await page.locator('#grp-save').click();
+    await expect(page.locator('.group-header')).toHaveCount(2);
+    const alca1 = await page.locator('.group-box.gc-0 .gb-grip-bottom').boundingBox();
+    const dentro = await linhas.nth(5).boundingBox();
+    if (!alca1 || !dentro) throw new Error('sem posição na tela');
+    await page.mouse.move(alca1.x + alca1.width / 2, alca1.y + alca1.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(dentro.x + dentro.width / 2, dentro.y + dentro.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await expect(page.locator('#toast')).toContainText('Já existe um grupo');
+    await expect(page.locator('.group-box.gc-0 .group-header')).toContainText('0/2'); // ficou como estava
+  });
+  });
+
   test.describe('no celular', () => {
     test.use({ hasTouch: true });
 
@@ -409,6 +466,29 @@ test.describe('Study Pets — smoke', () => {
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(antes + 50);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       await expect(page.locator('#group-panel')).toBeVisible(); // soltou longe da âncora: virou grupo
+    });
+
+    test('18. a alça da caixa responde ao dedo', async ({ page }) => {
+      await abrirApp(page);
+      const linhas = page.locator('.block-row');
+      await page.getByRole('button', { name: 'Agrupar' }).tap();
+      await linhas.nth(0).locator('.block-name').tap();
+      await linhas.nth(2).locator('.block-name').tap();
+      await page.locator('#grp-save').tap();
+      await expect(page.locator('.group-header')).toContainText('0/2');
+
+      const cdp = await page.context().newCDPSession(page);
+      const alca = await page.locator('.gb-grip-bottom').boundingBox();
+      if (!alca) throw new Error('alça sem posição');
+      const a = { x: alca.x + alca.width / 2, y: alca.y + alca.height / 2 };
+      const alvo = await centro(page, 4);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [a] });
+      for (let s = 1; s <= 6; s++) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: a.x, y: a.y + ((alvo.y - a.y) * s) / 6 }] });
+      }
+      await expect(page.locator('.block-row.selecting')).toHaveCount(5);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await expect(page.locator('.group-header')).toContainText('0/3');
     });
   });
 });

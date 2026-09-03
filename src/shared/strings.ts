@@ -58,6 +58,7 @@ export const strings = {
     hintFirst: 'Toque no primeiro bloco do grupo',
     hintLast: 'Agora toque no último bloco',
     hintDrag: 'Arraste até o último bloco e solte',
+    hintResize: 'Solte pra ajustar o trecho',
     panelNew: '✏️ Novo grupo',
     panelEdit: '✏️ Editar grupo',
     summary: (start: string, end: string, count: number, dur: string) =>
@@ -76,6 +77,7 @@ export const strings = {
     progressMins: (done: string, total: string) => `${done} de ${total}`,
     noStudy: 'sem estudos neste trecho',
     headerTitle: 'Toque pra editar o grupo',
+    gripTitle: 'Arraste pra ajustar o trecho',
     refusal: {
       closed: 'Dia encerrado 🔒',
       'end-before-start': 'O fim tem que ser depois do início.',

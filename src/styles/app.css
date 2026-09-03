@@ -717,6 +717,11 @@
   .gh-bar{height:4px;border-radius:2px;background:var(--gc-track);margin:0 4px 8px;overflow:hidden;}
   .gh-bar-fill{height:100%;border-radius:2px;background:var(--gc);transition:width .3s;}
   .group-rows{display:flex;flex-direction:column;gap:3px;}
+  .gb-grip{display:flex;align-items:center;justify-content:center;height:18px;width:96px;margin:0 auto;cursor:ns-resize;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .gb-grip::before{content:'';width:32px;height:4px;border-radius:2px;background:var(--gc-border);opacity:.7;transition:opacity .15s,background .15s;}
+  .gb-grip:hover::before,.gb-grip:active::before{opacity:1;background:var(--gc);}
+  .gb-grip-top{margin-top:-8px;margin-bottom:-2px;}
+  .gb-grip-bottom{margin-top:-2px;margin-bottom:-6px;}
   .group-rows .session-divider{margin:6px 0 2px;}
   .block-row.selecting{filter:brightness(1.2);}
   .blocks-list{position:relative;}

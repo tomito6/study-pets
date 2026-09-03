@@ -189,12 +189,20 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
     else startsAt.set(pos.index, pos);
   }
   // Cor pela ordem do grupo no dia (`groups` vem ordenado por horário): até 6 grupos, 6 cores.
-  const boxFor = (group: StudyGroup, empty: boolean, children?: ReactNode[]) => (
+  const boxFor = (group: StudyGroup, empty: boolean, children?: ReactNode[], rows?: { first: number; last: number }) => (
     <GroupBox
       key={`g-${group.id}`}
       group={group}
       progress={groupProgress(group, blocks, dayChecks)}
       empty={empty}
+      grips={
+        rows && selection.enabled
+          ? {
+              top: selection.gripProps(group.id, 'start', rows.first, rows.last),
+              bottom: selection.gripProps(group.id, 'end', rows.first, rows.last),
+            }
+          : undefined
+      }
       colorClass={`gc-${Math.max(0, groups.indexOf(group)) % GROUP_COLORS}`}
       onEdit={() => onEditGroup(group)}
     >
@@ -205,9 +213,9 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
     for (const { group } of emptyAt.get(index) ?? []) items.push(boxFor(group, true));
   };
 
-  let box: { group: StudyGroup; children: ReactNode[] } | null = null;
+  let box: { group: StudyGroup; first: number; last: number; children: ReactNode[] } | null = null;
   const closeBox = () => {
-    if (box) items.push(boxFor(box.group, false, box.children));
+    if (box) items.push(boxFor(box.group, false, box.children, { first: box.first, last: box.last }));
     box = null;
   };
 
@@ -234,11 +242,12 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
     if (start) {
       // Sessão nova começando junto com o grupo: o divisor fica fora da caixa (sessão > grupo).
       if (divider) items.push(divider);
-      box = { group: start.group, children: [] };
+      box = { group: start.group, first: i, last: i, children: [] };
     } else if (divider) {
       (box ? box.children : items).push(divider);
     }
 
+    if (box) box.last = i;
     (box ? box.children : items).push(
       <BlockRow
         key={`${b.type}-${b.time}-${b.endTime}`}

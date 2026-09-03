@@ -1,5 +1,6 @@
 // "Novo grupo" / "Editar grupo": nome e objetivo sobre um trecho já escolhido na
-// lista. O trecho não se edita aqui — pra mudar, apaga e seleciona de novo.
+// lista. O trecho não se digita aqui — horário livre cortaria bloco pelo meio; pra
+// mudar, puxa a alça da caixa (linhas inteiras, sempre).
 
 import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
