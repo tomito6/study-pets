@@ -61,6 +61,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `plan/` — a aba Plano inteira: `PlanTab.tsx` (XP card, stats do dia, semana/dia, "Encerrar o dia"), `BlockList.tsx` (sessões e linhas com check — a lógica de clique do `renderBlocks` antigo mora aqui), `feedback.ts` (ripple + "+X XP" flutuante), `useMinuteTick.ts` (re-render na virada do minuto, pro destaque "agora")
   - `timer/` — `TimerBar.tsx` (barra "Em andamento", volume, ✕ Parar) e `FocusOverlay.tsx` (modo foco: anel que drena, próximo bloco, ganho ao concluir). Os dois **derivam** o restante do relógio a cada segundo com `useSecondTick` — o store só sabe qual bloco está rodando
   - `events/` — os três modais do Plano: `EventPanel.tsx` (novo evento, com recorrência), `EventDeleteModal.tsx` (só este dia / a série / avulso), `LunchPanel.tsx` (almoço só deste dia). São **filhos do `PlanTab`**, que guarda qual está aberto em `useState` — modal é estado local, não vai pro store
+  - `analytics/AnalyticsTab.tsx` — a aba Análise inteira (cartão de perfil + sparkline, sub-nav Hoje/Semana/Geral/Recordes como estado local, aderência, dots da meta, heatmap, horas, drop-off, recordes). Só formata: os cálculos estão em `domain/analytics.ts`
   - `settings/` — a página de Configurações inteira: `SettingsPage.tsx` (Rotina/Geral, o botão ⚙️ flutuante e "aberta ou fechada" como estado local), `ConfigPreview.tsx` (Resumo do dia), `StudyWindowsEditor.tsx`, `FitStudyModal.tsx` (Encaixar estudo), `DangerModals.tsx` (cancelar sessão, apagar conta). O formulário é um rascunho (`ConfigDraft`) que só vira config ao Salvar
   - `shell/Modal.tsx` — a casca `.panel-overlay.center > .panel-sheet` de todo modal; clicar fora fecha
   - `shell/SaveIndicator.tsx` — "Salvando… / Salvo ✓"
@@ -74,6 +75,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `settings.ts` — `saveSettings` (preserva `periodStart`, refaz semanas, reagenda o prompt de fim de dia; **recusa campo numérico vazio**, que antes virava `NaN` salvo) e `cancelSession`
   - `account.ts` — `deleteAccount`: doc primeiro, usuário depois; devolve o estágio que falhou
   - `session.ts` — entrar/sair
+- `src/domain/analytics.ts` — `currentWeekKeys`, `goalWeek` (os 7 dots), `heatmap` (7×16 células, intensidade por % da meta), `hourBars`, `dropoff`, `sparkline` (8 semanas), `nextLevel`
 - `src/domain/settings.ts` — `ConfigDraft` ↔ `UserConfig` (`draftFromConfig`/`normalizeConfig`), `summarizeConfig` (o Resumo do dia), `fitStudySuggestions` (o algoritmo do Encaixar), formatação de durações
 - `src/domain/planDelta.ts` — o que mudou no plano de um dia (estudos a mais/menos, novo fim), puro
 - `src/domain/timer.ts` — `timerProgress` (restante = fim − agora; é por isso que o timer sobrevive a reload), `canStartBlock`, `soundForBlock`, `blockNumberInSession`, `nextBlockAfter`

@@ -159,8 +159,11 @@ disso; Fase 2 em diante sim.
     591 → 354. Smoke 9/9 de primeira; 248 unitários (`.env.test` liga a infra em memória pro Vitest).
     Duas mudanças de comportamento, de propósito: campo numérico vazio não salva mais (virava `NaN`
     na config), e o ⚙️ não aparece mais na tela de login (ficava fora do `#app`).
-  - **Próximas fatias**, nesta ordem: Análise, Perfil + Pets, Onboarding + Encerrar o dia (leva
-    `openFinishDay`, `openOnboarding` e `rescheduleEndOfDayPrompt`, e fecha a ponte).
+  - **Fatia 6 — feita**: Análise. `domain/analytics.ts` (semana atual, dots da meta, heatmap,
+    horas, drop-off, sparkline — dados, não texto) e `features/analytics/AnalyticsTab.tsx`. Legado
+    1174 → 926; `index.html` 354 → 241. Smoke 9/9; 266 unitários.
+  - **Próximas fatias**: Perfil + Pets, Onboarding + Encerrar o dia (leva `openFinishDay`,
+    `openOnboarding` e `rescheduleEndOfDayPrompt`, e fecha a ponte). Depois, Fase 6: remover o legado.
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência

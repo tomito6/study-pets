@@ -14,6 +14,7 @@ import { StrictMode, type ReactElement } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { Header } from './app/Header';
+import { AnalyticsTab } from './features/analytics/AnalyticsTab';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { PlanTab } from './features/plan/PlanTab';
 import { SettingsPage } from './features/settings/SettingsPage';
@@ -32,6 +33,7 @@ function mountIsland(hostId: string, element: ReactElement): void {
 mountIsland('login-root', <LoginScreen />);
 mountIsland('header-root', <Header />);
 mountIsland('plan-root', <PlanTab />);
+mountIsland('analytics-root', <AnalyticsTab />);
 mountIsland('timer-root', <TimerBar />);
 mountIsland('focus-root', <FocusOverlay />);
 mountIsland('settings-root', <SettingsPage />);
