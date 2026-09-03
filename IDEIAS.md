@@ -428,6 +428,67 @@ bloqueio de site depois, se ainda parecer necessário.
 emocional que funciona — ou a que passa do ponto)? Pausa entra? Tolerância de quantos segundos?
 Desligar o hardcore no meio da sequência: pode, sem custo, ou é desistir?
 
+## Conta com e-mail e senha, além do Google — 2026-09-03
+
+Ideia do Tomi: criar conta com e-mail e senha em vez de (só) conectar o Gmail. Faz sentido pra
+ambição de abrir pra qualquer estudante: nem todo mundo tem conta Google, e tem quem não queira ligar
+a conta do Google a um app de estudo. O Google continua como atalho; e-mail vira a porta padrão.
+
+**O que já ajuda:** o Firebase Auth tem o provedor Email/Password pronto (criar conta, entrar,
+"esqueci a senha" com e-mail de redefinição, verificação de e-mail opcional). Liga com um clique no
+console. As regras do Firestore não mudam (são por `request.auth.uid`). E o app já fala com o auth só
+pela porta `AuthPort` (`infrastructure/firebase/auth.ts`) — é estender a porta com
+`signUpWithEmail`/`signInWithEmail`/`resetPassword`, e o modo memória aceita qualquer coisa.
+
+**UI:** a tela de login vira um formulário curto (e-mail, senha, "Entrar" / "Criar conta" / "Esqueci a
+senha") com o botão do Google embaixo. Erros do Firebase traduzidos em `strings.ts` (e-mail já em uso,
+senha fraca, credencial inválida — nas versões novas do SDK, senha errada e e-mail inexistente voltam o
+mesmo erro de propósito, não dizer qual foi).
+
+**Pegadinhas que precisam de decisão:**
+- **Mesmo e-mail nos dois provedores.** Quem entrou com Google e depois tenta criar conta por e-mail com
+  o mesmo endereço cai em "e-mail já em uso". Ou orientar ("entre com o Google") ou oferecer vincular a
+  senha à conta existente (`linkWithCredential`). Vincular é o certo, mas é um fluxo a mais.
+- **Apagar conta** hoje reautentica com popup do Google quando o Firebase pede login recente. Usuário de
+  e-mail precisa do equivalente: um campo "digite sua senha" no modal de apagar.
+- **Verificação de e-mail**: exigir antes de usar cria fricção no minuto 1 (o oposto do starter);
+  não exigir permite conta com e-mail inventado. Proposta: não exigir, mas lembrar no perfil.
+- Senha: o Firebase cuida do hash e do mínimo de 6; pedir 8 e nada mais esperto que isso.
+
+**Em aberto:** o modo teste ganha uma tela de login falsa pra testar o formulário sem Firebase, ou o
+formulário só é testado em `npm run dev`? (O e2e hoje pula o login inteiro.)
+
+## Tutorial depois de criar a conta — 2026-09-03
+
+Ideia do Tomi: quando a conta é criada, um passo a passo explicando como as coisas funcionam —
+explicações **bem gerais** — ou um tutorial. A dor é real e só aparece com um usuário que não é o
+autor: a conta nova cai num plano já gerado, com sessões coloridas, checks, XP, pet, e ninguém diz que
+tocar no check dá XP, que o XP só entra ao encerrar o dia, que o plano se reajusta sozinho quando entra
+um evento, ou que tocar no bloco abre o foco. O Tomi sabe tudo isso porque construiu.
+
+**Dois formatos, e a recomendação:**
+- **Passo a passo antes de ver o app** (cartões "Bem-vindo", 4–5 telas). Simples de fazer, mas o
+  onboarding já tem dois passos (pet + período); somar cinco cartões antes da primeira tela é muito, e
+  explicação sem a coisa na frente evapora.
+- **Tour contextual em cima do app de verdade** (recomendado): balões apontando pro elemento real,
+  disparados na primeira visita a cada área. Plano: "Seu dia, já montado. Toque no check quando terminar
+  um bloco; toque no bloco pra entrar no modo foco." → "Almoçou mais cedo, entrou uma aula? Ajuste aqui
+  e o plano se reajusta." → "No fim do dia, encerre pra receber o XP e as moedas." Perfil: "Cada pet é
+  uma prova de horas estudadas; equipe um e ele ganha XP com você." Análise: uma frase. **Cinco balões
+  no total, duas linhas cada, "Pular" sempre visível.** Geral de propósito: explica o modelo, não os
+  botões.
+- Alternativa mínima, se o tour parecer grande: um card "Como funciona" com três linhas no topo do
+  plano, dispensável, só na primeira semana.
+
+**Regras:** linguagem adulta (o CLAUDE.md já veta infantilizar); não bloquear a tela — dá pra tocar em
+volta; revisitável em Configurações ("Ver o tour de novo"). Visto fica salvo (`state.tutorialSeen`,
+campo novo → default em `hydrateUserDoc` + teste); Cancelar sessão **não** zera (a pessoa já sabe).
+Tentador usar o pet inicial como guia ("Bolt te mostra o app") — é on-brand com "companhia", mas é
+justamente onde escorrega pro infantil; se for, uma linha e sem voz de mascote.
+
+**Ordem:** depende de ter outro usuário pra justificar. Enquanto só o Tomi usa, a versão mínima (card
+de três linhas) já paga o custo; o tour vem junto com a conta por e-mail, que é o que abre a porta.
+
 ---
 
 ## Como esse arquivo deve crescer
