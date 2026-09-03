@@ -4,10 +4,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { signIn } from '../../application/session';
+import { FORMS } from '../../domain/pets';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 
-const SPRITE_FRAMES = 4;
+/** O mascote da tela de entrada: o cachorro, não o personagem. */
+const MASCOT = FORMS.dog!;
 const SPRITE_INTERVAL_MS = 180;
 const STAR_COUNT = 30;
 
@@ -45,14 +47,14 @@ function Background() {
   );
 }
 
-function CharacterSprite() {
+function MascotSprite() {
   const [frame, setFrame] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setFrame((f) => (f + 1) % SPRITE_FRAMES), SPRITE_INTERVAL_MS);
+    const id = setInterval(() => setFrame((f) => (f + 1) % MASCOT.frames), SPRITE_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
   return (
-    <img className="ls-char" src={`idle/user/${frame}.png`} alt={strings.login.charAlt} id="ls-char-sprite" />
+    <img className="ls-char" src={MASCOT.sprite(frame)} alt={MASCOT.name} id="ls-char-sprite" />
   );
 }
 
@@ -76,7 +78,7 @@ export function LoginScreen() {
     <div id="login-screen">
       <Background />
       <div className="ls-content">
-        <CharacterSprite />
+        <MascotSprite />
         <div className="ls-eyebrow">{t.eyebrow}</div>
         <div className="ls-title">
           {t.title[0]}
