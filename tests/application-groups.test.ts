@@ -72,6 +72,15 @@ describe('editar e apagar', () => {
     expect(groupsForDay(HOJE)).toEqual([{ id: group.id, start: '09:00', end: '10:25', name: 'Análise II · revisão', goal: '' }]);
   });
 
+  it('updateGroup muda o trecho, e recusa se invadir outro grupo', () => {
+    const { group } = addGroup(HOJE, manha) as { ok: true; group: { id: string } };
+    addGroup(HOJE, { start: '14:00', end: '15:00', name: 'tarde', goal: '' });
+    expect(updateGroup(HOJE, group.id, { ...manha, end: '10:55' }).ok).toBe(true);
+    expect(groupsForDay(HOJE)[0]).toMatchObject({ id: group.id, start: '09:00', end: '10:55' });
+    expect(updateGroup(HOJE, group.id, { ...manha, end: '14:30' })).toEqual({ ok: false, reason: 'overlap' });
+    expect(groupsForDay(HOJE)[0]!.end).toBe('10:55');
+  });
+
   it('updateGroup de id desconhecido não faz nada', () => {
     addGroup(HOJE, manha);
     expect(updateGroup(HOJE, 'grp_nope', manha)).toEqual({ ok: false, reason: 'not-found' });

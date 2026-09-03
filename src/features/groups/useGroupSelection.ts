@@ -1,27 +1,33 @@
-// Seleção de um intervalo de linhas do plano pra virar grupo. Uma máquina de
-// estados só, com três portas de entrada: arrastar com o botão direito
-// (desktop), segurar o dedo numa linha e arrastar (celular) e o botão "Agrupar"
-// (fallback visível: toca no primeiro, toca no último). O gesto é açúcar — o
-// que importa é "da linha A até a linha B".
+// Seleção de um intervalo de linhas do plano pra virar grupo — e o ajuste do
+// trecho de um grupo que já existe, puxando a alça na borda da caixa. Uma
+// máquina de estados só, com as portas de entrada: arrastar com o botão direito
+// (desktop), segurar o dedo numa linha e arrastar (celular), o botão "Agrupar"
+// (fallback visível: toca no primeiro, toca no último) e as alças da caixa.
+// O gesto é açúcar — o que importa é "da linha A até a linha B".
 //
 // A seleção mora aqui, em estado React, e não no DOM: a lista re-renderiza a
 // cada check e a cada minuto, e a seleção precisa sobreviver a isso.
 //
 // No celular, o navegador quer transformar o dedo em scroll. Quando o toque
-// longo dispara, um listener nativo de `touchmove` (não passivo — o do React é
-// passivo e não cancela scroll) segura a página, e o ponteiro é capturado na
-// linha; a partir daí o dedo estica a seleção, e perto da borda da tela a
-// página rola sozinha. Soltar sem arrastar cai no modo de tocar no último bloco.
+// longo dispara (ou o dedo pega uma alça), um listener nativo de `touchmove`
+// (não passivo — o do React é passivo e não cancela scroll) segura a página, e o
+// ponteiro é capturado; a partir daí o dedo estica a seleção, e perto da borda
+// da tela a página rola sozinha. Soltar sem arrastar cai no modo de tocar no
+// último bloco.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react';
+
+export type GroupEdge = 'start' | 'end';
 
 export type SelectionMode =
   | { kind: 'idle' }
   /** Botão "Agrupar": esperando o primeiro toque. */
   | { kind: 'armed' }
   /** Primeira linha escolhida. `drag` = a seleção segue o ponteiro até soltar. */
-  | { kind: 'anchored'; anchor: number; focus: number; drag: boolean };
+  | { kind: 'anchored'; anchor: number; focus: number; drag: boolean }
+  /** Puxando a alça de um grupo: `fixed` é a linha da outra borda, que não se mexe. */
+  | { kind: 'resizing'; groupId: string; edge: GroupEdge; fixed: number; focus: number };
 
 export interface Range {
   from: number;
@@ -40,6 +46,8 @@ interface Options {
   enabled: boolean;
   /** Intervalo fechado de índices de linha, já em ordem. */
   onRange: (from: number, to: number) => void;
+  /** Soltou a alça de um grupo: o novo intervalo fechado de índices. */
+  onResize: (groupId: string, from: number, to: number) => void;
   /** Tentou selecionar com `enabled` false (ex.: botão direito num dia encerrado). */
   onRefuse: () => void;
 }
@@ -55,9 +63,17 @@ export interface RowSelectionProps {
   onPointerEnter: (e: RowEvent) => void;
 }
 
+export interface GripProps {
+  onPointerDown: (e: RowEvent) => void;
+  onPointerMove: (e: RowEvent) => void;
+  onPointerUp: (e: RowEvent) => void;
+  onPointerCancel: (e: RowEvent) => void;
+}
+
 export interface GroupSelection {
   mode: SelectionMode;
-  /** Há seleção em andamento — cliques nas linhas viram escolha de intervalo. */
+  enabled: boolean;
+  /** Há seleção ou ajuste em andamento — cliques nas linhas viram escolha de intervalo. */
   active: boolean;
   /** Intervalo selecionado (índices, em ordem) — o retângulo na lista desenha isto. */
   range: Range | null;
@@ -69,12 +85,14 @@ export interface GroupSelection {
   /** Clique numa linha. `true` = a seleção consumiu o clique. */
   handleClick: (idx: number) => boolean;
   rowProps: (idx: number) => RowSelectionProps;
+  /** Alça de um grupo: `first`/`last` são as linhas membros nas pontas. */
+  gripProps: (groupId: string, edge: GroupEdge, first: number, last: number) => GripProps;
   listProps: { onContextMenu: (e: ReactMouseEvent<HTMLElement>) => void };
 }
 
 const rowIndexOf = (el: HTMLElement): number => Number(el.getAttribute(ROW_ATTR));
 
-/** Linha sob o ponteiro — com captura, os eventos chegam na linha âncora, não na de baixo. */
+/** Linha sob o ponteiro — com captura, os eventos chegam em quem capturou, não na linha de baixo. */
 function rowIndexAt(x: number, y: number): number | null {
   const el = document.elementFromPoint(x, y)?.closest(`[${ROW_ATTR}]`);
   if (!el) return null;
@@ -82,18 +100,26 @@ function rowIndexAt(x: number, y: number): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Segura o scroll da página enquanto o dedo arrasta a seleção. Devolve o "solta". */
+/** Segura o scroll da página enquanto o dedo arrasta. Devolve o "solta". */
 function lockTouchScroll(): () => void {
   const block = (ev: TouchEvent) => ev.preventDefault();
   document.addEventListener('touchmove', block, { passive: false });
   return () => document.removeEventListener('touchmove', block);
 }
 
-export function useGroupSelection({ enabled, onRange, onRefuse }: Options): GroupSelection {
+const isDragging = (m: SelectionMode): boolean => (m.kind === 'anchored' && m.drag) || m.kind === 'resizing';
+
+function rangeOfMode(m: SelectionMode): Range | null {
+  if (m.kind === 'anchored') return { from: Math.min(m.anchor, m.focus), to: Math.max(m.anchor, m.focus) };
+  if (m.kind === 'resizing') return { from: Math.min(m.fixed, m.focus), to: Math.max(m.fixed, m.focus) };
+  return null;
+}
+
+export function useGroupSelection({ enabled, onRange, onResize, onRefuse }: Options): GroupSelection {
   const [mode, setMode] = useState<SelectionMode>({ kind: 'idle' });
   // Sempre os callbacks mais recentes, sem re-registrar handlers a cada render.
-  const latest = useRef({ enabled, onRange, onRefuse });
-  latest.current = { enabled, onRange, onRefuse };
+  const latest = useRef({ enabled, onRange, onResize, onRefuse });
+  latest.current = { enabled, onRange, onResize, onRefuse };
   // Espelho síncrono do modo: os handlers de ponteiro e o loop de rolagem leem daqui,
   // sem esperar o React renderizar.
   const modeRef = useRef(mode);
@@ -136,6 +162,11 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
     unlockScroll.current = null;
     lastPointer.current = null;
   };
+  const lockScrollFor = (pointerType: string) => {
+    if (pointerType !== 'touch') return;
+    unlockScroll.current?.();
+    unlockScroll.current = lockTouchScroll();
+  };
 
   const setModeNow = (m: SelectionMode) => {
     modeRef.current = m;
@@ -157,27 +188,35 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
     latest.current.onRange(Math.min(a, b), Math.max(a, b));
   };
 
-  /** Durante o arrasto, a linha sob o ponteiro vira o fim da seleção. */
+  /** Durante o arrasto, a linha sob o ponteiro vira a borda móvel. */
   const focusAt = (x: number, y: number) => {
     const m = modeRef.current;
-    if (m.kind !== 'anchored' || !m.drag) return;
+    if (!isDragging(m)) return;
     const idx = rowIndexAt(x, y);
-    if (idx !== null && idx !== m.focus) setModeNow({ ...m, focus: idx });
+    if (idx === null) return;
+    if (m.kind === 'anchored') {
+      if (idx !== m.focus) setModeNow({ ...m, focus: idx });
+    } else if (m.kind === 'resizing') {
+      // A alça de baixo não passa da linha de cima, e vice-versa: o grupo nunca vira do avesso.
+      const focus = m.edge === 'end' ? Math.max(idx, m.fixed) : Math.min(idx, m.fixed);
+      if (focus !== m.focus) setModeNow({ ...m, focus });
+    }
   };
 
   // Perto da borda da tela, rola a página e vai estendendo a seleção — até o ponteiro sair da faixa.
   const edgeStep = () => {
     edgeLoop.current = null;
     const p = lastPointer.current;
-    const m = modeRef.current;
-    if (!p || m.kind !== 'anchored' || !m.drag) return;
+    if (!p || !isDragging(modeRef.current)) return;
     const dy = p.y < EDGE_PX ? -EDGE_STEP_PX : p.y > window.innerHeight - EDGE_PX ? EDGE_STEP_PX : 0;
     if (dy === 0) return;
     window.scrollBy(0, dy);
     focusAt(p.x, p.y);
     edgeLoop.current = requestAnimationFrame(edgeStep);
   };
-  const keepEdgeScrolling = () => {
+  const trackPointer = (e: RowEvent) => {
+    lastPointer.current = { x: e.clientX, y: e.clientY };
+    focusAt(e.clientX, e.clientY);
     if (edgeLoop.current === null) edgeLoop.current = requestAnimationFrame(edgeStep);
   };
 
@@ -263,8 +302,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
       const timer = setTimeout(() => {
         press.current = null;
         // Daqui em diante o dedo estica a seleção, não rola a página.
-        unlockScroll.current?.();
-        unlockScroll.current = lockTouchScroll();
+        lockScrollFor('touch');
         try {
           el.setPointerCapture(pointerId);
         } catch {
@@ -280,9 +318,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
   const onPointerMove = (e: RowEvent) => {
     const m = modeRef.current;
     if (m.kind === 'anchored' && m.drag) {
-      lastPointer.current = { x: e.clientX, y: e.clientY };
-      focusAt(e.clientX, e.clientY);
-      keepEdgeScrolling();
+      trackPointer(e);
       return;
     }
     const p = press.current;
@@ -321,11 +357,53 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
     if (idx !== m.focus) setModeNow({ ...m, focus: idx });
   };
 
-  const range: Range | null =
-    mode.kind === 'anchored' ? { from: Math.min(mode.anchor, mode.focus), to: Math.max(mode.anchor, mode.focus) } : null;
+  // ---- alças da caixa de grupo ----
+  const gripProps = (groupId: string, edge: GroupEdge, first: number, last: number): GripProps => ({
+    onPointerDown: (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (!latest.current.enabled) {
+        latest.current.onRefuse();
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      blockContextMenu.current = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // ponteiro já inativo
+      }
+      lockScrollFor(e.pointerType);
+      setModeNow({
+        kind: 'resizing',
+        groupId,
+        edge,
+        fixed: edge === 'end' ? first : last,
+        focus: edge === 'end' ? last : first,
+      });
+    },
+    onPointerMove: (e) => {
+      if (modeRef.current.kind === 'resizing') trackPointer(e);
+    },
+    onPointerUp: () => {
+      const m = modeRef.current;
+      releaseContextMenu();
+      if (m.kind !== 'resizing') return;
+      endDrag();
+      setModeNow({ kind: 'idle' });
+      latest.current.onResize(m.groupId, Math.min(m.fixed, m.focus), Math.max(m.fixed, m.focus));
+    },
+    onPointerCancel: () => {
+      releaseContextMenu();
+      if (modeRef.current.kind === 'resizing') cancel();
+    },
+  });
+
+  const range = rangeOfMode(mode);
 
   return {
     mode,
+    enabled,
     active: mode.kind !== 'idle',
     range,
     isSelected: (idx) => range !== null && idx >= range.from && idx <= range.to,
@@ -334,6 +412,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
     cancel,
     handleClick,
     rowProps: (idx) => ({ 'data-row': idx, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onPointerEnter }),
+    gripProps,
     // O menu de contexto nunca tem valor em cima do plano — e o botão direito já é a seleção.
     listProps: { onContextMenu: (e) => e.preventDefault() },
   };

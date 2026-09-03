@@ -2,7 +2,7 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useEffect, useRef, useState } from 'react';
-import { canEditGroups, groupsForDay, validateGroup } from '../../application/groups';
+import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
 import { isDayClosed } from '../../domain/checks';
 import { rangeOf } from '../../domain/groups';
@@ -159,6 +159,13 @@ export function PlanTab() {
       }
       setModal({ kind: 'group', target: { dateKey: viewKey, ...range } });
     },
+    onResize: (groupId, from, to) => {
+      const g = groups.find((x) => x.id === groupId);
+      const range = rangeOf(blocks.slice(from, to + 1));
+      if (!g || !range || (range.start === g.start && range.end === g.end)) return;
+      const r = updateGroup(viewKey, groupId, { ...g, ...range });
+      if (!r.ok) showToast(tg.refusal[r.reason]);
+    },
     onRefuse: () => showToast(t.dayClosed),
   });
   const cancelSelection = selection.cancel;
@@ -186,6 +193,7 @@ export function PlanTab() {
   const hint =
     selection.mode.kind === 'armed' ? tg.hintFirst
     : selection.mode.kind === 'anchored' && selection.mode.drag ? tg.hintDrag
+    : selection.mode.kind === 'resizing' ? tg.hintResize
     : tg.hintLast;
 
   return (

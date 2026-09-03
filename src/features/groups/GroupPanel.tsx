@@ -1,5 +1,6 @@
-// "Novo grupo" / "Editar grupo": nome e objetivo sobre um trecho já escolhido na
-// lista. O trecho não se edita aqui — pra mudar, apaga e seleciona de novo.
+// "Novo grupo" / "Editar grupo": nome, objetivo e o trecho (início e fim). O trecho
+// chega da seleção na lista, mas dá pra ajustar aqui digitando — o resumo mostra na
+// hora quantos estudos cabem.
 
 import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
@@ -31,13 +32,20 @@ interface Props {
 function GroupForm({ target, onClose }: { target: GroupTarget; onClose: () => void }) {
   const [name, setName] = useState(target.group?.name ?? '');
   const [goal, setGoal] = useState(target.group?.goal ?? '');
+  const [start, setStart] = useState(target.start);
+  const [end, setEnd] = useState(target.end);
   const editing = !!target.group;
 
-  const p = groupProgress(target, blocksForDay(target.dateKey), undefined);
-  const summary = t.summary(target.start, target.end, p.total, formatCompact(p.minsTotal));
+  const complete = !!start && !!end;
+  const p = complete ? groupProgress({ start, end }, blocksForDay(target.dateKey), undefined) : null;
+  const summary = p ? t.summary(start, end, p.total, formatCompact(p.minsTotal)) : t.incomplete;
 
   const save = () => {
-    const input = { start: target.start, end: target.end, name, goal };
+    if (!complete) {
+      showToast(t.incomplete);
+      return;
+    }
+    const input = { start, end, name, goal };
     const r = target.group
       ? updateGroup(target.dateKey, target.group.id, input)
       : addGroup(target.dateKey, input);
@@ -86,6 +94,19 @@ function GroupForm({ target, onClose }: { target: GroupTarget; onClose: () => vo
           onKeyDown={onKey}
           maxLength={120}
         />
+      </div>
+      <div className="field-group">
+        <label>{t.rangeLabel}</label>
+        <div className="field-row">
+          <div>
+            <div className="field-sublabel">{t.start}</div>
+            <input type="time" id="grp-start" value={start} onChange={(e) => setStart(e.target.value)} onKeyDown={onKey} />
+          </div>
+          <div>
+            <div className="field-sublabel">{t.end}</div>
+            <input type="time" id="grp-end" value={end} onChange={(e) => setEnd(e.target.value)} onKeyDown={onKey} />
+          </div>
+        </div>
       </div>
       <div className="btn-row">
         <button className="reset-btn" onClick={onClose}>{t.cancel}</button>
