@@ -194,4 +194,74 @@ test.describe('Study Pets — smoke', () => {
     await expect(checksDeEstudo(page).first()).toHaveClass(/checked/);
     await expect(page.locator('#today-xp-val')).toContainText('+50 XP');
   });
+
+  test('11. agrupar blocos dá nome e objetivo a um trecho do dia', async ({ page }) => {
+    await abrirApp(page);
+    const linhas = page.locator('.block-row');
+
+    // Pelo botão: toca no primeiro bloco, depois no último.
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await expect(page.locator('#group-hint')).toContainText('primeiro bloco');
+    await linhas.nth(0).locator('.block-name').click();
+    await expect(page.locator('#group-hint')).toContainText('último bloco');
+    await linhas.nth(4).locator('.block-name').click(); // 10:00–10:25
+
+    await expect(page.locator('#group-panel')).toBeVisible();
+    await expect(page.locator('#group-summary')).toContainText('09:00 – 10:25');
+    await expect(page.locator('#group-summary')).toContainText('3 estudos');
+    await page.locator('#grp-name').fill('Análise II');
+    await page.locator('#grp-goal').fill('terminar a lista 3');
+    await page.locator('#grp-save').click();
+    await expect(page.locator('#group-panel')).toBeHidden();
+
+    const cabecalho = page.locator('.group-header');
+    await expect(cabecalho).toHaveCount(1);
+    await expect(cabecalho).toContainText('Análise II');
+    await expect(cabecalho).toContainText('terminar a lista 3');
+    await expect(cabecalho).toContainText('0/3');
+    await expect(page.locator('.block-row.in-group')).toHaveCount(5); // 3 estudos + 2 pausas
+
+    // O progresso acompanha os checks.
+    await checksDeEstudo(page).first().click();
+    await expect(cabecalho).toContainText('1/3');
+
+    // Tocar no cabeçalho edita.
+    await cabecalho.click();
+    await expect(page.locator('#group-panel')).toContainText('Editar grupo');
+    await expect(page.locator('#grp-name')).toHaveValue('Análise II');
+    await page.locator('#grp-name').fill('Análise II · revisão');
+    await page.locator('#grp-save').click();
+    await expect(cabecalho).toContainText('Análise II · revisão');
+
+    // Sobrevive ao reload (depois que o save com debounce terminou, como no teste 10).
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('.group-header')).toContainText('Análise II · revisão');
+  });
+
+  test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {
+    await abrirApp(page);
+    const linhas = page.locator('.block-row');
+    const de = await linhas.nth(0).boundingBox();
+    const ate = await linhas.nth(2).boundingBox();
+    if (!de || !ate) throw new Error('linhas sem posição na tela');
+
+    await page.mouse.move(de.x + de.width / 2, de.y + de.height / 2);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(ate.x + ate.width / 2, ate.y + ate.height / 2, { steps: 6 });
+    await expect(page.locator('.block-row.selecting')).toHaveCount(3);
+    await page.mouse.up({ button: 'right' });
+
+    await expect(page.locator('#group-panel')).toBeVisible();
+    await expect(page.locator('#group-summary')).toContainText('09:00 – 09:55');
+    await expect(page.locator('#group-summary')).toContainText('2 estudos');
+    await page.locator('#grp-save').click(); // sem nome → "Grupo"
+    await expect(page.locator('.group-header')).toContainText('Grupo');
+
+    // Trecho já ocupado por um grupo: recusa com aviso, sem abrir o painel.
+    await linhas.nth(1).click({ button: 'right' });
+    await expect(page.locator('#toast')).toContainText('Já existe um grupo');
+    await expect(page.locator('#group-panel')).toBeHidden();
+  });
 });

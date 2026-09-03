@@ -106,6 +106,22 @@ export type CheckRecord = { pet: PetId | null; bonus?: number } | true;
 /** Checks por dia e por horário do bloco. */
 export type ChecksByDate = Record<DateKey, Record<TimeString, CheckRecord>>;
 
+/**
+ * Grupo de estudo: nome e objetivo sobre um trecho do dia, salvo em `users/{uid}.groups`.
+ * É anotação por horário — nunca entra no gerador de blocos (ver `domain/groups.ts`).
+ */
+export interface StudyGroup {
+  id: string;
+  start: TimeString;
+  end: TimeString;
+  name: string;
+  /** Texto livre; vazio = sem objetivo. */
+  goal: string;
+}
+
+/** Grupos por dia. */
+export type GroupsByDate = Record<DateKey, StudyGroup[]>;
+
 export interface PetDefinition {
   id: PetId;
   name: string;

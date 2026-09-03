@@ -54,7 +54,7 @@ describe('cancelSession', () => {
 describe('deleteAccount (infra em memória)', () => {
   it('apaga o documento e desloga', async () => {
     const uid = auth.currentUser()!.uid;
-    await users.save(uid, { checks: {}, events: {}, eventSeries: [], lunchOverrides: {}, closedDays: {}, config: state.config, pets: state.pets, skills: state.skills, coinsSpent: 0, schemaVersion: 1 });
+    await users.save(uid, { checks: {}, events: {}, eventSeries: [], lunchOverrides: {}, closedDays: {}, config: state.config, pets: state.pets, skills: state.skills, coinsSpent: 0, groups: {}, schemaVersion: 1 });
     const stages: string[] = [];
     const r = await deleteAccount((s) => stages.push(s));
     expect(r).toBe('ok');

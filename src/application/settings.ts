@@ -46,6 +46,7 @@ export function cancelSession(): void {
   state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
   state.skills = { owl: null, activatedAt: 0 };
   state.coinsSpent = 0;
+  state.groups = {};
   rebuildWeeks();
   clearBlockCache();
   scheduleSave();

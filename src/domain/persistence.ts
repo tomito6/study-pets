@@ -9,9 +9,11 @@
 // formato que existia antes da migração — e são lidos normalmente.
 
 import { DEFAULT_CFG, migrateConfig } from './config';
+import { DEFAULT_GROUP_NAME } from './groups';
 import type {
   ChecksByDate,
   DateKey,
+  GroupsByDate,
   PetId,
   RecurringEventSeries,
   StudyEvent,
@@ -54,6 +56,8 @@ export interface PersistedState {
   pets: PetsState;
   skills: SkillsState;
   coinsSpent: number;
+  /** Grupos de estudo por dia (nome + objetivo num trecho). */
+  groups: GroupsByDate;
 }
 
 /** O documento como é escrito. */
@@ -73,12 +77,35 @@ export function emptyPersistedState(): PersistedState {
     pets: { owned: [], active: null, xp: {}, xpProcessedUntil: null },
     skills: { owl: null, activatedAt: 0 },
     coinsSpent: 0,
+    groups: {},
   };
 }
 
 type Raw = Record<string, unknown>;
 
 const isObj = (v: unknown): v is Raw => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** Grupos: só entradas com id/start/end de verdade; nome e objetivo ganham default. */
+function hydrateGroups(raw: unknown): GroupsByDate {
+  if (!isObj(raw)) return {};
+  const out: GroupsByDate = {};
+  for (const [day, list] of Object.entries(raw)) {
+    if (!Array.isArray(list)) continue;
+    const groups = list.filter(isObj).flatMap((g) =>
+      typeof g.id === 'string' && typeof g.start === 'string' && typeof g.end === 'string'
+        ? [{
+            id: g.id,
+            start: g.start,
+            end: g.end,
+            name: typeof g.name === 'string' && g.name.trim() ? g.name : DEFAULT_GROUP_NAME,
+            goal: typeof g.goal === 'string' ? g.goal : '',
+          }]
+        : [],
+    );
+    if (groups.length > 0) out[day] = groups;
+  }
+  return out;
+}
 
 /**
  * Lê um documento cru com tolerância a tudo que já existiu no Firestore: campos
@@ -110,6 +137,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
       ? { owl: (skills.owl as string) || null, activatedAt: (skills.activatedAt as number) || 0 }
       : { owl: null, activatedAt: 0 },
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
+    groups: hydrateGroups(d.groups),
   };
 }
 
@@ -126,5 +154,6 @@ export function serializeState(s: PersistedState): UserDoc {
     pets: s.pets,
     skills: s.skills || { owl: null, activatedAt: 0 },
     coinsSpent: s.coinsSpent || 0,
+    groups: s.groups || {},
   };
 }

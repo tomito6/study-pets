@@ -62,6 +62,27 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(s.skills).toEqual({ owl: null, activatedAt: 0 });
     expect(s.closedDays).toEqual({});
     expect(s.eventSeries).toEqual([]);
+    expect(s.groups).toEqual({});
+  });
+
+  it('grupos malformados são descartados; nome vazio vira "Grupo", objetivo ausente vira vazio', () => {
+    const s = hydrateUserDoc({
+      groups: {
+        '2026-09-02': [
+          { id: 'g1', start: '09:00', end: '10:25', name: 'Análise', goal: 'lista 3' },
+          { id: 'g2', start: '14:00', end: '15:00' },
+          { start: '16:00', end: '17:00', name: 'sem id' },
+          'lixo',
+        ],
+        '2026-09-03': 'não é lista',
+      },
+    });
+    expect(s.groups).toEqual({
+      '2026-09-02': [
+        { id: 'g1', start: '09:00', end: '10:25', name: 'Análise', goal: 'lista 3' },
+        { id: 'g2', start: '14:00', end: '15:00', name: 'Grupo', goal: '' },
+      ],
+    });
   });
 
   it('eventSeries que não é array é descartado', () => {
@@ -97,11 +118,13 @@ describe('serializeState', () => {
     delete parcial.closedDays;
     delete parcial.skills;
     delete parcial.coinsSpent;
+    delete parcial.groups;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
     expect(doc.skills).toEqual({ owl: null, activatedAt: 0 });
     expect(doc.coinsSpent).toBe(0);
+    expect(doc.groups).toEqual({});
   });
 });
 
@@ -116,6 +139,7 @@ describe('ida e volta', () => {
       pets: { owned: ['owl', 'cat'], active: 'owl', xp: { owl: 300 }, xpProcessedUntil: '2026-09-01' },
       skills: { owl: 'noturno', activatedAt: 1234 },
       coinsSpent: 300,
+      groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });

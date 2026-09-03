@@ -643,3 +643,26 @@
     .st-grid-3{grid-template-columns:1fr;}
     .st-danger .danger-btn{width:100%;}
   }
+
+  /* GRUPOS DE ESTUDO — nome + objetivo sobre um trecho do dia (CLAUDE.md, "Grupos de estudo") */
+  .day-events-bar{gap:8px;}
+  .group-hint{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;font-size:12px;color:var(--accent);}
+  .group-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 1px;padding:9px 12px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--sc-border,var(--accent2));cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .group-header:hover{filter:brightness(1.12);}
+  .group-header .gh-main{min-width:0;flex:1;}
+  .group-header .gh-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .group-header .gh-goal{font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .group-header .gh-side{text-align:right;flex-shrink:0;}
+  .group-header .gh-progress{font-family:'DM Mono',monospace;font-size:13px;color:var(--sc,var(--accent));}
+  .group-header .gh-mins{font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
+  .group-header.complete{border-left-color:var(--accent);}
+  .group-header.complete .gh-progress{color:var(--accent);}
+  .group-header.empty{border-left-style:dashed;}
+  .group-header.empty .gh-progress{color:var(--muted);font-size:11px;}
+  .block-row.in-group{margin-left:10px;border-left-width:3px;}
+  .block-row.selecting{outline:2px solid var(--accent);outline-offset:-1px;filter:brightness(1.25);}
+  .block-row.selecting-anchor{outline-style:double;}
+  .blocks-list.selecting-mode{user-select:none;}
+  .blocks-list.selecting-mode .block-row{cursor:crosshair;}
+  .block-row{-webkit-touch-callout:none;}
+  .group-summary{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}

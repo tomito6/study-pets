@@ -1,15 +1,19 @@
-// A lista de blocos do dia: divisores de sessão e linhas com check.
+// A lista de blocos do dia: divisores de sessão, cabeçalhos de grupo e linhas com check.
 // Mesmas classes do markup antigo — o CSS e o smoke test dependem delas.
 
 import type { MouseEvent } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
 import { playSound, tryStartTimer } from '../../application/timer';
 import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
+import { groupHeaderPositions, groupOf, groupProgress } from '../../domain/groups';
+import type { GroupHeaderPosition } from '../../domain/groups';
 import { dk, timeToMins } from '../../domain/time';
-import type { DateKey, StudyBlock } from '../../domain/types';
+import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state } from '../../store/store';
+import { GroupHeader } from '../groups/GroupHeader';
+import type { GroupSelection } from '../groups/useGroupSelection';
 import { spawnCheckRipple, spawnFloatGain } from './feedback';
 
 const NUM_SESSIONS = 6;
@@ -40,17 +44,22 @@ function CheckIcon() {
 export interface BlockActions {
   onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
   onEditLunch: (dateKey: DateKey) => void;
+  onEditGroup: (group: StudyGroup) => void;
 }
 
 interface RowProps extends BlockActions {
   dateKey: DateKey;
   block: StudyBlock;
+  /** Posição na lista — é o que a seleção de grupo usa. */
+  idx: number;
+  inGroup: boolean;
+  selection: GroupSelection;
   now: Date;
   isToday: boolean;
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, now, isToday, timerBlock, onDeleteEvent, onEditLunch }: RowProps) {
+function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, timerBlock, onDeleteEvent, onEditLunch }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -74,9 +83,13 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock, onDeleteEvent, 
     (isNow ? ' now-block' : '') +
     (timerActive ? ' timer-active' : '') +
     (closed ? ' day-closed' : '') +
-    (future ? ' day-future' : '');
+    (future ? ' day-future' : '') +
+    (inGroup ? ' in-group' : '') +
+    (selection.isSelected(idx) ? ' selecting' : '') +
+    (selection.isAnchor(idx) ? ' selecting-anchor' : '');
 
   const onRowClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (selection.handleClick(idx)) return;
     if ((e.target as HTMLElement).closest('.check')) return;
     if (isA) {
       onEditLunch(dateKey);
@@ -95,6 +108,8 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock, onDeleteEvent, 
 
   const onCheckClick = (e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    // Em modo de seleção, tocar no check escolhe a linha — não marca.
+    if (selection.handleClick(idx)) return;
     const why = refusal(dateKey, now);
     if (why) {
       showToast(why);
@@ -130,6 +145,7 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock, onDeleteEvent, 
       onClick={onRowClick}
       style={clickable ? { cursor: 'pointer' } : undefined}
       title={title}
+      {...selection.rowProps(idx)}
     >
       {!(isA || isI) && (
         <div className={'check' + (done ? ' checked' : '')} onClick={onCheckClick}>
@@ -148,16 +164,38 @@ function BlockRow({ dateKey, block: b, now, isToday, timerBlock, onDeleteEvent, 
 interface ListProps extends BlockActions {
   dateKey: DateKey;
   blocks: StudyBlock[];
+  groups: StudyGroup[];
+  selection: GroupSelection;
   now: Date;
   timerBlock: StudyBlock | null;
 }
 
-export function BlockList({ dateKey, blocks, now, timerBlock, onDeleteEvent, onEditLunch }: ListProps) {
+export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock, onDeleteEvent, onEditLunch, onEditGroup }: ListProps) {
   if (blocks.length === 0) return <div className="empty-day">{strings.plan.freeDay}</div>;
 
   const isToday = dateKey === dk(now);
+  const dayChecks = state.checks[dateKey];
   const items: React.ReactNode[] = [];
   let lastSession = -1;
+
+  // Cabeçalho de grupo entra antes do primeiro bloco membro (ver groupHeaderPositions).
+  const headersAt = new Map<number, GroupHeaderPosition[]>();
+  for (const pos of groupHeaderPositions(groups, blocks)) {
+    headersAt.set(pos.index, [...(headersAt.get(pos.index) ?? []), pos]);
+  }
+  const pushHeaders = (index: number) => {
+    for (const { group, session } of headersAt.get(index) ?? []) {
+      items.push(
+        <GroupHeader
+          key={`g-${group.id}`}
+          group={group}
+          progress={groupProgress(group, blocks, dayChecks)}
+          sessionClass={`s${(session ?? 0) % NUM_SESSIONS}`}
+          onClick={() => onEditGroup(group)}
+        />,
+      );
+    }
+  };
 
   blocks.forEach((b, i) => {
     if (isPomodoroPart(b) && b.session !== undefined && b.session !== lastSession) {
@@ -173,19 +211,25 @@ export function BlockList({ dateKey, blocks, now, timerBlock, onDeleteEvent, onE
         </div>,
       );
     }
+    pushHeaders(i);
     items.push(
       <BlockRow
         key={`${b.type}-${b.time}-${b.endTime}`}
         dateKey={dateKey}
         block={b}
+        idx={i}
+        inGroup={!!groupOf(groups, b)}
+        selection={selection}
         now={now}
         isToday={isToday}
         timerBlock={timerBlock}
         onDeleteEvent={onDeleteEvent}
         onEditLunch={onEditLunch}
+        onEditGroup={onEditGroup}
       />,
     );
   });
+  pushHeaders(blocks.length);
 
   return <>{items}</>;
 }

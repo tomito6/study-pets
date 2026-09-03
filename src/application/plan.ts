@@ -43,6 +43,7 @@ export function rebuildWeeks(now: Date = new Date()): void {
       ...Object.keys(state.checks),
       ...Object.keys(state.events),
       ...Object.keys(state.lunchOverrides),
+      ...Object.keys(state.groups),
     ],
     today: now,
   });
