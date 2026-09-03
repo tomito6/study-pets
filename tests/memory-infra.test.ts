@@ -64,6 +64,72 @@ describe('auth em memória (modo teste)', () => {
   });
 });
 
+describe('auth em memória — e-mail e senha', () => {
+  it('cria conta e já loga com provider "password"', async () => {
+    const auth = createMemoryAuth();
+    await auth.signUpWithEmail('nova@example.com', 'senhaboa123');
+    const user = auth.currentUser();
+    expect(user).not.toBeNull();
+    expect(user?.email).toBe('nova@example.com');
+    expect(user?.provider).toBe('password');
+  });
+
+  it('criar conta duas vezes com o mesmo e-mail dá email-in-use', async () => {
+    const auth = createMemoryAuth();
+    await auth.signUpWithEmail('duplicada@example.com', 'senhaboa123');
+    await expect(auth.signUpWithEmail('duplicada@example.com', 'outrasenha1')).rejects.toMatchObject({
+      name: 'AuthError',
+      reason: 'email-in-use',
+    });
+  });
+
+  it('e-mail é comparado sem diferenciar maiúsculas', async () => {
+    const auth = createMemoryAuth();
+    await auth.signUpWithEmail('Maiuscula@Example.com', 'senhaboa123');
+    await expect(auth.signInWithEmail('maiuscula@example.com', 'senhaboa123')).resolves.toBeUndefined();
+  });
+
+  it('entrar com senha diferente da cadastrada dá invalid-credential', async () => {
+    const auth = createMemoryAuth();
+    await auth.signUpWithEmail('senha@example.com', 'senhacerta1');
+    await expect(auth.signInWithEmail('senha@example.com', 'senhaerrada')).rejects.toMatchObject({
+      name: 'AuthError',
+      reason: 'invalid-credential',
+    });
+  });
+
+  it('entrar com e-mail nunca cadastrado dá invalid-credential (não revela se existe)', async () => {
+    const auth = createMemoryAuth();
+    await expect(auth.signInWithEmail('ninguem@example.com', 'qualquersenha')).rejects.toMatchObject({
+      name: 'AuthError',
+      reason: 'invalid-credential',
+    });
+  });
+
+  it('entrar com a senha certa loga a conta', async () => {
+    const auth = createMemoryAuth();
+    await auth.signUpWithEmail('login@example.com', 'senhacerta1');
+    await auth.signOut();
+    await auth.signInWithEmail('login@example.com', 'senhacerta1');
+    expect(auth.currentUser()?.email).toBe('login@example.com');
+  });
+
+  it('contas diferentes recebem uids diferentes (documentos separados)', async () => {
+    const auth = createMemoryAuth();
+    await auth.signUpWithEmail('a@example.com', 'senhaboa123');
+    const uidA = auth.currentUser()?.uid;
+    await auth.signOut();
+    await auth.signUpWithEmail('b@example.com', 'senhaboa123');
+    const uidB = auth.currentUser()?.uid;
+    expect(uidA).not.toBe(uidB);
+  });
+
+  it('reset de senha "envia" e resolve sem lançar', async () => {
+    const auth = createMemoryAuth();
+    await expect(auth.sendPasswordReset('qualquer@example.com')).resolves.toBeUndefined();
+  });
+});
+
 describe('repositório em memória (modo teste)', () => {
   const doc = () => serializeState({ ...emptyPersistedState(), coinsSpent: 42 });
 

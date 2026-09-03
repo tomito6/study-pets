@@ -8,20 +8,22 @@ import { expect, test, type Page } from '@playwright/test';
 
 const DIA = '2026-09-02';
 
-/**
- * Abre o app com o relógio fixo, espera o modo teste logar e passa pelo onboarding:
- * o gato como pet inicial (com o nome sugerido) e o período padrão.
- */
-async function abrirApp(page: Page, hora = '17:30') {
-  await page.clock.setFixedTime(new Date(`${DIA}T${hora}:00`));
-  await page.goto('/');
-  await expect(page.locator('#app')).toBeVisible();
+/** Passa pelo onboarding: o gato como pet inicial (com o nome sugerido) e o período padrão. */
+async function passarOnboarding(page: Page) {
   await expect(page.locator('#onboarding-panel')).toBeVisible();
   await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
   await expect(page.locator('#starter-name')).not.toHaveValue('');
   await page.locator('#onb-next').click();
   await page.getByRole('button', { name: 'Começar' }).click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
+}
+
+/** Abre o app com o relógio fixo, espera o modo teste logar e passa pelo onboarding. */
+async function abrirApp(page: Page, hora = '17:30') {
+  await page.clock.setFixedTime(new Date(`${DIA}T${hora}:00`));
+  await page.goto('/');
+  await expect(page.locator('#app')).toBeVisible();
+  await passarOnboarding(page);
 }
 
 /**
@@ -97,6 +99,64 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeHidden();
     await page.locator('.ls-google-btn').click();
     await expect(page.locator('#app')).toBeVisible();
+  });
+
+  test('21. criar conta por e-mail abre o app com onboarding, como conta nova', async ({ page }) => {
+    await abrirApp(page);
+    await page.getByRole('button', { name: 'Sair' }).click();
+    await expect(page.locator('#login-screen')).toBeVisible();
+
+    await page.locator('#login-toggle-mode').click(); // "Criar conta"
+    await expect(page.locator('#login-submit')).toHaveText('Criar conta');
+    await page.locator('#login-email').fill('tomi@example.com');
+    await page.locator('#login-password').fill('senhaboa123');
+    await page.locator('#login-submit').click();
+
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#onboarding-panel')).toBeVisible();
+  });
+
+  test('22. entrar por e-mail: senha errada mostra erro inline, senha certa abre o app', async ({ page }) => {
+    await abrirApp(page);
+    await page.getByRole('button', { name: 'Sair' }).click();
+    await expect(page.locator('#login-screen')).toBeVisible();
+
+    // Cria a conta primeiro, pra ter o que entrar depois.
+    await page.locator('#login-toggle-mode').click();
+    await page.locator('#login-email').fill('senha-teste@example.com');
+    await page.locator('#login-password').fill('senhacerta1');
+    await page.locator('#login-submit').click();
+    await expect(page.locator('#app')).toBeVisible();
+    await passarOnboarding(page);
+    // O save tem debounce: espera o onboarding chegar no storage antes de sair,
+    // senão o próximo login acha a conta "nova" de novo (mesmo problema do teste 15).
+    await expect
+      .poll(() => page.evaluate(() => sessionStorage.getItem('study-pets:teste:email:senha-teste@example.com') !== null))
+      .toBe(true);
+
+    await page.getByRole('button', { name: 'Sair' }).click();
+    await expect(page.locator('#login-screen')).toBeVisible();
+
+    await page.locator('#login-email').fill('senha-teste@example.com');
+    await page.locator('#login-password').fill('senhaerrada');
+    await page.locator('#login-submit').click();
+    await expect(page.locator('#login-error')).toContainText('incorretos');
+    await expect(page.locator('#app')).toBeHidden();
+
+    await page.locator('#login-password').fill('senhacerta1');
+    await page.locator('#login-submit').click();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#onboarding-panel')).toBeHidden(); // conta já passou pelo onboarding
+  });
+
+  test('23. esqueci a senha mostra confirmação inline', async ({ page }) => {
+    await abrirApp(page);
+    await page.getByRole('button', { name: 'Sair' }).click();
+    await expect(page.locator('#login-screen')).toBeVisible();
+
+    await page.locator('#login-email').fill('esqueci@example.com');
+    await page.locator('#login-forgot').click();
+    await expect(page.locator('#login-reset-sent')).toContainText('esqueci@example.com');
   });
 
   test('3. configurar rotina muda o plano do dia', async ({ page }) => {

@@ -1,6 +1,8 @@
 // Sessão: entrar, sair, e o boot do app a cada mudança de usuário.
 // Era o callback de onAuthStateChanged + loadData + initApp do app antigo.
 
+import { AuthError, isValidEmail, isValidPassword } from '../domain/auth';
+import type { AuthErrorReason } from '../domain/auth';
 import { DEFAULT_CFG } from '../domain/config';
 import { emptyPersistedState, emptyPets, hydrateUserDoc } from '../domain/persistence';
 import { auth, users } from '../infrastructure';
@@ -20,6 +22,47 @@ export async function signIn(): Promise<void> {
     // Popup fechado, rede fora… o usuário tenta de novo; não é erro fatal.
     console.error(e);
   }
+}
+
+export type AuthActionResult = { ok: true } | { ok: false; reason: AuthErrorReason };
+
+const reasonOf = (e: unknown): AuthErrorReason => (e instanceof AuthError ? e.reason : 'unknown');
+
+export async function signUpWithEmail(email: string, password: string): Promise<AuthActionResult> {
+  if (!isValidEmail(email)) return { ok: false, reason: 'invalid-email' };
+  // O Firebase aceita 6 caracteres; pedimos 8 — checagem nossa, antes de chamar a infra.
+  if (!isValidPassword(password)) return { ok: false, reason: 'weak-password' };
+  try {
+    await auth.signUpWithEmail(email.trim(), password);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: reasonOf(e) };
+  }
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<AuthActionResult> {
+  if (!isValidEmail(email)) return { ok: false, reason: 'invalid-email' };
+  try {
+    await auth.signInWithEmail(email.trim(), password);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: reasonOf(e) };
+  }
+}
+
+/**
+ * Dispara o e-mail de redefinição. Sempre resolve `ok: true` quando o e-mail
+ * tem formato válido — mesmo que a conta não exista — pra não revelar contas
+ * cadastradas (ver decisão em plans/2026-09-03_2000_login-email-senha.md).
+ */
+export async function resetPassword(email: string): Promise<AuthActionResult> {
+  if (!isValidEmail(email)) return { ok: false, reason: 'invalid-email' };
+  try {
+    await auth.sendPasswordReset(email.trim());
+  } catch (e) {
+    console.error(e);
+  }
+  return { ok: true };
 }
 
 export async function signOut(): Promise<void> {
