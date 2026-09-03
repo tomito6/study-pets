@@ -89,13 +89,75 @@ describe('equivalência com o gerador antigo', () => {
     expect(casos.length).toBeGreaterThan(4000);
   });
 
-  it('produz saída idêntica em todos os casos', () => {
-    const divergentes: string[] = [];
-    for (const { nome, cfg, eventos } of casos) {
-      const antigo = JSON.stringify(legacyGenerateBlocks(cfg, eventos));
-      const novo = JSON.stringify(generateBlocks(cfg, eventos));
-      if (antigo !== novo) divergentes.push(nome);
+  // A única diferença aceita em relação ao gerador antigo (corrigida em 2026-09-03, era o item 1
+  // do PENDENCIAS.md): quando um pomo terminava exatamente no minuto em que um bloqueio (evento
+  // ou almoço) começava, o antigo não enxergava o bloqueio. Ou emitia a pausa por cima dele, ou,
+  // perto do fim da janela, deixava o bloqueio fora do plano. Nos casos em que isso não acontece
+  // a saída tem que ser idêntica; nos outros, o novo só pode tirar essa pausa e devolver o bloqueio.
+  type Bloco = { time: string; endTime: string; type: string; name: string; xp: number; mini?: boolean; session: number };
+  const BLOQUEIOS = ['event', 'intervalo', 'almoco'];
+  // Sem `session`: devolver um bloqueio que o antigo perdia abre uma sessão a mais depois dele.
+  const chave = (b: Bloco) => `${b.time}-${b.endTime} ${b.type} ${b.name} ${b.xp}${b.mini ? ' mini' : ''}`;
+  const so = (bs: Bloco[], tipos: string[]) => bs.filter((b) => tipos.includes(b.type)).map(chave);
+  const inicioDeBloqueio = (cfg: PlannerConfig, eventos: StudyEvent[]) =>
+    new Set([...eventos.map((e) => e.start), ...(cfg.hasLunch ? [cfg.lunch] : [])]);
+
+  // O "tropeço" do antigo: um pomo termina exatamente onde um bloqueio começa, e o antigo
+  // (a) emite a pausa por cima do bloqueio, ou (b) perde o bloqueio de vez — nesse caso, com
+  // uma pausa longa maior que um evento curto, o evento sumia e a manhã seguia como se ele
+  // não existisse. O novo mostra o bloqueio e recomeça depois dele, como faz com qualquer
+  // evento; por isso, a partir do tropeço, os horários podem mudar.
+  function tropecoDoAntigo(antigo: Bloco[], inicios: Set<string>): string | null {
+    const bloqueios = so(antigo, BLOQUEIOS);
+    for (let i = 0; i < antigo.length; i++) {
+      const b = antigo[i]!;
+      if (b.type !== 'estudo' || !inicios.has(b.endTime)) continue;
+      const proximo = antigo[i + 1];
+      const pausaPorCima = proximo?.type === 'pausa' && proximo.time === b.endTime;
+      const bloqueioPerdido = !bloqueios.some((k) => k.startsWith(`${b.endTime}-`));
+      if (pausaPorCima || bloqueioPerdido) return b.endTime;
     }
-    expect(divergentes).toEqual([]);
+    return null;
+  }
+
+  it('só diverge do antigo onde ele tropeçava; até lá é idêntico, e o bloqueio volta pro plano', () => {
+    const problemas: string[] = [];
+    let divergentes = 0;
+    for (const { nome, cfg, eventos } of casos) {
+      const antigo = legacyGenerateBlocks(cfg, eventos) as Bloco[];
+      const novo = generateBlocks(cfg, eventos) as Bloco[];
+      if (JSON.stringify(antigo) === JSON.stringify(novo)) continue;
+      divergentes++;
+      const inicios = inicioDeBloqueio(cfg, eventos);
+      const tropeco = tropecoDoAntigo(antigo, inicios);
+      if (!tropeco) {
+        problemas.push(`${nome}: divergiu sem o antigo ter tropeçado`);
+        continue;
+      }
+
+      const ate = (bs: Bloco[]) => bs.filter((b) => b.time < tropeco).map(chave);
+      if (JSON.stringify(ate(antigo)) !== JSON.stringify(ate(novo))) problemas.push(`${nome}: diferente antes do tropeço das ${tropeco}`);
+
+      const bloqN = so(novo, BLOQUEIOS);
+      if (!bloqN.some((k) => k.startsWith(`${tropeco}-`))) problemas.push(`${nome}: o bloqueio das ${tropeco} não voltou`);
+      for (const k of so(antigo, BLOQUEIOS)) if (!bloqN.includes(k)) problemas.push(`${nome}: perdeu o bloqueio ${k}`);
+      if (novo.some((b) => b.type === 'pausa' && b.time === tropeco)) problemas.push(`${nome}: ainda há pausa às ${tropeco}`);
+    }
+    expect(problemas).toEqual([]);
+    // A matriz foi feita pra bater nessa borda (eventos em hora redonda com todo tipo de pomo),
+    // então o tropeço aparece em ~1 a cada 6 casos aqui. Na vida real é raro.
+    expect(divergentes).toBeGreaterThan(0);
+  });
+
+  it('o gerador novo nunca emite pausa por cima do bloco seguinte', () => {
+    const invasoes: string[] = [];
+    for (const { nome, cfg, eventos } of casos) {
+      const blocks = generateBlocks(cfg, eventos);
+      blocks.forEach((b, i) => {
+        const next = blocks[i + 1];
+        if (b.type === 'pausa' && next && next.time < b.endTime) invasoes.push(`${nome}: ${b.time}-${b.endTime} pausa invade ${next.time}`);
+      });
+    }
+    expect(invasoes).toEqual([]);
   });
 });

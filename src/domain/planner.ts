@@ -161,7 +161,9 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = []): S
       const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
       const bxp = Math.max(1, breakDur);
       const afterBreak = cur + breakDur;
-      const nextBlockAfterBreak = blocked.find((b) => b.start > cur && b.start < winEnd);
+      // `>=`: um bloqueio que começa exatamente onde o pomo terminou também conta.
+      // Senão a pausa era emitida por cima do evento (bug anterior à migração).
+      const nextBlockAfterBreak = blocked.find((b) => b.start >= cur && b.start < winEnd);
       const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : winEnd;
 
       if (afterBreak > nextStartAfterBreak) {

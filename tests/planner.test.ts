@@ -220,18 +220,49 @@ describe('generateBlocks — sobras menores que um pomodoro', () => {
   });
 });
 
-describe('generateBlocks — comportamento herdado (caracterização, não aprovação)', () => {
-  it('emite pausa curta sobreposta ao evento quando o pomo acaba na hora exata em que ele começa', () => {
-    // Bug que já existia antes da migração: o pomo 09:30–10:00 termina exatamente
-    // quando o evento das 10:00 começa, e a pausa é emitida por cima dele.
-    // O teste trava o comportamento atual pra que consertar isso seja uma decisão
-    // consciente, com o efeito visível no diff — e não um acidente de refatoração.
+describe('generateBlocks — pausa nunca invade um bloqueio', () => {
+  // Bug anterior à migração: quando o pomo terminava exatamente no minuto em que o
+  // evento começava, a pausa era emitida por cima do evento. Decisão (2026-09-03):
+  // a pausa some e o plano vai direto pro evento — igual ao que já acontecia quando
+  // a pausa invadiria um evento alguns minutos depois.
+  const resumo = (blocks: ReturnType<typeof generateBlocks>) => blocks.map((b) => `${b.time}-${b.endTime} ${b.type}`);
+
+  it('pomo que termina exatamente onde o evento começa: sem pausa, direto pro evento', () => {
     const blocks = generateBlocks(
       cfg({ hasLunch: false, pomo: 30, shortBreak: 5, studyWindows: [{ start: '09:00', end: '11:00' }] }),
       [{ name: 'Consulta', start: '10:00', end: '10:20' }],
     );
-    expect(blocks.find((b) => b.type === 'pausa')).toMatchObject({ time: '10:00', endTime: '10:05' });
-    expect(blocks.find((b) => b.type === 'event')).toMatchObject({ time: '10:00', endTime: '10:20' });
+    expect(resumo(blocks)).toEqual([
+      '09:00-09:30 estudo',
+      '09:30-10:00 estudo', // a pausa das 09:30 é pulada pra caber um pomo inteiro antes do evento
+      '10:00-10:20 event',
+      '10:20-10:50 estudo',
+    ]);
+  });
+
+  it('config padrão com evento às 10:20 (o caso que aparecia na tela)', () => {
+    const blocks = generateBlocks(cfg({}), [{ name: 'Consulta', start: '10:20', end: '11:00' }]);
+    expect(resumo(blocks).slice(2, 6)).toEqual([
+      '09:30-09:55 estudo',
+      '09:55-10:20 estudo',
+      '10:20-11:00 event',
+      '11:00-11:25 estudo',
+    ]);
+    expect(blocks.filter((b) => b.type === 'pausa' && b.time === '10:20')).toEqual([]);
+  });
+
+  it('nenhuma pausa termina depois do bloco seguinte', () => {
+    const casos = [
+      generateBlocks(cfg({}), [{ name: 'A', start: '10:20', end: '11:00' }]),
+      generateBlocks(cfg({ pomo: 30 }), [{ name: 'B', start: '10:00', end: '10:20' }]),
+      generateBlocks(cfg({ pomo: 50, shortBreak: 10 }), [{ name: 'C', start: '09:50', end: '10:30' }]),
+    ];
+    for (const blocks of casos) {
+      blocks.forEach((b, i) => {
+        const next = blocks[i + 1];
+        if (b.type === 'pausa' && next) expect(next.time >= b.endTime, `${b.time}-${b.endTime} pausa invade ${next.time}`).toBe(true);
+      });
+    }
   });
 });
 
