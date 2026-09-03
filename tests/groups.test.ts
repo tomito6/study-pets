@@ -107,11 +107,12 @@ describe('posição dos cabeçalhos', () => {
   it('antes do primeiro bloco membro, com a sessão dele', () => {
     const pos = groupHeaderPositions([g('t', '13:00', '15:00'), g('m', '09:30', '10:25')], blocks);
     expect(pos.map((p) => [p.group.id, p.index, p.session])).toEqual([['m', 2, 0], ['t', 6, 1]]);
+    expect(pos.every((p) => !p.empty)).toBe(true);
   });
 
   it('sem membro, antes do primeiro bloco que começa no horário do grupo ou depois', () => {
     const pos = groupHeaderPositions([g('v', '11:00', '11:45')], blocks);
-    expect(pos[0]).toMatchObject({ index: 5, session: undefined });
+    expect(pos[0]).toMatchObject({ index: 5, session: undefined, empty: true });
   });
 
   it('depois de todos os blocos, quando o trecho fica no fim do dia', () => {

@@ -78,6 +78,14 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
   // Ponteiro cujo toque longo já disparou: o click que vem ao soltar o dedo não é "o último bloco".
   const pressFired = useRef<number | null>(null);
   const suppressClick = useRef(false);
+  // Botão direito (ou toque longo) em andamento: o menu de contexto do browser é bloqueado onde
+  // quer que dispare — inclusive em cima do modal que abre no pointerup, fora da lista.
+  const blockContextMenu = useRef(false);
+  const releaseContextMenu = () => {
+    setTimeout(() => {
+      blockContextMenu.current = false;
+    }, 300);
+  };
 
   const clearPress = () => {
     if (press.current) clearTimeout(press.current.timer);
@@ -106,6 +114,15 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mode.kind, cancel]);
+  useEffect(() => {
+    const onContextMenu = (e: MouseEvent) => {
+      if (!blockContextMenu.current) return;
+      e.preventDefault();
+      blockContextMenu.current = false;
+    };
+    document.addEventListener('contextmenu', onContextMenu, true);
+    return () => document.removeEventListener('contextmenu', onContextMenu, true);
+  }, []);
   useEffect(() => {
     if (!enabled) cancel();
   }, [enabled, cancel]);
@@ -144,6 +161,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
         latest.current.onRefuse();
         return;
       }
+      blockContextMenu.current = true;
       e.preventDefault();
       try {
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -155,6 +173,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
     }
     if (e.pointerType === 'touch' && e.button === 0 && modeRef.current.kind === 'idle' && latest.current.enabled) {
       clearPress();
+      blockContextMenu.current = true; // Android abre menu no toque longo
       const timer = setTimeout(() => {
         press.current = null;
         pressFired.current = e.pointerId;
@@ -184,6 +203,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
       complete(m.anchor, m.focus);
       return;
     }
+    releaseContextMenu();
     if (press.current?.pointerId === e.pointerId) clearPress();
     if (pressFired.current === e.pointerId) {
       pressFired.current = null;
@@ -195,6 +215,7 @@ export function useGroupSelection({ enabled, onRange, onRefuse }: Options): Grou
   };
 
   const onPointerCancel = (e: RowEvent) => {
+    releaseContextMenu();
     if (press.current?.pointerId === e.pointerId) clearPress();
     if (modeRef.current.kind === 'anchored' && modeRef.current.drag) cancel();
   };

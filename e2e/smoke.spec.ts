@@ -241,6 +241,12 @@ test.describe('Study Pets — smoke', () => {
   });
 
   test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {
+    // O menu de contexto do browser nunca pode aparecer — nem em cima do modal que abre ao soltar.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __ctx: boolean[] };
+      w.__ctx = [];
+      document.addEventListener('contextmenu', (e) => w.__ctx.push(e.defaultPrevented));
+    });
     await abrirApp(page);
     const linhas = page.locator('.block-row');
     const de = await linhas.nth(0).boundingBox();
@@ -254,6 +260,7 @@ test.describe('Study Pets — smoke', () => {
     await page.mouse.up({ button: 'right' });
 
     await expect(page.locator('#group-panel')).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __ctx: boolean[] }).__ctx)).toEqual([true]);
     await expect(page.locator('#group-summary')).toContainText('09:00 – 09:55');
     await expect(page.locator('#group-summary')).toContainText('2 estudos');
     await page.locator('#grp-save').click(); // sem nome → "Grupo"

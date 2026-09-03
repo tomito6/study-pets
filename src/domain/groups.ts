@@ -98,8 +98,10 @@ export interface GroupHeaderPosition {
   group: StudyGroup;
   /** Índice do bloco antes do qual o cabeçalho aparece (`blocks.length` = depois de todos). */
   index: number;
-  /** Sessão do primeiro bloco membro — dá a cor de acento ao cabeçalho. */
+  /** Sessão do primeiro bloco membro. */
   session: number | undefined;
+  /** Nenhum bloco cabe no trecho (o plano mudou): só o cabeçalho aparece. */
+  empty: boolean;
 }
 
 /**
@@ -111,9 +113,9 @@ export function groupHeaderPositions(groups: StudyGroup[], blocks: StudyBlock[])
   return groups
     .map((group): GroupHeaderPosition => {
       const member = blocks.findIndex((b) => blockInGroup(b, group));
-      if (member >= 0) return { group, index: member, session: blocks[member]!.session };
+      if (member >= 0) return { group, index: member, session: blocks[member]!.session, empty: false };
       const after = blocks.findIndex((b) => timeToMins(b.time) >= timeToMins(group.start));
-      return { group, index: after >= 0 ? after : blocks.length, session: undefined };
+      return { group, index: after >= 0 ? after : blocks.length, session: undefined, empty: true };
     })
     .sort((a, b) => a.index - b.index || timeToMins(a.group.start) - timeToMins(b.group.start));
 }
