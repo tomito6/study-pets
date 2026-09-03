@@ -366,6 +366,68 @@ mostra Cachorro e Coruja com skills e o resto sem nada.
 **Ordem:** sprites (gato, cobra, coruja, vaca) → skills → `adoptStarter` + onboarding em dois passos
 → e2e (conta nova escolhe a cobra, nomeia, hero já mostra ela).
 
+## Renomear pet: já existe, mas ninguém acha — 2026-09-03
+
+O Tomi pediu pra anotar "a opção de mudar o nome dos pets". Ela já está implementada: o ✏️ no card
+do pet em "Meus pets" abre o modal de renomear (`renamePet`, grátis, 1–16 caracteres). Se quem fez o
+app não lembrou dela, o botão está escondido demais — o pedido vira uma ideia de **descoberta**, não
+de feature:
+
+- Tocar no **nome** do pet no card "Pet ativo" (perfil) abre o mesmo modal. É onde o nome mais
+  aparece, então é onde a pessoa vai querer mudar.
+- Em "Meus pets", o nome inteiro clicável (com o ✏️ pequeno colado no texto), em vez de um ícone solto
+  na ponta do card.
+- Pequeno o bastante pra entrar de carona em qualquer mexida no perfil.
+
+## Modo hardcore: sair do foco custa XP (bem pro futuro) — 2026-09-03
+
+Ideia do Tomi, na linha do Forest: um modo em que **sair do foco tem consequência**. No Forest a
+árvore morre; aqui ninguém morre — o usuário **e o pet** recebem XP negativo. Junto vêm duas coisas:
+bloquear sites específicos do computador enquanto o foco roda, e o foco deixar de permitir interação
+com o resto do app (hoje "← Sair do foco" fecha o overlay e o timer segue; no hardcore essa porta não
+existe).
+
+**Por que pode fazer sentido, e onde bate no CLAUDE.md.** "O app NUNCA deve fazer o usuário se sentir
+mal" e "nada de ameaça" são regras da base. Hardcore só cabe como **dificuldade escolhida**, nunca
+padrão: um botão explícito antes de começar ("entrar em modo hardcore"), com o custo escrito na cara
+("sair custa −50 XP pra você e −50 pro Bolt"). O que não pode acontecer: pet morrer, perder
+forma/evolução (evolução é definitiva), alguém descer de nível, ou o app cutucar pra ligar o modo. A
+pressão é do usuário sobre ele mesmo; o app só cobra o que ele mesmo combinou.
+
+**Regras (rabisco):**
+- Ligado por bloco/sequência, no momento de entrar no foco. Vale até a sequência acabar (a emenda
+  estudo → pausa → estudo já existe). Pausa: sem penalidade, ou menor — o ponto é o estudo.
+- "Sair" vira o único botão do overlay: "Desistir (−X XP)", com confirmação. Sem "Sair do foco", sem
+  barra, sem abas — o overlay já cobre a tela (`position:fixed; inset:0`), só falta tirar a porta.
+- Sair da aba/janela conta? Uma página web não impede trocar de aba, mas enxerga
+  (`visibilitychange`/`blur`) — é o que o Forest faz no celular. Proposta: tolerância de ~30 s
+  (notificação, mensagem rápida) e aviso na volta ("você saiu por 12 s"); acima disso, conta como
+  desistir. Sem tolerância vira punição por acidente — exatamente o que o app evita.
+- Quanto: o mais legível é **perder o que o bloco daria** (−50 XP num pomo de 25 min), pro usuário e
+  pro pet equipado. Simétrico, sem tabela nova. Moeda não some (é o que se gasta na loja; XP é a
+  jornada). Piso: XP nunca cai abaixo do início do nível atual — ninguém desce de nível.
+- O bloco abandonado fica sem check e não pode ser marcado depois (senão desistir é grátis).
+
+**Como caberia na arquitetura:** XP hoje é soma de checks (`computeStats`), e o do pet vem de
+`computePendingPetXP`. Negativo precisa de registro próprio, persistido:
+`state.penalties[dateKey] = [{ time, xp, pet }]` (quem estava equipado no momento, igual ao check),
+agregado na mesma passada do `computeStats` e do XP pendente do pet; campo novo no doc → default em
+`hydrateUserDoc` + teste com doc sem o campo. Regra pura em `domain/` (quanto custa, piso do nível),
+efeito em `application/timer.ts` (o "Desistir" e o watcher de visibilidade). A aba Análise ganha
+"abandonos" quase de graça.
+
+**Bloquear sites: não é o app que faz.** Uma página web não bloqueia nada no computador. Caminhos:
+(a) uma extensão de browser própria (MV3, `declarativeNetRequest`) que lê "foco hardcore ativo" da aba
+do app e aplica a lista — a parte mais trabalhosa e a que menos generaliza (Firefox, celular);
+(b) integrar com um bloqueador que a pessoa já usa — o Tomi já roda o Cold Turkey, que bloqueia por
+agenda e por comando local, mas uma página web não dispara isso sem um ajudante instalado. Ordem
+natural: **penalidade primeiro** (é o que o app garante sozinho e é o que muda o comportamento),
+bloqueio de site depois, se ainda parecer necessário.
+
+**Perguntas abertas:** o pet perde XP mesmo, ou só o usuário (o pet como "vítima" pode ser a pressão
+emocional que funciona — ou a que passa do ponto)? Pausa entra? Tolerância de quantos segundos?
+Desligar o hardcore no meio da sequência: pode, sem custo, ou é desistir?
+
 ---
 
 ## Como esse arquivo deve crescer
