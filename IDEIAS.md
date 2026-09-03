@@ -344,8 +344,8 @@ mostra Cachorro e Coruja com skills e o resto sem nada.
   preço cheio pra quem quiser uma segunda cópia.
 - **Com nome**, o mesmo `NameField` da adoção (sugestão sorteada + 🎲). É a primeira coisa que o
   usuário nomeia no app — vale mais que o período.
-- **Onboarding em dois passos**: (1) "Escolha seu companheiro" — três cards com sprite animado, nome
-  da espécie, uma linha de personalidade (não stats), campo de nome embaixo do escolhido;
+- **Onboarding em dois passos**: (1) "Escolha seu companheiro" — um card por espécie, com sprite
+  animado, nome e uma linha de personalidade (não stats), campo de nome embaixo do escolhido;
   (2) o que existe hoje (período + fins de semana). Pet primeiro: é o gancho emocional; o período é
   burocracia. `finishOnboarding` recebe o starter junto e cria a instância antes de fechar.
 - Contas existentes sem pet: não mexer (o Tomi já tem pets; quem cancelar sessão passa pelo
