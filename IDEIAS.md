@@ -314,6 +314,56 @@ estágio do Lv. 10 e forma lendária (frame editado, acessório) 15 min · skin 
 Perguntas abertas pro Tomi: a escolha do Lv. 10 é definitiva mesmo (eu acho que sim, e é por isso
 que instância importa)? O bônus "em dobro pro pet" vale pra toda skill ou só pras de estudo?
 
+## Pet inicial no onboarding (starter, estilo Pokémon) — 2026-09-03
+
+Ideia do Tomi: quando cria a conta, o usuário escolhe um pet inicial. Ele quer que dê pra escolher uma
+cobra, por exemplo. Dúvida dele: oferecer todos os pets vira paralisia de escolha?
+
+**Por que faz sentido (dor real):** hoje uma conta nova passa 2h30 de estudo (150 moedas) sem pet.
+O hero do perfil fica vazio, o resumo do fim do dia não tem ninguém subindo de nível, e a premissa do
+app ("estudar com companhia") só aparece dias depois. O starter resolve isso no minuto 1 — e o
+onboarding, que hoje é só "período + fins de semana", ganha o momento de calor que falta.
+
+**Quantos: três, não todos.** Não é paralisia (5 ainda é pouco), é identidade: com três, cada um
+carrega um arquétipo e a escolha diz algo sobre você — a regra do Pokémon. E deixa a loja com
+motivo de existir: os outros continuam sendo conquista de horas. Trio proposto, um por
+temperamento:
+
+- **Cachorro** — fiel; Fiel (+5% no 1º estudo do dia); evolui (Pastor alemão / Lobo).
+- **Gato** — independente; skill a criar: *Preguiça* (+5% no estudo logo depois de uma pausa longa).
+- **Cobra** — paciente; skill a criar: *Constância* (+5% no estudo que bate a meta do dia); um dia
+  vira Dragão.
+
+Coruja (skills prontas) e Vaca ficam na loja. O trio é config no catálogo (`starter: true` na
+espécie), então trocar depois é trivial. Se um dia parecer pouco, um "ver todos" discreto embaixo dos
+três resolve sem tirar o foco.
+
+**Como funciona:**
+- Starter é **grátis** e só existe enquanto `pets.owned` está vazio (conta nova, ou depois de
+  Cancelar sessão — que zera moedas junto, então não dá pra farmar). Caso de uso
+  `adoptStarter(speciesId, name)` ao lado do `buyPet`, sem cobrar; a espécie continua na loja pelo
+  preço cheio pra quem quiser uma segunda cópia.
+- **Com nome**, o mesmo `NameField` da adoção (sugestão sorteada + 🎲). É a primeira coisa que o
+  usuário nomeia no app — vale mais que o período.
+- **Onboarding em dois passos**: (1) "Escolha seu companheiro" — três cards com sprite animado, nome
+  da espécie, uma linha de personalidade (não stats), campo de nome embaixo do escolhido;
+  (2) o que existe hoje (período + fins de semana). Pet primeiro: é o gancho emocional; o período é
+  burocracia. `finishOnboarding` recebe o starter junto e cria a instância antes de fechar.
+- Contas existentes sem pet: não mexer (o Tomi já tem pets; quem cancelar sessão passa pelo
+  onboarding de novo e ganha o starter).
+
+**Pré-requisitos que não são código:**
+- **Arte**: o gato atual é IA em 1254×1254 com fundo xadrez pintado, e a cobra não tem sprite
+  (cai no emoji). Num trio de starters a arte é o produto — os dois precisam de sprite 32×32 no padrão
+  do `scripts/pixel-sprites.mjs` antes de a tela existir.
+- **Uma skill pra gato e cobra**, senão o cachorro é a única escolha "útil" e o trio vira falso.
+  Preguiça e Constância são decidíveis no momento do check com o que o `toggleBlockCheck` já tem
+  (bloco anterior é pausa longa; minutos estudados hoje + este bloco ≥ `dailyStudyMin`), então é só
+  regra nova em `SkillRule` — sem mexer no schema.
+
+**Ordem:** sprites de gato e cobra → duas skills → `adoptStarter` + onboarding em dois passos →
+e2e (conta nova escolhe a cobra, nomeia, hero já mostra ela).
+
 ---
 
 ## Como esse arquivo deve crescer
