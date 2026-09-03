@@ -12,6 +12,8 @@ import { hydrateUserDoc, serializeState, emptyPersistedState } from '../domain/p
 // Estado compartilhado com o React (mesmo objeto). Depois de mutar, notify().
 import { state, derived, notify, subscribe, setTab, markAuthReady } from '../store/store';
 import { stopTimer } from '../application/timer';
+import { applyPendingPetXP } from '../application/pets';
+import { PETS } from '../domain/pets';
 import { notifyPlanDelta } from '../application/events';
 // O plano (semanas, blocos do dia, stats) e o save saíram daqui. Ver src/application.
 import {
@@ -48,10 +50,6 @@ import { computeStats as computeStatsPure, calcStreaks as calcStreaksPure } from
 // agora vivem em src/domain/ (config.ts e progression.ts), importados no topo.
 
 // Saldo de moedas = total ganho - gasto. Nunca negativo.
-function getCoinBalance() {
-  const stats = computeStats();
-  return Math.max(0, stats.coins - (state.coinsSpent || 0));
-}
 
 // ============================================================
 // SKILLS — bônus de XP por pet/skill ativa
@@ -83,17 +81,7 @@ const DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 // ============================================================
 // PETS REGISTRY
 // ============================================================
-const PETS = {
-  cat:   { id: 'cat',   name: 'Gato',      emoji: '🐱', price: 150, frames: 4, sprite: i => `idle/pets/cat/${i}.png` },
-  cow:   { id: 'cow',   name: 'Vaca',      emoji: '🐮', price: 150, frames: 4, sprite: i => `idle/pets/cow/${i}.png` },
-  snake: { id: 'snake', name: 'Cobra',     emoji: '🐍', price: 150, frames: 4, sprite: i => `idle/pets/snake/${i}.png` },
-  owl:   { id: 'owl',   name: 'Coruja',    emoji: '🦉', price: 150, frames: 4, sprite: i => `idle/pets/owl/${i}.png`,
-           skills: [
-             { id: 'noturno', name: 'Noturno', desc: '+5% XP em estudos a partir das 18h' },
-             { id: 'voo',     name: 'Voo',     desc: 'Permite o usuário voar (placeholder)' },
-           ] },
-  dog:   { id: 'dog',   name: 'Cachorro',  emoji: '🐶', price: 150, frames: 4, sprite: i => `idle/pets/dog/${i}.png` },
-};
+// PETS: src/domain/pets.ts
 
 
 // ============================================================
@@ -151,48 +139,12 @@ function isFutureDay(dateKey) {
 }
 
 
-function getPetXP(petId) {
-  return (state.pets.xp && state.pets.xp[petId]) || 0;
-}
-function getPetLevel(petId) {
-  return getLevelIdx(getPetXP(petId)) + 1;
-}
 
 // Lê o petId associado a um check. Retrocompat: checks antigos eram `true` (sem pet).
-function checkPet(dateKey, blockTime) {
-  return checkPetOf(state.checks[dateKey] && state.checks[dateKey][blockTime]);
-}
 
 // Processa XP de dias fechados (anteriores a hoje OU hoje se encerrado manualmente)
 // creditando no pet salvo em cada check. Idempotente via xpProcessedUntil.
-function applyPendingPetXP() {
-  if (!state.pets) state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
-  const today = dk(new Date());
-  const yest = new Date(); yest.setDate(yest.getDate() - 1);
 
-  // O cálculo (e a idempotência) vive em src/domain/checks.ts.
-  const pending = computePendingPetXP({
-    checks: state.checks,
-    xpProcessedUntil: state.pets.xpProcessedUntil,
-    todayKey: today,
-    yesterdayKey: dk(yest),
-    dayClosed: isDayClosed,
-    getBlocks: dayKey => generateBlocks(state.config, getEventsForDate(dayKey)),
-  });
-  if (!pending) return;
-
-  if (pending.resetXp) state.pets.xp = {};
-  if (!state.pets.xp) state.pets.xp = {};
-  for (const petId of Object.keys(pending.gains)) {
-    state.pets.xp[petId] = (state.pets.xp[petId] || 0) + pending.gains[petId];
-  }
-  state.pets.xpProcessedUntil = pending.processedUntil;
-  scheduleSave();
-}
-
-function dayCheckCount(dateKey) {
-  return state.checks[dateKey] ? Object.keys(state.checks[dateKey]).length : 0;
-}
 
 // ============================================================
 // STATS — single computation
@@ -339,8 +291,6 @@ let appliedTab = state.uiTab;
 function applyTab(tab) {
   const isPlano = tab === 'plano';
   document.querySelector('.main').style.display = isPlano ? '' : 'none';
-  document.getElementById('profile-page').classList.toggle('visible', tab === 'perfil');
-  if (tab === 'perfil') renderProfile();
 }
 subscribe(() => {
   if (state.uiTab === appliedTab) return;
@@ -349,258 +299,8 @@ subscribe(() => {
 });
 
 // ============================================================
-// CHARACTER ANIMATION (profile tab)
+// PERSONAGEM, PETS E LOJA — migraram pra src/features/profile e src/features/pets
 // ============================================================
-let charFrame = 0, charInterval = null;
-const CHAR_FRAMES = 4;
-function startCharAnim() {
-  if (charInterval) clearInterval(charInterval);
-  charInterval = setInterval(() => {
-    charFrame = (charFrame + 1) % CHAR_FRAMES;
-    const img = document.getElementById('char-sprite');
-    if (img) img.src = `idle/user/${charFrame}.png`;
-  }, 180);
-}
-
-// ============================================================
-// PET ANIMATION + SHOP
-// ============================================================
-let petFrame = 0, petInterval = null;
-function startPetAnim() {
-  if (petInterval) clearInterval(petInterval);
-  petInterval = null;
-  const img = document.getElementById('pet-sprite');
-  if (!img) return;
-  const activeId = state.pets.active;
-  const pet = activeId && PETS[activeId];
-  if (!pet) { img.style.display = 'none'; return; }
-  img.style.display = '';
-  petFrame = 0;
-  img.src = pet.sprite(0);
-  petInterval = setInterval(() => {
-    petFrame = (petFrame + 1) % pet.frames;
-    img.src = pet.sprite(petFrame);
-  }, 180);
-}
-
-window.openPetsShop = () => {
-  renderShop();
-  document.getElementById('pets-shop-panel').classList.add('open');
-};
-window.closePetsShop = () => {
-  document.getElementById('pets-shop-panel').classList.remove('open');
-};
-
-window.openMyPets = () => {
-  renderOwnedPets();
-  document.getElementById('my-pets-panel').classList.add('open');
-};
-window.closeMyPets = () => {
-  document.getElementById('my-pets-panel').classList.remove('open');
-};
-
-// Cria um card de pet pra grade. Se `showPrice` for false (aba "Meus pets"),
-// não mostra preço e desativa o botão "Adotar" — só Equipar/Ativo.
-function buildPetCard(pet, { showPrice }) {
-  const owned = state.pets.owned.includes(pet.id);
-  const active = state.pets.active === pet.id;
-  const item = document.createElement('div');
-  item.className = 'shop-item' + (active ? ' active-pet' : '');
-
-  if (active) {
-    const badge = document.createElement('div');
-    badge.className = 'shop-item-active-badge';
-    badge.textContent = 'Ativa';
-    item.appendChild(badge);
-  }
-
-  const img = document.createElement('img');
-  img.className = 'shop-item-img';
-  img.src = pet.sprite(0);
-  img.alt = pet.name;
-  img.onerror = () => {
-    const fallback = document.createElement('div');
-    fallback.className = 'shop-item-emoji';
-    fallback.textContent = pet.emoji;
-    img.replaceWith(fallback);
-  };
-
-  const nameRow = document.createElement('div');
-  nameRow.className = 'shop-item-name-row';
-  const nameSpan = document.createElement('span');
-  nameSpan.className = 'shop-item-name';
-  nameSpan.textContent = pet.name;
-  nameRow.appendChild(nameSpan);
-  if (owned) {
-    const lv = document.createElement('span');
-    lv.className = 'shop-item-lv';
-    lv.textContent = 'Lv. ' + getPetLevel(pet.id);
-    nameRow.appendChild(lv);
-  }
-
-  item.appendChild(img);
-  item.appendChild(nameRow);
-
-  if (showPrice && !owned) {
-    const priceDiv = document.createElement('div');
-    priceDiv.className = 'shop-item-price';
-    priceDiv.textContent = `🪙 ${pet.price}`;
-    item.appendChild(priceDiv);
-  }
-
-  const btn = document.createElement('button');
-  const balance = getCoinBalance();
-  const canAfford = balance >= pet.price;
-  const locked = !owned && !canAfford;
-  btn.className = 'shop-btn' + (active ? ' active' : owned ? ' owned' : locked ? ' locked' : '');
-  btn.textContent = active ? '✓ Equipada' : owned ? 'Equipar' : 'Adotar';
-  btn.onclick = () => {
-    if (!owned) {
-      if (!canAfford) {
-        showToast('Moedas insuficientes');
-        return;
-      }
-      openBuyConfirm(pet.id);
-      return;
-    }
-    if (active) {
-      state.pets.active = null;
-    } else {
-      state.pets.active = pet.id;
-    }
-    scheduleSave();
-    renderShop();
-    renderOwnedPets();
-    renderProfile();
-    startPetAnim();
-  };
-  item.appendChild(btn);
-
-  // Skills: só na aba "Meus pets" (showPrice=false), só se o pet tem skills cadastradas, só se o usuário possui o pet
-  if (!showPrice && owned && pet.skills && pet.skills.length) {
-    const skillsWrap = document.createElement('div');
-    skillsWrap.className = 'pet-skills-wrap';
-    const header = document.createElement('div');
-    header.className = 'pet-skills-header';
-    header.textContent = 'Skills';
-    skillsWrap.appendChild(header);
-
-    pet.skills.forEach(skill => {
-      const active = state.skills && state.skills[pet.id] === skill.id;
-      const row = document.createElement('button');
-      row.type = 'button';
-      row.className = 'pet-skill-row' + (active ? ' active' : '');
-      row.innerHTML = `
-        <span class="ps-info">
-          <span class="ps-name">${skill.name}</span>
-          <span class="ps-desc">${skill.desc}</span>
-        </span>
-        <span class="ps-toggle ${active ? 'on' : ''}"><span class="ps-knob"></span></span>
-      `;
-      row.onclick = () => {
-        if (!state.skills) state.skills = { activatedAt: 0 };
-        if (state.skills[pet.id] === skill.id) {
-          state.skills[pet.id] = null;
-        } else {
-          state.skills[pet.id] = skill.id;
-        }
-        state.skills.activatedAt = Date.now();
-        scheduleSave();
-        renderOwnedPets();
-      };
-      skillsWrap.appendChild(row);
-    });
-
-    item.appendChild(skillsWrap);
-  }
-
-  return item;
-}
-
-function renderShop() {
-  const grid = document.getElementById('pets-shop');
-  if (!grid) return;
-  grid.innerHTML = '';
-  Object.values(PETS).forEach(pet => {
-    grid.appendChild(buildPetCard(pet, { showPrice: true }));
-  });
-}
-
-function renderOwnedPets() {
-  ['my-pets-grid'].forEach(id => {
-    const grid = document.getElementById(id);
-    if (!grid) return;
-    grid.innerHTML = '';
-    const owned = state.pets.owned;
-    if (!owned || owned.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'my-pets-empty';
-      empty.innerHTML = '<div class="mpe-icon">🐾</div>Nenhum pet ainda.<br>Visite a loja pra adotar um!';
-      grid.appendChild(empty);
-      return;
-    }
-    owned.forEach(petId => {
-      const pet = PETS[petId];
-      if (!pet) return;
-      grid.appendChild(buildPetCard(pet, { showPrice: false }));
-    });
-  });
-}
-
-// === BUY CONFIRMATION MODAL ===
-let pendingBuy = null;
-
-window.openBuyConfirm = (petId) => {
-  const pet = PETS[petId];
-  if (!pet) return;
-  pendingBuy = petId;
-  const body = document.getElementById('buy-confirm-body');
-  body.innerHTML = '';
-  const img = document.createElement('img');
-  img.className = 'buy-confirm-img';
-  img.src = pet.sprite(0);
-  img.alt = pet.name;
-  img.onerror = () => {
-    const fallback = document.createElement('div');
-    fallback.className = 'buy-confirm-emoji';
-    fallback.textContent = pet.emoji;
-    img.replaceWith(fallback);
-  };
-  const text = document.createElement('div');
-  text.className = 'buy-confirm-text';
-  text.innerHTML = `Adotar <b>${pet.name}</b> por 🪙 <b>${pet.price}</b>?`;
-  body.appendChild(img);
-  body.appendChild(text);
-  document.getElementById('pet-buy-confirm').classList.add('open');
-};
-
-window.closeBuyConfirm = () => {
-  pendingBuy = null;
-  document.getElementById('pet-buy-confirm').classList.remove('open');
-};
-
-window.confirmBuy = () => {
-  const petId = pendingBuy;
-  if (!petId) return;
-  const pet = PETS[petId];
-  if (!pet) { closeBuyConfirm(); return; }
-  if (state.pets.owned.includes(pet.id)) { closeBuyConfirm(); return; }
-  if (getCoinBalance() < pet.price) {
-    showToast('Moedas insuficientes');
-    closeBuyConfirm();
-    return;
-  }
-  state.pets.owned.push(pet.id);
-  state.pets.active = pet.id;
-  state.coinsSpent = (state.coinsSpent || 0) + pet.price;
-  scheduleSave();
-  closeBuyConfirm();
-  renderShop();
-  renderOwnedPets();
-  renderProfile();
-  startPetAnim();
-  showToast(`${pet.name} adotado! 🎉`);
-};
 
 // ============================================================
 // RENDERING
@@ -727,7 +427,7 @@ window.confirmFinishDay = () => {
   const after = snapshotForSummary();
   renderDaySummary(before, after);
   renderAll();
-  if (state.uiTab === 'perfil') renderProfile();
+  notify();   // o Perfil (React) relê pets e stats do store
   openDaySummary();
 };
 
@@ -840,86 +540,6 @@ window.endPromptSaveExtend = () => {
 // ============================================================
 // ANÁLISE — migrou pra src/features/analytics e src/domain/analytics.ts
 // ============================================================
-
-// ============================================================
-// PROFILE RENDER
-// ============================================================
-function renderProfile() {
-  startCharAnim();
-  startPetAnim();
-  applyPendingPetXP();   // se atravessou a meia-noite, credita XP do dia fechado
-  const stats = computeStats();
-  const totalXP = stats.totalXP;
-  const level = getLevel(totalXP);
-  const pct = getLevelPct(totalXP);
-  const lvlIdx = getLevelIdx(totalXP);
-  const nextLvl = LEVELS.find(([t]) => t > totalXP);
-
-  document.getElementById('char-level-badge').textContent = 'Lv. ' + (lvlIdx + 1);
-  document.getElementById('char-name').textContent = 'Estudante';
-
-  // Subtitle: só o nível do usuário (info do pet vive no card destacado abaixo)
-  document.getElementById('char-title-sub').textContent = level;
-
-  // Próximo XP label
-  document.getElementById('char-xp-next-val').textContent = nextLvl ? (nextLvl[0] - totalXP) + ' XP' : 'MÁX';
-  document.getElementById('char-xp-bar').style.width = pct + '%';
-
-  // Stats 4-col
-  document.getElementById('ps-xp').textContent = totalXP;
-  document.getElementById('ps-blocks').textContent = stats.totalChecks;
-  const h = Math.floor(stats.studyMins / 60), m = stats.studyMins % 60;
-  document.getElementById('ps-hours').textContent = h + 'h' + (m > 0 ? m + 'min' : '');
-  document.getElementById('char-coins').textContent = getCoinBalance();
-
-  // Card do pet ativo + contador no botão "Meus pets"
-  renderActivePetCard();
-  const totalPets = Object.keys(PETS).length;
-  const ownedCount = (state.pets.owned || []).length;
-  document.getElementById('my-pets-count').textContent = `${ownedCount}/${totalPets} ✨`;
-}
-
-function renderActivePetCard() {
-  const activeId = state.pets.active;
-  const pet = activeId && PETS[activeId];
-  const card = document.getElementById('active-pet-card');
-  const empty = document.getElementById('no-active-pet');
-  if (!pet) {
-    card.style.display = 'none';
-    empty.style.display = '';
-    return;
-  }
-  card.style.display = '';
-  empty.style.display = 'none';
-
-  const sprite = document.getElementById('ap-sprite');
-  sprite.src = pet.sprite(0);
-  sprite.alt = pet.name;
-  sprite.onerror = () => { sprite.style.display = 'none'; };
-  sprite.style.display = '';
-
-  document.getElementById('ap-name').textContent = pet.name;
-  const petXP = getPetXP(activeId);
-  const lvl = getPetLevel(activeId);
-  document.getElementById('ap-lv').textContent = 'Lv. ' + lvl;
-
-  const lvlIdx = lvl - 1;
-  const curThreshold = LEVELS[lvlIdx] ? LEVELS[lvlIdx][0] : 0;
-  const nextEntry = LEVELS[lvlIdx + 1];
-  const fill = document.getElementById('ap-bar-fill');
-  const xpLabel = document.getElementById('ap-xp');
-  if (!nextEntry) {
-    fill.style.width = '100%';
-    xpLabel.textContent = `${petXP} XP · nível máximo`;
-  } else {
-    const nextThreshold = nextEntry[0];
-    const inLevel = petXP - curThreshold;
-    const span = nextThreshold - curThreshold;
-    const pct = Math.min(100, Math.round((inLevel / span) * 100));
-    fill.style.width = pct + '%';
-    xpLabel.textContent = `${petXP} / ${nextThreshold} XP · faltam ${nextThreshold - petXP} pro Lv. ${lvl + 1}`;
-  }
-}
 
 // Salvar configurações (React) reagenda o prompt de fim de dia com o novo horário.
 window.rescheduleEndOfDayPrompt = () => { endPromptShown = false; scheduleEndOfDayPrompt(); };

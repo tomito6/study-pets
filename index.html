@@ -93,44 +93,7 @@
 </div>
 
 <div id="settings-root"></div>
-<!-- PETS SHOP PANEL -->
-<div class="panel-overlay center" id="pets-shop-panel" onclick="closeIfOutside(event,'pets-shop-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🛒 Loja de pets</h2>
-      <button class="panel-close" onclick="closePetsShop()">✕</button>
-    </div>
-    <div class="shop-grid" id="pets-shop"></div>
-  </div>
-</div>
-
 <div id="focus-root"></div>
-<!-- MEUS PETS PANEL -->
-<div class="panel-overlay center" id="my-pets-panel" onclick="closeIfOutside(event,'my-pets-panel')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>🐾 Meus pets</h2>
-      <button class="panel-close" onclick="closeMyPets()">✕</button>
-    </div>
-    <div class="shop-grid" id="my-pets-grid"></div>
-  </div>
-</div>
-
-<!-- PET BUY CONFIRM -->
-<div class="panel-overlay center" id="pet-buy-confirm" onclick="closeIfOutside(event,'pet-buy-confirm')">
-  <div class="panel-sheet">
-    <div class="panel-header">
-      <h2>Adotar pet?</h2>
-      <button class="panel-close" onclick="closeBuyConfirm()">✕</button>
-    </div>
-    <div class="buy-confirm-body" id="buy-confirm-body"></div>
-    <div class="btn-row">
-      <button class="reset-btn" onclick="closeBuyConfirm()">Cancelar</button>
-      <button class="save-btn" onclick="confirmBuy()">Adotar</button>
-    </div>
-  </div>
-</div>
-
 <!-- ONBOARDING PANEL -->
 <div class="panel-overlay center" id="onboarding-panel">
   <div class="panel-sheet">
@@ -163,76 +126,7 @@
 </div><!-- end #app -->
 <div id="analytics-root"></div>
 
-<div class="profile-page" id="profile-page">
-
-  <!-- HERO SCENE -->
-  <div class="profile-hero">
-    <div class="profile-hero-stage">
-      <img id="char-sprite" class="char-sprite" src="idle/user/0.png" alt="Personagem">
-      <img id="pet-sprite" class="pet-sprite" alt="Pet" style="display:none">
-    </div>
-    <div class="profile-hero-divider"></div>
-    <div class="profile-hero-row">
-      <div class="profile-hero-left">
-        <div class="profile-hero-name">
-          <span id="char-name">Estudante</span>
-          <span class="hero-lv-badge" id="char-level-badge">Lv.1</span>
-        </div>
-        <div class="profile-hero-sub" id="char-title-sub">Zero</div>
-      </div>
-      <div class="profile-hero-right">
-        <div class="phr-label">próximo nível</div>
-        <div class="phr-val" id="char-xp-next-val">— XP</div>
-      </div>
-    </div>
-    <div class="profile-hero-bar">
-      <div class="bar-fill" id="char-xp-bar" style="width:0%"></div>
-    </div>
-  </div>
-
-  <!-- STATS 4-col -->
-  <div class="profile-stats-4">
-    <div class="profile-stat-mini"><div class="psm-val" id="ps-xp">0</div><div class="psm-label">XP total</div></div>
-    <div class="profile-stat-mini"><div class="psm-val" id="ps-blocks">0</div><div class="psm-label">Blocos</div></div>
-    <div class="profile-stat-mini"><div class="psm-val" id="ps-hours">0h</div><div class="psm-label">Estudo</div></div>
-    <div class="profile-stat-mini coins-stat"><div class="psm-val" id="char-coins">0</div><div class="psm-label">Moedas</div></div>
-  </div>
-
-  <!-- PET ATIVO (card destacado) -->
-  <div class="active-pet-card" id="active-pet-card" style="display:none">
-    <img class="ap-sprite" id="ap-sprite" alt="">
-    <div class="ap-info">
-      <div class="ap-tag">Pet ativo</div>
-      <div class="ap-name-row">
-        <span class="ap-name" id="ap-name">—</span>
-        <span class="ap-lv" id="ap-lv">Lv. 1</span>
-      </div>
-      <div class="ap-bar-track"><div class="ap-bar-fill" id="ap-bar-fill" style="width:0%"></div></div>
-      <div class="ap-xp" id="ap-xp">— XP</div>
-    </div>
-  </div>
-  <div class="no-active-pet" id="no-active-pet">
-    Nenhum pet equipado. Adote um na loja e equipe em "🐾 Meus pets".
-  </div>
-
-  <!-- MEUS PETS BUTTON -->
-  <button type="button" class="shop-open-btn" onclick="openMyPets()">
-    <span class="shop-open-icon">🐾</span>
-    <span class="shop-open-label">Meus pets</span>
-    <span class="shop-open-count" id="my-pets-count">0 ✨</span>
-    <span class="shop-open-arrow">›</span>
-  </button>
-
-  <!-- PETS SHOP BUTTON -->
-  <button type="button" class="shop-open-btn" onclick="openPetsShop()">
-    <span class="shop-open-icon">🛒</span>
-    <span class="shop-open-label">Loja de pets</span>
-    <span class="shop-open-arrow">›</span>
-  </button>
-
-</div>
-
-
+<div id="profile-root"></div>
 <div id="save-root"></div>
 
 <script type="module" src="/src/main.tsx"></script>

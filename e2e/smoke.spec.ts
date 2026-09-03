@@ -148,7 +148,7 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: /Perfil/ }).click();
     await expect(page.locator('#char-coins')).toHaveText('180');
 
-    await page.locator('[onclick^="openPetsShop"]').click();
+    await page.getByRole('button', { name: /Loja de pets/ }).click();
     await expect(page.locator('#pets-shop-panel')).toBeVisible();
     const gato = page.locator('#pets-shop-panel .shop-item', { hasText: 'Gato' });
     await gato.locator('.shop-btn').click();
@@ -159,7 +159,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#char-coins')).toHaveText('30'); // 180 − 150
     await page.locator('#pets-shop-panel .panel-close').click();
 
-    await page.locator('[onclick^="openMyPets"]').click();
+    await page.getByRole('button', { name: /Meus pets/ }).click();
     await expect(page.locator('#my-pets-panel')).toBeVisible();
     await expect(page.locator('#my-pets-grid')).toContainText('Gato');
     await expect(page.locator('#my-pets-grid .shop-btn.active')).toHaveText(/Equipada/);

@@ -162,8 +162,12 @@ disso; Fase 2 em diante sim.
   - **Fatia 6 — feita**: Análise. `domain/analytics.ts` (semana atual, dots da meta, heatmap,
     horas, drop-off, sparkline — dados, não texto) e `features/analytics/AnalyticsTab.tsx`. Legado
     1174 → 926; `index.html` 354 → 241. Smoke 9/9; 266 unitários.
-  - **Próximas fatias**: Perfil + Pets, Onboarding + Encerrar o dia (leva `openFinishDay`,
-    `openOnboarding` e `rescheduleEndOfDayPrompt`, e fecha a ponte). Depois, Fase 6: remover o legado.
+  - **Fatia 7 — feita**: Perfil + Pets. `domain/pets.ts` (catálogo, XP/nível do pet, saldo),
+    `application/pets.ts` (XP pendente, adotar, equipar, skills), `features/profile/` e
+    `features/pets/`. Legado 926 → 545; `index.html` 241 → 135. Smoke 9/9 (a loja agora é
+    localizada por papel/nome, não pelo `onclick` antigo); 266 unitários.
+  - **Próxima fatia**: Onboarding + Encerrar o dia (leva `openFinishDay`, `openOnboarding` e
+    `rescheduleEndOfDayPrompt`, e fecha a ponte). Depois, Fase 6: remover o legado.
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência
