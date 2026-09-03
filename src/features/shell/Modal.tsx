@@ -22,7 +22,9 @@ export function Modal({ id, open, title, onClose, children }: Props) {
           <h2>{title}</h2>
           <button className="panel-close" onClick={onClose}>✕</button>
         </div>
-        {children}
+        {/* Conteúdo só existe enquanto aberto, como no app antigo (que montava o modal ao abrir).
+            Senão a loja e o Meus pets carregam os sprites de todos os pets já na tela de login. */}
+        {open ? children : null}
       </div>
     </div>
   );
