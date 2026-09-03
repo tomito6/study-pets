@@ -271,4 +271,61 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#toast')).toContainText('Já existe um grupo');
     await expect(page.locator('#group-panel')).toBeHidden();
   });
+
+  test.describe('no celular', () => {
+    test.use({ hasTouch: true });
+
+    /** Toque de verdade pelo CDP: passa pelo gesto do Chromium, inclusive a decisão de rolar. */
+    const centro = async (page: Page, i: number) => {
+      const b = await page.locator('.block-row').nth(i).boundingBox();
+      if (!b) throw new Error(`linha ${i} sem posição`);
+      return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+    };
+
+    test('13. toque longo arrasta a seleção; soltar sem arrastar volta ao toque no último', async ({ page }) => {
+      await abrirApp(page);
+      const cdp = await page.context().newCDPSession(page);
+      const toque = (type: 'touchStart' | 'touchMove' | 'touchEnd', p?: { x: number; y: number }) =>
+        cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [p] : [] });
+
+      // Segura na linha 0, espera o toque longo, arrasta até a linha 2 e solta.
+      const a = await centro(page, 0);
+      const b = await centro(page, 2);
+      await toque('touchStart', a);
+      await page.waitForTimeout(600);
+      await expect(page.locator('#group-hint')).toContainText('Arraste');
+      for (let s = 1; s <= 6; s++) await toque('touchMove', { x: a.x, y: a.y + ((b.y - a.y) * s) / 6 });
+      await expect(page.locator('.block-row.selecting')).toHaveCount(3);
+      await expect(page.locator('.selection-rect')).toBeVisible();
+      await toque('touchEnd');
+      await expect(page.locator('#group-panel')).toBeVisible();
+      await expect(page.locator('#group-summary')).toContainText('09:00 – 09:55');
+      await page.locator('#group-panel .panel-close').click();
+
+      // Toque longo e solta no lugar: continua esperando o toque no último bloco.
+      const c = await centro(page, 6);
+      await toque('touchStart', c);
+      await page.waitForTimeout(600);
+      await toque('touchEnd');
+      await expect(page.locator('#group-hint')).toContainText('último bloco');
+      await page.locator('.block-row').nth(8).locator('.block-name').tap();
+      await expect(page.locator('#group-panel')).toBeVisible();
+      await expect(page.locator('#group-summary')).toContainText('10:30 – 11:40');
+    });
+
+    test('14. arrastando até a borda de baixo, a página rola sozinha', async ({ page }) => {
+      await abrirApp(page);
+      const cdp = await page.context().newCDPSession(page);
+      const a = await centro(page, 0);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [a] });
+      await page.waitForTimeout(600);
+      const antes = await page.evaluate(() => window.scrollY);
+      const h = page.viewportSize()!.height;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: a.x, y: h - 20 }] });
+      await page.waitForTimeout(400);
+      expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(antes + 50);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await expect(page.locator('#group-panel')).toBeVisible(); // soltou longe da âncora: virou grupo
+    });
+  });
 });

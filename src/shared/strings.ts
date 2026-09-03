@@ -57,7 +57,7 @@ export const strings = {
     cancel: 'Cancelar',
     hintFirst: 'Toque no primeiro bloco do grupo',
     hintLast: 'Agora toque no último bloco',
-    hintDrag: 'Solte pra criar o grupo',
+    hintDrag: 'Arraste até o último bloco e solte',
     panelNew: '✏️ Novo grupo',
     panelEdit: '✏️ Editar grupo',
     summary: (start: string, end: string, count: number, dur: string) =>

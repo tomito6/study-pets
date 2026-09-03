@@ -32,6 +32,12 @@ progresso (`feitos/total` e minutos), e as linhas membros ficam indentadas com o
   ordem do grupo no dia: ciano, índigo, turquesa, magenta, céu, lilás — fria e luminosa, fora da
   paleta das sessões. Completo vira verde. Grupo sem bloco (plano mudou) fica tracejado, só o
   cabeçalho, pra editar/apagar.
+- **Toque longo arrasta** (pedido do Tomi depois de testar no celular; antes era toque longo + toque
+  no último). Ao disparar, um `touchmove` nativo não passivo segura o scroll (o `onTouchMove` do
+  React é passivo e não cancela) e o ponteiro é capturado na linha; o dedo estica a seleção, o
+  retângulo tracejado (`SelectionRect`) acompanha, e perto da borda a página rola sozinha. Soltar
+  sem arrastar cai no modo antigo. Não dá pra testar toque real no Playwright — validado com
+  eventos de ponteiro sintéticos e no celular do Tomi.
 - **Menu de contexto bloqueado no `document`**, em fase de captura, enquanto há arrasto ou toque
   longo: o modal abre no `pointerup`, e o `contextmenu` disparava em cima dele, fora da lista.
 - **Persistência**: campo `groups` no doc, `hydrateUserDoc` tolera ausente/malformado (só entra

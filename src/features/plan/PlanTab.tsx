@@ -19,6 +19,7 @@ import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal
 import { EventPanel } from '../events/EventPanel';
 import { LunchPanel } from '../events/LunchPanel';
 import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
+import { SelectionRect } from '../groups/SelectionRect';
 import { useGroupSelection } from '../groups/useGroupSelection';
 import { BlockList, dayProgress } from './BlockList';
 import { useMinuteTick } from './useMinuteTick';
@@ -223,6 +224,7 @@ export function PlanTab() {
           onEditLunch={(dateKey) => setModal({ kind: 'lunch', dateKey })}
           onEditGroup={openEditGroup}
         />
+        <SelectionRect range={selection.range} listId="blocks-list" />
       </div>
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
 
