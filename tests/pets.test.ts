@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyPendingPetXP, buyPet, coinBalance, evolvePet, renamePet, toggleEquip, toggleSkill } from '../src/application/pets';
+import { adoptStarter, applyPendingPetXP, buyPet, coinBalance, evolvePet, needsStarter, renamePet, toggleEquip, toggleSkill } from '../src/application/pets';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { toggleBlockCheck } from '../src/application/checks';
 import { emptyPersistedState } from '../src/domain/persistence';
@@ -14,6 +14,7 @@ import {
   formatStudyHours,
   legacyPetInstance,
   newPetInstance,
+  normalizePetInstance,
   normalizePetName,
   petForm,
   petLevelFromXP,
@@ -32,16 +33,18 @@ const inst = (over: Partial<PetInstance> = {}): PetInstance => ({
 });
 
 describe('catálogo', () => {
-  it('5 espécies a 150 moedas; toda forma e skill referenciada existe', () => {
+  it('5 espécies a 150 moedas, cada uma com pelo menos uma skill; toda forma e skill referenciada existe', () => {
     expect(PET_LIST).toHaveLength(5);
     expect(PET_LIST.every((p) => p.price === 150)).toBe(true);
+    expect(PET_LIST.every((p) => speciesForm(p).skills.length > 0)).toBe(true);
     for (const s of PET_LIST) {
       expect(FORMS[s.form], s.id).toBeDefined();
       for (const path of s.paths) for (const st of path.stages) expect(FORMS[st.form], st.form).toBeDefined();
     }
     for (const f of Object.values(FORMS)) for (const id of f.skills) expect(SKILLS[id], id).toBeDefined();
     expect(speciesForm(PETS.cat!).sprite(2)).toBe('idle/pets/cat/2.png');
-    expect(FORMS.owl!.skills).toEqual(['noturno', 'voo']);
+    expect(FORMS.dove!.skills).toEqual(['madrugador', 'aula']);
+    expect(FORMS.owl).toBeUndefined(); // a coruja virou pomba
   });
 
   it('o cachorro tem dois caminhos: pastor alemão ou lobo, no Lv. 5', () => {
@@ -138,11 +141,22 @@ describe('forma, nome e evolução (puro)', () => {
     expect(newPetInstance(PETS.dog!, 'Rex', [a, b], 3000).id).toBe('dog-3');
   });
 
-  it('instância legada: id = espécie, nome = nome da forma', () => {
+  it('instância legada: id = espécie, nome = nome da forma; a coruja vira pomba e perde a skill que a pomba não tem', () => {
+    expect(legacyPetInstance('cat', 300, null, 0)).toEqual({
+      id: 'cat', species: 'cat', name: 'Gato', xp: 300, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0,
+    });
     expect(legacyPetInstance('owl', 300, 'noturno', 5)).toEqual({
-      id: 'owl', species: 'owl', name: 'Coruja', xp: 300, path: null, stage: 0, skill: 'noturno', skillActivatedAt: 5, adoptedAt: 0,
+      id: 'owl', species: 'dove', name: 'Pomba', xp: 300, path: null, stage: 0, skill: null, skillActivatedAt: 5, adoptedAt: 0,
     });
     expect(legacyPetInstance('dragao', 0, null, 0).name).toBe('dragao');
+  });
+
+  it('normalizePetInstance: traduz espécie renomeada e desliga skill fora da forma; sem mudança devolve a mesma referência', () => {
+    const owl = inst({ id: 'owl', species: 'owl', name: 'Sofia', skill: 'noturno' });
+    expect(normalizePetInstance(owl)).toMatchObject({ id: 'owl', species: 'dove', name: 'Sofia', skill: null });
+    const dove = inst({ id: 'owl', species: 'dove', skill: 'madrugador' });
+    expect(normalizePetInstance(dove)).toBe(dove);
+    expect(normalizePetInstance(inst({ skill: 'noturno' })).skill).toBeNull(); // cachorro não tem Noturno
   });
 
   it('saldo nunca fica negativo; horas de estudo formatadas', () => {
@@ -199,28 +213,28 @@ describe('casos de uso dos pets', () => {
   });
 
   it('equipar/desequipar é grátis; só pets que você tem; marca desde quando', () => {
-    state.pets.owned = [inst({ id: 'cat', species: 'cat' }), inst({ id: 'owl', species: 'owl' })];
-    toggleEquip('owl', AGORA);
-    expect(state.pets.active).toBe('owl');
+    state.pets.owned = [inst({ id: 'cat', species: 'cat' }), inst({ id: 'dove', species: 'dove' })];
+    toggleEquip('dove', AGORA);
+    expect(state.pets.active).toBe('dove');
     expect(state.pets.activeSince).toBe(AGORA.getTime());
-    toggleEquip('owl', AGORA);
+    toggleEquip('dove', AGORA);
     expect(state.pets.active).toBeNull();
     toggleEquip('dog', AGORA);
     expect(state.pets.active).toBeNull();
   });
 
   it('skill: uma por pet, só das que a forma tem; clicar na ativa desliga; marca a troca', () => {
-    state.pets.owned = [inst({ id: 'owl', species: 'owl' })];
-    const owl = state.pets.owned[0]!;
-    toggleSkill('owl', 'noturno', AGORA);
-    expect(owl.skill).toBe('noturno');
-    expect(owl.skillActivatedAt).toBe(AGORA.getTime());
-    toggleSkill('owl', 'fiel', AGORA); // coruja não tem Fiel
-    expect(owl.skill).toBe('noturno');
-    toggleSkill('owl', 'voo', AGORA);
-    expect(owl.skill).toBe('voo');
-    toggleSkill('owl', 'voo', AGORA);
-    expect(owl.skill).toBeNull();
+    state.pets.owned = [inst({ id: 'dove', species: 'dove' })];
+    const dove = state.pets.owned[0]!;
+    toggleSkill('dove', 'madrugador', AGORA);
+    expect(dove.skill).toBe('madrugador');
+    expect(dove.skillActivatedAt).toBe(AGORA.getTime());
+    toggleSkill('dove', 'fiel', AGORA); // pomba não tem Fiel
+    expect(dove.skill).toBe('madrugador');
+    toggleSkill('dove', 'aula', AGORA);
+    expect(dove.skill).toBe('aula');
+    toggleSkill('dove', 'aula', AGORA);
+    expect(dove.skill).toBeNull();
   });
 
   it('renomear é grátis, mas o nome precisa servir', () => {
@@ -265,6 +279,31 @@ describe('casos de uso dos pets', () => {
     expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.05 });
     expect(toggleBlockCheck(HOJE, b2!, AGORA)).toMatchObject({ checked: true, xp: 50 });
     expect(state.checks[HOJE]![b2!.time]).toEqual({ pet: 'dog', bonus: 0 });
+  });
+
+  it('Preguiça: o estudo logo depois da pausa longa ganha o bônus, o seguinte não', () => {
+    state.pets.owned = [inst({ id: 'cat', species: 'cat', skill: 'preguica', skillActivatedAt: OITO_DA_MANHA })];
+    state.pets.active = 'cat';
+    state.pets.activeSince = OITO_DA_MANHA;
+    const blocks = blocksForDay(HOJE);
+    const i = blocks.findIndex((b, k) => b.type === 'estudo' && k > 0 && blocks[k - 1]!.name.includes('longa'));
+    expect(i).toBeGreaterThan(0);
+    expect(toggleBlockCheck(HOJE, blocks[i]!, AGORA)).toMatchObject({ xp: 53 });
+    const next = blocks.find((b, k) => k > i && b.type === 'estudo')!;
+    expect(toggleBlockCheck(HOJE, next, AGORA)).toMatchObject({ xp: 50 });
+  });
+
+  it('pet inicial: de graça, só pra quem não tem pet, já equipado', () => {
+    expect(needsStarter()).toBe(true);
+    expect(adoptStarter('dragao', 'X', AGORA)).toBe('unknown');
+    expect(adoptStarter('snake', '  ', AGORA)).toBe('invalid-name');
+    expect(adoptStarter('snake', ' Sibila ', AGORA)).toBe('ok');
+    expect(state.pets.owned).toMatchObject([{ id: 'snake', species: 'snake', name: 'Sibila', xp: 0, adoptedAt: AGORA.getTime() }]);
+    expect(state.pets.active).toBe('snake');
+    expect(state.coinsSpent).toBe(0);
+    expect(needsStarter()).toBe(false);
+    expect(adoptStarter('cat', 'Mia', AGORA)).toBe('already-has-pet');
+    expect(state.pets.owned).toHaveLength(1);
   });
 
   it('equipar o pet depois do bloco começar não dá bônus (anti-exploit)', () => {

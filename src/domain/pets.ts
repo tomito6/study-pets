@@ -11,10 +11,10 @@ import type { EvolutionPath, FormId, PetForm, PetId, PetInstance, PetSpecies } f
 const spriteOf = (form: FormId) => (i: number) => `idle/pets/${form}/${i}.png`;
 
 export const FORMS: Record<FormId, PetForm> = {
-  cat: { id: 'cat', name: 'Gato', emoji: '🐱', frames: 4, sprite: spriteOf('cat'), skills: [] },
-  cow: { id: 'cow', name: 'Vaca', emoji: '🐮', frames: 4, sprite: spriteOf('cow'), skills: [] },
-  snake: { id: 'snake', name: 'Cobra', emoji: '🐍', frames: 4, sprite: spriteOf('snake'), skills: [] },
-  owl: { id: 'owl', name: 'Coruja', emoji: '🦉', frames: 4, sprite: spriteOf('owl'), skills: ['noturno', 'voo'] },
+  cat: { id: 'cat', name: 'Gato', emoji: '🐱', frames: 4, sprite: spriteOf('cat'), skills: ['preguica'] },
+  cow: { id: 'cow', name: 'Vaca', emoji: '🐮', frames: 4, sprite: spriteOf('cow'), skills: ['rumina'] },
+  snake: { id: 'snake', name: 'Cobra', emoji: '🐍', frames: 4, sprite: spriteOf('snake'), skills: ['constancia'] },
+  dove: { id: 'dove', name: 'Pomba', emoji: '🕊️', frames: 4, sprite: spriteOf('dove'), skills: ['madrugador', 'aula'] },
   dog: { id: 'dog', name: 'Cachorro', emoji: '🐶', frames: 4, sprite: spriteOf('dog'), skills: ['fiel'] },
   'dog-shepherd': { id: 'dog-shepherd', name: 'Pastor alemão', emoji: '🐕', frames: 4, sprite: spriteOf('dog-shepherd'), skills: ['fiel', 'aula'] },
   wolf: { id: 'wolf', name: 'Lobo', emoji: '🐺', frames: 4, sprite: spriteOf('wolf'), skills: ['noturno', 'lua-cheia'] },
@@ -28,10 +28,6 @@ export const FORMS: Record<FormId, PetForm> = {
 export const DOG_EVOLVE_LEVEL = 5;
 
 export const PETS: Record<PetId, PetSpecies> = {
-  cat: { id: 'cat', price: 150, form: 'cat', paths: [], names: ['Mia', 'Tom', 'Frida', 'Nina', 'Simba', 'Jade', 'Luna', 'Salem'] },
-  cow: { id: 'cow', price: 150, form: 'cow', paths: [], names: ['Mimosa', 'Malhada', 'Berta', 'Estrela', 'Dona', 'Preta'] },
-  snake: { id: 'snake', price: 150, form: 'snake', paths: [], names: ['Sibila', 'Ísis', 'Ônix', 'Zig', 'Medusa', 'Naja'] },
-  owl: { id: 'owl', price: 150, form: 'owl', paths: [], names: ['Sofia', 'Atena', 'Hugo', 'Merlin', 'Noite', 'Bubo'] },
   dog: {
     id: 'dog',
     price: 150,
@@ -52,6 +48,10 @@ export const PETS: Record<PetId, PetSpecies> = {
       },
     ],
   },
+  cat: { id: 'cat', price: 150, form: 'cat', paths: [], names: ['Mia', 'Tom', 'Frida', 'Nina', 'Simba', 'Jade', 'Luna', 'Salem'] },
+  cow: { id: 'cow', price: 150, form: 'cow', paths: [], names: ['Mimosa', 'Malhada', 'Berta', 'Estrela', 'Dona', 'Preta'] },
+  snake: { id: 'snake', price: 150, form: 'snake', paths: [], names: ['Sibila', 'Ísis', 'Ônix', 'Zig', 'Medusa', 'Naja'] },
+  dove: { id: 'dove', price: 150, form: 'dove', paths: [], names: ['Paz', 'Alva', 'Nuvem', 'Cora', 'Pipo', 'Branca'] },
 };
 
 export const PET_LIST: PetSpecies[] = Object.values(PETS);
@@ -213,14 +213,32 @@ export function newPetInstance(species: PetSpecies, name: string, existing: read
 }
 
 /**
+ * Espécies que mudaram de id. O id antigo continua nos docs salvos (e como id de
+ * instância nos checks); a leitura traduz. A coruja virou pomba em 2026-09-03.
+ */
+export const SPECIES_RENAMES: Readonly<Record<string, PetId>> = { owl: 'dove' };
+
+/**
+ * Deixa uma instância coerente com o catálogo atual: traduz espécie renomeada e
+ * desliga skill que a forma atual não tem. Puro; devolve a mesma referência se
+ * nada mudou.
+ */
+export function normalizePetInstance(pet: PetInstance): PetInstance {
+  const species = SPECIES_RENAMES[pet.species] ?? pet.species;
+  let next = species === pet.species ? pet : { ...pet, species };
+  if (next.skill && !petForm(next).skills.includes(next.skill)) next = { ...next, skill: null };
+  return next;
+}
+
+/**
  * Instância a partir do formato antigo, em que `owned` era só o id da espécie.
  * O id continua sendo o da espécie: assim todo check antigo (`pet: 'cat'`)
  * continua apontando pro bicho certo, sem reescrever checks.
  */
 export function legacyPetInstance(speciesId: PetId, xp: number, skill: string | null, skillActivatedAt: number): PetInstance {
-  const species = PETS[speciesId];
-  const name = species ? speciesForm(species).name : speciesId;
-  return { id: speciesId, species: speciesId, name, xp, path: null, stage: 0, skill, skillActivatedAt, adoptedAt: 0 };
+  const pet = normalizePetInstance({ id: speciesId, species: speciesId, name: '', xp, path: null, stage: 0, skill, skillActivatedAt, adoptedAt: 0 });
+  const def = PETS[pet.species];
+  return { ...pet, name: def ? speciesForm(def).name : speciesId };
 }
 
 /** Saldo = ganho − gasto, nunca negativo. */

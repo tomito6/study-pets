@@ -1,7 +1,7 @@
 // XP, moedas, níveis e skills. Regras puras — nada aqui lê estado global.
 
-import type { CheckRecord, DateKey, PetInstanceId, SkillId, StudyBlock } from './types';
-import { dk } from './time';
+import type { BlockType, CheckRecord, DateKey, PetInstanceId, SkillId, StudyBlock } from './types';
+import { dk, timeToMins } from './time';
 
 /** Níveis do usuário: [XP mínimo, nome]. (Os pets têm curva própria em `pets.ts`.) */
 export const LEVELS: ReadonlyArray<readonly [number, string]> = [
@@ -84,17 +84,24 @@ export function checkPetOf(check: CheckRecord | undefined | null): PetInstanceId
 
 /**
  * O que uma skill exige do bloco pra dar bônus. Regras pequenas e situacionais de
- * propósito — nada aqui pode virar "quem não tem tá perdendo".
+ * propósito — nada aqui pode virar "quem não tem tá perdendo". Todas são decidíveis
+ * no momento do check, com o que o plano do dia já sabe.
  */
 export type SkillRule =
   /** Estudo que começa a partir de `hour`. */
   | { kind: 'after-hour'; hour: number }
+  /** Estudo que começa antes de `hour`. */
+  | { kind: 'before-hour'; hour: number }
   /** O primeiro estudo marcado no dia. */
   | { kind: 'first-study' }
   /** Evento que conta como estudo (aula, prova). */
   | { kind: 'event' }
-  /** Placeholder sem efeito. */
-  | { kind: 'none' };
+  /** Estudo logo depois de uma pausa longa. */
+  | { kind: 'after-long-break' }
+  /** Estudo logo depois do almoço. */
+  | { kind: 'after-lunch' }
+  /** O estudo/evento que faz o dia bater a meta diária. */
+  | { kind: 'meets-goal' };
 
 export interface SkillDefinition {
   id: SkillId;
@@ -110,9 +117,12 @@ export const SKILL_BONUS = 0.05;
 export const SKILLS: Record<SkillId, SkillDefinition> = {
   noturno: { id: 'noturno', name: 'Noturno', desc: '+5% XP em estudos a partir das 18h', rule: { kind: 'after-hour', hour: 18 } },
   'lua-cheia': { id: 'lua-cheia', name: 'Lua cheia', desc: '+5% XP em estudos a partir das 21h', rule: { kind: 'after-hour', hour: 21 } },
+  madrugador: { id: 'madrugador', name: 'Madrugador', desc: '+5% XP em estudos antes das 9h', rule: { kind: 'before-hour', hour: 9 } },
   fiel: { id: 'fiel', name: 'Fiel', desc: '+5% XP no primeiro estudo do dia', rule: { kind: 'first-study' } },
   aula: { id: 'aula', name: 'Aula', desc: '+5% XP em eventos que contam como estudo', rule: { kind: 'event' } },
-  voo: { id: 'voo', name: 'Voo', desc: 'Permite o usuário voar (placeholder)', rule: { kind: 'none' } },
+  preguica: { id: 'preguica', name: 'Preguiça', desc: '+5% XP no estudo logo depois de uma pausa longa', rule: { kind: 'after-long-break' } },
+  rumina: { id: 'rumina', name: 'Rumina', desc: '+5% XP no estudo logo depois do almoço', rule: { kind: 'after-lunch' } },
+  constancia: { id: 'constancia', name: 'Constância', desc: '+5% XP no estudo que bate a meta do dia', rule: { kind: 'meets-goal' } },
 };
 
 /** Contexto necessário pra decidir o bônus no momento do check. */
@@ -126,16 +136,26 @@ export interface SkillContext {
   activatedAt: number;
   /** Estudos/eventos já marcados hoje antes deste check. */
   studiesCheckedToday: number;
+  /** Minutos de estudo/evento já marcados hoje antes deste check. */
+  studyMinsToday: number;
+  /** Meta diária (`config.dailyStudyMin`). */
+  dailyStudyMin: number;
+  /** O bloco imediatamente anterior no plano do dia; null se este é o primeiro. */
+  prevBlock: { type: BlockType; mins: number } | null;
+  /** Duração da pausa longa na config, pra reconhecer uma. */
+  longBreakMins: number;
   /** "Agora" — injetado pra ser testável. */
   now: Date;
 }
+
+const blockMins = (b: Pick<StudyBlock, 'time' | 'endTime'>): number => timeToMins(b.endTime) - timeToMins(b.time);
 
 /**
  * A skill ativa vale pra este bloco? Além da regra da skill, só conta hoje e só
  * se a skill já estava ativa ANTES do bloco começar (evita equipar no final).
  */
 export function skillEligible(
-  b: Pick<StudyBlock, 'type' | 'time'>,
+  b: Pick<StudyBlock, 'type' | 'time' | 'endTime'>,
   dateKey: DateKey,
   ctx: SkillContext,
 ): boolean {
@@ -148,22 +168,34 @@ export function skillEligible(
   blockStart.setHours(bh as number, bm as number, 0, 0);
   if ((ctx.activatedAt || 0) > blockStart.getTime()) return false;
 
+  const study = b.type === 'estudo';
   const rule = skill.rule;
   switch (rule.kind) {
     case 'after-hour':
-      return b.type === 'estudo' && (bh as number) >= rule.hour;
+      return study && (bh as number) >= rule.hour;
+    case 'before-hour':
+      return study && (bh as number) < rule.hour;
     case 'first-study':
-      return b.type === 'estudo' && ctx.studiesCheckedToday === 0;
+      return study && ctx.studiesCheckedToday === 0;
     case 'event':
       return b.type === 'event';
-    case 'none':
-      return false;
+    case 'after-long-break':
+      return study && !!ctx.prevBlock && ctx.prevBlock.type === 'pausa' && ctx.prevBlock.mins >= ctx.longBreakMins;
+    case 'after-lunch':
+      return study && ctx.prevBlock?.type === 'almoco';
+    case 'meets-goal':
+      return (
+        (study || b.type === 'event') &&
+        ctx.dailyStudyMin > 0 &&
+        ctx.studyMinsToday < ctx.dailyStudyMin &&
+        ctx.studyMinsToday + blockMins(b) >= ctx.dailyStudyMin
+      );
   }
 }
 
 /** Bônus aditivo a gravar no check, dada a skill ativa. */
 export function bonusForCheck(
-  b: Pick<StudyBlock, 'type' | 'time'>,
+  b: Pick<StudyBlock, 'type' | 'time' | 'endTime'>,
   dateKey: DateKey,
   ctx: SkillContext,
 ): number {

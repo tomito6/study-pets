@@ -41,7 +41,10 @@ export function applyPendingPetXP(now: Date = new Date()): void {
     if (pet) pet.xp = (pet.xp || 0) + pending.gains[id]!;
   }
   state.pets.xpProcessedUntil = pending.processedUntil;
-  scheduleSave();
+  // A primeira execução sem nada a creditar não grava: numa conta nova, salvar aqui
+  // criaria o documento antes do onboarding terminar — e um reload pularia o
+  // onboarding (e o pet inicial). O marcador vai junto com o próximo save.
+  if (!pending.resetXp || Object.keys(pending.gains).length > 0) scheduleSave();
 }
 
 export function coinBalance(now: Date = new Date()): number {
@@ -65,6 +68,29 @@ export function buyPet(speciesId: PetId, rawName: string, now: Date = new Date()
   state.pets.active = pet.id;
   state.pets.activeSince = now.getTime();
   state.coinsSpent = (state.coinsSpent || 0) + species.price;
+  scheduleSave();
+  return 'ok';
+}
+
+export type StarterResult = 'ok' | 'unknown' | 'invalid-name' | 'already-has-pet';
+
+/** Alguém sem pet nenhum ganha um de graça no onboarding (conta nova, ou depois de cancelar a sessão). */
+export const needsStarter = (): boolean => state.pets.owned.length === 0;
+
+/**
+ * O pet inicial: qualquer espécie do catálogo, de graça, uma vez — só enquanto o
+ * usuário não tem pet nenhum. Já nasce equipado.
+ */
+export function adoptStarter(speciesId: PetId, rawName: string, now: Date = new Date()): StarterResult {
+  if (!needsStarter()) return 'already-has-pet';
+  const species = PETS[speciesId];
+  if (!species) return 'unknown';
+  const name = normalizePetName(rawName);
+  if (!name) return 'invalid-name';
+  const pet = newPetInstance(species, name, state.pets.owned, now.getTime());
+  state.pets.owned.push(pet);
+  state.pets.active = pet.id;
+  state.pets.activeSince = now.getTime();
   scheduleSave();
   return 'ok';
 }

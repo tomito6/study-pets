@@ -8,12 +8,18 @@ import { expect, test, type Page } from '@playwright/test';
 
 const DIA = '2026-09-02';
 
-/** Abre o app com o relógio fixo, espera o modo teste logar e fecha o onboarding. */
+/**
+ * Abre o app com o relógio fixo, espera o modo teste logar e passa pelo onboarding:
+ * o gato como pet inicial (com o nome sugerido) e o período padrão.
+ */
 async function abrirApp(page: Page, hora = '17:30') {
   await page.clock.setFixedTime(new Date(`${DIA}T${hora}:00`));
   await page.goto('/');
   await expect(page.locator('#app')).toBeVisible();
   await expect(page.locator('#onboarding-panel')).toBeVisible();
+  await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
+  await expect(page.locator('#starter-name')).not.toHaveValue('');
+  await page.locator('#onb-next').click();
   await page.getByRole('button', { name: 'Começar' }).click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
 }
@@ -58,7 +64,30 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await expect(page.locator('#login-screen')).toBeHidden();
     await expect(page.locator('#onboarding-panel')).toBeVisible();
+    await expect(page.locator('#starter-grid .starter-card')).toHaveCount(5);
     await expect(page.locator('#today-label')).toContainText('quarta-feira');
+  });
+
+  test('16. o pet inicial: escolhe a cobra, dá nome, e ela já aparece no perfil de graça', async ({ page }) => {
+    await page.clock.setFixedTime(new Date(`${DIA}T17:30:00`));
+    await page.goto('/');
+    await expect(page.locator('#onboarding-panel')).toBeVisible();
+    await expect(page.locator('.starter-notice')).toContainText('todos os outros');
+    await expect(page.locator('#onb-next')).toBeDisabled(); // sem escolher, não passa
+
+    await page.locator('#starter-grid .starter-card[data-species="snake"]').click();
+    await expect(page.locator('#starter-grid .starter-card[data-species="snake"]')).toHaveClass(/selected/);
+    await page.locator('#starter-name').fill('Sibila');
+    await page.locator('#onb-next').click();
+    await page.getByRole('button', { name: 'Começar' }).click();
+    await expect(page.locator('#onboarding-panel')).toBeHidden();
+
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(page.locator('#ap-name')).toHaveText('Sibila');
+    await expect(page.locator('#ap-species')).toHaveText('Cobra');
+    await expect(page.locator('#pet-sprite')).toHaveAttribute('src', /idle\/pets\/snake\//);
+    await expect(page.locator('#char-coins')).toHaveText('0'); // de graça
+    await expect(page.locator('#my-pets-count')).toContainText('1/5');
   });
 
   test('2. sair volta pra tela de login, e entrar volta pro app', async ({ page }) => {

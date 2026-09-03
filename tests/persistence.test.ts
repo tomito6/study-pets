@@ -48,12 +48,12 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(s.pets).toEqual({ owned: [{ id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }], active: 'cat', activeSince: 0, xpProcessedUntil: null });
   });
 
-  it('pets v1 (xp por espécie + skills.owl) migram XP e skill pra dentro da instância', () => {
+  it('pets v1 (xp por espécie + skills.owl) migram XP pra dentro da instância; a coruja vira pomba (id continua owl)', () => {
     const pets = { owned: ['owl', 'cat'], active: 'owl', xp: { owl: 120 }, xpProcessedUntil: '2026-09-01' };
     const s = hydrateUserDoc({ pets, skills: { owl: 'noturno', activatedAt: 1234 } });
     expect(s.pets).toEqual({
       owned: [
-        { id: 'owl', species: 'owl', name: 'Coruja', xp: 120, path: null, stage: 0, skill: 'noturno', skillActivatedAt: 1234, adoptedAt: 0 },
+        { id: 'owl', species: 'dove', name: 'Pomba', xp: 120, path: null, stage: 0, skill: null, skillActivatedAt: 1234, adoptedAt: 0 },
         { id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 },
       ],
       active: 'owl',
@@ -68,6 +68,11 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     const s = hydrateUserDoc({ pets: { owned: [{ id: 'dog-2', species: 'dog' }, { nao: 'vale' }, 42], active: 'sumiu' } });
     expect(s.pets.owned).toEqual([{ id: 'dog-2', species: 'dog', name: 'Cachorro', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }]);
     expect(s.pets.active).toBeNull();
+  });
+
+  it('instância v2 de espécie renomeada: coruja vira pomba, nome fica, skill que a pomba não tem cai', () => {
+    const sofia = { id: 'owl', species: 'owl', name: 'Sofia', xp: 10, path: null, stage: 0, skill: 'noturno', skillActivatedAt: 1, adoptedAt: 2 };
+    expect(hydrateUserDoc({ pets: { owned: [sofia], active: 'owl' } }).pets.owned).toEqual([{ ...sofia, species: 'dove', skill: null }]);
   });
 
   it('xpProcessedUntil que não é string vira null', () => {
@@ -155,7 +160,7 @@ describe('ida e volta', () => {
       closedDays: { '2026-09-01': true },
       pets: {
         owned: [
-          { id: 'owl', species: 'owl', name: 'Sofia', xp: 300, path: null, stage: 0, skill: 'noturno', skillActivatedAt: 1234, adoptedAt: 10 },
+          { id: 'owl', species: 'dove', name: 'Sofia', xp: 300, path: null, stage: 0, skill: 'madrugador', skillActivatedAt: 1234, adoptedAt: 10 },
           { id: 'dog', species: 'dog', name: 'Bolt', xp: 60, path: 'selvagem', stage: 1, skill: null, skillActivatedAt: 0, adoptedAt: 20 },
         ],
         active: 'owl',

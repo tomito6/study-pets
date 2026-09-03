@@ -17,9 +17,19 @@ export interface CheckResult {
   coins: number;
 }
 
-/** Quantos estudos/eventos do dia já estão marcados. */
-function studiesChecked(dateKey: DateKey, day: Record<TimeString, CheckRecord>): number {
-  return blocksForDay(dateKey).filter((b) => (b.type === 'estudo' || b.type === 'event') && day[b.time]).length;
+const mins = (b: Pick<StudyBlock, 'time' | 'endTime'>): number => timeToMins(b.endTime) - timeToMins(b.time);
+
+/** O que as regras de skill precisam saber do dia: o que já foi marcado e o bloco anterior. */
+function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, CheckRecord>) {
+  const blocks = blocksForDay(dateKey);
+  const idx = blocks.findIndex((b) => b.time === block.time);
+  const prev = idx > 0 ? blocks[idx - 1]! : null;
+  const done = blocks.filter((b) => (b.type === 'estudo' || b.type === 'event') && day[b.time]);
+  return {
+    studiesCheckedToday: done.length,
+    studyMinsToday: done.reduce((sum, b) => sum + mins(b), 0),
+    prevBlock: prev ? { type: prev.type, mins: mins(prev) } : null,
+  };
 }
 
 /**
@@ -31,7 +41,7 @@ export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date 
   if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now })) return null;
 
   const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
-  const dur = timeToMins(block.endTime) - timeToMins(block.time);
+  const dur = mins(block);
 
   if (day[block.time]) {
     delete day[block.time];
@@ -45,7 +55,9 @@ export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date 
     activeSkill: pet?.skill ?? null,
     // A skill vale desde a troca dela OU desde que o pet foi equipado — o mais recente.
     activatedAt: Math.max(pet?.skillActivatedAt ?? 0, state.pets.activeSince ?? 0),
-    studiesCheckedToday: studiesChecked(dateKey, day),
+    ...dayContext(dateKey, block, day),
+    dailyStudyMin: state.config.dailyStudyMin ?? 0,
+    longBreakMins: state.config.longBreak,
     now,
   });
   const record = { pet: pet?.id ?? null, bonus };

@@ -122,13 +122,28 @@ describe('prompt automático de fim de dia', () => {
 describe('onboarding e boot', () => {
   beforeEach(() => resetAt('2026-09-02T09:00:00'));
 
-  it('onboarding define o período e fecha; recusa fim antes do início', () => {
+  it('onboarding define o período e fecha; recusa fim antes do início; sem pet, exige o inicial', () => {
     derived.onboardingOpen = true;
-    expect(finishOnboarding({ periodStart: '2026-09-02', periodEnd: '2026-09-01', skipWeekends: false })).toEqual({ ok: false, reason: 'end-before-start' });
+    const base = { periodStart: '2026-09-02', periodEnd: null, skipWeekends: true };
+    expect(finishOnboarding({ ...base, periodEnd: '2026-09-01' })).toEqual({ ok: false, reason: 'end-before-start' });
+    expect(finishOnboarding(base)).toEqual({ ok: false, reason: 'no-starter' });
+    expect(finishOnboarding({ ...base, starter: { species: 'dragao', name: 'X' } })).toEqual({ ok: false, reason: 'unknown-species' });
+    expect(finishOnboarding({ ...base, starter: { species: 'snake', name: '  ' } })).toEqual({ ok: false, reason: 'invalid-name' });
     expect(derived.onboardingOpen).toBe(true);
-    expect(finishOnboarding({ periodStart: '2026-09-02', periodEnd: null, skipWeekends: true })).toEqual({ ok: true });
+    expect(state.pets.owned).toEqual([]);
+
+    expect(finishOnboarding({ ...base, starter: { species: 'snake', name: ' Sibila ' } })).toEqual({ ok: true });
     expect(state.config).toMatchObject({ periodStart: '2026-09-02', periodEnd: null, skipWeekends: true });
+    expect(state.pets.owned).toMatchObject([{ id: 'snake', species: 'snake', name: 'Sibila' }]);
+    expect(state.pets.active).toBe('snake');
     expect(derived.onboardingOpen).toBe(false);
+  });
+
+  it('quem já tem pet não passa pelo pet inicial (o starter é ignorado)', () => {
+    derived.onboardingOpen = true;
+    state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Mia', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
+    expect(finishOnboarding({ periodStart: '2026-09-02', periodEnd: null, skipWeekends: false, starter: { species: 'dog', name: 'Bolt' } })).toEqual({ ok: true });
+    expect(state.pets.owned).toHaveLength(1);
   });
 
   it('carrega conta nova como nova, e uma existente com os dados dela', async () => {

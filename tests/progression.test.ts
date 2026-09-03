@@ -132,39 +132,72 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     activeSkill: 'noturno',
     activatedAt: new Date('2026-09-02T08:00:00').getTime(),
     studiesCheckedToday: 0,
+    studyMinsToday: 0,
+    dailyStudyMin: 60,
+    prevBlock: null,
+    longBreakMins: 15,
     now: agora,
     ...over,
   });
 
-  const blocoNoturno = { type: 'estudo' as const, time: '18:30' };
-  const blocoManha = { type: 'estudo' as const, time: '09:00' };
+  const estudo = (time: string, endTime: string) => ({ type: 'estudo' as const, time, endTime });
+  const blocoNoturno = estudo('18:30', '18:55');
+  const blocoManha = estudo('09:00', '09:25');
 
   it('Noturno vale pra estudo a partir das 18h', () => {
     expect(skillEligible(blocoNoturno, HOJE, ctx())).toBe(true);
-    expect(skillEligible({ type: 'estudo', time: '17:59' }, HOJE, ctx())).toBe(false);
-    expect(skillEligible({ type: 'pausa', time: '19:00' }, HOJE, ctx())).toBe(false);
+    expect(skillEligible(estudo('17:59', '18:24'), HOJE, ctx())).toBe(false);
+    expect(skillEligible({ type: 'pausa', time: '19:00', endTime: '19:05' }, HOJE, ctx())).toBe(false);
   });
 
   it('Lua cheia só a partir das 21h', () => {
     expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: 'lua-cheia' }))).toBe(false);
-    expect(skillEligible({ type: 'estudo', time: '21:00' }, HOJE, ctx({ activeSkill: 'lua-cheia', now: new Date('2026-09-02T21:30:00') }))).toBe(true);
+    expect(skillEligible(estudo('21:00', '21:25'), HOJE, ctx({ activeSkill: 'lua-cheia', now: new Date('2026-09-02T21:30:00') }))).toBe(true);
+  });
+
+  it('Madrugador vale pra estudo antes das 9h', () => {
+    const cedo = ctx({ activeSkill: 'madrugador', now: new Date('2026-09-02T09:30:00') });
+    expect(skillEligible(estudo('08:30', '08:55'), HOJE, cedo)).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, cedo)).toBe(false);
   });
 
   it('Fiel vale só pro primeiro estudo marcado no dia', () => {
     expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'fiel' }))).toBe(true);
     expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'fiel', studiesCheckedToday: 1 }))).toBe(false);
-    expect(skillEligible({ type: 'event', time: '09:00' }, HOJE, ctx({ activeSkill: 'fiel' }))).toBe(false);
+    expect(skillEligible({ type: 'event', time: '09:00', endTime: '10:00' }, HOJE, ctx({ activeSkill: 'fiel' }))).toBe(false);
   });
 
   it('Aula vale só pra evento que conta como estudo', () => {
-    expect(skillEligible({ type: 'event', time: '10:00' }, HOJE, ctx({ activeSkill: 'aula' }))).toBe(true);
+    expect(skillEligible({ type: 'event', time: '10:00', endTime: '11:30' }, HOJE, ctx({ activeSkill: 'aula' }))).toBe(true);
     expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'aula' }))).toBe(false);
   });
 
-  it('sem skill, skill desconhecida ou placeholder: nada', () => {
+  it('Preguiça vale pro estudo logo depois de uma pausa longa', () => {
+    const c = (prevBlock: SkillContext['prevBlock']) => ctx({ activeSkill: 'preguica', prevBlock });
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'pausa', mins: 15 }))).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'pausa', mins: 5 }))).toBe(false);
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'almoco', mins: 60 }))).toBe(false);
+    expect(skillEligible(blocoManha, HOJE, c(null))).toBe(false);
+  });
+
+  it('Rumina vale pro estudo logo depois do almoço', () => {
+    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'rumina', prevBlock: { type: 'almoco', mins: 60 } }))).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'rumina', prevBlock: { type: 'pausa', mins: 15 } }))).toBe(false);
+  });
+
+  it('Constância vale pro bloco que faz o dia bater a meta', () => {
+    const c = (studyMinsToday: number, dailyStudyMin = 60) => ctx({ activeSkill: 'constancia', studyMinsToday, dailyStudyMin });
+    expect(skillEligible(blocoManha, HOJE, c(40))).toBe(true); // 40 + 25 ≥ 60
+    expect(skillEligible(blocoManha, HOJE, c(35))).toBe(true); // exatamente 60
+    expect(skillEligible(blocoManha, HOJE, c(10))).toBe(false); // ainda longe
+    expect(skillEligible(blocoManha, HOJE, c(60))).toBe(false); // já tinha batido
+    expect(skillEligible({ type: 'event', time: '10:00', endTime: '11:00' }, HOJE, c(10))).toBe(true); // evento conta
+    expect(skillEligible(blocoManha, HOJE, c(40, 0))).toBe(false); // sem meta, sem bônus
+  });
+
+  it('sem skill ou skill desconhecida: nada', () => {
     expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: null }))).toBe(false);
     expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: 'xyz' }))).toBe(false);
-    expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: 'voo' }))).toBe(false);
   });
 
   it('não vale em outro dia que não hoje', () => {

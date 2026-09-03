@@ -12,7 +12,7 @@
 
 import { DEFAULT_CFG, migrateConfig } from './config';
 import { DEFAULT_GROUP_NAME } from './groups';
-import { legacyPetInstance, petForm } from './pets';
+import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
 import type {
   ChecksByDate,
   DateKey,
@@ -87,22 +87,20 @@ const isObj = (v: unknown): v is Raw => !!v && typeof v === 'object' && !Array.i
 const num = (v: unknown, fallback = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
 const str = (v: unknown): string | null => (typeof v === 'string' && v ? v : null);
 
-/** Instância salva no formato v2, com defaults pra qualquer campo que falte. */
+/** Instância salva no formato v2, com defaults pra qualquer campo que falte, já no catálogo atual. */
 function hydratePetInstance(raw: Raw): PetInstance {
-  const base = {
+  const pet = normalizePetInstance({
     id: raw.id as string,
     species: raw.species as string,
+    name: str(raw.name) ?? '',
     xp: num(raw.xp),
     path: str(raw.path),
     stage: Math.max(0, Math.floor(num(raw.stage))),
-  };
-  return {
-    ...base,
-    name: str(raw.name) ?? petForm(base).name,
     skill: str(raw.skill),
     skillActivatedAt: num(raw.skillActivatedAt),
     adoptedAt: num(raw.adoptedAt),
-  };
+  });
+  return pet.name ? pet : { ...pet, name: petForm(pet).name };
 }
 
 /** `pets` em qualquer formato que já existiu → instâncias. */

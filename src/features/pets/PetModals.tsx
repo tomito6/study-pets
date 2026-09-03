@@ -3,13 +3,14 @@
 
 import { useState } from 'react';
 import { buyPet, evolvePet, renamePet } from '../../application/pets';
-import { PET_LIST, PET_NAME_MAX, evolutionOf, normalizePetName, speciesForm, suggestPetName } from '../../domain/pets';
+import { PET_LIST, evolutionOf, normalizePetName, speciesForm, suggestPetName } from '../../domain/pets';
 import { SKILLS } from '../../domain/progression';
 import type { PetForm, PetInstance, PetSpecies } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { useAppState } from '../../store/store';
 import { Modal } from '../shell/Modal';
+import { NameField } from './NameField';
 import { OwnedPetCard, PetSprite, ShopPetCard } from './PetCard';
 
 const t = strings.pets;
@@ -55,38 +56,6 @@ export function MyPetsModal({ open, onClose, onRename, onEvolve }: MineProps) {
         )}
       </div>
     </Modal>
-  );
-}
-
-// ---------------------------------------------------------------- nome
-
-interface NameFieldProps {
-  id: string;
-  value: string;
-  onChange: (v: string) => void;
-  onDice?: () => void;
-}
-
-function NameField({ id, value, onChange, onDice }: NameFieldProps) {
-  const invalid = normalizePetName(value) === null;
-  return (
-    <div className="pet-name-field">
-      <label htmlFor={id}>{t.nameLabel}</label>
-      <div className="pet-name-row">
-        <input
-          id={id}
-          className="pet-name-input"
-          type="text"
-          maxLength={PET_NAME_MAX}
-          placeholder={t.namePlaceholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          autoComplete="off"
-        />
-        {onDice && <button type="button" className="dice-btn" title={t.nameDice} aria-label={t.nameDice} onClick={onDice}>🎲</button>}
-      </div>
-      {invalid && <div className="pet-name-error">{t.nameInvalid}</div>}
-    </div>
   );
 }
 
