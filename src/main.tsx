@@ -16,6 +16,7 @@ import { createRoot } from 'react-dom/client';
 import { Header } from './app/Header';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { PlanTab } from './features/plan/PlanTab';
+import { SettingsPage } from './features/settings/SettingsPage';
 import { SaveIndicator } from './features/shell/SaveIndicator';
 import { FocusOverlay } from './features/timer/FocusOverlay';
 import { TimerBar } from './features/timer/TimerBar';
@@ -33,6 +34,7 @@ mountIsland('header-root', <Header />);
 mountIsland('plan-root', <PlanTab />);
 mountIsland('timer-root', <TimerBar />);
 mountIsland('focus-root', <FocusOverlay />);
+mountIsland('settings-root', <SettingsPage />);
 mountIsland('save-root', <SaveIndicator />);
 
 // Legado por último. Ele registra o listener de auth (assíncrono) e daí em diante

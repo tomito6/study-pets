@@ -153,9 +153,14 @@ disso; Fase 2 em diante sim.
     A ponte ficou só com `openFinishDay`. Legado 1789 → 1576; `index.html` 697 → 591. Smoke 9/9 de
     primeira (o teste 9 cria evento pelo painel React); 230 unitários. Decisão mantida: validação
     ainda usa `alert()`, como o original — trocar por mensagem inline é design, não migração.
-  - **Próximas fatias**, nesta ordem: Configurações (a página inteira + "Encaixar estudo" + cancelar
-    sessão + apagar conta), Análise, Perfil + Pets, Onboarding + Encerrar o dia (leva `openFinishDay`
-    e fecha a ponte).
+  - **Fatia 5 — feita**: Configurações. `domain/settings.ts` (rascunho ↔ config, Resumo do dia,
+    Encaixar estudo), `application/settings.ts` + `application/account.ts`, `features/settings/`
+    (página inteira com o ⚙️ junto — "aberta" é estado local). Legado 1576 → 1174; `index.html`
+    591 → 354. Smoke 9/9 de primeira; 248 unitários (`.env.test` liga a infra em memória pro Vitest).
+    Duas mudanças de comportamento, de propósito: campo numérico vazio não salva mais (virava `NaN`
+    na config), e o ⚙️ não aparece mais na tela de login (ficava fora do `#app`).
+  - **Próximas fatias**, nesta ordem: Análise, Perfil + Pets, Onboarding + Encerrar o dia (leva
+    `openFinishDay`, `openOnboarding` e `rescheduleEndOfDayPrompt`, e fecha a ponte).
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência

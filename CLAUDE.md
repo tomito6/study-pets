@@ -61,6 +61,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `plan/` — a aba Plano inteira: `PlanTab.tsx` (XP card, stats do dia, semana/dia, "Encerrar o dia"), `BlockList.tsx` (sessões e linhas com check — a lógica de clique do `renderBlocks` antigo mora aqui), `feedback.ts` (ripple + "+X XP" flutuante), `useMinuteTick.ts` (re-render na virada do minuto, pro destaque "agora")
   - `timer/` — `TimerBar.tsx` (barra "Em andamento", volume, ✕ Parar) e `FocusOverlay.tsx` (modo foco: anel que drena, próximo bloco, ganho ao concluir). Os dois **derivam** o restante do relógio a cada segundo com `useSecondTick` — o store só sabe qual bloco está rodando
   - `events/` — os três modais do Plano: `EventPanel.tsx` (novo evento, com recorrência), `EventDeleteModal.tsx` (só este dia / a série / avulso), `LunchPanel.tsx` (almoço só deste dia). São **filhos do `PlanTab`**, que guarda qual está aberto em `useState` — modal é estado local, não vai pro store
+  - `settings/` — a página de Configurações inteira: `SettingsPage.tsx` (Rotina/Geral, o botão ⚙️ flutuante e "aberta ou fechada" como estado local), `ConfigPreview.tsx` (Resumo do dia), `StudyWindowsEditor.tsx`, `FitStudyModal.tsx` (Encaixar estudo), `DangerModals.tsx` (cancelar sessão, apagar conta). O formulário é um rascunho (`ConfigDraft`) que só vira config ao Salvar
   - `shell/Modal.tsx` — a casca `.panel-overlay.center > .panel-sheet` de todo modal; clicar fora fecha
   - `shell/SaveIndicator.tsx` — "Salvando… / Salvo ✓"
 - `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` + `focusOpen` + `audio` (geridos por `application/timer`), `save` (status), `authReady`
@@ -70,11 +71,15 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `save.ts` — `scheduleSave` com debounce, `blockSaves` (apagar conta), status pro indicador
   - `timer.ts` — `tryStartTimer` (valida: só bloco de hoje que está rolando; devolve o motivo pra UI mostrar o toast), `startTimer`/`stopTimer`/`closeFocus`, o único `setInterval` do timer (detecta o fim → som + notificação), e o áudio (`playSound`, `toggleMute`, `setVolume`). **Não há `notify()` por segundo** — isso faria o app inteiro re-renderizar e recalcular stats
   - `events.ts` — `addEvent`/`addEventSeries`, `deleteEvent`/`deleteSeriesOccurrence`/`deleteSeries`, `setLunchOverride`/`lunchForDay`, validações com motivo. Cada mutação limpa o cache do gerador, salva, notifica e emite o toast "Plano reajustado: …" (`notifyPlanDelta`, que o legado ainda usa ao salvar configurações)
+  - `settings.ts` — `saveSettings` (preserva `periodStart`, refaz semanas, reagenda o prompt de fim de dia; **recusa campo numérico vazio**, que antes virava `NaN` salvo) e `cancelSession`
+  - `account.ts` — `deleteAccount`: doc primeiro, usuário depois; devolve o estágio que falhou
   - `session.ts` — entrar/sair
+- `src/domain/settings.ts` — `ConfigDraft` ↔ `UserConfig` (`draftFromConfig`/`normalizeConfig`), `summarizeConfig` (o Resumo do dia), `fitStudySuggestions` (o algoritmo do Encaixar), formatação de durações
 - `src/domain/planDelta.ts` — o que mudou no plano de um dia (estudos a mais/menos, novo fim), puro
 - `src/domain/timer.ts` — `timerProgress` (restante = fim − agora; é por isso que o timer sobrevive a reload), `canStartBlock`, `soundForBlock`, `blockNumberInSession`, `nextBlockAfter`
 - `src/infrastructure/audio/sounds.ts` (Web Audio, porte fiel, falha em silêncio) e `infrastructure/notifications/notifications.ts` (Web Notifications, guardadas)
-- `src/legacy/bridge.ts` — a ponte tipada pro que ainda é legado (só "Encerrar o dia" restou). React chama isto, nunca `window.*` solto. Cada entrada some quando a feature migra
+- `src/legacy/bridge.ts` — a ponte tipada pro que ainda é legado: `openFinishDay`, `openOnboarding` e `rescheduleEndOfDayPrompt` (tudo da última fatia). React chama isto, nunca `window.*` solto. Em Node vira no-op
+- `.env.test` — liga o modo memória pro Vitest; os testes de aplicação que passam pela infra nunca tocam o Firebase
 - `src/shared/strings.ts` — textos da UI React. Tudo que migrar pro React escreve texto aqui, não inline
 - `src/shared/toast.ts` — o toast, compartilhado por React e legado
 - `src/styles/app.css` e `login.css` — o CSS que estava no `index.html`, sem mudança
