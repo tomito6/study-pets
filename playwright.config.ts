@@ -15,8 +15,9 @@ import { defineConfig } from '@playwright/test';
 // bundle) — o Cold Turkey pode pegar pelo nome. Avisar antes de rodar assim.
 //
 // PW_CHANNEL existe só como override consciente (ex.: CI com outro browser).
+// PW_PORT idem: pra rodar a suíte com um dev server já ocupando a 5174 (ex.: dois checkouts).
 
-const PORT = 5174;
+const PORT = Number(process.env.PW_PORT) || 5174;
 const channel = process.env.PW_CHANNEL; // undefined = Chromium do Playwright
 
 export default defineConfig({
@@ -38,7 +39,8 @@ export default defineConfig({
     timezoneId: 'Europe/Berlin',
   },
   webServer: {
-    command: 'npm run dev:teste -- --strictPort',
+    // O mesmo que `npm run dev:teste`, com a porta parametrizada.
+    command: `npx vite --mode teste --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

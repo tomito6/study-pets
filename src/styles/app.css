@@ -677,3 +677,38 @@
     .st-grid-3{grid-template-columns:1fr;}
     .st-danger .danger-btn{width:100%;}
   }
+
+  /* GRUPOS DE ESTUDO — nome + objetivo sobre um trecho do dia (CLAUDE.md, "Grupos de estudo").
+     A caixa envolve cabeçalho e linhas membros. Cada grupo do dia ganha uma cor da paleta gc-0…gc-5
+     (pela ordem de horário): fria e luminosa, fora da paleta das sessões. Só --gc-rgb muda por cor. */
+  .day-events-bar{gap:8px;}
+  .group-hint{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;font-size:12px;color:var(--accent);}
+  .group-box{--gc-rgb:34,211,238;--gc:rgb(var(--gc-rgb));--gc-border:rgba(var(--gc-rgb),.55);--gc-bg:rgba(var(--gc-rgb),.07);--gc-track:rgba(var(--gc-rgb),.15);display:flex;flex-direction:column;gap:3px;margin:8px 0 4px;padding:10px 8px 8px;border:1.5px solid var(--gc-border);border-radius:14px;background:var(--gc-bg);}
+  .group-box.gc-0{--gc-rgb:34,211,238;}   /* ciano */
+  .group-box.gc-1{--gc-rgb:129,140,248;}  /* índigo */
+  .group-box.gc-2{--gc-rgb:45,212,191;}   /* turquesa */
+  .group-box.gc-3{--gc-rgb:232,121,249;}  /* magenta */
+  .group-box.gc-4{--gc-rgb:56,189,248;}   /* céu */
+  .group-box.gc-5{--gc-rgb:192,132,252;}  /* lilás */
+  .group-box.complete{--gc-rgb:163,230,53;}
+  .group-box.empty{border-style:dashed;}
+  .group-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px 6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .group-header:hover .gh-name{text-decoration:underline;text-decoration-color:var(--gc-border);}
+  .group-header .gh-main{min-width:0;flex:1;}
+  .group-header .gh-name{font-size:14px;font-weight:600;color:var(--gc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .group-header .gh-goal{font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .group-header .gh-side{text-align:right;flex-shrink:0;}
+  .group-header .gh-progress{font-family:'DM Mono',monospace;font-size:13px;color:var(--gc);}
+  .group-header .gh-mins{font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
+  .group-box.empty .gh-progress{color:var(--muted);font-size:11px;}
+  .gh-bar{height:4px;border-radius:2px;background:var(--gc-track);margin:0 4px 8px;overflow:hidden;}
+  .gh-bar-fill{height:100%;border-radius:2px;background:var(--gc);transition:width .3s;}
+  .group-rows{display:flex;flex-direction:column;gap:3px;}
+  .group-rows .session-divider{margin:6px 0 2px;}
+  .block-row.selecting{filter:brightness(1.2);}
+  .blocks-list{position:relative;}
+  .selection-rect{position:absolute;left:-6px;right:-6px;border:2px dashed var(--accent);border-radius:14px;background:rgba(163,230,53,.06);pointer-events:none;z-index:3;transition:top .08s ease-out,height .08s ease-out;}
+  .blocks-list.selecting-mode{user-select:none;}
+  .blocks-list.selecting-mode .block-row{cursor:crosshair;}
+  .block-row{-webkit-touch-callout:none;}
+  .group-summary{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}

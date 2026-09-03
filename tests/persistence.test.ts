@@ -78,6 +78,27 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     const s = hydrateUserDoc({ checks: {} });
     expect(s.closedDays).toEqual({});
     expect(s.eventSeries).toEqual([]);
+    expect(s.groups).toEqual({});
+  });
+
+  it('grupos malformados são descartados; nome vazio vira "Grupo", objetivo ausente vira vazio', () => {
+    const s = hydrateUserDoc({
+      groups: {
+        '2026-09-02': [
+          { id: 'g1', start: '09:00', end: '10:25', name: 'Análise', goal: 'lista 3' },
+          { id: 'g2', start: '14:00', end: '15:00' },
+          { start: '16:00', end: '17:00', name: 'sem id' },
+          'lixo',
+        ],
+        '2026-09-03': 'não é lista',
+      },
+    });
+    expect(s.groups).toEqual({
+      '2026-09-02': [
+        { id: 'g1', start: '09:00', end: '10:25', name: 'Análise', goal: 'lista 3' },
+        { id: 'g2', start: '14:00', end: '15:00', name: 'Grupo', goal: '' },
+      ],
+    });
   });
 
   it('eventSeries que não é array é descartado', () => {
@@ -113,12 +134,14 @@ describe('serializeState', () => {
     delete parcial.closedDays;
     delete parcial.pets;
     delete parcial.coinsSpent;
+    delete parcial.groups;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
     expect(doc.pets).toEqual({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
     expect(doc.coinsSpent).toBe(0);
     expect(doc).not.toHaveProperty('skills');
+    expect(doc.groups).toEqual({});
   });
 });
 
@@ -140,6 +163,7 @@ describe('ida e volta', () => {
         xpProcessedUntil: '2026-09-01',
       },
       coinsSpent: 300,
+      groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });

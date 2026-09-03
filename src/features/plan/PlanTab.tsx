@@ -1,20 +1,26 @@
-// Aba Plano: XP, stats do dia, seletor de semana/dia, blocos e "Encerrar o dia".
+// Aba Plano: XP, stats do dia, seletor de semana/dia, blocos, grupos e "Encerrar o dia".
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useEffect, useRef, useState } from 'react';
+import { canEditGroups, groupsForDay, validateGroup } from '../../application/groups';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
 import { isDayClosed } from '../../domain/checks';
+import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
 import { dk } from '../../domain/time';
 import type { Stats } from '../../domain/stats';
-import type { DateKey } from '../../domain/types';
+import type { DateKey, StudyGroup } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
 import { openFinishDay } from '../../application/dayEnd';
 import { strings } from '../../shared/strings';
+import { showToast } from '../../shared/toast';
 import { setDay, setView, useAppState } from '../../store/store';
 import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal';
 import { EventPanel } from '../events/EventPanel';
 import { LunchPanel } from '../events/LunchPanel';
+import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
+import { SelectionRect } from '../groups/SelectionRect';
+import { useGroupSelection } from '../groups/useGroupSelection';
 import { BlockList, dayProgress } from './BlockList';
 import { useMinuteTick } from './useMinuteTick';
 
@@ -23,9 +29,11 @@ type PlanModal =
   | { kind: 'none' }
   | { kind: 'event' }
   | { kind: 'delete'; target: EventToDelete }
-  | { kind: 'lunch'; dateKey: DateKey };
+  | { kind: 'lunch'; dateKey: DateKey }
+  | { kind: 'group'; target: GroupTarget };
 
 const t = strings.plan;
+const tg = strings.groups;
 const fmtDay = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
 function TodayPending({ stats, todayKey }: { stats: Stats; todayKey: string }) {
@@ -129,14 +137,56 @@ export function PlanTab() {
   }));
   const [modal, setModal] = useState<PlanModal>({ kind: 'none' });
   const closeModal = () => setModal({ kind: 'none' });
-  if (weeks.length === 0) return null; // antes de carregar
 
   const now = new Date();
   const todayKey = dk(now);
-  const viewKey = dk(dateForWeekDay(week, day));
-  const blocks = blocksForDay(viewKey);
+  const loaded = weeks.length > 0; // antes de carregar não há semanas
+  const viewKey = loaded ? dk(dateForWeekDay(week, day)) : todayKey;
+  const blocks = loaded ? blocksForDay(viewKey) : [];
+  const groups = groupsForDay(viewKey);
+  const canGroup = blocks.length > 0 && canEditGroups(viewKey);
+
+  // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
+  const selection = useGroupSelection({
+    enabled: canGroup,
+    onRange: (from, to) => {
+      const range = rangeOf(blocks.slice(from, to + 1));
+      if (!range) return;
+      const v = validateGroup(viewKey, range);
+      if (!v.ok) {
+        showToast(tg.refusal[v.reason]);
+        return;
+      }
+      setModal({ kind: 'group', target: { dateKey: viewKey, ...range } });
+    },
+    onRefuse: () => showToast(t.dayClosed),
+  });
+  const cancelSelection = selection.cancel;
+  useEffect(() => {
+    cancelSelection(); // trocou de dia: a seleção era do outro
+  }, [viewKey, cancelSelection]);
+
+  if (!loaded) return null;
+
   const stats = computeStatsNow(now);
   const { eD, eT, pD, pT } = dayProgress(viewKey, blocks);
+
+  const openEditGroup = (g: StudyGroup) => {
+    if (selection.active) {
+      selection.cancel();
+      return;
+    }
+    if (!canEditGroups(viewKey)) {
+      showToast(t.dayClosed);
+      return;
+    }
+    setModal({ kind: 'group', target: { dateKey: viewKey, start: g.start, end: g.end, group: g } });
+  };
+
+  const hint =
+    selection.mode.kind === 'armed' ? tg.hintFirst
+    : selection.mode.kind === 'anchored' && selection.mode.drag ? tg.hintDrag
+    : tg.hintLast;
 
   return (
     <>
@@ -148,23 +198,40 @@ export function PlanTab() {
       </div>
       <WeekDayPicker weeks={weeks} week={week} day={day} />
       <div className="day-events-bar">
-        <button className="add-event-btn" onClick={() => setModal({ kind: 'event' })}>{t.addEvent}</button>
+        {selection.active ? (
+          <div className="group-hint" id="group-hint">
+            <span>{hint}</span>
+            <button className="add-event-btn" onClick={selection.cancel}>{tg.cancel}</button>
+          </div>
+        ) : (
+          <>
+            {canGroup && (
+              <button className="add-event-btn" id="group-mode-btn" onClick={selection.arm}>{tg.button}</button>
+            )}
+            <button className="add-event-btn" onClick={() => setModal({ kind: 'event' })}>{t.addEvent}</button>
+          </>
+        )}
       </div>
-      <div className="blocks-list" id="blocks-list">
+      <div className={'blocks-list' + (selection.active ? ' selecting-mode' : '')} id="blocks-list" {...selection.listProps}>
         <BlockList
           dateKey={viewKey}
           blocks={blocks}
+          groups={groups}
+          selection={selection}
           now={now}
           timerBlock={timerBlock}
           onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
           onEditLunch={(dateKey) => setModal({ kind: 'lunch', dateKey })}
+          onEditGroup={openEditGroup}
         />
+        <SelectionRect range={selection.range} listId="blocks-list" />
       </div>
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
 
       <EventPanel open={modal.kind === 'event'} dateKey={viewKey} onClose={closeModal} />
       <EventDeleteModal target={modal.kind === 'delete' ? modal.target : null} onClose={closeModal} />
       <LunchPanel dateKey={modal.kind === 'lunch' ? modal.dateKey : null} onClose={closeModal} />
+      <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
     </>
   );
 }

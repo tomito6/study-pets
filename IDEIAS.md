@@ -38,7 +38,11 @@ Pontos a pensar:
 - Como o usuário cria/edita builds? Modal? Aba dedicada?
 - Se isso for pra acontecer, repensar onde o pet ativo é gerenciado (hoje é só um campo `state.pets.active` — viraria parte da build).
 
-## Grupos de estudo no plano (nome + objetivo num trecho do dia)
+## ~~Grupos de estudo no plano (nome + objetivo num trecho do dia)~~ → implementado
+
+Implementado em 2026-09-03 no branch `feat/grupos-de-estudo` (detalhes em
+`plans/2026-09-03_1230_grupos-de-estudo.md`). O texto abaixo fica como registro da avaliação — e a
+seção "v2" continua sendo o backlog dessa feature.
 
 Avaliado em 2026-09-02, no meio da migração. **Recomendação: UI depois da Fase 5** — ela mora no
 `renderBlocks`, que o React vai reescrever, e fazer em vanilla agora é escrever duas vezes. Domínio e
