@@ -645,23 +645,29 @@
   }
 
   /* GRUPOS DE ESTUDO — nome + objetivo sobre um trecho do dia (CLAUDE.md, "Grupos de estudo").
-     A caixa envolve cabeçalho e linhas membros. Cor própria (--gc), fora da paleta das sessões.
-     body[data-gs="2"|"3"] são os protótipos em avaliação; o padrão (sem atributo) é o protótipo 1. */
+     A caixa envolve cabeçalho e linhas membros. Cada grupo do dia ganha uma cor da paleta gc-0…gc-5
+     (pela ordem de horário): fria e luminosa, fora da paleta das sessões. Só --gc-rgb muda por cor. */
   .day-events-bar{gap:8px;}
   .group-hint{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;font-size:12px;color:var(--accent);}
-  .group-box{--gc:#e4e4e7;--gc-border:rgba(255,255,255,.22);--gc-bg:rgba(255,255,255,.035);display:flex;flex-direction:column;gap:3px;margin:8px 0 4px;padding:8px;border:1px solid var(--gc-border);border-radius:12px;background:var(--gc-bg);}
+  .group-box{--gc-rgb:34,211,238;--gc:rgb(var(--gc-rgb));--gc-border:rgba(var(--gc-rgb),.55);--gc-bg:rgba(var(--gc-rgb),.07);--gc-track:rgba(var(--gc-rgb),.15);display:flex;flex-direction:column;gap:3px;margin:8px 0 4px;padding:10px 8px 8px;border:1.5px solid var(--gc-border);border-radius:14px;background:var(--gc-bg);}
+  .group-box.gc-0{--gc-rgb:34,211,238;}   /* ciano */
+  .group-box.gc-1{--gc-rgb:129,140,248;}  /* índigo */
+  .group-box.gc-2{--gc-rgb:45,212,191;}   /* turquesa */
+  .group-box.gc-3{--gc-rgb:232,121,249;}  /* magenta */
+  .group-box.gc-4{--gc-rgb:56,189,248;}   /* céu */
+  .group-box.gc-5{--gc-rgb:192,132,252;}  /* lilás */
+  .group-box.complete{--gc-rgb:163,230,53;}
   .group-box.empty{border-style:dashed;}
-  .group-box.complete{--gc:var(--accent);--gc-border:var(--accent2);}
-  .group-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .group-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px 6px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;}
   .group-header:hover .gh-name{text-decoration:underline;text-decoration-color:var(--gc-border);}
   .group-header .gh-main{min-width:0;flex:1;}
-  .group-header .gh-name{font-size:13px;font-weight:600;color:var(--gc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .group-header .gh-name{font-size:14px;font-weight:600;color:var(--gc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .group-header .gh-goal{font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .group-header .gh-side{text-align:right;flex-shrink:0;}
   .group-header .gh-progress{font-family:'DM Mono',monospace;font-size:13px;color:var(--gc);}
   .group-header .gh-mins{font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
   .group-box.empty .gh-progress{color:var(--muted);font-size:11px;}
-  .gh-bar{display:none;height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin:0 4px 8px;overflow:hidden;}
+  .gh-bar{height:4px;border-radius:2px;background:var(--gc-track);margin:0 4px 8px;overflow:hidden;}
   .gh-bar-fill{height:100%;border-radius:2px;background:var(--gc);transition:width .3s;}
   .group-rows{display:flex;flex-direction:column;gap:3px;}
   .group-rows .session-divider{margin:6px 0 2px;}
@@ -671,16 +677,3 @@
   .blocks-list.selecting-mode .block-row{cursor:crosshair;}
   .block-row{-webkit-touch-callout:none;}
   .group-summary{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
-  /* protótipo 2: card ciano com barra de progresso */
-  body[data-gs="2"] .group-box{--gc:#22d3ee;--gc-border:rgba(34,211,238,.55);--gc-bg:rgba(34,211,238,.07);border-width:1.5px;border-radius:14px;padding:10px 8px 8px;}
-  body[data-gs="2"] .group-header{padding:0 4px 6px;}
-  body[data-gs="2"] .group-header .gh-name{font-size:14px;}
-  body[data-gs="2"] .gh-bar{display:block;background:rgba(34,211,238,.15);}
-  body[data-gs="2"] .group-box.complete{--gc:var(--accent);--gc-border:var(--accent2);--gc-bg:rgba(163,230,53,.07);}
-  body[data-gs="2"] .group-box.complete .gh-bar{background:rgba(163,230,53,.15);}
-  /* protótipo 3: faixa amarela à esquerda, sem moldura fechada */
-  body[data-gs="3"] .group-box{--gc:#fde047;--gc-border:rgba(253,224,71,.75);--gc-bg:linear-gradient(90deg,rgba(253,224,71,.09),rgba(253,224,71,0) 70%);border:none;border-left:4px solid var(--gc-border);border-radius:4px 12px 12px 4px;padding:6px 0 6px 10px;background:var(--gc-bg);}
-  body[data-gs="3"] .group-box.empty{border-left-style:dashed;}
-  body[data-gs="3"] .group-header{padding:2px 6px 8px 2px;}
-  body[data-gs="3"] .group-header .gh-goal{color:rgba(253,224,71,.6);}
-  body[data-gs="3"] .group-box.complete{--gc:var(--accent);--gc-border:var(--accent2);--gc-bg:linear-gradient(90deg,rgba(163,230,53,.09),rgba(163,230,53,0) 70%);}

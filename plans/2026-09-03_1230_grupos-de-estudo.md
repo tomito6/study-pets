@@ -26,8 +26,14 @@ progresso (`feitos/total` e minutos), e as linhas membros ficam indentadas com o
   o modal.
 - **Dia encerrado é read-only; dia futuro pode.** Planejar o amanhã é o ponto.
 - **Progresso** conta estudo e evento pela duração real; pausa é membro visual, sem contar.
-- **Sem segundo sistema de cores**: cabeçalho neutro com `--sc`/`--sc-border` da sessão do primeiro
-  membro. Grupo que ficou sem bloco (plano mudou) continua visível, tracejado, pra editar/apagar.
+- **Caixa em volta dos blocos, com cor própria.** O primeiro desenho (cabeçalho solto + linhas
+  indentadas com a cor da sessão) não lia como grupo. O Tomi escolheu entre três protótipos o card
+  com borda colorida e barra de progresso, e pediu uma cor por grupo. Paleta `gc-0`…`gc-5`, pela
+  ordem do grupo no dia: ciano, índigo, turquesa, magenta, céu, lilás — fria e luminosa, fora da
+  paleta das sessões. Completo vira verde. Grupo sem bloco (plano mudou) fica tracejado, só o
+  cabeçalho, pra editar/apagar.
+- **Menu de contexto bloqueado no `document`**, em fase de captura, enquanto há arrasto ou toque
+  longo: o modal abre no `pointerup`, e o `contextmenu` disparava em cima dele, fora da lista.
 - **Persistência**: campo `groups` no doc, `hydrateUserDoc` tolera ausente/malformado (só entra
   grupo com id/start/end; nome vazio vira "Grupo"). Grupos em dias futuros contam como dado pra
   `rebuildWeeks`. Cancelar sessão zera.

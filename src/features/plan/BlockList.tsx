@@ -17,6 +17,7 @@ import type { GroupSelection } from '../groups/useGroupSelection';
 import { spawnCheckRipple, spawnFloatGain } from './feedback';
 
 const NUM_SESSIONS = 6;
+const GROUP_COLORS = 6;
 
 const isPomodoroPart = (b: StudyBlock) => b.type === 'estudo' || b.type === 'pausa';
 
@@ -187,12 +188,14 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
     if (pos.empty) emptyAt.set(pos.index, [...(emptyAt.get(pos.index) ?? []), pos]);
     else startsAt.set(pos.index, pos);
   }
+  // Cor pela ordem do grupo no dia (`groups` vem ordenado por horário): até 6 grupos, 6 cores.
   const boxFor = (group: StudyGroup, empty: boolean, children?: ReactNode[]) => (
     <GroupBox
       key={`g-${group.id}`}
       group={group}
       progress={groupProgress(group, blocks, dayChecks)}
       empty={empty}
+      colorClass={`gc-${Math.max(0, groups.indexOf(group)) % GROUP_COLORS}`}
       onEdit={() => onEditGroup(group)}
     >
       {children}
