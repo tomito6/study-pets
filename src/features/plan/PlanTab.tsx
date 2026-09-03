@@ -9,7 +9,7 @@ import { dk } from '../../domain/time';
 import type { Stats } from '../../domain/stats';
 import type { DateKey } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
-import { legacy } from '../../legacy/bridge';
+import { openFinishDay } from '../../application/dayEnd';
 import { strings } from '../../shared/strings';
 import { setDay, setView, useAppState } from '../../store/store';
 import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal';
@@ -111,7 +111,7 @@ function FinishDay({ viewKey, todayKey }: { viewKey: string; todayKey: string })
       {closed ? (
         <div className="finish-day-banner"><span className="fdb-check">✓</span>{t.dayClosedBanner}</div>
       ) : (
-        <button className="finish-day-btn" onClick={() => legacy.openFinishDay()}>
+        <button className="finish-day-btn" onClick={openFinishDay}>
           <span>✓</span><span>{t.finishDay}</span>
         </button>
       )}

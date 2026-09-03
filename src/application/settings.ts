@@ -3,11 +3,12 @@
 import { DEFAULT_CFG } from '../domain/config';
 import { hasMissingNumbers, normalizeConfig } from '../domain/settings';
 import type { ConfigDraft } from '../domain/settings';
-import { legacy } from '../legacy/bridge';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { notify, state } from '../store/store';
+import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
+import { openOnboarding } from './onboarding';
 import { blocksForDay, clearBlockCache, currentDayKey, rebuildWeeks } from './plan';
 import { scheduleSave } from './save';
 
@@ -29,7 +30,7 @@ export function saveSettings(draft: ConfigDraft): SaveSettingsResult {
   scheduleSave();
   notify();
   // Config mudou → o último bloco pode ter mudado → o prompt de fim de dia reagenda.
-  legacy.rescheduleEndOfDayPrompt();
+  rescheduleEndOfDayPrompt();
   notifyPlanDelta(visibleKey, before);
   return { ok: true };
 }
@@ -49,6 +50,6 @@ export function cancelSession(): void {
   clearBlockCache();
   scheduleSave();
   notify();
-  legacy.openOnboarding();
+  openOnboarding();
   showToast(strings.settings.cancel.done);
 }

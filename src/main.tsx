@@ -1,46 +1,18 @@
-// Entry do app.
-//
-// Durante a migração o React vive em ILHAS: cada pedaço já migrado monta num
-// ponto fixo do index.html, e o resto continua sendo o legado (src/legacy/app.js)
-// mexendo no DOM por id. Os dois compartilham o store (src/store).
-//
-// Ordem importa: as ilhas são montadas de forma síncrona (flushSync) ANTES de o
-// legado carregar, porque ele procura elementos por id em tempo de execução.
+// Entry do app: monta a árvore React e liga a sessão (auth → carregar dados → boot).
 
 import './styles/app.css';
 import './styles/login.css';
 
-import { StrictMode, type ReactElement } from 'react';
-import { flushSync } from 'react-dom';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Header } from './app/Header';
-import { AnalyticsTab } from './features/analytics/AnalyticsTab';
-import { LoginScreen } from './features/auth/LoginScreen';
-import { PlanTab } from './features/plan/PlanTab';
-import { ProfileTab } from './features/profile/ProfileTab';
-import { SettingsPage } from './features/settings/SettingsPage';
-import { SaveIndicator } from './features/shell/SaveIndicator';
-import { FocusOverlay } from './features/timer/FocusOverlay';
-import { TimerBar } from './features/timer/TimerBar';
+import { App } from './app/App';
+import { startSession } from './application/session';
 
-function mountIsland(hostId: string, element: ReactElement): void {
-  const host = document.getElementById(hostId);
-  if (!host) throw new Error(`ilha React sem host: #${hostId}`);
-  flushSync(() => {
-    createRoot(host).render(<StrictMode>{element}</StrictMode>);
-  });
-}
-
-mountIsland('login-root', <LoginScreen />);
-mountIsland('header-root', <Header />);
-mountIsland('plan-root', <PlanTab />);
-mountIsland('analytics-root', <AnalyticsTab />);
-mountIsland('profile-root', <ProfileTab />);
-mountIsland('timer-root', <TimerBar />);
-mountIsland('focus-root', <FocusOverlay />);
-mountIsland('settings-root', <SettingsPage />);
-mountIsland('save-root', <SaveIndicator />);
-
-// Legado por último. Ele registra o listener de auth (assíncrono) e daí em diante
-// renderiza as partes ainda não migradas.
-void import('./legacy/app.js');
+const root = document.getElementById('root');
+if (!root) throw new Error('index.html sem #root');
+createRoot(root).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+startSession();

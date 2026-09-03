@@ -1,11 +1,11 @@
-// Estado central do app — um objeto só, compartilhado entre o React e o legado.
+// Estado central do app — um objeto só, mutado no lugar pelos casos de uso.
 //
-// Regra de convivência durante a migração: o objeto `state` é O MESMO que o
-// `src/legacy/app.js` muta no lugar (mesmos nomes de campo: `uiTab`, `user`…).
 // Quem muta chama `notify()`; o React lê via `useAppState` e re-renderiza.
-// Quando o legado acabar, isto vira um store imutável de verdade.
+// (Herança da migração: o objeto é compartilhado e mutável. Virar um store
+// imutável de verdade é um refactor possível, não necessário.)
 
 import { useSyncExternalStore } from 'react';
+import type { DaySummary } from '../domain/daySummary';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
 import type { StudyBlock } from '../domain/types';
@@ -16,7 +16,7 @@ import type { AuthUser } from '../infrastructure/ports';
 export type Tab = 'plano' | 'analise' | 'perfil';
 export const TABS: readonly Tab[] = ['plano', 'analise', 'perfil'];
 
-/** Persistido + sessão + UI. Nada de modal aberto aqui: isso é estado local de componente. */
+/** Persistido + sessão + UI. Modal aberto por clique local NÃO vem pra cá. */
 export interface AppState extends PersistedState {
   user: AuthUser | null;
   uiTab: Tab;
@@ -38,23 +38,27 @@ export interface SaveStatus {
   visible: boolean;
 }
 
+export interface DayEndUi {
+  confirmOpen: boolean;
+  promptOpen: boolean;
+  promptLastEnd: string;
+  summary: DaySummary | null;
+}
+
 /**
- * Derivados e estado de runtime que não são persistidos. `weeks` é calculado por
- * `rebuildWeeks` (application/plan); o timer é gerido por application/timer.
+ * Derivados e estado de runtime que não são persistidos. Os modais que estão
+ * aqui (`focusOpen`, `onboardingOpen`, `dayEnd`) são exceções conscientes: quem
+ * os abre é um caso de uso, não um clique local.
  */
 export interface Derived {
   weeks: Week[];
-  /** Bloco com timer rodando. O restante é derivado do relógio, não guardado. */
   timerBlock: StudyBlock | null;
-  /**
-   * Overlay de foco aberto. É a exceção à regra "modal não vai no store": quem
-   * abre é um caso de uso (iniciar timer), não um clique local.
-   */
   focusOpen: boolean;
   audio: AudioSettings;
   save: SaveStatus;
-  /** O provedor de auth já respondeu pelo menos uma vez (logado ou não). */
   authReady: boolean;
+  onboardingOpen: boolean;
+  dayEnd: DayEndUi;
 }
 
 export const derived: Derived = {
@@ -64,6 +68,8 @@ export const derived: Derived = {
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,
+  onboardingOpen: false,
+  dayEnd: { confirmOpen: false, promptOpen: false, promptLastEnd: '', summary: null },
 };
 
 let version = 0;
@@ -90,7 +96,7 @@ export function useAppState<T>(selector: (s: AppState, d: Derived) => T): T {
   return selector(state, derived);
 }
 
-// ---- ações usadas pela UI React ----
+// ---- ações de UI ----
 
 export function setTab(tab: Tab): void {
   if (state.uiTab === tab) return;
