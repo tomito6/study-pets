@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
 import type { DaySummary } from '../domain/daySummary';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
-import type { StudyBlock } from '../domain/types';
+import type { BlockType, StudyBlock } from '../domain/types';
 import type { Week } from '../domain/weeks';
 import type { AudioSettings } from '../infrastructure/audio/sounds';
 import type { AuthUser } from '../infrastructure/ports';
@@ -45,6 +45,17 @@ export interface DayEndUi {
   summary: DaySummary | null;
 }
 
+/** O bloco que acabou de terminar no modo foco — a faixa "✓ … concluído" do overlay. */
+export interface CompletedBlock {
+  name: string;
+  type: BlockType;
+  /** Ganho do check automático (0 se o bloco já estava marcado à mão). */
+  xp: number;
+  coins: number;
+  /** ms de quando terminou — o overlay esconde a faixa alguns segundos depois. */
+  at: number;
+}
+
 /**
  * Derivados e estado de runtime que não são persistidos. Os modais que estão
  * aqui (`focusOpen`, `onboardingOpen`, `dayEnd`) são exceções conscientes: quem
@@ -54,6 +65,8 @@ export interface Derived {
   weeks: Week[];
   timerBlock: StudyBlock | null;
   focusOpen: boolean;
+  /** Preenchido quando o foco emenda de um bloco no seguinte; limpo ao parar/iniciar. */
+  timerCompleted: CompletedBlock | null;
   audio: AudioSettings;
   save: SaveStatus;
   authReady: boolean;
@@ -65,6 +78,7 @@ export const derived: Derived = {
   weeks: [],
   timerBlock: null,
   focusOpen: false,
+  timerCompleted: null,
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,

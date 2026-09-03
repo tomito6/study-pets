@@ -456,6 +456,13 @@
   .focus-timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .focus-time-big { font-family:'DM Mono',monospace; font-size:clamp(44px, 11vmin, 88px); font-weight:600; color:var(--text); line-height:1; letter-spacing:-.02em; }
   .focus-time-big.ending { color:var(--orange); }
+  /* Aberto antes da hora: anel cheio e apagado, contagem até o início em cinza. */
+  .focus-timer-fill.waiting { opacity:.3; }
+  .focus-time-big.waiting { color:var(--muted); }
+  /* "✓ Estudo 3 concluído · +50 XP · +25 🪙" — aparece ao emendar no próximo bloco e some sozinha. */
+  .focus-done { position:fixed; top:clamp(56px, 9vmin, 76px); left:50%; z-index:1; background:var(--green-bg); border:1px solid var(--accent2); color:var(--accent); border-radius:99px; padding:8px 18px; font-family:'DM Mono',monospace; font-size:clamp(12px, 1.7vmin, 14px); white-space:nowrap; box-shadow:0 0 20px rgba(163,230,53,.28); pointer-events:none; animation:focus-done-pop .5s cubic-bezier(.34,1.56,.64,1) both, focus-done-fade .6s ease 3.4s forwards; }
+  @keyframes focus-done-pop { 0% { opacity:0; transform:translate(-50%,-10px) scale(.85); } 100% { opacity:1; transform:translate(-50%,0) scale(1); } }
+  @keyframes focus-done-fade { to { opacity:0; } }
   .focus-time-sub { font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); margin-top:8px; font-family:'DM Mono',monospace; }
   .focus-scene { background:linear-gradient(180deg, transparent 0%, var(--bg2) 60%); border-radius:16px; padding:clamp(16px, 2.5vmin, 28px) clamp(16px, 2.5vmin, 28px) clamp(12px, 2vmin, 20px); margin:clamp(12px, 2vmin, 24px) 0 clamp(14px, 2.5vmin, 28px); position:relative; overflow:hidden; }
   .focus-scene-stage { display:flex; align-items:flex-end; justify-content:center; gap:12px; height:clamp(100px, 14vmin, 160px); margin-bottom:10px; }
@@ -555,6 +562,7 @@
   .timer-block-name { font-size:12px; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .timer-time { font-size:22px; font-weight:600; font-family:'DM Mono',monospace; color:var(--accent); min-width:60px; text-align:right; }
   .timer-time.ending { color:#f87171; }
+  .timer-time.waiting { color:var(--muted); }
   .timer-stop { background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--muted); font-size:11px; padding:4px 8px; cursor:pointer; font-family:'DM Sans',sans-serif; }
   .timer-stop:hover { border-color:#555; color:var(--text); }
   .volume-wrap { display:flex; align-items:center; gap:6px; }

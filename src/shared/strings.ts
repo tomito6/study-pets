@@ -401,14 +401,16 @@ export const strings = {
   },
   timer: {
     inProgress: 'Em andamento',
+    startsIn: 'Começa em',
     stop: '✕ Parar',
     mute: 'Silenciar',
-    refusal: (r: { reason: 'not-today' } | { reason: 'ended' } | { reason: 'not-started'; minutesUntil: number }) =>
-      r.reason === 'not-today'
-        ? 'Só dá pra iniciar timer em blocos de hoje 📅'
-        : r.reason === 'ended'
-          ? 'Este bloco já terminou ⏎'
-          : `Este bloco começa em ${r.minutesUntil} min ⏳`,
+    refusal: (r: { reason: 'not-today' } | { reason: 'ended' }) =>
+      r.reason === 'not-today' ? 'Só dá pra iniciar timer em blocos de hoje 📅' : 'Este bloco já terminou ⏎',
+    /** "✓ Estudo 3 concluído · +50 XP · +25 🪙" — a faixa no foco e o toast no plano. */
+    completed: (c: { name: string; type: string; xp: number; coins: number }) =>
+      `✓ ${c.name} ${c.type === 'pausa' ? 'concluída' : 'concluído'}` +
+      (c.xp ? ` · +${c.xp} XP` : '') +
+      (c.coins ? ` · +${c.coins} 🪙` : ''),
     notification: {
       study: '📖 Estudo concluído! Hora da pausa.',
       break: '🧘 Pausa concluída! Hora de estudar.',
@@ -419,6 +421,7 @@ export const strings = {
       pomodoroOf: (min: number) => `Pomodoro de ${min} min`,
       breakOf: (min: number) => `Pausa de ${min} min`,
       completed: (pct: number) => `completou · ${pct}%`,
+      startsAt: (time: string) => `começa às ${time}`,
       onComplete: ' ao concluir',
       next: 'Em seguida',
       endOfDay: 'Fim do dia 🌙',

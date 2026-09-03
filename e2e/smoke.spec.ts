@@ -131,6 +131,38 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).not.toHaveClass(/active/);
   });
 
+  test('19. bloco futuro abre o foco em espera e começa sozinho na hora', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    // Estudo 4 (10:30–10:55) ainda não começou: o foco abre em espera, contando até o início.
+    await page.locator('.block-row', { hasText: '10:30–10:55' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText('20:00');
+    await expect(page.locator('#focus-time-sub')).toHaveText('começa às 10:30');
+    await expect(page.locator('#timer-bar')).toContainText('Começa em');
+
+    // Chegou a hora: vira o pomodoro normal, sem clique nenhum.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:30:01`));
+    await expect(page.locator('#focus-time-big')).toHaveText('24:59');
+    await expect(page.locator('#focus-time-sub')).toContainText('completou');
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
+  });
+
+  test('20. bloco que acaba no foco é marcado sozinho e emenda na pausa', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    const estudo3 = page.locator('.block-row', { hasText: '10:00–10:25' });
+    await estudo3.locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    await page.clock.setFixedTime(new Date(`${DIA}T10:25:01`));
+    await expect(page.locator('#focus-block-name')).toHaveText('Pausa'); // emendou na pausa 10:25–10:30
+    await expect(page.locator('#focus-done')).toHaveText('✓ Estudo 3 concluído · +50 XP · +25 🪙');
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    await page.locator('.focus-exit').click();
+    await expect(estudo3.locator('.check')).toHaveClass(/checked/);
+    await expect(page.locator('#timer-bar')).toContainText('Pausa');
+  });
+
   test('5. concluir um bloco mostra XP e moedas pendentes de hoje', async ({ page }) => {
     await abrirApp(page);
     await expect(page.locator('#today-xp-val')).not.toContainText('XP');

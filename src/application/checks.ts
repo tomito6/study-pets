@@ -32,24 +32,8 @@ function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString,
   };
 }
 
-/**
- * Marca ou desmarca o bloco. Devolve `null` se o dia não aceita mudança (encerrado
- * ou futuro). Ao marcar, grava o pet equipado e o bônus decidido AGORA — o XP do
- * pet é creditado só quando o dia fechar (ver `computePendingPetXP`).
- */
-export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
-  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now })) return null;
-
-  const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
-  const dur = mins(block);
-
-  if (day[block.time]) {
-    delete day[block.time];
-    if (Object.keys(day).length === 0) delete state.checks[dateKey];
-    scheduleSave();
-    return { checked: false, xp: 0, coins: 0 };
-  }
-
+/** Grava o check com o pet equipado e o bônus de skill decidido AGORA. */
+function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, CheckRecord>, now: Date): CheckResult {
   const pet = activePet();
   const bonus = bonusForCheck(block, dateKey, {
     activeSkill: pet?.skill ?? null,
@@ -63,5 +47,35 @@ export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date 
   const record = { pet: pet?.id ?? null, bonus };
   day[block.time] = record;
   scheduleSave();
-  return { checked: true, xp: xpFromCheck(block, record), coins: coinsForBlock(block, dur) };
+  return { checked: true, xp: xpFromCheck(block, record), coins: coinsForBlock(block, mins(block)) };
+}
+
+/**
+ * Marca ou desmarca o bloco. Devolve `null` se o dia não aceita mudança (encerrado
+ * ou futuro). Ao marcar, grava o pet equipado e o bônus decidido AGORA — o XP do
+ * pet é creditado só quando o dia fechar (ver `computePendingPetXP`).
+ */
+export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
+  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now })) return null;
+
+  const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
+  if (day[block.time]) {
+    delete day[block.time];
+    if (Object.keys(day).length === 0) delete state.checks[dateKey];
+    scheduleSave();
+    return { checked: false, xp: 0, coins: 0 };
+  }
+  return markBlock(dateKey, block, day, now);
+}
+
+/**
+ * Marca o bloco só se ainda não está marcado — o fim de um bloco no modo foco usa
+ * isto, e um check feito à mão no meio do bloco não pode ser desfeito por ele.
+ * `null` = nada mudou (já marcado, ou o dia não aceita).
+ */
+export function checkBlock(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
+  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now })) return null;
+  if (state.checks[dateKey]?.[block.time]) return null;
+  const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
+  return markBlock(dateKey, block, day, now);
 }

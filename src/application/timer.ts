@@ -3,17 +3,27 @@
 // O estado é só "qual bloco" (derived.timerBlock). O restante é derivado do
 // relógio pelos componentes, a cada segundo, SEM passar pelo store — um
 // notify() por segundo faria o app inteiro re-renderizar e recalcular stats.
-// O único intervalo aqui existe pra detectar o fim e disparar som/notificação.
+// O único intervalo aqui existe pra detectar o fim do bloco.
+//
+// Um bloco de hoje pode ser aberto antes da hora (fica em espera até começar).
+// No modo foco, o fim do bloco é uma conquista: marca o check sozinho, toca
+// "deu certo" e emenda no bloco seguinte (estudo → pausa → estudo…) até o dia
+// mudar de assunto (almoço, evento, gap, fim). Com o foco fechado (só a barra),
+// o fim continua como sempre foi: som do tipo, notificação, e o timer some.
 
-import { canStartBlock, cleanBlockName, soundForBlock, timerProgress } from '../domain/timer';
+import { canToggleCheck } from '../domain/checks';
+import { dk } from '../domain/time';
+import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerProgress } from '../domain/timer';
 import type { StartCheck } from '../domain/timer';
 import type { StudyBlock } from '../domain/types';
 import { playSound as playSoundInfra } from '../infrastructure/audio/sounds';
 import type { SoundType } from '../infrastructure/audio/sounds';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
 import { strings } from '../shared/strings';
-import { derived, notify } from '../store/store';
-import { currentDayKey } from './plan';
+import { showToast } from '../shared/toast';
+import { derived, notify, state } from '../store/store';
+import { checkBlock } from './checks';
+import { blocksForDay, currentDayKey } from './plan';
 
 let endWatcher: ReturnType<typeof setInterval> | null = null;
 
@@ -22,16 +32,22 @@ function clearWatcher(): void {
   endWatcher = null;
 }
 
-/** Inicia o timer no bloco (sem validar — use `tryStartTimer` a partir da UI). */
-export function startTimer(block: StudyBlock): void {
+/** Põe o bloco no timer, abre o foco e fica de olho no fim. */
+function runBlock(block: StudyBlock): void {
   clearWatcher();
   derived.timerBlock = block;
   derived.focusOpen = true;
-  requestNotificationPermission();
   notify();
   endWatcher = setInterval(() => {
     if (derived.timerBlock && timerProgress(derived.timerBlock, new Date()).done) finishTimer();
   }, 1000);
+}
+
+/** Inicia o timer no bloco (sem validar — use `tryStartTimer` a partir da UI). */
+export function startTimer(block: StudyBlock): void {
+  derived.timerCompleted = null;
+  runBlock(block);
+  requestNotificationPermission();
 }
 
 /** Valida contra o dia visível e o relógio; a UI mostra o motivo se recusar. */
@@ -42,17 +58,47 @@ export function tryStartTimer(block: StudyBlock, now: Date = new Date()): StartC
   return check;
 }
 
-/** Fim natural do bloco: som, notificação, e o timer some. */
+/**
+ * Fim natural do bloco. No foco: check automático, som de "deu certo" e emenda
+ * no próximo bloco — ou fecha, se a sequência acabou. Fora do foco: som do tipo
+ * e notificação, e o timer some.
+ */
 function finishTimer(): void {
   const block = derived.timerBlock;
   clearWatcher();
-  if (block) {
+  if (!block) {
+    derived.focusOpen = false;
+    notify();
+    return;
+  }
+  const now = new Date();
+  const todayKey = dk(now);
+  const n = strings.timer.notification;
+  pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
+
+  if (derived.focusOpen && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
+    const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
+    playSound('sucesso');
+    const completed = {
+      name: cleanBlockName(block.name),
+      type: block.type,
+      xp: result?.xp ?? 0,
+      coins: result?.coins ?? 0,
+      at: now.getTime(),
+    };
+    const next = chainedBlockAfter(blocksForDay(todayKey), block);
+    if (next) {
+      derived.timerCompleted = completed;
+      runBlock(next);
+      return;
+    }
+    showToast(strings.timer.completed(completed));
+  } else {
     playSound(soundForBlock(block));
-    const t = strings.timer.notification;
-    pushNotification(block.type === 'estudo' ? t.study : t.break, cleanBlockName(block.name));
   }
   derived.timerBlock = null;
   derived.focusOpen = false;
+  derived.timerCompleted = null;
   notify();
 }
 
@@ -61,6 +107,7 @@ export function stopTimer(): void {
   clearWatcher();
   derived.timerBlock = null;
   derived.focusOpen = false;
+  derived.timerCompleted = null;
   notify();
 }
 

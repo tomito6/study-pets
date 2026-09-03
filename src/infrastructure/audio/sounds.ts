@@ -2,7 +2,8 @@
 // Falha em silêncio onde não há áudio (headless, contexto bloqueado): som nunca
 // pode derrubar o app.
 
-export type SoundType = 'check' | 'estudo' | 'pausa_curta' | 'pausa_longa';
+/** `sucesso` = "deu certo": o bloco terminou dentro do modo foco. */
+export type SoundType = 'check' | 'estudo' | 'pausa_curta' | 'pausa_longa' | 'sucesso';
 
 export interface AudioSettings {
   volume: number;
@@ -79,6 +80,17 @@ export function playSound(type: SoundType, settings: AudioSettings): void {
           g.gain.linearRampToValueAtTime(vol * 0.5, at + 0.01);
           g.gain.exponentialRampToValueAtTime(0.001, at + 0.25);
         }, at, at + 0.26);
+      });
+    } else if (type === 'sucesso') {
+      // Arpejo maior subindo (C5 E5 G5 C6), a última nota segurada — o "deu certo".
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+        const at = t + i * 0.11;
+        const dur = i === 3 ? 0.9 : 0.3;
+        tone(ctx, 'triangle', freq, (g) => {
+          g.gain.setValueAtTime(0, at);
+          g.gain.linearRampToValueAtTime(vol * 0.35, at + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.001, at + dur);
+        }, at, at + dur + 0.05);
       });
     }
   } catch {
