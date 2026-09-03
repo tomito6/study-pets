@@ -489,6 +489,98 @@ justamente onde escorrega pro infantil; se for, uma linha e sem voz de mascote.
 **Ordem:** depende de ter outro usuário pra justificar. Enquanto só o Tomi usa, a versão mínima (card
 de três linhas) já paga o custo; o tour vem junto com a conta por e-mail, que é o que abre a porta.
 
+## Revisão de 2026-09-03: o que falta, na opinião do Claude
+
+O Tomi perguntou "tem mais alguma coisa que melhoraria muito o projeto?". Lendo o código de save,
+timer e sessão, o que apareceu foi menos feature e mais **fundação**: coisas que hoje ninguém sente
+porque só o Tomi usa, num dispositivo, quase sempre online. O que já tinha escopo fechado virou
+pendência (`PENDENCIAS.md` 1–5: o bug do `merge: true`, reconciliar o timer ao voltar + Wake Lock,
+editar evento, error boundary, cache offline). O que ainda pede decisão fica aqui.
+
+**Ordem sugerida:** o bug do merge hoje (uma linha, e está corrompendo dado). Sync entre dispositivos e
+o alarme (as duas seções abaixo) antes de qualquer outra pessoa usar. Janela do dia quando incomodar de
+novo. O resto é miúdo e pode entrar de carona.
+
+### Sync entre dispositivos (hoje o último a salvar apaga o outro)
+
+O doc é carregado **uma vez**, no login, e salvo inteiro com debounce. Celular e notebook abertos ao
+mesmo tempo: o que salvou por último ganha, e o outro perde o que fez sem aviso nenhum. O CLAUDE.md já
+lista "sync mais responsivo" como direção futura; isto é o argumento pra subir de prioridade — é perda
+de dado, não conveniência.
+
+- **Mecânica:** `onSnapshot` em `users/{uid}`, atrás da porta (`UserRepository.subscribe(uid, cb)`; o
+  repo em memória pode escutar o evento `storage`, ou ser no-op). Snapshot com `hasPendingWrites` é eco
+  da própria escrita — ignorar. Snapshot vindo de fora: `hydrateUserDoc` de novo, `clearBlockCache`,
+  `rebuildWeeks`, `notify`. `applyPendingPetXP` é idempotente, então rodar de novo é seguro.
+- **Conflito:** se chegar snapshot remoto enquanto há um save local na fila (janela de 800 ms), v1 =
+  o remoto entra e o local pendente sobrescreve em seguida. Documentar e aceitar; a janela é curta e
+  o cenário (os dois dispositivos mexendo no mesmo segundo) é raro. Se um dia doer, o caminho é
+  escrita granular (`updateDoc` com field paths por check/evento) em vez de doc inteiro.
+- **Cuidado:** o snapshot não pode tocar `derived` (timer rodando, foco aberto). E numa conta nova,
+  um snapshot chegando no meio do onboarding (outra aba) não pode fechar o modal — checar
+  `derived.onboardingOpen` antes de reidratar, ou adiar.
+- **Depende da pendência 1:** com `merge: true`, dois clientes ressuscitam checks um do outro pra
+  sempre; sem merge, o último doc inteiro vence, que é pelo menos previsível.
+
+### O alarme do pomodoro e o celular travado (PWA)
+
+O que uma página web **não** consegue: tocar com o browser em segundo plano ou a tela travada. O
+`setInterval` congela, `new Notification` só dispara com a página viva, o Web Audio fica suspenso. As
+pendências 2 e 5 cobrem o que dá pra garantir sozinho (a tela não trava durante o foco; ao voltar, o
+app reconcilia). Isto aqui é o passo seguinte:
+
+- **Virar PWA de verdade:** `manifest.webmanifest` (nome, `display: standalone`, `theme_color` escuro,
+  ícones 192/512) e service worker (`vite-plugin-pwa`, precache do build, estratégia `autoUpdate`).
+  Hoje o `index.html` tem só as meta tags da Apple e um `<link rel="icon" href="data:,">` — **não existe
+  ícone**, e ícone é arte: o personagem? o cachorro? Decisão do Tomi. Instalado na tela inicial, o app
+  ganha janela própria e o Android trata melhor o áudio e a notificação.
+- **Notificação pelo service worker** (`registration.showNotification`) em vez de `new Notification`:
+  sobrevive melhor à aba em segundo plano, e é o caminho pra ações na notificação ("Marcar como
+  feito"). Ainda depende de JS rodando na hora — não resolve tela travada.
+- **O único jeito de tocar com o celular travado é push do servidor** (FCM + Cloud Function que sabe
+  o plano do dia e agenda o push pro fim de cada bloco). É pesado: backend, tokens por dispositivo,
+  plano no servidor. Só faz sentido se, mesmo com Wake Lock, o Tomi ainda perder finais de bloco.
+  Anotar, não fazer.
+
+### Janela de estudo só de hoje (e "dia livre")
+
+Almoço tem override por dia (`lunchOverrides`); janela não. "Acordei tarde, hoje começo às 10" hoje é
+mudar a config pra sempre ou criar um evento falso — e isso contradiz a promessa central ("almoçou
+cedo? tudo bem, ajusta"). A assimetria é o bug de design mais visível que sobrou.
+
+- **Modelo:** `windowOverrides[dateKey] = { studyWindows: StudyWindow[] }` — mesmo padrão do
+  `lunchOverrides`. `blocksForDay` usa o override se existir. Campo novo no doc → default em
+  `hydrateUserDoc` + teste com doc sem o campo; Cancelar sessão zera; entra na lista de datas que
+  expandem as semanas (`rebuildWeeks`). Nunca entra no gerador como regra especial — é só a config
+  daquele dia. Toast "Plano reajustado" e `planDelta` funcionam como estão.
+- **UI:** ao lado de "✏️ Almoço" na lista do dia, um "Janelas de hoje" que abre o mesmo
+  `StudyWindowsEditor` das configurações, num modal, só pro dia visível. Dia com override ganha o
+  mesmo "editado" que o almoço mostra. Atalho que resolve o caso mais comum sem abrir nada:
+  **"Começar agora"** — primeira janela de hoje passa a começar no próximo múltiplo de 5 min.
+- **"Dia livre":** o mesmo mecanismo com `studyWindows: []` — o dia renderiza "🌴 Dia livre" como o fim
+  de semana. Pra feriado bávaro no meio da semana, dia de prova, viagem. Decisão a tomar: dia livre
+  declarado conta pro streak como fim de semana com `skipWeekends` (neutro) ou como dia sem estudo
+  (quebra)? Neutro é coerente com o que `skipWeekends` já faz e com "a vida não para por causa do
+  Pomodoro" — desde que só valha pra hoje/futuro e pra dia **sem check** (declarar depois de falhar
+  seria o streak freeze do Duolingo, que é o padrão manipulativo que a gente evita).
+- Dia encerrado é read-only; dia futuro pode (planejar a semana é o ponto).
+
+### Miúdos que só aparecem com outro usuário
+
+- **Exportar meus dados:** botão em Configurações → Geral, "Baixar meus dados", que baixa o JSON de
+  `serializeState` (blob + `<a download>`). Substitui o `scripts/backup-firestore-console.js` pra quem
+  não é o autor, e é a resposta pra "quero meus dados" que o GDPR exige de quem opera na Alemanha.
+  Importar fica de fora até alguém pedir.
+- **Inglês:** a ambição é qualquer estudante do mundo, e a TUM é internacional. `strings.ts` já é o
+  lugar único da UI, então virar `strings[locale]` é mecânico. O que **não** está lá e teria de sair
+  do domínio: nomes de bloco gerados pelo `planner.ts` ("📖 Estudo 3", "🍽️ Almoço"), `DEFAULT_GROUP_NAME`,
+  nomes de forma e traços dos pets no catálogo (`FORMS[].name`, `strings.onboarding.traits`), nomes de
+  nível em `LEVELS`, descrições de skill em `SKILLS`. Formatação de data via `Intl`. Regra pra hoje:
+  texto novo continua indo pro `strings.ts`, e texto de domínio ganha um id em vez de uma frase.
+- **Fuso horário:** tudo é horário local (`dk`, `closedDays`, `xpProcessedUntil`). Viajar Munique →
+  Brasil no meio do dia muda o "hoje" e pode fechar/abrir dia fora de ordem. Provavelmente só aparece
+  no dia da viagem; anotar pra quando um relato estranho chegar.
+
 ---
 
 ## Como esse arquivo deve crescer
