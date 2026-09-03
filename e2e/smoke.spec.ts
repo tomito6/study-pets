@@ -165,6 +165,56 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#my-pets-grid .shop-btn.active')).toHaveText(/Equipada/);
   });
 
+  test('11. o pet ganha nome ao adotar, XP ao fechar o dia, e evolui escolhendo o caminho', async ({ page }) => {
+    await abrirApp(page);
+    for (let i = 0; i < 7; i++) await checksDeEstudo(page).nth(i).click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+
+    // Adota o cachorro com nome próprio (o campo já vem com uma sugestão).
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.getByRole('button', { name: /Loja de pets/ }).click();
+    await page.locator('#pets-shop-panel .shop-item', { hasText: 'Cachorro' }).locator('.shop-btn').click();
+    await expect(page.locator('#pet-name-input')).not.toHaveValue('');
+    await page.locator('#pet-name-input').fill('Bolt');
+    await page.locator('#pet-buy-confirm').getByRole('button', { name: 'Adotar' }).click();
+    await expect(page.locator('#pet-buy-confirm')).toBeHidden();
+    await page.locator('#pets-shop-panel .panel-close').click();
+    await expect(page.locator('#ap-name')).toHaveText('Bolt');
+    await expect(page.locator('#ap-species')).toHaveText('Cachorro');
+    // O save tem debounce: espera a adoção chegar no storage antes de recarregar.
+    await expect(page.locator('#save-indicator')).toContainText('Salvando');
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+
+    // Dia seguinte: um estudo com o Bolt equipado e o dia fechado → 50 XP = Lv. 2.
+    await page.clock.setFixedTime(new Date('2026-09-03T17:30:00'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#onboarding-panel')).toBeHidden();
+    await checksDeEstudo(page).first().click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await expect(page.locator('#day-summary-panel')).toContainText('Bolt');
+    await expect(page.locator('#day-summary-panel')).toContainText('Lv. 1 → 2');
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+
+    // Escolhe o caminho selvagem: vira lobo e continua sendo o Bolt.
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(page.locator('#ap-lv')).toHaveText('Lv. 2');
+    await page.getByRole('button', { name: /Meus pets/ }).click();
+    await page.locator('#my-pets-grid .shop-btn.evolve').click();
+    await expect(page.locator('#pet-evolve-panel')).toBeVisible();
+    await page.locator('#pet-evolve-panel .evo-path', { hasText: 'Lobo' }).click();
+    await page.locator('#pet-evolve-panel').getByRole('button', { name: 'Evoluir', exact: true }).click();
+    await expect(page.locator('#pet-evolve-panel')).toBeHidden();
+    await expect(page.locator('#my-pets-grid')).toContainText('Bolt');
+    await expect(page.locator('#my-pets-grid')).toContainText('Lobo');
+    await expect(page.locator('#my-pets-grid .shop-btn.evolve')).toHaveCount(0);
+    await page.locator('#my-pets-panel .panel-close').click();
+    await expect(page.locator('#pet-sprite')).toHaveAttribute('src', /idle\/pets\/wolf\//);
+  });
+
   test('9. criar um evento encaixa ele no plano', async ({ page }) => {
     await abrirApp(page);
     await page.getByRole('button', { name: '+ Evento' }).click();

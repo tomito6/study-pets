@@ -1,7 +1,7 @@
 // Regras de check: quem pode ser marcado, e quando o XP dos pets é creditado.
 // Puro — o estado e a persistência ficam em quem chama.
 
-import type { ChecksByDate, DateKey, PetId, StudyBlock, TimeString } from './types';
+import type { ChecksByDate, DateKey, PetInstanceId, StudyBlock, TimeString } from './types';
 import { checkPetOf, xpFromCheck } from './progression';
 import { dk } from './time';
 
@@ -47,8 +47,8 @@ export interface PendingPetXPInput {
 }
 
 export interface PendingPetXPResult {
-  /** XP a somar por pet. */
-  gains: Record<PetId, number>;
+  /** XP a somar por pet adotado (id da instância — o que o check guarda). */
+  gains: Record<PetInstanceId, number>;
   /** Novo valor de `xpProcessedUntil`. */
   processedUntil: DateKey;
   /** Primeira execução: zera o XP acumulado antes de aplicar os ganhos. */
@@ -81,7 +81,7 @@ export function computePendingPetXP(input: PendingPetXPInput): PendingPetXPResul
     return resetXp ? { gains: {}, processedUntil: from, resetXp: true } : null;
   }
 
-  const gains: Record<PetId, number> = {};
+  const gains: Record<PetInstanceId, number> = {};
   const dayKeys = Object.keys(checks)
     .filter((k) => k > from && k <= endKey)
     .sort();

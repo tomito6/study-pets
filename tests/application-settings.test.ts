@@ -3,7 +3,7 @@ import { deleteAccount } from '../src/application/account';
 import { rebuildWeeks } from '../src/application/plan';
 import { cancelSession, saveSettings } from '../src/application/settings';
 import { defaultDraft } from '../src/domain/settings';
-import { emptyPersistedState } from '../src/domain/persistence';
+import { SCHEMA_VERSION, emptyPersistedState } from '../src/domain/persistence';
 import { auth, users } from '../src/infrastructure';
 import { derived, state } from '../src/store/store';
 
@@ -40,11 +40,11 @@ describe('saveSettings', () => {
 describe('cancelSession', () => {
   it('zera tudo e volta pra config padrão, mantendo o usuário', () => {
     state.checks = { '2026-09-01': { '09:00': { pet: 'cat', bonus: 0 } } };
-    state.pets.owned = ['cat'];
+    state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
     state.coinsSpent = 150;
     cancelSession();
     expect(state.checks).toEqual({});
-    expect(state.pets).toEqual({ owned: [], active: null, xp: {}, xpProcessedUntil: null });
+    expect(state.pets).toEqual({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
     expect(state.coinsSpent).toBe(0);
     expect(state.config.periodStart).toBeNull(); // só aqui o início é redefinido
     expect(state.user?.uid).toBe('u');
@@ -54,7 +54,7 @@ describe('cancelSession', () => {
 describe('deleteAccount (infra em memória)', () => {
   it('apaga o documento e desloga', async () => {
     const uid = auth.currentUser()!.uid;
-    await users.save(uid, { checks: {}, events: {}, eventSeries: [], lunchOverrides: {}, closedDays: {}, config: state.config, pets: state.pets, skills: state.skills, coinsSpent: 0, schemaVersion: 1 });
+    await users.save(uid, { ...emptyPersistedState(), config: state.config, schemaVersion: SCHEMA_VERSION });
     const stages: string[] = [];
     const r = await deleteAccount((s) => stages.push(s));
     expect(r).toBe('ok');

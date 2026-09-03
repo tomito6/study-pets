@@ -40,7 +40,7 @@ describe('domínio do fim do dia', () => {
       { totalXP: 300, coins: 150, userLevelIdx: 1, petXP: { cat: 800, owl: 0 } },
     );
     expect(s).toMatchObject({ userXP: 100, userCoins: 50, userLevelUp: true, newLevel: 2, newLevelName: 'Iniciante', empty: false });
-    expect(s.pets).toEqual([{ id: 'cat', gain: 100, oldLevel: 2, newLevel: 3, levelUp: true }]);
+    expect(s.pets).toEqual([{ id: 'cat', gain: 100, oldLevel: 7, newLevel: 8, levelUp: true }]); // curva própria do pet
   });
 
   it('resumo vazio quando nada mudou', () => {
@@ -71,7 +71,7 @@ describe('encerrar o dia', () => {
   beforeEach(() => resetAt('2026-09-02T17:30:00'));
 
   it('trava os checks, credita o pet na hora e monta o resumo', () => {
-    state.pets.owned = ['cat'];
+    state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Mia', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
     state.pets.active = 'cat';
     state.pets.xpProcessedUntil = '2026-09-01';
     const b = blocksForDay(HOJE).find((x) => x.type === 'estudo')!;
@@ -82,7 +82,8 @@ describe('encerrar o dia', () => {
     const s = closeDay();
     expect(state.closedDays[HOJE]).toBe(true);
     expect(s).toMatchObject({ userXP: 50, userCoins: 25, empty: false });
-    expect(s.pets).toEqual([{ id: 'cat', gain: 50, oldLevel: 1, newLevel: 1, levelUp: false }]);
+    expect(s.pets).toEqual([{ id: 'cat', gain: 50, oldLevel: 1, newLevel: 2, levelUp: true }]); // 50 XP = Lv. 2
+    expect(state.pets.owned[0]!.xp).toBe(50);
     expect(derived.dayEnd).toMatchObject({ confirmOpen: false, promptOpen: false });
     expect(derived.dayEnd.summary).toBe(s);
     expect(toggleBlockCheck(HOJE, blocksForDay(HOJE)[2]!)).toBeNull(); // read-only

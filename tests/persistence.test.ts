@@ -43,23 +43,39 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc({ checks }).checks).toEqual(checks);
   });
 
-  it('pets sem xp nem xpProcessedUntil (formato antigo) ganham os defaults', () => {
+  it('pets v0 (só owned/active, por espécie) viram instâncias com o id da espécie', () => {
     const s = hydrateUserDoc({ pets: { owned: ['cat'], active: 'cat' } });
-    expect(s.pets).toEqual({ owned: ['cat'], active: 'cat', xp: {}, xpProcessedUntil: null });
+    expect(s.pets).toEqual({ owned: [{ id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }], active: 'cat', activeSince: 0, xpProcessedUntil: null });
   });
 
-  it('pets com xp e xpProcessedUntil são preservados', () => {
-    const pets = { owned: ['owl'], active: 'owl', xp: { owl: 120 }, xpProcessedUntil: '2026-09-01' };
-    expect(hydrateUserDoc({ pets }).pets).toEqual(pets);
+  it('pets v1 (xp por espécie + skills.owl) migram XP e skill pra dentro da instância', () => {
+    const pets = { owned: ['owl', 'cat'], active: 'owl', xp: { owl: 120 }, xpProcessedUntil: '2026-09-01' };
+    const s = hydrateUserDoc({ pets, skills: { owl: 'noturno', activatedAt: 1234 } });
+    expect(s.pets).toEqual({
+      owned: [
+        { id: 'owl', species: 'owl', name: 'Coruja', xp: 120, path: null, stage: 0, skill: 'noturno', skillActivatedAt: 1234, adoptedAt: 0 },
+        { id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 },
+      ],
+      active: 'owl',
+      activeSince: 0,
+      xpProcessedUntil: '2026-09-01',
+    });
+  });
+
+  it('pets v2 (instâncias) passam intactos; campo faltando ganha default; active órfão vira null', () => {
+    const bolt = { id: 'dog', species: 'dog', name: 'Bolt', xp: 60, path: 'selvagem', stage: 1, skill: 'noturno', skillActivatedAt: 9, adoptedAt: 5 };
+    expect(hydrateUserDoc({ pets: { owned: [bolt], active: 'dog', activeSince: 7 } }).pets).toEqual({ owned: [bolt], active: 'dog', activeSince: 7, xpProcessedUntil: null });
+    const s = hydrateUserDoc({ pets: { owned: [{ id: 'dog-2', species: 'dog' }, { nao: 'vale' }, 42], active: 'sumiu' } });
+    expect(s.pets.owned).toEqual([{ id: 'dog-2', species: 'dog', name: 'Cachorro', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }]);
+    expect(s.pets.active).toBeNull();
   });
 
   it('xpProcessedUntil que não é string vira null', () => {
     expect(hydrateUserDoc({ pets: { xpProcessedUntil: 123 } }).pets.xpProcessedUntil).toBeNull();
   });
 
-  it('documento sem skills, closedDays ou eventSeries ganha vazios', () => {
+  it('documento sem closedDays ou eventSeries ganha vazios', () => {
     const s = hydrateUserDoc({ checks: {} });
-    expect(s.skills).toEqual({ owl: null, activatedAt: 0 });
     expect(s.closedDays).toEqual({});
     expect(s.eventSeries).toEqual([]);
   });
@@ -95,13 +111,14 @@ describe('serializeState', () => {
     const parcial = { ...emptyPersistedState() } as Record<string, unknown>;
     delete parcial.eventSeries;
     delete parcial.closedDays;
-    delete parcial.skills;
+    delete parcial.pets;
     delete parcial.coinsSpent;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
-    expect(doc.skills).toEqual({ owl: null, activatedAt: 0 });
+    expect(doc.pets).toEqual({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
     expect(doc.coinsSpent).toBe(0);
+    expect(doc).not.toHaveProperty('skills');
   });
 });
 
@@ -113,8 +130,15 @@ describe('ida e volta', () => {
       events: { '2026-09-01': [{ name: 'Aula', start: '10:00', end: '11:30', countsAsStudy: true }] },
       eventSeries: [{ id: 's1', name: 'Treino', start: '18:00', end: '19:00', weekdays: [1, 3], freq: 'weekly', anchor: '2026-09-01' }],
       closedDays: { '2026-09-01': true },
-      pets: { owned: ['owl', 'cat'], active: 'owl', xp: { owl: 300 }, xpProcessedUntil: '2026-09-01' },
-      skills: { owl: 'noturno', activatedAt: 1234 },
+      pets: {
+        owned: [
+          { id: 'owl', species: 'owl', name: 'Sofia', xp: 300, path: null, stage: 0, skill: 'noturno', skillActivatedAt: 1234, adoptedAt: 10 },
+          { id: 'dog', species: 'dog', name: 'Bolt', xp: 60, path: 'selvagem', stage: 1, skill: null, skillActivatedAt: 0, adoptedAt: 20 },
+        ],
+        active: 'owl',
+        activeSince: 99,
+        xpProcessedUntil: '2026-09-01',
+      },
       coinsSpent: 300,
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);

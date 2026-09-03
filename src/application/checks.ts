@@ -3,8 +3,10 @@
 import { canToggleCheck } from '../domain/checks';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
 import { timeToMins } from '../domain/time';
-import type { DateKey, StudyBlock } from '../domain/types';
+import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/types';
 import { state } from '../store/store';
+import { activePet } from './pets';
+import { blocksForDay } from './plan';
 import { scheduleSave } from './save';
 
 export interface CheckResult {
@@ -13,6 +15,11 @@ export interface CheckResult {
   /** XP efetivo do check (já com bônus de skill), pro feedback visual. */
   xp: number;
   coins: number;
+}
+
+/** Quantos estudos/eventos do dia já estão marcados. */
+function studiesChecked(dateKey: DateKey, day: Record<TimeString, CheckRecord>): number {
+  return blocksForDay(dateKey).filter((b) => (b.type === 'estudo' || b.type === 'event') && day[b.time]).length;
 }
 
 /**
@@ -33,13 +40,15 @@ export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date 
     return { checked: false, xp: 0, coins: 0 };
   }
 
+  const pet = activePet();
   const bonus = bonusForCheck(block, dateKey, {
-    activePet: state.pets.active || null,
-    owlSkill: state.skills?.owl ?? null,
-    activatedAt: state.skills?.activatedAt ?? 0,
+    activeSkill: pet?.skill ?? null,
+    // A skill vale desde a troca dela OU desde que o pet foi equipado — o mais recente.
+    activatedAt: Math.max(pet?.skillActivatedAt ?? 0, state.pets.activeSince ?? 0),
+    studiesCheckedToday: studiesChecked(dateKey, day),
     now,
   });
-  const record = { pet: state.pets.active || null, bonus };
+  const record = { pet: pet?.id ?? null, bonus };
   day[block.time] = record;
   scheduleSave();
   return { checked: true, xp: xpFromCheck(block, record), coins: coinsForBlock(block, dur) };

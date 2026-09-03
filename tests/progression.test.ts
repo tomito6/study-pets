@@ -8,7 +8,7 @@ import {
   getLevel,
   getLevelIdx,
   getLevelPct,
-  noturnoBonusEligible,
+  skillEligible,
   xpFromCheck,
 } from '../src/domain/progression';
 import type { SkillContext } from '../src/domain/progression';
@@ -123,59 +123,63 @@ describe('Pet associado ao check', () => {
   });
 });
 
-describe('Skill Noturno da coruja', () => {
+describe('skills: elegibilidade decidida no momento do check', () => {
   const HOJE = '2026-09-02';
   // "Agora" fixo às 19h, pra o teste não depender do relógio real.
   const agora = new Date('2026-09-02T19:00:00');
 
   const ctx = (over: Partial<SkillContext> = {}): SkillContext => ({
-    activePet: 'owl',
-    owlSkill: 'noturno',
+    activeSkill: 'noturno',
     activatedAt: new Date('2026-09-02T08:00:00').getTime(),
+    studiesCheckedToday: 0,
     now: agora,
     ...over,
   });
 
   const blocoNoturno = { type: 'estudo' as const, time: '18:30' };
+  const blocoManha = { type: 'estudo' as const, time: '09:00' };
 
-  it('vale pra estudo depois das 18h com a coruja e a skill ativas', () => {
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx())).toBe(true);
+  it('Noturno vale pra estudo a partir das 18h', () => {
+    expect(skillEligible(blocoNoturno, HOJE, ctx())).toBe(true);
+    expect(skillEligible({ type: 'estudo', time: '17:59' }, HOJE, ctx())).toBe(false);
+    expect(skillEligible({ type: 'pausa', time: '19:00' }, HOJE, ctx())).toBe(false);
   });
 
-  it('não vale antes das 18h', () => {
-    expect(noturnoBonusEligible({ type: 'estudo', time: '17:59' }, HOJE, ctx())).toBe(false);
+  it('Lua cheia só a partir das 21h', () => {
+    expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: 'lua-cheia' }))).toBe(false);
+    expect(skillEligible({ type: 'estudo', time: '21:00' }, HOJE, ctx({ activeSkill: 'lua-cheia', now: new Date('2026-09-02T21:30:00') }))).toBe(true);
   });
 
-  it('não vale em pausa', () => {
-    expect(noturnoBonusEligible({ type: 'pausa', time: '19:00' }, HOJE, ctx())).toBe(false);
+  it('Fiel vale só pro primeiro estudo marcado no dia', () => {
+    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'fiel' }))).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'fiel', studiesCheckedToday: 1 }))).toBe(false);
+    expect(skillEligible({ type: 'event', time: '09:00' }, HOJE, ctx({ activeSkill: 'fiel' }))).toBe(false);
   });
 
-  it('não vale sem a coruja equipada', () => {
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx({ activePet: 'cat' }))).toBe(false);
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx({ activePet: null }))).toBe(false);
+  it('Aula vale só pra evento que conta como estudo', () => {
+    expect(skillEligible({ type: 'event', time: '10:00' }, HOJE, ctx({ activeSkill: 'aula' }))).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'aula' }))).toBe(false);
   });
 
-  it('não vale com outra skill ativa', () => {
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx({ owlSkill: 'voo' }))).toBe(false);
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx({ owlSkill: null }))).toBe(false);
+  it('sem skill, skill desconhecida ou placeholder: nada', () => {
+    expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: null }))).toBe(false);
+    expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: 'xyz' }))).toBe(false);
+    expect(skillEligible(blocoNoturno, HOJE, ctx({ activeSkill: 'voo' }))).toBe(false);
   });
 
   it('não vale em outro dia que não hoje', () => {
-    expect(noturnoBonusEligible(blocoNoturno, '2026-09-01', ctx())).toBe(false);
+    expect(skillEligible(blocoNoturno, '2026-09-01', ctx())).toBe(false);
   });
 
-  it('não vale se a skill foi ativada depois do bloco começar (anti-exploit)', () => {
+  it('não vale se a skill (ou o pet) foi ativada depois do bloco começar (anti-exploit)', () => {
     const depois = new Date('2026-09-02T18:45:00').getTime();
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx({ activatedAt: depois }))).toBe(false);
-  });
-
-  it('vale se a skill já estava ativa antes do bloco começar', () => {
+    expect(skillEligible(blocoNoturno, HOJE, ctx({ activatedAt: depois }))).toBe(false);
     const antes = new Date('2026-09-02T18:00:00').getTime();
-    expect(noturnoBonusEligible(blocoNoturno, HOJE, ctx({ activatedAt: antes }))).toBe(true);
+    expect(skillEligible(blocoNoturno, HOJE, ctx({ activatedAt: antes }))).toBe(true);
   });
 
   it('bonusForCheck traduz elegibilidade em 0.05 ou 0', () => {
     expect(bonusForCheck(blocoNoturno, HOJE, ctx())).toBe(0.05);
-    expect(bonusForCheck(blocoNoturno, HOJE, ctx({ activePet: 'cat' }))).toBe(0);
+    expect(bonusForCheck(blocoNoturno, HOJE, ctx({ activeSkill: null }))).toBe(0);
   });
 });

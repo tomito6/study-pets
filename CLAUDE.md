@@ -63,7 +63,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `events/` — os três modais do Plano: `EventPanel.tsx` (novo evento, com recorrência), `EventDeleteModal.tsx` (só este dia / a série / avulso), `LunchPanel.tsx` (almoço só deste dia). São **filhos do `PlanTab`**, que guarda qual está aberto em `useState` — modal é estado local, não vai pro store
   - `analytics/AnalyticsTab.tsx` — a aba Análise inteira (cartão de perfil + sparkline, sub-nav Hoje/Semana/Geral/Recordes como estado local, aderência, dots da meta, heatmap, horas, drop-off, recordes). Só formata: os cálculos estão em `domain/analytics.ts`
   - `profile/ProfileTab.tsx` — a aba Perfil (hero com personagem e pet animados por `useSpriteFrame`, stats, card do pet ativo, botões da loja e de "Meus pets"). Roda `applyPendingPetXP` ao ficar visível
-  - `pets/` — `PetCard.tsx` (o card compartilhado entre loja e "Meus pets", com skills) e `PetModals.tsx` (loja, meus pets, confirmação de adoção — filhos do ProfileTab)
+  - `pets/` — `PetCard.tsx` (`ShopPetCard` = espécie à venda; `OwnedPetCard` = pet adotado, com nome, forma, Equipar, Evoluir e skills) e `PetModals.tsx` (loja, meus pets, adoção com nome, renomear, escolher caminho de evolução — filhos do ProfileTab)
   - `settings/` — a página de Configurações inteira: `SettingsPage.tsx` (Rotina/Geral, o botão ⚙️ flutuante e "aberta ou fechada" como estado local), `ConfigPreview.tsx` (Resumo do dia), `StudyWindowsEditor.tsx`, `FitStudyModal.tsx` (Encaixar estudo), `DangerModals.tsx` (cancelar sessão, apagar conta). O formulário é um rascunho (`ConfigDraft`) que só vira config ao Salvar
   - `onboarding/OnboardingModal.tsx` — "Bem-vindo!": período de uso e fins de semana. Aberto pelo boot (conta nova) e por cancelar sessão
   - `dayend/DayEndModals.tsx` — confirmação de encerrar o dia, o resumo com os ganhos, e o prompt automático "passou do horário" (encerrar / prolongar)
@@ -72,18 +72,18 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `src/store/store.ts` — estado central tipado, um objeto só mutado no lugar pelos casos de uso; quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` + `focusOpen` + `audio` (`application/timer`), `save` (status), `authReady`, `onboardingOpen`, `dayEnd` (modais do fim do dia). Modal aberto por **clique local** fica em `useState` do componente; só entra no store o que um **caso de uso** abre
 - `src/application/` — casos de uso e leituras do estado. UI chama isto; isto chama domínio/infra:
   - `plan.ts` — `rebuildWeeks`, `blocksForDay` (com a memoização do gerador), `computeStatsNow` (memoizado por versão do store: cabeçalho, Plano, Análise e Perfil pagam uma passada só), `dateForWeekDay`/`findWeek`/`forEachDay`
-  - `checks.ts` — `toggleBlockCheck` (marca/desmarca, decide bônus e pet, devolve XP/moedas pro feedback)
+  - `checks.ts` — `toggleBlockCheck` (marca/desmarca, grava o **id da instância** equipada e o bônus da skill dela via `bonusForCheck`, devolve XP/moedas pro feedback)
   - `save.ts` — `scheduleSave` com debounce, `blockSaves` (apagar conta), status pro indicador
   - `timer.ts` — `tryStartTimer` (valida: só bloco de hoje que está rolando; devolve o motivo pra UI mostrar o toast), `startTimer`/`stopTimer`/`closeFocus`, o único `setInterval` do timer (detecta o fim → som + notificação), e o áudio (`playSound`, `toggleMute`, `setVolume`). **Não há `notify()` por segundo** — isso faria o app inteiro re-renderizar e recalcular stats
   - `events.ts` — `addEvent`/`addEventSeries`, `deleteEvent`/`deleteSeriesOccurrence`/`deleteSeries`, `setLunchOverride`/`lunchForDay`, validações com motivo. Cada mutação limpa o cache do gerador, salva, notifica e emite o toast "Plano reajustado: …" (`notifyPlanDelta`, que `settings.ts` também usa ao salvar configurações)
   - `settings.ts` — `saveSettings` (preserva `periodStart`, refaz semanas, reagenda o prompt de fim de dia; **recusa campo numérico vazio**, que antes virava `NaN` salvo) e `cancelSession`
   - `account.ts` — `deleteAccount`: doc primeiro, usuário depois; devolve o estágio que falhou
-  - `pets.ts` — `applyPendingPetXP` (idempotente), `coinBalance`, `buyPet` (com motivo de recusa), `toggleEquip`, `toggleSkill`
+  - `pets.ts` — `applyPendingPetXP` (idempotente), `coinBalance`, `buyPet` (espécie + nome, com motivo de recusa), `toggleEquip`, `toggleSkill`, `renamePet`, `evolvePet`, `activePet`/`petById`
   - `dayEnd.ts` — `closeDay` (trava checks, credita pets, monta o resumo), o prompt automático agendado pro fim do último estudo (sem polling), `extendDay`
   - `onboarding.ts` — `finishOnboarding` (validação com motivo)
   - `session.ts` — entrar/sair e o boot: `startSession` registra o listener de auth; a cada login, `loadUserData` → `initAfterLoad` (XP pendente, prompt, semana/dia visíveis); conta nova abre o onboarding
 - `src/domain/daySummary.ts` (o resumo do dia entre dois instantâneos) e `src/domain/endOfDay.ts` (último estudo, quando perguntar, prolongar)
-- `src/domain/pets.ts` — o catálogo `PETS` (adicionar pet = uma entrada aqui + sprites em `public/idle/pets/{id}/`), XP/nível/progresso do pet, saldo de moedas
+- `src/domain/pets.ts` — o catálogo: `FORMS` (o que aparece na tela: sprite + skills) e `PETS` (espécies à venda, com caminhos de evolução). Adicionar pet = uma forma + uma espécie aqui + sprites em `public/idle/pets/{form}/`. Também a curva de nível própria do pet, nome (`normalizePetName`/`suggestPetName`), instância (`newPetInstance`/`legacyPetInstance`), forma atual (`petForm`) e evolução (`evolutionOf`/`evolve`), saldo de moedas
 - `src/domain/analytics.ts` — `currentWeekKeys`, `goalWeek` (os 7 dots), `heatmap` (7×16 células, intensidade por % da meta), `hourBars`, `dropoff`, `sparkline` (8 semanas), `nextLevel`
 - `src/domain/settings.ts` — `ConfigDraft` ↔ `UserConfig` (`draftFromConfig`/`normalizeConfig`), `summarizeConfig` (o Resumo do dia), `fitStudySuggestions` (o algoritmo do Encaixar), formatação de durações
 - `src/domain/planDelta.ts` — o que mudou no plano de um dia (estudos a mais/menos, novo fim), puro
@@ -97,7 +97,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `firebase/` — `config.ts` (config pública, sobrescrevível por `VITE_FIREBASE_*`), `auth.ts` (Google, com reautenticação ao apagar conta), `userRepository.ts` (`users/{uid}`)
   - `memory/` — as mesmas portas sem rede: usuário fixo já logado, documento no `sessionStorage` da aba (sobrevive a reload/HMR, some ao fechar a aba; aba nova = conta nova). É o **modo teste**
   - `index.ts` — escolhe qual usar por `VITE_PERSISTENCE` (`memory` → teste; qualquer outra coisa → Firebase)
-- `src/domain/persistence.ts` — `hydrateUserDoc` (documento cru → estado; **é a função explícita de migração**, tolera todo formato antigo) e `serializeState` (estado → documento, com `schemaVersion`)
+- `src/domain/persistence.ts` — `hydrateUserDoc` (documento cru → estado; **é a função explícita de migração**, tolera todo formato antigo) e `serializeState` (estado → documento, com `schemaVersion`). Hoje `schemaVersion` é 2: pets como instâncias; v0/v1 (pets por espécie, `skills.owl`) migram na leitura
 - `.env.example` — variáveis suportadas (todas opcionais). `.env.teste` liga o modo memória pro `npm run dev:teste`
 - `src/domain/` — regras puras em TypeScript, sem DOM/Firebase/estado global:
   - `types.ts` — tipos do domínio (`StudyBlock`, `UserConfig`, `RecurringEventSeries`, `CheckRecord`, ...)
@@ -105,17 +105,18 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `config.ts` — `DEFAULT_CFG` e `migrateConfig`
   - `planner.ts` — `generateBlocks` (a memoização fica em `application/plan.ts`) e `calcActualEnd`
   - `events.ts` — `expandEventsForDate`, com semanal/quinzenal/mensal e exceções
-  - `progression.ts` — XP, moedas, `LEVELS`, skills e o bônus da Noturno
+  - `progression.ts` — XP, moedas, `LEVELS` (do usuário), o catálogo `SKILLS` com a regra de cada uma, e `skillEligible`/`bonusForCheck`
   - `checks.ts` — quem pode ser marcado (`canToggleCheck`: dia fechado é read-only, dia futuro não
     chegou) e `computePendingPetXP`, que calcula o XP dos pets de forma idempotente
   - `stats.ts` — `computeStats` (uma passada só) e `calcStreaks`
 - `tests/` — Vitest sobre o domínio e a infra em memória
 - `e2e/` + `playwright.config.ts` — smoke test de ponta a ponta no modo teste
 - `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`
-- `public/idle/pets/{nome}/` — convenção pra sprites de pets
+- `public/idle/pets/{form}/` — convenção pra sprites de pets (uma pasta por **forma**: `dog`, `dog-shepherd`, `wolf`…)
 - Sprites são frames sequenciais nomeados `0.png`, `1.png`, ...
 - `firestore.rules` — regras de acesso (só o dono lê/escreve `users/{uid}`)
 - `scripts/backup-firestore-console.js` — snippet pra baixar seu doc do Firestore pelo DevTools
+- `scripts/pixel-sprites.mjs` — desenha em código os sprites placeholder de cachorro, pastor alemão e lobo (`node scripts/pixel-sprites.mjs` → `public/idle/pets/{form}/`). Arte autoral, 32×32 com transparência, no padrão do personagem; trocar por arte à mão quando houver
 - `dist/` — saída do build, não versionada
 
 ## Workflow
@@ -137,7 +138,7 @@ Mais importantes que valores concretos. Estes você protege ao mexer no código:
 - **Estado centralizado**: tudo em um único objeto `state`, que vive em `src/store/store.ts`. Não criar globais soltas. Modal aberto por clique local é `useState` do componente; só o que um caso de uso abre (foco, onboarding, fim do dia) vai pro `derived`.
 - **Ids e classes são contrato**: o CSS em `src/styles/app.css` e o smoke test em `e2e/` dependem dos ids/classes que os componentes rendem. Mudar um nome = mudar nos três lugares.
 - **Sem `notify()` por segundo**: o timer e o modo foco derivam o restante do relógio dentro do componente (`useSecondTick`). Um `notify()` global a cada segundo faria o app inteiro re-renderizar e o `computeStatsNow` recalcular.
-- **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null, bonus: number }` — `pet` = equipado no momento do check; `bonus` = multiplicador aditivo de XP (0 ou 0.05) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
+- **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: instanceId | null, bonus: number }` — `pet` = **id da instância** equipada no momento do check (o pet adotado, não a espécie; pets migrados do formato antigo têm id igual ao da espécie, então checks antigos continuam batendo); `bonus` = multiplicador aditivo de XP (0 ou 0.05) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
 - **Memoization em `generateBlocks`**: a função tem cache. Sempre que alterar config ou eventos, chamar `clearBlockCache()`.
 - **Stats em uma passada**: `computeStats()` calcula tudo de uma vez iterando os dias uma única vez. Não criar funções separadas que reiteram.
 - **Datas dinâmicas**: sem dates hardcoded. As semanas são construídas a partir da semana atual.
@@ -212,29 +213,30 @@ Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqu
 
 ## Sistema de pets
 
+**Modelo**: espécie ≠ forma ≠ instância.
+
+- **Espécie** (`PETS`) é o que a loja vende: preço, forma base, caminhos de evolução, sugestões de nome.
+- **Forma** (`FORMS`) é o que aparece na tela: nome, emoji, sprite, skills possíveis. Cachorro, Pastor alemão e Lobo são três formas; só Cachorro é espécie.
+- **Instância** (`PetInstance`, em `state.pets.owned`) é o pet adotado: `{ id, species, name, xp, path, stage, skill, skillActivatedAt, adoptedAt }`. Dá pra ter dois cachorros — cada um com nome e XP próprios. O id é o da espécie se estiver livre (`dog`), senão `dog-2`, `dog-3`. `state.pets.active` é o id da instância; `activeSince` marca quando foi equipada.
+
 Adicionar um pet novo:
 
-1. Colocar sprites em `public/idle/pets/{id}/` (`0.png` a `{frames-1}.png`)
-2. Adicionar entrada em `PETS`, em `src/domain/pets.ts`:
+1. Colocar sprites em `public/idle/pets/{form}/` (`0.png` a `{frames-1}.png`, 32×32 com transparência — `scripts/pixel-sprites.mjs` é o padrão)
+2. Adicionar a forma em `FORMS` e a espécie em `PETS`, em `src/domain/pets.ts`. Se a imagem do sprite falhar (pasta não existe ainda), o emoji entra no lugar — dá pra cadastrar antes da arte existir.
 
-```js
-const PETS = {
-  cat: { id, name, emoji, price, frames, sprite: i => `idle/pets/cat/${i}.png` },
-  // novo pet aqui — mesmo shape
-};
-```
+**Nome**: obrigatório ao adotar, mas o campo já vem preenchido com uma sugestão sorteada de `species.names` (🎲 sorteia outra). 1–16 caracteres (`normalizePetName`). Renomear é grátis (✏️ no card em "Meus pets"). O nome aparece no card "Pet ativo", em "Meus pets", no resumo do fim do dia e nos toasts.
 
-Campos: `id` (key), `name` (label em pt-BR), `emoji` (fallback visual quando sprite não carrega), `price` (moedas), `frames` (quantos frames de animação), `sprite(i)` (path do frame `i`).
+**Nível do pet**: curva própria, separada da do usuário — o próximo nível custa `50 + 20·(nível−1)` XP (`petXpToNext`/`petLevelStart`/`petLevelFromXP`). Lv. 2 = 1 pomo, Lv. 10 ≈ 10h, Lv. 30 ≈ 80h. Sem teto.
 
-`renderShop()` monta o card; se a imagem do sprite falhar (pasta não existe ainda), o emoji entra no lugar — então dá pra cadastrar pets sem sprites e adicionar os arquivos depois sem mexer no código.
+**Evolução**: a espécie declara `paths` (caminhos), cada um com `stages: [{ level, form }]`. `evolutionOf(pet)` diz o que está disponível: `choose` (chegou no nível e ainda não tem caminho — escolhe entre as opções), `advance` (próximo estágio do caminho), `locked` (falta nível) ou `null` (não evolui / fim do caminho). `evolve` devolve a instância nova: nome, XP e nível continuam; só `path`/`stage` mudam (a forma é derivada por `petForm`); skill que a forma nova não tem é desligada. **Definitivo.** Hoje: Cachorro → *Companheiro* (Pastor alemão) ou *Selvagem* (Lobo), no **Lv. 2** (`DOG_EVOLVE_LEVEL`, baixo de propósito pra testar; o design final é Lv. 10 pra escolha e Lv. 30 pra transformação — ver IDEIAS.md). UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills); "Evolui no Lv. N" enquanto trancado.
 
-A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). `renderShop()` é chamado em `openPetsShop()` e após cada compra/equip — não no `renderProfile()`. A função interna `buildPetCard(pet, { showPrice })` é compartilhada com a aba "Meus pets" (ver abaixo).
+A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). Os cards são `ShopPetCard` (espécie, com preço) e `OwnedPetCard` (instância, em "Meus pets").
 
 **Estrutura da área de pets no perfil** (abaixo dos stats 4-col):
 
-1. **Card "Pet ativo"** (`.active-pet-card`, id `#active-pet-card`): destaque do pet equipado no momento. Sprite pequeno (54×54) + tag "Pet ativo" + nome + badge `Lv. N` + barra de XP + texto `X / Y XP · faltam Z pro Lv. N+1`. Quando não tem pet equipado, esconde e mostra `#no-active-pet` ("Nenhum pet equipado. Adote um na loja e equipe em 🐾 Meus pets."). Populado por `renderActivePetCard()` chamado dentro de `renderProfile()` (que já roda em equip/compra). Cálculo de XP usa `getPetXP`, `getPetLevel` (já existentes) + thresholds do `LEVELS`.
+1. **Card "Pet ativo"** (`.active-pet-card`, id `#active-pet-card`): destaque do pet equipado no momento. Sprite da forma atual (54×54) + tag "Pet ativo" + **nome do pet** + badge `Lv. N` + nome da forma (`#ap-species`) + barra de XP + texto `X / Y XP · faltam Z pro Lv. N+1`. Quando não tem pet equipado, esconde e mostra `#no-active-pet` ("Nenhum pet equipado. Adote um na loja e equipe em 🐾 Meus pets."). Populado por `renderActivePetCard()` chamado dentro de `renderProfile()` (que já roda em equip/compra). Cálculo usa `petProgress` (curva própria do pet).
 
-2. **Botão "🐾 Meus pets"** (`.shop-open-btn` com `onclick=openMyPets()`): abre o modal `#my-pets-panel` com a grade completa de todos os pets adquiridos. Mostra contador `X/N ✨` no canto direito (`#my-pets-count`). Modal lista todos via `renderOwnedPets()` populando `#my-pets-grid`, inclusive o ativo (com badge "✓ Equipada"). Equipar/desequipar de dentro do modal é grátis e instantâneo.
+2. **Botão "🐾 Meus pets"** (`.shop-open-btn` com `onclick=openMyPets()`): abre o modal `#my-pets-panel` com a grade completa de todos os pets adquiridos. Mostra contador `X/N ✨` no canto direito (`#my-pets-count`; espécies distintas adotadas / espécies no catálogo). Modal lista todos via `renderOwnedPets()` populando `#my-pets-grid`, inclusive o ativo (com badge "✓ Equipada"). Equipar/desequipar de dentro do modal é grátis e instantâneo.
 
 3. **Botão "🛒 Loja de pets"**: igual antes — abre modal de compra.
 
@@ -242,7 +244,7 @@ A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo bot
 
 Removido: grade inline `#my-pets-grid-profile` e header "Meus pets" inline. O id `my-pets-count` foi reaproveitado pro contador no botão.
 
-**Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: petId | null }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada **estudo ou evento** done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera `state.pets.xp` e marca `yesterday` como processado (sem aplicar retroativamente). Level usa as mesmas thresholds do usuário (`LEVELS` + `getLevelIdx`). Pausa não conta (só estudo+evento). Pet null no momento do check = ninguém ganha XP.
+**Pet ganha XP (com fechamento de dia)**: quando o usuário marca um bloco, `toggleCheck` salva o pet equipado **no momento do check** em `state.checks[date][time] = { pet: instanceId | null, bonus }`. XP não é creditado na hora — fica "pendente". `applyPendingPetXP()` processa dias **anteriores a hoje** entre `state.pets.xpProcessedUntil + 1` e ontem: pra cada **estudo ou evento** done, credita `b.xp` no pet salvo naquele check. Roda em `initApp()` e `renderProfile()` (cobre o caso do app ficar aberto atravessando a meia-noite). Idempotente — não credita 2x. Na primeira execução pós-mudança (`xpProcessedUntil == null`), zera o XP de todas as instâncias e marca `yesterday` como processado (sem aplicar retroativamente). Level usa a curva própria do pet (`petLevelFromXP`). Pausa não conta (só estudo+evento). Pet null no momento do check = ninguém ganha XP.
 
 **XP/moedas do usuário também só refletem dias fechados**: `computeStats()` itera todos os dias, mas só agrega `totalXP/totalChecks/coins/studyMins/hourCounts/weekXP/weekChecks/bestDay/activeWeeks` quando o dia está fechado (`isPast = key !== todayKey || isDayClosed(key)`). Stats específicos de hoje (`todayXP`, `todayCoins`, `estudosToday`, `pausasToday`, `dayStudyMins[today]`) continuam refletindo o dia atual. Streak ainda usa `dayStudyMins` incluindo hoje (você "está em sequência" se atingiu o mínimo), mas o **bônus de moedas** do streak só entra quando o dia fechou. Motivo: evitar exploit de marcar/desmarcar pra ganhar XP/moedas; também garante consistência com o XP do pet.
 
@@ -268,42 +270,44 @@ Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPrompt
 
 **Hero scene do perfil**: container com gradient escuro contém personagem (`#char-sprite`) + pet ativo (`#pet-sprite`) lado a lado. Subtitle abaixo mostra `${nome do nível} · com ${pet ativo}` (ou só o nível se sem pet). Canto direito mostra "próximo nível · X XP". Stats em grid 4-col: XP total / Blocos / Estudo (horas) / Moedas (card dourado destacado).
 
-**Economia real** (não é mais decisão futura): ao adotar um pet, abre modal de confirmação `#pet-buy-confirm` ("Adotar X por 🪙 Y?"). Ao confirmar: `state.pets.owned.push(...)`, `state.pets.active = id`, **`state.coinsSpent += pet.price`**. Saldo exibido em `#char-coins` = `getCoinBalance() = stats.coins - coinsSpent` (nunca negativo). Se saldo < preço, botão "Adotar" ganha classe `.shop-btn.locked` (opacity .5, cursor:not-allowed) e clicar dispara toast "Moedas insuficientes" — não abre o modal. **Equipar/desequipar é grátis** e instantâneo (sem confirmação, sem custo). Cancelar sessão zera `coinsSpent` junto com o resto.
+**Economia real** (não é mais decisão futura): ao adotar um pet, abre modal de confirmação `#pet-buy-confirm` ("Adotar X por 🪙 Y?"). Ao confirmar (com o nome preenchido): cria a instância em `state.pets.owned`, equipa (`active` + `activeSince`), **`state.coinsSpent += species.price`**. Saldo exibido em `#char-coins` = `getCoinBalance() = stats.coins - coinsSpent` (nunca negativo). Se saldo < preço, botão "Adotar" ganha classe `.shop-btn.locked` (opacity .5, cursor:not-allowed) e clicar dispara toast "Moedas insuficientes" — não abre o modal. **Equipar/desequipar é grátis** e instantâneo (sem confirmação, sem custo). Cancelar sessão zera `coinsSpent` junto com o resto.
 
 ## Sistema de skills
 
-Skills opcionais por pet — ficam visíveis e ativáveis dentro do modal "Meus pets" (no card do pet correspondente). Cada pet pode ter um array `skills: [{ id, name, desc }]` no `PETS`. Quem tem hoje: **Coruja** (`owl`) → `noturno` (+5% XP em estudos a partir das 18h) e `voo` (placeholder, sem efeito).
+Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, rule }`. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma (Coruja e Lobo têm Noturno). Hoje: `noturno` (+5% em estudos a partir das 18h), `lua-cheia` (idem, 21h), `fiel` (+5% no 1º estudo do dia), `aula` (+5% em eventos que contam como estudo), `voo` (placeholder sem efeito). Quem tem: Coruja → noturno, voo · Cachorro → fiel · Pastor alemão → fiel, aula · Lobo → noturno, lua-cheia.
 
-**Escolha exclusiva por pet**: `state.skills.owl` guarda **só uma** skill ativa por vez (`'noturno' | 'voo' | null`). Clicar na skill ativa desliga (vira null); clicar em outra troca. `state.skills.activatedAt` (ms) marca o timestamp da última troca — usado pra prevenir exploit.
+**Uma skill ativa por pet**, guardada na instância (`pet.skill`); `pet.skillActivatedAt` marca a troca. Clicar na ativa desliga; clicar em outra troca; `toggleSkill` recusa skill que a forma não tem. Evoluir pra uma forma que não tem a skill ativa desliga ela.
 
-**Anti-exploit ("equipar no final")**: o bônus de XP é decidido **no momento do check** (não retroativamente), e a skill precisa estar ativa **desde antes do bloco começar**. `noturnoBonusEligible(b, dateKey)` valida: bloco de estudo + coruja equipada + skill `noturno` ativa + hora >= 18 + `dateKey === hoje` + `activatedAt <= blockStartMs`. Se elegível, `toggleCheck` salva `bonus: 0.05` dentro do check: `state.checks[date][time] = { pet, bonus }`. Sem bonus, salva `bonus: 0`. Bônus salvo é permanente — desligar a skill depois não revoga.
+**Anti-exploit (decidido no check, não retroativo)**: `skillEligible(b, dateKey, ctx)` exige `dateKey === hoje`, a skill ativa **desde antes do bloco começar** — `ctx.activatedAt = max(pet.skillActivatedAt, state.pets.activeSince)`, então equipar o pet no fim do bloco também não vale — e a regra da skill (`after-hour`, `first-study` com `ctx.studiesCheckedToday`, `event`). Se elegível, `toggleBlockCheck` grava `bonus: 0.05` (`SKILL_BONUS`) no check; senão `bonus: 0`. Bônus salvo é permanente — desligar a skill depois não revoga.
 
-**XP efetivo**: `xpFromCheck(b, check)` retorna `Math.round(b.xp * (1 + (check.bonus || 0)))`. Usado em `computeStats` (todos os pontos onde XP é agregado: `totalXP`, `weekXP`, `todayXP`, `dayXP`), em `applyPendingPetXP` (XP creditado pro pet também respeita bônus), e no `spawnFloatGain` no momento do check (mostra o número final, não o base).
+**XP efetivo**: `xpFromCheck(b, check)` retorna `Math.round(b.xp * (1 + (check.bonus || 0)))`. Usado em `computeStats` (todos os pontos onde XP é agregado), em `computePendingPetXP` (o pet também recebe com bônus) e no feedback flutuante do check (mostra o número final, não o base).
 
-**UI**: dentro do card do pet no modal `#my-pets-panel`, abaixo do botão Equipar, aparece a seção "Skills" com toggles estilo switch. Estado visual: `.pet-skill-row.active` = borda verde + nome em accent + switch `.ps-toggle.on` (knob deslocado). Toggle é `<button>` (acessível por teclado). Cancelar sessão zera `state.skills`.
+**UI**: dentro do card do pet no modal `#my-pets-panel`, abaixo de Equipar/Evoluir, aparece a seção "Skills" com toggles estilo switch. Estado visual: `.pet-skill-row.active` = borda verde + nome em accent + switch `.ps-toggle.on` (knob deslocado). Toggle é `<button>` (acessível por teclado).
 
-**Pra adicionar nova skill**: (1) adicionar entrada no array `skills` do pet em PETS, (2) se for skill de XP, adicionar entrada em `xxxBonusEligible(b, dateKey)` análoga a `noturnoBonusEligible` e expandir o cálculo de `bonus` em `toggleCheck`. O resto da pipeline (`xpFromCheck`, render no card, save/load) já cobre genericamente.
+**Pra adicionar nova skill**: (1) entrada em `SKILLS` usando uma `rule` existente — ou um `kind` novo em `SkillRule`, o caso em `skillEligible` e o que o `SkillContext` precisar (que `application/checks.ts` monta), (2) o id na lista `skills` da forma. O resto (gravação no check, `xpFromCheck`, render no card, save/load) já cobre.
 
 ## Schema do Firestore
 
 ```
 users/{uid} {
-  schemaVersion, // 1 a partir da Fase 4. Ausente = doc anterior à migração; hydrateUserDoc lê os dois
-  checks,        // { "YYYY-MM-DD": { "HH:MM": { pet: petId|null, bonus: number } } }   bonus = multiplicador aditivo de XP salvo no check (0 ou 0.05 hoje)
+  schemaVersion, // 2 = pets como instâncias. 1 = Fase 4 (pets por espécie). Ausente = anterior à migração. hydrateUserDoc lê todos
+  checks,        // { "YYYY-MM-DD": { "HH:MM": { pet: instanceId|null, bonus: number } } }   pet = id da instância equipada no check; bonus = multiplicador aditivo de XP salvo no check (0 ou 0.05 hoje)
   events,        // { "YYYY-MM-DD": [{name, start, end, countsAsStudy}] } — eventos avulsos por dia. countsAsStudy: true=tipo 'event' (XP), false=tipo 'intervalo' (só bloqueia)
   eventSeries,   // [{id, name, start, end, weekdays[], freq, anchor, until, exceptions[], countsAsStudy}] — séries recorrentes
   lunchOverrides,
   closedDays: { "YYYY-MM-DD": true, ... },   // dias encerrados manualmente via botão "Encerrar o dia"
   pets: {
-    owned: [petId, ...],
-    active: petId | null,
-    xp: { petId: number, ... },           // XP acumulado por pet (creditado quando o dia em que o check foi feito fecha)
+    owned: [{                              // v2: instâncias (v0/v1 eram ids de espécie — hydrateUserDoc migra)
+      id, species, name, xp,               // id = espécie se livre ("dog"), senão "dog-2"; xp creditado quando o dia do check fecha
+      path, stage,                         // caminho de evolução escolhido (null = ainda não) e estágios aplicados (0 = forma base)
+      skill, skillActivatedAt,             // skill ativa (uma por pet) e ms da última troca
+      adoptedAt                            // ms (0 em pets migrados)
+    }, ...],
+    active: instanceId | null,
+    activeSince: number,                   // ms de quando o ativo foi equipado (anti-exploit do bônus)
     xpProcessedUntil: "YYYY-MM-DD" | null  // último dia já processado por applyPendingPetXP (null = ainda não inicializado)
   },
-  skills: {
-    owl: 'noturno' | 'voo' | null,         // skill ativa pra coruja (exclusivo — só uma por pet)
-    activatedAt: number                    // ms da última troca, usado pra validar elegibilidade do bônus no check
-  },
+  // skills: { owl, activatedAt } existia até o v1 — migrado pra dentro da instância
   coinsSpent,
   config: {
     studyWindows,   // [{start:"HH:MM", end:"HH:MM"}, ...] — janelas de estudo do dia (fonte da verdade)

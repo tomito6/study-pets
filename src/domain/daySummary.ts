@@ -1,18 +1,20 @@
 // O resumo ao encerrar o dia: o que o usuário e os pets ganharam entre dois
 // instantâneos (antes e depois de fechar). Puro.
 
-import { LEVELS, getLevelIdx } from './progression';
-import type { PetId } from './types';
+import { petLevelFromXP } from './pets';
+import { LEVELS } from './progression';
+import type { PetInstanceId } from './types';
 
 export interface ProgressSnapshot {
   totalXP: number;
   coins: number;
   userLevelIdx: number;
-  petXP: Record<PetId, number>;
+  /** XP por pet adotado (id da instância). */
+  petXP: Record<PetInstanceId, number>;
 }
 
 export interface PetGain {
-  id: PetId;
+  id: PetInstanceId;
   gain: number;
   oldLevel: number;
   newLevel: number;
@@ -38,8 +40,8 @@ export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot): D
     const newXP = after.petXP[id] || 0;
     const gain = newXP - oldXP;
     if (gain <= 0) continue;
-    const oldLevel = getLevelIdx(oldXP) + 1;
-    const newLevel = getLevelIdx(newXP) + 1;
+    const oldLevel = petLevelFromXP(oldXP);
+    const newLevel = petLevelFromXP(newXP);
     pets.push({ id, gain, oldLevel, newLevel, levelUp: newLevel > oldLevel });
   }
   const userXP = after.totalXP - before.totalXP;

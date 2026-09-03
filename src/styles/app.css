@@ -475,6 +475,40 @@
   .buy-confirm-text { font-size:14px; text-align:center; color:var(--text); line-height:1.5; }
   .buy-confirm-text b { color:var(--accent); font-family:'DM Mono',monospace; }
 
+  /* NOME DO PET (adotar / renomear) */
+  .pet-name-field { width:100%; margin-top:4px; }
+  .pet-name-field label { display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  .pet-name-row { display:flex; gap:8px; }
+  .pet-name-input { flex:1; min-width:0; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; padding:9px 12px; outline:none; }
+  .pet-name-input:focus { border-color:var(--accent); }
+  .dice-btn { width:42px; flex-shrink:0; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:18px; cursor:pointer; color:var(--text); }
+  .dice-btn:hover { border-color:var(--accent); }
+  .pet-name-error { font-size:11px; color:var(--orange); margin-top:6px; }
+  .save-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+  /* Card do pet adotado: forma, renomear, evolução */
+  .shop-item-species { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); margin-top:-4px; }
+  .shop-item-rename { background:transparent; border:none; cursor:pointer; font-size:11px; padding:0 2px; opacity:.7; line-height:1; }
+  .shop-item-rename:hover { opacity:1; }
+  .shop-btn.evolve { border-color:#f5b342; color:#f5b342; }
+  .shop-btn.evolve:hover { background:#f5b342; color:#0e0e0f; }
+  .shop-item-evo-hint { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; }
+  .active-pet-card .ap-species { font-size:11px; color:var(--muted); margin:-3px 0 6px; }
+
+  /* EVOLUÇÃO */
+  .evo-intro { font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:14px; }
+  .evo-paths { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .evo-paths.single { grid-template-columns:1fr; }
+  .evo-path { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; color:var(--text); font-family:inherit; text-align:center; transition:border-color .15s, background .15s; }
+  .evo-path:hover { border-color:#555; }
+  .evo-path:disabled { cursor:default; }
+  .evo-path.selected { border-color:var(--accent); background:rgba(163,230,53,.08); }
+  .evo-path .shop-item-img, .evo-path .shop-item-emoji { width:72px; height:72px; }
+  .evo-path-name { font-size:14px; font-weight:600; }
+  .evo-path-sub { font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
+  .evo-path-desc { font-size:11px; color:var(--muted); line-height:1.4; }
+  .evo-path-skills { font-size:10px; color:var(--text); font-family:'DM Mono',monospace; margin-top:2px; }
+
   /* FAB */
   .fab-config {
     position:fixed;

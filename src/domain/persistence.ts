@@ -5,36 +5,36 @@
 //   É a função explícita de migração: tudo que o Firestore já tem precisa passar por aqui.
 // - `serializeState`: estado → documento pra salvar.
 //
-// `SCHEMA_VERSION` é gravado no doc a partir de agora. Docs sem o campo são v0 — o
-// formato que existia antes da migração — e são lidos normalmente.
+// `SCHEMA_VERSION` é gravado no doc. Docs sem o campo são v0 — o formato de antes
+// da migração pro Vite; v1 tinha pets por espécie (`owned: ['cat']`, `xp: {cat: 120}`,
+// `skills.owl`); v2 tem pets como instâncias, com nome, caminho e skill próprios.
+// Todos são lidos normalmente.
 
 import { DEFAULT_CFG, migrateConfig } from './config';
+import { legacyPetInstance, petForm } from './pets';
 import type {
   ChecksByDate,
   DateKey,
-  PetId,
+  PetInstance,
+  PetInstanceId,
   RecurringEventSeries,
   StudyEvent,
   TimeString,
   UserConfig,
 } from './types';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export interface PetsState {
-  owned: PetId[];
-  active: PetId | null;
-  /** XP acumulado por pet, creditado quando o dia do check fecha. */
-  xp: Record<PetId, number>;
-  /** Último dia já processado. `null` = ainda não inicializado. */
+  owned: PetInstance[];
+  active: PetInstanceId | null;
+  /**
+   * ms de quando o pet ativo foi equipado. Junto com `skillActivatedAt`, fecha o
+   * exploit de equipar no fim do bloco: o bônus só vale pra blocos que começam depois.
+   */
+  activeSince: number;
+  /** Último dia já processado por `applyPendingPetXP`. `null` = ainda não inicializado. */
   xpProcessedUntil: DateKey | null;
-}
-
-export interface SkillsState {
-  /** Skill ativa da coruja — só uma por vez. */
-  owl: string | null;
-  /** ms da última troca; valida a elegibilidade do bônus no check. */
-  activatedAt: number;
 }
 
 export interface LunchOverride {
@@ -52,7 +52,6 @@ export interface PersistedState {
   closedDays: Record<DateKey, boolean>;
   config: UserConfig;
   pets: PetsState;
-  skills: SkillsState;
   coinsSpent: number;
 }
 
@@ -60,6 +59,8 @@ export interface PersistedState {
 export interface UserDoc extends PersistedState {
   schemaVersion: number;
 }
+
+export const emptyPets = (): PetsState => ({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
 
 /** Estado de uma conta nova (documento inexistente). */
 export function emptyPersistedState(): PersistedState {
@@ -70,8 +71,7 @@ export function emptyPersistedState(): PersistedState {
     lunchOverrides: {},
     closedDays: {},
     config: { ...DEFAULT_CFG },
-    pets: { owned: [], active: null, xp: {}, xpProcessedUntil: null },
-    skills: { owl: null, activatedAt: 0 },
+    pets: emptyPets(),
     coinsSpent: 0,
   };
 }
@@ -79,16 +79,61 @@ export function emptyPersistedState(): PersistedState {
 type Raw = Record<string, unknown>;
 
 const isObj = (v: unknown): v is Raw => !!v && typeof v === 'object' && !Array.isArray(v);
+const num = (v: unknown, fallback = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+const str = (v: unknown): string | null => (typeof v === 'string' && v ? v : null);
+
+/** Instância salva no formato v2, com defaults pra qualquer campo que falte. */
+function hydratePetInstance(raw: Raw): PetInstance {
+  const base = {
+    id: raw.id as string,
+    species: raw.species as string,
+    xp: num(raw.xp),
+    path: str(raw.path),
+    stage: Math.max(0, Math.floor(num(raw.stage))),
+  };
+  return {
+    ...base,
+    name: str(raw.name) ?? petForm(base).name,
+    skill: str(raw.skill),
+    skillActivatedAt: num(raw.skillActivatedAt),
+    adoptedAt: num(raw.adoptedAt),
+  };
+}
+
+/** `pets` em qualquer formato que já existiu → instâncias. */
+function hydratePets(d: Raw): PetsState {
+  const pets = isObj(d.pets) ? d.pets : {};
+  // v0/v1: XP por espécie e a skill da coruja moravam fora da instância.
+  const legacyXp = isObj(pets.xp) ? pets.xp : {};
+  const legacySkills = isObj(d.skills) ? d.skills : null;
+
+  const owned: PetInstance[] = [];
+  if (Array.isArray(pets.owned)) {
+    for (const raw of pets.owned) {
+      if (typeof raw === 'string') {
+        const skill = raw === 'owl' && legacySkills ? str(legacySkills.owl) : null;
+        owned.push(legacyPetInstance(raw, num(legacyXp[raw]), skill, skill && legacySkills ? num(legacySkills.activatedAt) : 0));
+      } else if (isObj(raw) && typeof raw.id === 'string' && typeof raw.species === 'string') {
+        owned.push(hydratePetInstance(raw));
+      }
+    }
+  }
+
+  const active = str(pets.active);
+  return {
+    owned,
+    active: active && owned.some((p) => p.id === active) ? active : null,
+    activeSince: num(pets.activeSince),
+    xpProcessedUntil: typeof pets.xpProcessedUntil === 'string' ? pets.xpProcessedUntil : null,
+  };
+}
 
 /**
  * Lê um documento cru com tolerância a tudo que já existiu no Firestore: campos
- * ausentes, config sem `studyWindows`, checks como `true`, pets sem `xp`, etc.
- * Comportamento idêntico ao `loadData` original — só que testável.
+ * ausentes, config sem `studyWindows`, checks como `true`, pets por espécie, etc.
  */
 export function hydrateUserDoc(raw: unknown): PersistedState {
   const d: Raw = isObj(raw) ? raw : {};
-  const pets = isObj(d.pets) ? d.pets : {};
-  const skills = isObj(d.skills) ? d.skills : null;
 
   return {
     checks: (d.checks as ChecksByDate) || {},
@@ -99,22 +144,15 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     // nasce deles. (O código original fazia ao contrário e a janela padrão 09–18
     // engolia os horários reais do usuário — corrigido na Fase 4.)
     config: { ...DEFAULT_CFG, ...migrateConfig(isObj(d.config) ? d.config : {}) } as UserConfig,
-    pets: {
-      owned: Array.isArray(pets.owned) ? (pets.owned as PetId[]) : [],
-      active: (pets.active as PetId) || null,
-      xp: isObj(pets.xp) ? (pets.xp as Record<PetId, number>) : {},
-      xpProcessedUntil: typeof pets.xpProcessedUntil === 'string' ? pets.xpProcessedUntil : null,
-    },
+    pets: hydratePets(d),
     closedDays: isObj(d.closedDays) ? (d.closedDays as Record<DateKey, boolean>) : {},
-    skills: skills
-      ? { owl: (skills.owl as string) || null, activatedAt: (skills.activatedAt as number) || 0 }
-      : { owl: null, activatedAt: 0 },
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
   };
 }
 
-/** Monta o documento a salvar. Espelha o `setDoc` original, mais o `schemaVersion`. */
+/** Monta o documento a salvar. Só o formato atual — a leitura é que tolera os antigos. */
 export function serializeState(s: PersistedState): UserDoc {
+  const pets = s.pets || emptyPets();
   return {
     schemaVersion: SCHEMA_VERSION,
     checks: s.checks,
@@ -123,8 +161,12 @@ export function serializeState(s: PersistedState): UserDoc {
     lunchOverrides: s.lunchOverrides,
     closedDays: s.closedDays || {},
     config: s.config,
-    pets: s.pets,
-    skills: s.skills || { owl: null, activatedAt: 0 },
+    pets: {
+      owned: pets.owned || [],
+      active: pets.active || null,
+      activeSince: pets.activeSince || 0,
+      xpProcessedUntil: pets.xpProcessedUntil ?? null,
+    },
     coinsSpent: s.coinsSpent || 0,
   };
 }

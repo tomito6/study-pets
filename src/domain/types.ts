@@ -106,12 +106,69 @@ export type CheckRecord = { pet: PetId | null; bonus?: number } | true;
 /** Checks por dia e por horário do bloco. */
 export type ChecksByDate = Record<DateKey, Record<TimeString, CheckRecord>>;
 
-export interface PetDefinition {
-  id: PetId;
+/** Forma de um pet: o que aparece na tela (sprite) e quais skills ela pode ter. */
+export type FormId = string;
+export type SkillId = string;
+/** Id de um pet adotado (instância). Legado: igual ao id da espécie ("cat"). */
+export type PetInstanceId = string;
+
+export interface PetForm {
+  id: FormId;
+  /** Nome da forma em pt-BR ("Cachorro", "Lobo"). */
   name: string;
+  /** Fallback visual quando o sprite não carrega. */
   emoji: string;
-  price: number;
   frames: number;
   sprite: (frame: number) => string;
-  skills?: Array<{ id: string; name: string; desc: string }>;
+  /** Skills que um pet nesta forma pode ativar. */
+  skills: SkillId[];
+}
+
+export interface EvolutionStage {
+  /** Nível do pet em que este estágio fica disponível. */
+  level: number;
+  form: FormId;
+}
+
+/** Um caminho de evolução: a escolha que o usuário faz, e os estágios que vêm dela. */
+export interface EvolutionPath {
+  id: string;
+  name: string;
+  desc: string;
+  /** Em ordem crescente de nível. */
+  stages: EvolutionStage[];
+}
+
+/** Uma espécie: o que a loja vende. */
+export interface PetSpecies {
+  id: PetId;
+  price: number;
+  /** Forma com que o pet nasce. */
+  form: FormId;
+  /** Vazio = essa espécie não evolui (ainda). */
+  paths: EvolutionPath[];
+  /** Sugestões de nome, sorteadas ao adotar. */
+  names: string[];
+}
+
+/**
+ * Um pet adotado. É a instância que tem nome, XP e caminho — a espécie é só o
+ * catálogo. Dá pra ter dois cachorros: cada um é uma instância.
+ */
+export interface PetInstance {
+  id: PetInstanceId;
+  species: PetId;
+  name: string;
+  /** XP acumulado, creditado quando o dia do check fecha. */
+  xp: number;
+  /** Caminho de evolução escolhido; `null` = ainda não escolheu. */
+  path: string | null;
+  /** Quantos estágios do caminho já foram aplicados (0 = forma base). */
+  stage: number;
+  /** Skill ativa — uma por pet. */
+  skill: SkillId | null;
+  /** ms da última troca de skill; o bônus só vale pra blocos que começam depois. */
+  skillActivatedAt: number;
+  /** ms da adoção (0 em pets migrados do formato antigo). */
+  adoptedAt: number;
 }

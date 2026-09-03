@@ -11,7 +11,7 @@ import {
   promptFinish,
 } from '../../application/dayEnd';
 import { suggestedExtendTime } from '../../domain/endOfDay';
-import { PETS } from '../../domain/pets';
+import { petForm } from '../../domain/pets';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 import { Modal } from '../shell/Modal';
@@ -34,7 +34,7 @@ function FinishDayConfirm({ open }: { open: boolean }) {
 }
 
 function DaySummaryModal() {
-  const summary = useAppState((_, d) => d.dayEnd.summary);
+  const { summary, owned } = useAppState((s, d) => ({ summary: d.dayEnd.summary, owned: s.pets.owned }));
   return (
     <Modal id="day-summary-panel" open={!!summary} title={t.summaryTitle} onClose={closeSummary}>
       <div id="day-summary-body">
@@ -48,13 +48,13 @@ function DaySummaryModal() {
               <div className="ds-levelup"><span className="ds-lu-icon">🆙</span>{t.levelUp(summary.newLevel, summary.newLevelName)}</div>
             )}
             {summary.pets.map((p) => {
-              const pet = PETS[p.id];
-              if (!pet) return null;
+              const pet = owned.find((x) => x.id === p.id);
+              const form = pet ? petForm(pet) : null;
               return (
                 <div className="ds-pet-row" key={p.id}>
-                  <img src={pet.sprite(0)} alt={pet.name} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  {form && <img src={form.sprite(0)} alt={form.name} onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
                   <div style={{ flex: 1 }}>
-                    <div className="ds-pet-name">{pet.name}</div>
+                    <div className="ds-pet-name">{pet?.name ?? p.id}</div>
                     <div className={'ds-pet-lv' + (p.levelUp ? ' up' : '')}>{p.levelUp ? t.petLevelUp(p.oldLevel, p.newLevel) : strings.pets.lv(p.newLevel)}</div>
                   </div>
                   <div className="ds-pet-gain">{strings.plan.xpGain(p.gain)}</div>

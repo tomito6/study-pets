@@ -1,71 +1,89 @@
-// O card de um pet, compartilhado pela loja e por "Meus pets". Na loja mostra
-// preço e "Adotar"; em "Meus pets" mostra nível, Equipar/Equipada e as skills.
-// Sem sprite (pasta ainda não existe), cai no emoji.
+// Os cards de pet. `ShopPetCard` é a espécie à venda (preço + "Adotar");
+// `OwnedPetCard` é o pet adotado, em "Meus pets" (nome, nível, forma, Equipar,
+// evolução e skills). Sem sprite (pasta ainda não existe), cai no emoji.
 
 import { useState } from 'react';
-import { activeSkillOf, toggleEquip, toggleSkill } from '../../application/pets';
-import { petLevel } from '../../domain/pets';
-import type { PetDefinition } from '../../domain/types';
+import { toggleEquip, toggleSkill } from '../../application/pets';
+import { evolutionOf, petForm, petLevel, speciesForm } from '../../domain/pets';
+import { SKILLS } from '../../domain/progression';
+import type { PetForm, PetInstance, PetSpecies } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { useAppState } from '../../store/store';
 
 const t = strings.pets;
 
-interface Props {
-  pet: PetDefinition;
-  showPrice: boolean;
-  balance: number;
-  onAdopt: (pet: PetDefinition) => void;
+/** Sprite parado (frame 0) com fallback no emoji. Mesmas classes da loja antiga. */
+export function PetSprite({ form }: { form: PetForm }) {
+  const [failed, setFailed] = useState(false);
+  if (failed || !form.sprite(0)) return <div className="shop-item-emoji">{form.emoji}</div>;
+  return <img className="shop-item-img" src={form.sprite(0)} alt={form.name} onError={() => setFailed(true)} />;
 }
 
-export function PetCard({ pet, showPrice, balance, onAdopt }: Props) {
-  const { pets, skillsVersion } = useAppState((s) => ({ pets: s.pets, skillsVersion: s.skills?.activatedAt ?? 0 }));
-  void skillsVersion; // só pra re-renderizar quando uma skill muda
-  const [spriteFailed, setSpriteFailed] = useState(false);
-  const owned = pets.owned.includes(pet.id);
-  const active = pets.active === pet.id;
-  const canAfford = balance >= pet.price;
-  const locked = !owned && !canAfford;
+interface ShopProps {
+  species: PetSpecies;
+  balance: number;
+  onAdopt: (species: PetSpecies) => void;
+}
 
+export function ShopPetCard({ species, balance, onAdopt }: ShopProps) {
+  const form = speciesForm(species);
+  const canAfford = balance >= species.price;
   const onButton = () => {
-    if (!owned) {
-      if (!canAfford) {
-        showToast(t.insufficient);
-        return;
-      }
-      onAdopt(pet);
+    if (!canAfford) {
+      showToast(t.insufficient);
       return;
     }
-    toggleEquip(pet.id);
+    onAdopt(species);
   };
+  return (
+    <div className="shop-item">
+      <PetSprite form={form} />
+      <div className="shop-item-name-row">
+        <span className="shop-item-name">{form.name}</span>
+      </div>
+      <div className="shop-item-price">{t.price(species.price)}</div>
+      <button className={'shop-btn' + (canAfford ? '' : ' locked')} onClick={onButton}>{t.adopt}</button>
+    </div>
+  );
+}
 
-  const showSkills = !showPrice && owned && !!pet.skills?.length;
+interface OwnedProps {
+  pet: PetInstance;
+  onRename: (pet: PetInstance) => void;
+  onEvolve: (pet: PetInstance) => void;
+}
+
+export function OwnedPetCard({ pet, onRename, onEvolve }: OwnedProps) {
+  const active = useAppState((s) => s.pets.active === pet.id);
+  const form = petForm(pet);
+  const evo = evolutionOf(pet);
+  const skills = form.skills.map((id) => SKILLS[id]).filter((s): s is NonNullable<typeof s> => !!s);
 
   return (
     <div className={'shop-item' + (active ? ' active-pet' : '')}>
       {active && <div className="shop-item-active-badge">{t.badgeActive}</div>}
-      {spriteFailed ? (
-        <div className="shop-item-emoji">{pet.emoji}</div>
-      ) : (
-        <img className="shop-item-img" src={pet.sprite(0)} alt={pet.name} onError={() => setSpriteFailed(true)} />
-      )}
+      <PetSprite form={form} />
       <div className="shop-item-name-row">
         <span className="shop-item-name">{pet.name}</span>
-        {owned && <span className="shop-item-lv">{t.lv(petLevel(pets, pet.id))}</span>}
+        <span className="shop-item-lv">{t.lv(petLevel(pet))}</span>
       </div>
-      {showPrice && !owned && <div className="shop-item-price">{t.price(pet.price)}</div>}
-      <button
-        className={'shop-btn' + (active ? ' active' : owned ? ' owned' : locked ? ' locked' : '')}
-        onClick={onButton}
-      >
-        {active ? t.equipped : owned ? t.equip : t.adopt}
+      <div className="shop-item-species">
+        <span>{form.name}</span>
+        <button type="button" className="shop-item-rename" title={t.rename} aria-label={t.rename} onClick={() => onRename(pet)}>✏️</button>
+      </div>
+      <button className={'shop-btn' + (active ? ' active' : ' owned')} onClick={() => toggleEquip(pet.id)}>
+        {active ? t.equipped : t.equip}
       </button>
-      {showSkills && (
+      {evo && evo.kind !== 'locked' && (
+        <button type="button" className="shop-btn evolve" onClick={() => onEvolve(pet)}>{t.evolve}</button>
+      )}
+      {evo && evo.kind === 'locked' && <div className="shop-item-evo-hint">{t.evolveHint(evo.level)}</div>}
+      {skills.length > 0 && (
         <div className="pet-skills-wrap">
           <div className="pet-skills-header">{t.skills}</div>
-          {pet.skills!.map((skill) => {
-            const on = activeSkillOf(pet.id) === skill.id;
+          {skills.map((skill) => {
+            const on = pet.skill === skill.id;
             return (
               <button type="button" key={skill.id} className={'pet-skill-row' + (on ? ' active' : '')} onClick={() => toggleSkill(pet.id, skill.id)}>
                 <span className="ps-info">

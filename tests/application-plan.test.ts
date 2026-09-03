@@ -63,6 +63,7 @@ describe('toggleBlockCheck', () => {
   });
 
   it('grava o pet equipado no momento', () => {
+    state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Mia', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
     state.pets.active = 'cat';
     const b = blocksForDay(HOJE)[0]!;
     toggleBlockCheck(HOJE, b, AGORA);

@@ -2,7 +2,7 @@
 // Era o callback de onAuthStateChanged + loadData + initApp do app antigo.
 
 import { DEFAULT_CFG } from '../domain/config';
-import { emptyPersistedState, hydrateUserDoc } from '../domain/persistence';
+import { emptyPersistedState, emptyPets, hydrateUserDoc } from '../domain/persistence';
 import { auth, users } from '../infrastructure';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
@@ -64,7 +64,7 @@ function resetToLoggedOut(): void {
   state.lunchOverrides = {};
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
-  state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
+  state.pets = emptyPets();
   state.coinsSpent = 0;
 }
 

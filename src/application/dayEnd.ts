@@ -44,7 +44,7 @@ function snapshot(now: Date): ProgressSnapshot {
     totalXP: stats.totalXP,
     coins: stats.coins,
     userLevelIdx: getLevelIdx(stats.totalXP),
-    petXP: structuredClone(state.pets.xp || {}),
+    petXP: Object.fromEntries(state.pets.owned.map((p) => [p.id, p.xp || 0])),
   };
 }
 

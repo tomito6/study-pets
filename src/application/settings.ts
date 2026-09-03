@@ -1,6 +1,7 @@
 // Casos de uso da tela de Configurações.
 
 import { DEFAULT_CFG } from '../domain/config';
+import { emptyPets } from '../domain/persistence';
 import { hasMissingNumbers, normalizeConfig } from '../domain/settings';
 import type { ConfigDraft } from '../domain/settings';
 import { showToast } from '../shared/toast';
@@ -43,8 +44,7 @@ export function cancelSession(): void {
   state.lunchOverrides = {};
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
-  state.pets = { owned: [], active: null, xp: {}, xpProcessedUntil: null };
-  state.skills = { owl: null, activatedAt: 0 };
+  state.pets = emptyPets();
   state.coinsSpent = 0;
   rebuildWeeks();
   clearBlockCache();
