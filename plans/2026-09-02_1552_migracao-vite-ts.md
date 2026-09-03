@@ -166,8 +166,23 @@ disso; Fase 2 em diante sim.
     `application/pets.ts` (XP pendente, adotar, equipar, skills), `features/profile/` e
     `features/pets/`. Legado 926 → 545; `index.html` 241 → 135. Smoke 9/9 (a loja agora é
     localizada por papel/nome, não pelo `onclick` antigo); 266 unitários.
-  - **Próxima fatia**: Onboarding + Encerrar o dia (leva `openFinishDay`, `openOnboarding` e
-    `rescheduleEndOfDayPrompt`, e fecha a ponte). Depois, Fase 6: remover o legado.
+  - **Fatia 8 — feita**: Onboarding + Encerrar o dia + boot. `domain/daySummary.ts` e
+    `domain/endOfDay.ts`; `application/dayEnd.ts` (encerrar, resumo, prompt automático sem polling,
+    prolongar), `application/onboarding.ts`, `application/session.ts` (o boot inteiro);
+    `features/onboarding/` e `features/dayend/`.
+- **Fase 6 — feita** (commit `39d5421`). `src/legacy/` e `legacy/index_teste.html` removidos. O app é
+  uma árvore React só (`src/app/App.tsx`), `index.html` tem `<div id="root">`. 276 unitários,
+  smoke 9/9 nos dez fluxos do brief. Documentação (`CLAUDE.md`) reescrita pro estado final.
+
+## Pendências pós-migração (não são bugs, são decisões)
+
+- Bundle: um chunk de ~600 KB (React + Firebase). Separar em chunks (`vite.config.ts`).
+- `tests/_legacy-*.mjs` + `equivalence*.test.ts`: cópias literais do gerador e do `computeStats`
+  antigos, usadas como prova de equivalência na Fase 3. Podem ir embora quando o Tomi quiser; hoje
+  são testes de caracterização gratuitos.
+- `firestore.rules` publicado pelo Tomi em 2026-09-03; login real e apagar conta validados por ele.
+- Validação de evento ainda usa `alert()` (comportamento original). Trocar por mensagem inline é design.
+- `noUncheckedIndexedAccess` está desligado no `tsconfig.json` (ligar quando sobrar tempo).
   - Pendência técnica: bundle único de 509 KB (React + Firebase). Separar em chunks quando estabilizar.
 
 ## Achados que viraram pendência

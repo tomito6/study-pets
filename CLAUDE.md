@@ -44,7 +44,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Stack & deploy
 
-- Frontend: React + TypeScript (Vite), **em migração** a partir de um app vanilla. Hoje o React vive em **ilhas** (login, cabeçalho) e o resto ainda é o legado `src/legacy/app.js` mexendo no DOM por id. Os dois compartilham o store. Ver `plans/2026-09-02_1552_migracao-vite-ts.md`
+- Frontend: React + TypeScript (Vite). Uma árvore React só (`src/app/App.tsx`); o app vanilla de arquivo único foi migrado por completo em 2026-09 (história em `plans/2026-09-02_1552_migracao-vite-ts.md`)
 - Build/testes: Vite + TypeScript + Vitest. `vercel.json` declara build e output explicitamente — não depender da detecção automática da Vercel
 - Backend: Firebase (Auth via Google + Firestore)
 - Hosting: Vercel (deploy automático no push pra `main`)
@@ -53,9 +53,9 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 ## Arquivos
 
-- `index.html` — só markup (774 linhas). Tem dois **hosts de ilha** React (`#login-root`, `#header-root`) e o markup legado do resto (`#app`, abas, modais). Sem `<style>` nem `<script>` inline
-- `src/main.tsx` — entry. Monta as ilhas React (síncrono, `flushSync`) e **depois** importa o legado — ele procura elementos por id em runtime
-- `src/app/` — casca do app em React (`Header.tsx`: abas, data, XP, Sair)
+- `index.html` — `<div id="root">` e o `<link>` das fontes. Nada mais
+- `src/main.tsx` — entry: monta `<App/>` e chama `startSession()` (auth → carregar doc → boot)
+- `src/app/` — `App.tsx` (a árvore inteira: login, `#app` com cabeçalho, timer, abas, modais) e `Header.tsx` (abas, data, XP, Sair). Quem mostra/esconde `#app` e a aba ativa é o `App`, lendo o store
 - `src/features/<feature>/` — UI React por feature:
   - `auth/LoginScreen.tsx`
   - `plan/` — a aba Plano inteira: `PlanTab.tsx` (XP card, stats do dia, semana/dia, "Encerrar o dia"), `BlockList.tsx` (sessões e linhas com check — a lógica de clique do `renderBlocks` antigo mora aqui), `feedback.ts` (ripple + "+X XP" flutuante), `useMinuteTick.ts` (re-render na virada do minuto, pro destaque "agora")
@@ -65,43 +65,45 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `profile/ProfileTab.tsx` — a aba Perfil (hero com personagem e pet animados por `useSpriteFrame`, stats, card do pet ativo, botões da loja e de "Meus pets"). Roda `applyPendingPetXP` ao ficar visível
   - `pets/` — `PetCard.tsx` (o card compartilhado entre loja e "Meus pets", com skills) e `PetModals.tsx` (loja, meus pets, confirmação de adoção — filhos do ProfileTab)
   - `settings/` — a página de Configurações inteira: `SettingsPage.tsx` (Rotina/Geral, o botão ⚙️ flutuante e "aberta ou fechada" como estado local), `ConfigPreview.tsx` (Resumo do dia), `StudyWindowsEditor.tsx`, `FitStudyModal.tsx` (Encaixar estudo), `DangerModals.tsx` (cancelar sessão, apagar conta). O formulário é um rascunho (`ConfigDraft`) que só vira config ao Salvar
+  - `onboarding/OnboardingModal.tsx` — "Bem-vindo!": período de uso e fins de semana. Aberto pelo boot (conta nova) e por cancelar sessão
+  - `dayend/DayEndModals.tsx` — confirmação de encerrar o dia, o resumo com os ganhos, e o prompt automático "passou do horário" (encerrar / prolongar)
   - `shell/Modal.tsx` — a casca `.panel-overlay.center > .panel-sheet` de todo modal; clicar fora fecha
   - `shell/SaveIndicator.tsx` — "Salvando… / Salvo ✓"
-- `src/store/store.ts` — estado central tipado. É **o mesmo objeto** que o legado muta (`state.uiTab`, `state.user`…); quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` + `focusOpen` + `audio` (geridos por `application/timer`), `save` (status), `authReady`
+- `src/store/store.ts` — estado central tipado, um objeto só mutado no lugar pelos casos de uso; quem muta chama `notify()`; React lê com `useAppState`. `derived` = runtime não persistido: `weeks` (calculado por `rebuildWeeks`), `timerBlock` + `focusOpen` + `audio` (`application/timer`), `save` (status), `authReady`, `onboardingOpen`, `dayEnd` (modais do fim do dia). Modal aberto por **clique local** fica em `useState` do componente; só entra no store o que um **caso de uso** abre
 - `src/application/` — casos de uso e leituras do estado. UI chama isto; isto chama domínio/infra:
-  - `plan.ts` — `rebuildWeeks`, `blocksForDay` (com a memoização do gerador), `computeStatsNow` (memoizado por versão do store: cabeçalho, Plano e legado pagam uma passada só), `dateForWeekDay`/`findWeek`/`forEachDay`
+  - `plan.ts` — `rebuildWeeks`, `blocksForDay` (com a memoização do gerador), `computeStatsNow` (memoizado por versão do store: cabeçalho, Plano, Análise e Perfil pagam uma passada só), `dateForWeekDay`/`findWeek`/`forEachDay`
   - `checks.ts` — `toggleBlockCheck` (marca/desmarca, decide bônus e pet, devolve XP/moedas pro feedback)
   - `save.ts` — `scheduleSave` com debounce, `blockSaves` (apagar conta), status pro indicador
   - `timer.ts` — `tryStartTimer` (valida: só bloco de hoje que está rolando; devolve o motivo pra UI mostrar o toast), `startTimer`/`stopTimer`/`closeFocus`, o único `setInterval` do timer (detecta o fim → som + notificação), e o áudio (`playSound`, `toggleMute`, `setVolume`). **Não há `notify()` por segundo** — isso faria o app inteiro re-renderizar e recalcular stats
-  - `events.ts` — `addEvent`/`addEventSeries`, `deleteEvent`/`deleteSeriesOccurrence`/`deleteSeries`, `setLunchOverride`/`lunchForDay`, validações com motivo. Cada mutação limpa o cache do gerador, salva, notifica e emite o toast "Plano reajustado: …" (`notifyPlanDelta`, que o legado ainda usa ao salvar configurações)
+  - `events.ts` — `addEvent`/`addEventSeries`, `deleteEvent`/`deleteSeriesOccurrence`/`deleteSeries`, `setLunchOverride`/`lunchForDay`, validações com motivo. Cada mutação limpa o cache do gerador, salva, notifica e emite o toast "Plano reajustado: …" (`notifyPlanDelta`, que `settings.ts` também usa ao salvar configurações)
   - `settings.ts` — `saveSettings` (preserva `periodStart`, refaz semanas, reagenda o prompt de fim de dia; **recusa campo numérico vazio**, que antes virava `NaN` salvo) e `cancelSession`
   - `account.ts` — `deleteAccount`: doc primeiro, usuário depois; devolve o estágio que falhou
   - `pets.ts` — `applyPendingPetXP` (idempotente), `coinBalance`, `buyPet` (com motivo de recusa), `toggleEquip`, `toggleSkill`
-  - `session.ts` — entrar/sair
+  - `dayEnd.ts` — `closeDay` (trava checks, credita pets, monta o resumo), o prompt automático agendado pro fim do último estudo (sem polling), `extendDay`
+  - `onboarding.ts` — `finishOnboarding` (validação com motivo)
+  - `session.ts` — entrar/sair e o boot: `startSession` registra o listener de auth; a cada login, `loadUserData` → `initAfterLoad` (XP pendente, prompt, semana/dia visíveis); conta nova abre o onboarding
+- `src/domain/daySummary.ts` (o resumo do dia entre dois instantâneos) e `src/domain/endOfDay.ts` (último estudo, quando perguntar, prolongar)
 - `src/domain/pets.ts` — o catálogo `PETS` (adicionar pet = uma entrada aqui + sprites em `public/idle/pets/{id}/`), XP/nível/progresso do pet, saldo de moedas
 - `src/domain/analytics.ts` — `currentWeekKeys`, `goalWeek` (os 7 dots), `heatmap` (7×16 células, intensidade por % da meta), `hourBars`, `dropoff`, `sparkline` (8 semanas), `nextLevel`
 - `src/domain/settings.ts` — `ConfigDraft` ↔ `UserConfig` (`draftFromConfig`/`normalizeConfig`), `summarizeConfig` (o Resumo do dia), `fitStudySuggestions` (o algoritmo do Encaixar), formatação de durações
 - `src/domain/planDelta.ts` — o que mudou no plano de um dia (estudos a mais/menos, novo fim), puro
 - `src/domain/timer.ts` — `timerProgress` (restante = fim − agora; é por isso que o timer sobrevive a reload), `canStartBlock`, `soundForBlock`, `blockNumberInSession`, `nextBlockAfter`
 - `src/infrastructure/audio/sounds.ts` (Web Audio, porte fiel, falha em silêncio) e `infrastructure/notifications/notifications.ts` (Web Notifications, guardadas)
-- `src/legacy/bridge.ts` — a ponte tipada pro que ainda é legado: `openFinishDay`, `openOnboarding` e `rescheduleEndOfDayPrompt` (tudo da última fatia). React chama isto, nunca `window.*` solto. Em Node vira no-op
 - `.env.test` — liga o modo memória pro Vitest; os testes de aplicação que passam pela infra nunca tocam o Firebase
 - `src/shared/strings.ts` — textos da UI React. Tudo que migrar pro React escreve texto aqui, não inline
-- `src/shared/toast.ts` — o toast, compartilhado por React e legado
+- `src/shared/toast.ts` — o toast (DOM direto, sem React; vira no-op fora do browser)
 - `src/styles/app.css` e `login.css` — o CSS que estava no `index.html`, sem mudança
-- `src/legacy/app.js` — o app vanilla (era `src/main.js`): DOM, render, timer, modais. Chama o domínio, fala com auth/persistência pelas portas de `src/infrastructure`, e usa o `state` do store. **Não cresce mais**: feature nova ou mexida vai pro React
 - `src/infrastructure/` — o mundo externo, atrás de interfaces (`ports.ts`: `AuthPort`, `UserRepository`):
   - `firebase/` — `config.ts` (config pública, sobrescrevível por `VITE_FIREBASE_*`), `auth.ts` (Google, com reautenticação ao apagar conta), `userRepository.ts` (`users/{uid}`)
   - `memory/` — as mesmas portas sem rede: usuário fixo já logado, documento no `sessionStorage` da aba (sobrevive a reload/HMR, some ao fechar a aba; aba nova = conta nova). É o **modo teste**
   - `index.ts` — escolhe qual usar por `VITE_PERSISTENCE` (`memory` → teste; qualquer outra coisa → Firebase)
 - `src/domain/persistence.ts` — `hydrateUserDoc` (documento cru → estado; **é a função explícita de migração**, tolera todo formato antigo) e `serializeState` (estado → documento, com `schemaVersion`)
 - `.env.example` — variáveis suportadas (todas opcionais). `.env.teste` liga o modo memória pro `npm run dev:teste`
-- `legacy/index_teste.html` — o app antigo sem Firebase, **congelado**. Substituído por `npm run dev:teste`; some quando o modo teste estiver validado em todos os fluxos
 - `src/domain/` — regras puras em TypeScript, sem DOM/Firebase/estado global:
   - `types.ts` — tipos do domínio (`StudyBlock`, `UserConfig`, `RecurringEventSeries`, `CheckRecord`, ...)
   - `time.ts` — `dk`, `timeToMins`, `minsToTime`, `mondayOf`, `aggregateMins` (tudo em horário local)
   - `config.ts` — `DEFAULT_CFG` e `migrateConfig`
-  - `planner.ts` — `generateBlocks` (a memoização ficou no `main.js`) e `calcActualEnd`
+  - `planner.ts` — `generateBlocks` (a memoização fica em `application/plan.ts`) e `calcActualEnd`
   - `events.ts` — `expandEventsForDate`, com semanal/quinzenal/mensal e exceções
   - `progression.ts` — XP, moedas, `LEVELS`, skills e o bônus da Noturno
   - `checks.ts` — quem pode ser marcado (`canToggleCheck`: dia fechado é read-only, dia futuro não
@@ -130,9 +132,11 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 
 Mais importantes que valores concretos. Estes você protege ao mexer no código:
 
-- **Regra pura mora em `src/domain/`**: se uma função só transforma dados em dados, ela vai pro domínio, é tipada e ganha teste. O domínio **não pode** tocar DOM, Firebase, `state`, áudio, notificação ou `new Date()` implícito — quando precisa do "agora", recebe como parâmetro (ver `SkillContext` em `progression.ts`). O `src/legacy/app.js` fica com o que é efeito: render, estado, persistência, e wrappers finos que ligam um ao outro (`getEventsForDate`, `noturnoBonusEligible`, a memoização de `generateBlocks`).
-- **Estado centralizado**: tudo em um único objeto `state`, que vive em `src/store/store.ts`. Não criar globais soltas. Nada de UI efêmera (modal aberto) no store — isso é estado local de componente.
-- **Ilhas React durante a migração**: cada pedaço migrado monta num host fixo do `index.html` e mantém **os mesmos ids e classes** do markup antigo — CSS, legado e smoke test dependem desse contrato. O legado escuta o store (`subscribe`) pra reagir ao que o React muda (ex.: aba ativa → `applyTab`), e o React re-renderiza a cada `notify()` do legado. Quando um pedaço migra, o legado **para** de tocar naqueles ids (senão os dois brigam pelo DOM).
+- **Regra pura mora em `src/domain/`**: se uma função só transforma dados em dados, ela vai pro domínio, é tipada e ganha teste. O domínio **não pode** tocar DOM, React, Firebase, `state`, áudio, notificação ou `new Date()` implícito — quando precisa do "agora", recebe como parâmetro (ver `SkillContext` em `progression.ts`). Efeito (estado, persistência, timers, toast) fica em `src/application/`; React só formata e chama casos de uso.
+- **Camadas em uma direção**: `features` → `application` → `domain`/`infrastructure`. Componente não importa `infrastructure` nem muta `state` direto; caso de uso não importa React nem toca o DOM (exceção pequena e nomeada: `shared/toast`).
+- **Estado centralizado**: tudo em um único objeto `state`, que vive em `src/store/store.ts`. Não criar globais soltas. Modal aberto por clique local é `useState` do componente; só o que um caso de uso abre (foco, onboarding, fim do dia) vai pro `derived`.
+- **Ids e classes são contrato**: o CSS em `src/styles/app.css` e o smoke test em `e2e/` dependem dos ids/classes que os componentes rendem. Mudar um nome = mudar nos três lugares.
+- **Sem `notify()` por segundo**: o timer e o modo foco derivam o restante do relógio dentro do componente (`useSecondTick`). Um `notify()` global a cada segundo faria o app inteiro re-renderizar e o `computeStatsNow` recalcular.
 - **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: petId | null, bonus: number }` — `pet` = equipado no momento do check; `bonus` = multiplicador aditivo de XP (0 ou 0.05) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
 - **Memoization em `generateBlocks`**: a função tem cache. Sempre que alterar config ou eventos, chamar `clearBlockCache()`.
 - **Stats em uma passada**: `computeStats()` calcula tudo de uma vez iterando os dias uma única vez. Não criar funções separadas que reiteram.
@@ -142,39 +146,9 @@ Mais importantes que valores concretos. Estes você protege ao mexer no código:
 - **Firebase só atrás de porta**: nada fora de `src/infrastructure/firebase/` importa `firebase/*`. O app fala com `auth` e `users` (ver `ports.ts`); é isso que permite o modo teste em memória e, no futuro, emulador ou outro backend sem tocar na UI.
 - **Todo formato antigo do Firestore passa por `hydrateUserDoc`**: campo novo no doc = default ali + teste em `tests/persistence.test.ts` com o doc sem o campo. `serializeState` é o único lugar que monta o documento salvo.
 
-## Estrutura do legado (`src/legacy/app.js`)
-
-O arquivo segue seções comentadas com cabeçalhos. Manter essa ordem evita Temporal Dead Zone. As seções FIREBASE, CONSTANTS, STATE, DATE/TIME e STATS hoje são quase só comentários apontando pra `src/domain`, `src/infrastructure` e `src/store` — o que sobrou é efeito:
-
-```
-FIREBASE / TEST MODE
-CONSTANTS (DEFAULT_CFG, LEVELS, PETS, DAYS, ...)
-STATE
-DATE/TIME HELPERS
-WEEKS
-BLOCK GENERATOR (com memoization)
-CHECKS HELPERS
-STATS
-LEVEL HELPERS
-FIREBASE LOAD/SAVE
-AUTH
-TOAST
-AUDIO
-TIMER
-SETTINGS / ONBOARDING / EVENT / LUNCH PANELS
-TAB SWITCHING
-CHARACTER ANIMATION
-RENDERING
-ANALYTICS RENDER
-PROFILE RENDER + PETS
-INIT (no final)
-```
-
-⚠️ **Cuidado com TDZ**: `let timerBlock = null` no meio do script não pode ser acessado por código que roda antes da declaração. `initApp()` precisa rodar no fim ou via callback assíncrono.
-
 ## Conceitos do app
 
-> Nota da migração: as seções abaixo citam funções pelo nome que tinham no app vanilla (`renderBlocks`, `toggleCheck`, `renderXP`…). Quando a feature já migrou, o equivalente vive em `src/features/<feature>` e `src/application` — a **regra** descrita continua valendo; só o lugar mudou. Plano, cabeçalho e login já migraram.
+> As seções abaixo descrevem as **regras** do produto e ainda citam nomes do app vanilla (`renderBlocks`, `toggleCheck`, `renderXP`, `applyPendingPetXP`…). Tudo migrou: a regra continua valendo, e o código equivalente está em `src/domain` (o cálculo), `src/application` (o caso de uso) e `src/features/<feature>` (a tela). Na dúvida, o código é a fonte da verdade.
 
 - **Sessões**: pomodoros separados por pausa longa, evento ou almoço viram "sessões" coloridas (classes `.s0` a `.s5`).
 - **Janelas de estudo** (`config.studyWindows`): lista de intervalos `[{start, end}]` durante o dia em que o usuário estuda. UI na aba Rotina = uma linha por janela dentro de um card (`.sw-row`: início → fim, duração alinhada à direita, ✕ pra remover), botão "+ Adicionar" no cabeçalho da seção. Permite N janelas (caso de uso clássico: estuda 9-12 e 15-20, com gap de 3h no meio onde o app não gera pomos). `generateBlocks` itera as janelas em ordem; entre janelas, bloqueios (almoço/eventos) aparecem visíveis no plano. `cfg.start` / `cfg.end` viraram **campos derivados** (primeira janela / última janela) — mantidos no schema só pra retrocompat. Migração: `migrateConfig(cfg)` cria `studyWindows: [{start, end}]` a partir do antigo `start`/`end` se ausente. Pra estender o dia via "Prolongar estudos" do end-of-day prompt: ajusta `end` da última janela.
@@ -240,8 +214,8 @@ Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqu
 
 Adicionar um pet novo:
 
-1. Colocar sprites em `idle/pets/{id}/` (`0.png` a `{frames-1}.png`)
-2. Adicionar entrada em `PETS`:
+1. Colocar sprites em `public/idle/pets/{id}/` (`0.png` a `{frames-1}.png`)
+2. Adicionar entrada em `PETS`, em `src/domain/pets.ts`:
 
 ```js
 const PETS = {

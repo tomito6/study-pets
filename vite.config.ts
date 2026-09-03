@@ -9,6 +9,20 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Firebase e React mudam raramente: em chunks próprios, o cache do browser segura
+    // eles entre deploys e só o código do app é baixado de novo.
+    rollupOptions: {
+      output: {
+        // Vite 8 (rolldown) só aceita a forma de função.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          const pkg = id.split('node_modules').pop()!.slice(1); // tira o separador, em qualquer SO
+          if (pkg.startsWith('firebase') || pkg.startsWith('@firebase')) return 'firebase';
+          if (pkg.startsWith('react') || pkg.startsWith('scheduler')) return 'react';
+          return undefined;
+        },
+      },
+    },
   },
   test: {
     // Domínio é código puro: não precisa de DOM pra testar.
