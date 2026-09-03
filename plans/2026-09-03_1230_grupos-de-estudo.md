@@ -40,8 +40,9 @@ progresso (`feitos/total` e minutos), e as linhas membros ficam indentadas com o
   eventos de ponteiro sintéticos e no celular do Tomi.
 - **Ajustar o trecho sem apagar** (pedido do Tomi): alças nas bordas da caixa (`gb-grip`, com
   `touch-action: none`, então no dedo não há briga com o scroll) reaproveitam a máquina de seleção
-  num modo `resizing` — a borda oposta fica fixa e a móvel não passa dela — e campos de início/fim
-  no painel, com o resumo recalculado a cada tecla. Opção descartada: botão direito no cabeçalho
+  num modo `resizing` — a borda oposta fica fixa e a móvel não passa dela. Campos de início/fim
+  no painel entraram junto e saíram no dia seguinte, depois do teste no celular: horário livre
+  corta bloco pelo meio, e a alça já cobre os dois aparelhos. Trecho é sempre de linhas inteiras. Opção descartada: botão direito no cabeçalho
   abrindo um "modo de edição" — gesto escondido, só desktop, redundante com as duas acima.
 - **Menu de contexto bloqueado no `document`**, em fase de captura, enquanto há arrasto ou toque
   longo: o modal abre no `pointerup`, e o `contextmenu` disparava em cima dele, fora da lista.

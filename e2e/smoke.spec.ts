@@ -331,7 +331,7 @@ test.describe('Study Pets — smoke', () => {
   test.describe('em tela alta', () => {
     test.use({ viewport: { width: 480, height: 1400 } });
 
-  test('17. ajustar o trecho: puxando a alça de baixo, e digitando no painel', async ({ page }) => {
+  test('17. a alça de baixo estica e encolhe o trecho, e não invade outro grupo', async ({ page }) => {
     await abrirApp(page);
     const linhas = page.locator('.block-row');
     await page.getByRole('button', { name: 'Agrupar' }).click();
@@ -354,12 +354,16 @@ test.describe('Study Pets — smoke', () => {
     await expect(cabecalho).toContainText('0/4');
     await expect(page.locator('.block-row.in-group')).toHaveCount(7);
 
-    // Pelo painel: fim 09:55 → 2 estudos.
-    await cabecalho.click();
-    await page.locator('#grp-end').fill('09:55');
-    await expect(page.locator('#group-summary')).toContainText('2 estudos');
-    await page.locator('#grp-save').click();
+    // De volta até a linha 2 (09:30–09:55): encolhe pra 2 estudos.
+    const alca2 = await page.locator('.gb-grip-bottom').boundingBox();
+    const volta = await linhas.nth(2).boundingBox();
+    if (!alca2 || !volta) throw new Error('sem posição na tela');
+    await page.mouse.move(alca2.x + alca2.width / 2, alca2.y + alca2.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(volta.x + volta.width / 2, volta.y + volta.height / 2, { steps: 8 });
+    await page.mouse.up();
     await expect(cabecalho).toContainText('0/2');
+    await expect(page.locator('.block-row.in-group')).toHaveCount(3);
 
     // Um segundo grupo logo abaixo; a alça do primeiro não passa por cima dele.
     await page.getByRole('button', { name: 'Agrupar' }).click();

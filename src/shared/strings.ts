@@ -78,10 +78,6 @@ export const strings = {
     noStudy: 'sem estudos neste trecho',
     headerTitle: 'Toque pra editar o grupo',
     gripTitle: 'Arraste pra ajustar o trecho',
-    rangeLabel: 'Trecho',
-    start: 'Início',
-    end: 'Fim',
-    incomplete: 'Preencha início e fim.',
     refusal: {
       closed: 'Dia encerrado 🔒',
       'end-before-start': 'O fim tem que ser depois do início.',
