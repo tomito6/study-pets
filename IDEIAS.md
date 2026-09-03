@@ -324,19 +324,18 @@ O hero do perfil fica vazio, o resumo do fim do dia não tem ninguém subindo de
 app ("estudar com companhia") só aparece dias depois. O starter resolve isso no minuto 1 — e o
 onboarding, que hoje é só "período + fins de semana", ganha o momento de calor que falta.
 
-**Quantos: três, não todos.** Não é paralisia (5 ainda é pouco), é identidade: com três, cada um
-carrega um arquétipo e a escolha diz algo sobre você — a regra do Pokémon. E deixa a loja com
-motivo de existir: os outros continuam sendo conquista de horas. Trio proposto, um por
-temperamento:
+**Quantos: todos (decidido pelo Tomi).** A primeira proposta era um trio de arquétipos, na regra do
+Pokémon. O Tomi discordou, e o argumento é melhor: com Pokémon a pessoa precisa aprender o que cada
+um é antes de escolher; com animais a opinião já vem pronta — todo mundo já sabe se é de gato ou
+de cachorro, e quem quer uma cobra quer uma cobra. Escolha rápida, não paralisia. Então o starter é
+**qualquer espécie do catálogo**, e a loja continua com razão de existir pelas cópias, pelas
+evoluções e pelos pets que forem entrando depois. Se o catálogo crescer muito (15+), aí sim vale
+revisitar — mas por curadoria, não por medo de escolha.
 
-- **Cachorro** — fiel; Fiel (+5% no 1º estudo do dia); evolui (Pastor alemão / Lobo).
-- **Gato** — independente; skill a criar: *Preguiça* (+5% no estudo logo depois de uma pausa longa).
-- **Cobra** — paciente; skill a criar: *Constância* (+5% no estudo que bate a meta do dia); um dia
-  vira Dragão.
-
-Coruja (skills prontas) e Vaca ficam na loja. O trio é config no catálogo (`starter: true` na
-espécie), então trocar depois é trivial. Se um dia parecer pouco, um "ver todos" discreto embaixo dos
-três resolve sem tirar o foco.
+Consequência prática: com todos na tela de entrada, **a arte de todos vira pré-requisito** — hoje só
+cachorro (e as formas dele) tem sprite de verdade; gato é IA com fundo xadrez, e coruja, vaca e cobra
+caem no emoji. E uma skill por espécie deixa de ser "seria bom" e vira necessário, senão a tela
+mostra Cachorro e Coruja com skills e o resto sem nada.
 
 **Como funciona:**
 - Starter é **grátis** e só existe enquanto `pets.owned` está vazio (conta nova, ou depois de
@@ -353,16 +352,15 @@ três resolve sem tirar o foco.
   onboarding de novo e ganha o starter).
 
 **Pré-requisitos que não são código:**
-- **Arte**: o gato atual é IA em 1254×1254 com fundo xadrez pintado, e a cobra não tem sprite
-  (cai no emoji). Num trio de starters a arte é o produto — os dois precisam de sprite 32×32 no padrão
-  do `scripts/pixel-sprites.mjs` antes de a tela existir.
-- **Uma skill pra gato e cobra**, senão o cachorro é a única escolha "útil" e o trio vira falso.
-  Preguiça e Constância são decidíveis no momento do check com o que o `toggleBlockCheck` já tem
-  (bloco anterior é pausa longa; minutos estudados hoje + este bloco ≥ `dailyStudyMin`), então é só
-  regra nova em `SkillRule` — sem mexer no schema.
+- **Arte das cinco espécies** em 32×32 no padrão do `scripts/pixel-sprites.mjs`: gato (refazer),
+  coruja, vaca e cobra (criar). Na tela de entrada a arte é o produto.
+- **Uma skill por espécie** (gato: *Preguiça*, +5% no estudo logo depois de uma pausa longa; cobra:
+  *Constância*, +5% no estudo que bate a meta do dia; vaca: a inventar). As duas são decidíveis no
+  momento do check com o que o `toggleBlockCheck` já tem (bloco anterior é pausa longa; minutos
+  estudados hoje + este bloco ≥ `dailyStudyMin`) — regra nova em `SkillRule`, sem mexer no schema.
 
-**Ordem:** sprites de gato e cobra → duas skills → `adoptStarter` + onboarding em dois passos →
-e2e (conta nova escolhe a cobra, nomeia, hero já mostra ela).
+**Ordem:** sprites (gato, cobra, coruja, vaca) → skills → `adoptStarter` + onboarding em dois passos
+→ e2e (conta nova escolhe a cobra, nomeia, hero já mostra ela).
 
 ---
 
