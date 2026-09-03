@@ -184,24 +184,28 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#ap-name')).toHaveText('Bolt');
     await expect(page.locator('#ap-species')).toHaveText('Cachorro');
     // O save tem debounce: espera a adoção chegar no storage antes de recarregar.
-    await expect(page.locator('#save-indicator')).toContainText('Salvando');
-    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await expect
+      .poll(() => page.evaluate(() => {
+        const doc = JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}');
+        return (doc.pets?.owned ?? []).some((p: { name?: string }) => p.name === 'Bolt');
+      }))
+      .toBe(true);
 
-    // Dia seguinte: um estudo com o Bolt equipado e o dia fechado → 50 XP = Lv. 2.
+    // Dia seguinte: 7 estudos com o Bolt equipado e o dia fechado → 350 XP = Lv. 5, o nível da evolução.
     await page.clock.setFixedTime(new Date('2026-09-03T17:30:00'));
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
-    await checksDeEstudo(page).first().click();
+    for (let i = 0; i < 7; i++) await checksDeEstudo(page).nth(i).click();
     await page.locator('.finish-day-btn').click();
     await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
     await expect(page.locator('#day-summary-panel')).toContainText('Bolt');
-    await expect(page.locator('#day-summary-panel')).toContainText('Lv. 1 → 2');
+    await expect(page.locator('#day-summary-panel')).toContainText('Lv. 1 → 5');
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
 
     // Escolhe o caminho selvagem: vira lobo e continua sendo o Bolt.
     await page.getByRole('button', { name: /Perfil/ }).click();
-    await expect(page.locator('#ap-lv')).toHaveText('Lv. 2');
+    await expect(page.locator('#ap-lv')).toHaveText('Lv. 5');
     await page.getByRole('button', { name: /Meus pets/ }).click();
     await page.locator('#my-pets-grid .shop-btn.evolve').click();
     await expect(page.locator('#pet-evolve-panel')).toBeVisible();

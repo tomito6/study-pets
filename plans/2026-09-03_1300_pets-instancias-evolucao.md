@@ -6,8 +6,9 @@ Branch: `feat/pets-evolucao`. Origem: IDEIAS.md, "Pets: nome, evolução, vário
 
 O Tomi pediu: nomear o pet ao adotar, pets que evoluem em certos níveis com escolha (cachorro →
 continua cachorro ou vira lobo, cada caminho com skills próprias), poder ter mais de um do mesmo
-pet, e sprites de cachorro, lobo e pastor alemão com animação. Pra testar, a evolução fica no
-**Lv. 2**; o design final (IDEIAS.md) é Lv. 10 (escolha) e Lv. 30 (transformação).
+pet, e sprites de cachorro, lobo e pastor alemão com animação. A escolha do caminho fica no
+**Lv. 5** (320 XP ≈ 2h40 com o pet equipado — o Tomi preferiu 5 a 10 pelo senso de evolução);
+a transformação maior no Lv. 30 continua como ideia (IDEIAS.md).
 
 ## Decisões
 
@@ -43,7 +44,7 @@ pet, e sprites de cachorro, lobo e pastor alemão com animação. Pra testar, a 
   `features/dayend/DayEndModals.tsx`, `shared/strings.ts`, `styles/app.css`
 - `scripts/pixel-sprites.mjs` + `public/idle/pets/{dog,dog-shepherd,wolf}/`
 - Testes: `tests/pets.test.ts` (reescrito), `persistence`, `progression`, `dayend`,
-  `application-settings`, `application-plan`; e2e `11.` (adotar com nome → dia seguinte → Lv. 2 →
+  `application-settings`, `application-plan`; e2e `11.` (adotar com nome → dia seguinte → Lv. 5 →
   escolher Lobo)
 - Docs: CLAUDE.md (pets, skills, schema, arquivos), IDEIAS.md (nota)
 
@@ -55,7 +56,7 @@ pet, e sprites de cachorro, lobo e pastor alemão com animação. Pra testar, a 
 
 ## Fica pra depois
 
-- Lv. 10 (escolha, mudança visual pequena) e Lv. 30 (transformação) — hoje `DOG_EVOLVE_LEVEL = 2`
+- Lv. 30 (transformação maior) — hoje só existe a escolha no Lv. 5 (`DOG_EVOLVE_LEVEL`)
 - "XP em dobro pro pet" nos blocos em que a skill valeu
 - Skins, faixas de preço, gato/coruja/cobra/vaca em 32×32 (o gato atual é IA em 1254×1254 com
   fundo xadrez pintado)

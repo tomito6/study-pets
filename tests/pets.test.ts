@@ -44,7 +44,8 @@ describe('catálogo', () => {
     expect(FORMS.owl!.skills).toEqual(['noturno', 'voo']);
   });
 
-  it('o cachorro tem dois caminhos: pastor alemão ou lobo', () => {
+  it('o cachorro tem dois caminhos: pastor alemão ou lobo, no Lv. 5', () => {
+    expect(DOG_EVOLVE_LEVEL).toBe(5);
     expect(PETS.dog!.paths.map((p) => p.id)).toEqual(['companheiro', 'selvagem']);
     expect(PETS.dog!.paths.map((p) => p.stages[0]!.form)).toEqual(['dog-shepherd', 'wolf']);
     expect(PETS.dog!.paths.every((p) => p.stages[0]!.level === DOG_EVOLVE_LEVEL)).toBe(true);
@@ -103,13 +104,13 @@ describe('forma, nome e evolução (puro)', () => {
 
   it('evolve: recusa sem nível ou com caminho inválido; aplica sem mutar; skill que a forma nova não tem cai', () => {
     expect(evolve(inst())).toEqual({ ok: false, reason: 'not-ready' });
-    const pronto = inst({ xp: 60, skill: 'fiel' });
+    const pronto = inst({ xp: petLevelStart(DOG_EVOLVE_LEVEL), skill: 'fiel' });
     expect(evolve(pronto, 'nada')).toEqual({ ok: false, reason: 'invalid-path' });
 
     const lobo = evolve(pronto, 'selvagem');
     expect(lobo.ok).toBe(true);
     if (lobo.ok) {
-      expect(lobo.pet).toMatchObject({ name: 'Bolt', xp: 60, path: 'selvagem', stage: 1, skill: null });
+      expect(lobo.pet).toMatchObject({ name: 'Bolt', xp: petLevelStart(DOG_EVOLVE_LEVEL), path: 'selvagem', stage: 1, skill: null });
       expect(petForm(lobo.pet).id).toBe('wolf');
     }
     expect(pronto.stage).toBe(0);
@@ -233,7 +234,7 @@ describe('casos de uso dos pets', () => {
   it('evoluir: precisa de nível; troca a forma no lugar; é definitivo', () => {
     state.pets.owned = [inst()];
     expect(evolvePet('dog', 'selvagem')).toBe('not-ready');
-    state.pets.owned[0]!.xp = 50;
+    state.pets.owned[0]!.xp = petLevelStart(DOG_EVOLVE_LEVEL);
     expect(evolvePet('dog', 'nada')).toBe('invalid-path');
     expect(evolvePet('dog', 'selvagem')).toBe('ok');
     expect(petForm(state.pets.owned[0]!).id).toBe('wolf');

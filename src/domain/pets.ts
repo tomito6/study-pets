@@ -21,11 +21,11 @@ export const FORMS: Record<FormId, PetForm> = {
 };
 
 /**
- * Nível em que o cachorro escolhe o caminho. Está em 2 pra dar pra testar num
- * dia; o design final é 10 (escolha, mudança pequena) e 30 (transformação) —
- * ver IDEIAS.md, "Pets: nome, evolução…".
+ * Nível em que o cachorro escolhe o caminho: 5 (320 XP ≈ 2h40 de estudo com o
+ * pet equipado) — cedo o bastante pra dar senso de evolução. A transformação
+ * maior (Lv. 30) é ideia futura — ver IDEIAS.md, "Pets: nome, evolução…".
  */
-export const DOG_EVOLVE_LEVEL = 2;
+export const DOG_EVOLVE_LEVEL = 5;
 
 export const PETS: Record<PetId, PetSpecies> = {
   cat: { id: 'cat', price: 150, form: 'cat', paths: [], names: ['Mia', 'Tom', 'Frida', 'Nina', 'Simba', 'Jade', 'Luna', 'Salem'] },
