@@ -2,6 +2,8 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useEffect, useRef, useState } from 'react';
+import { findEventEditTarget } from '../../application/events';
+import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
 import { isDayClosed } from '../../domain/checks';
@@ -27,7 +29,7 @@ import { useMinuteTick } from './useMinuteTick';
 /** Qual modal do Plano está aberto. Estado local: quem abre é sempre um clique aqui dentro. */
 type PlanModal =
   | { kind: 'none' }
-  | { kind: 'event' }
+  | { kind: 'event'; edit?: EventEditTarget }
   | { kind: 'delete'; target: EventToDelete }
   | { kind: 'lunch'; dateKey: DateKey }
   | { kind: 'group'; target: GroupTarget };
@@ -236,8 +238,20 @@ export function PlanTab() {
       </div>
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
 
-      <EventPanel open={modal.kind === 'event'} dateKey={viewKey} onClose={closeModal} />
-      <EventDeleteModal target={modal.kind === 'delete' ? modal.target : null} onClose={closeModal} />
+      <EventPanel open={modal.kind === 'event'} dateKey={viewKey} edit={modal.kind === 'event' ? modal.edit ?? null : null} onClose={closeModal} />
+      <EventDeleteModal
+        target={modal.kind === 'delete' ? modal.target : null}
+        onClose={closeModal}
+        onEdit={(target) => {
+          const edit = findEventEditTarget(target.dateKey, target.block);
+          if (!edit) {
+            showToast(strings.events.panel.validation['not-found']);
+            closeModal();
+            return;
+          }
+          setModal({ kind: 'event', edit });
+        }}
+      />
       <LunchPanel dateKey={modal.kind === 'lunch' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
     </>

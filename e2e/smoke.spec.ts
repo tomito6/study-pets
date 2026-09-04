@@ -298,6 +298,39 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row', { hasText: '14:30–' })).toHaveCount(0);
   });
 
+  test('24. editar um evento muda nome e horário no plano', async ({ page }) => {
+    await abrirApp(page);
+    await page.getByRole('button', { name: '+ Evento' }).click();
+    await page.locator('#ev-name').fill('Aula de Cálculo');
+    await page.locator('#ev-start').fill('14:00');
+    await page.locator('#ev-end').fill('15:30');
+    await page.locator('#event-panel').getByRole('button', { name: 'Adicionar' }).click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+
+    // Tocar no evento abre o modal dele; "Editar" abre o painel já preenchido.
+    await page.locator('.block-row.event-row', { hasText: 'Aula de Cálculo' }).locator('.block-name').click();
+    await expect(page.locator('#event-delete-confirm')).toBeVisible();
+    await page.locator('#event-edit-btn').click();
+    await expect(page.locator('#event-delete-confirm')).toBeHidden();
+    await expect(page.locator('#event-panel')).toBeVisible();
+    await expect(page.locator('#event-panel')).toContainText('Editar evento');
+    await expect(page.locator('#ev-name')).toHaveValue('Aula de Cálculo');
+    await expect(page.locator('#ev-start')).toHaveValue('14:00');
+    await expect(page.locator('#ev-end')).toHaveValue('15:30');
+    await expect(page.locator('#ev-repeat')).toHaveCount(0); // avulso não vira série ao editar
+
+    await page.locator('#ev-name').fill('Aula de Álgebra');
+    await page.locator('#ev-end').fill('16:00');
+    await page.locator('#ev-save').click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+
+    const editado = page.locator('.block-row.event-row', { hasText: 'Aula de Álgebra' });
+    await expect(editado).toBeVisible();
+    await expect(editado).toContainText('14:00–16:00');
+    await expect(page.locator('.block-row.event-row', { hasText: 'Aula de Cálculo' })).toHaveCount(0);
+    await expect(page.locator('.block-row.event-row')).toHaveCount(1); // editou, não duplicou
+  });
+
   test('10. recarregar a página preserva o que foi salvo', async ({ page }) => {
     await abrirApp(page);
     await checksDeEstudo(page).first().click();

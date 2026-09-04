@@ -1,8 +1,11 @@
 // "Novo Evento": avulso ou série recorrente. Reabre sempre com os defaults,
-// pré-selecionando o dia da semana do dia visível.
+// pré-selecionando o dia da semana do dia visível. Com `edit`, vira "Editar
+// evento": os campos vêm preenchidos e Salvar substitui o avulso (ou a série
+// inteira) em vez de criar outro.
 
 import { useEffect, useState } from 'react';
-import { addEvent, addEventSeries, validateEvent, validateSeries } from '../../application/events';
+import { addEvent, addEventSeries, updateEvent, updateSeries, validateEvent, validateSeries } from '../../application/events';
+import type { EventEditTarget } from '../../application/events';
 import { dateFromKey } from '../../domain/time';
 import type { DateKey, RecurrenceFreq } from '../../domain/types';
 import { strings } from '../../shared/strings';
@@ -18,10 +21,12 @@ interface Props {
   open: boolean;
   /** Dia visível no Plano — onde o evento avulso entra, e a âncora da série. */
   dateKey: DateKey;
+  /** Presente = modo edição. */
+  edit?: EventEditTarget | null;
   onClose: () => void;
 }
 
-export function EventPanel({ open, dateKey, onClose }: Props) {
+export function EventPanel({ open, dateKey, edit = null, onClose }: Props) {
   const [name, setName] = useState('');
   const [start, setStart] = useState('11:30');
   const [end, setEnd] = useState('13:00');
@@ -33,6 +38,28 @@ export function EventPanel({ open, dateKey, onClose }: Props) {
 
   useEffect(() => {
     if (!open) return;
+    if (edit?.kind === 'single') {
+      setName(edit.event.name);
+      setStart(edit.event.start);
+      setEnd(edit.event.end);
+      setCounts(edit.event.countsAsStudy !== false);
+      setRepeat(false);
+      setWeekdays([]);
+      setFreq('weekly');
+      setUntil('');
+      return;
+    }
+    if (edit?.kind === 'series') {
+      setName(edit.series.name);
+      setStart(edit.series.start);
+      setEnd(edit.series.end);
+      setCounts(edit.series.countsAsStudy !== false);
+      setRepeat(true);
+      setWeekdays([...edit.series.weekdays]);
+      setFreq(edit.series.freq);
+      setUntil(edit.series.until || '');
+      return;
+    }
     setName('');
     setStart('11:30');
     setEnd('13:00');
@@ -41,14 +68,20 @@ export function EventPanel({ open, dateKey, onClose }: Props) {
     setWeekdays([dateFromKey(dateKey).getDay()]);
     setFreq('weekly');
     setUntil('');
-  }, [open, dateKey]);
+  }, [open, dateKey, edit]);
 
   const toggleWeekday = (dow: number) =>
     setWeekdays((w) => (w.includes(dow) ? w.filter((d) => d !== dow) : [...w, dow]));
 
   const save = () => {
     const base = { name, start, end, countsAsStudy: counts };
-    if (repeat) {
+    if (edit?.kind === 'single') {
+      const r = updateEvent(edit.dateKey, edit.event.start, base);
+      if (!r.ok) { alert(t.validation[r.reason]); return; }
+    } else if (edit?.kind === 'series') {
+      const r = updateSeries(edit.series.id, { ...base, weekdays, freq, until: until || null }, dateKey);
+      if (!r.ok) { alert(t.validation[r.reason]); return; }
+    } else if (repeat) {
       const input = { ...base, weekdays, freq, until: until || null };
       const v = validateSeries(input);
       if (!v.ok) { alert(t.validation[v.reason]); return; }
@@ -61,13 +94,22 @@ export function EventPanel({ open, dateKey, onClose }: Props) {
     onClose();
   };
 
+  const editing = edit !== null;
+  const showRecurrence = editing ? edit.kind === 'series' : repeat;
+
   return (
-    <Modal id="event-panel" open={open} title={t.title} onClose={onClose}>
-      <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', marginBottom: 16, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
-        💡 <strong style={{ color: 'var(--text)' }}>{t.tip1Title}</strong> {t.tip1}
-        <br /><br />
-        ⏱️ <strong style={{ color: 'var(--text)' }}>{t.tip2Title}</strong> {t.tip2}
-      </div>
+    <Modal id="event-panel" open={open} title={editing ? t.editTitle : t.title} onClose={onClose}>
+      {editing ? (
+        edit.kind === 'series' && (
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }} id="ev-edit-series-note">{t.editSeriesNote}</p>
+        )
+      ) : (
+        <div style={{ background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', marginBottom: 16, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+          💡 <strong style={{ color: 'var(--text)' }}>{t.tip1Title}</strong> {t.tip1}
+          <br /><br />
+          ⏱️ <strong style={{ color: 'var(--text)' }}>{t.tip2Title}</strong> {t.tip2}
+        </div>
+      )}
       <div className="field-group">
         <label>{t.name}</label>
         <input type="text" id="ev-name" placeholder={t.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} />
@@ -87,11 +129,13 @@ export function EventPanel({ open, dateKey, onClose }: Props) {
         <div className="field-sublabel" style={{ marginTop: 6, lineHeight: 1.5 }}>{t.countsHint}</div>
       </div>
       <div className="field-group">
-        <div className="checkbox-row">
-          <input type="checkbox" id="ev-repeat" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} />
-          <label htmlFor="ev-repeat" style={{ fontSize: 13 }}>{t.repeat}</label>
-        </div>
-        <div className={'recurrence-section' + (repeat ? ' show' : '')} id="ev-repeat-section">
+        {!editing && (
+          <div className="checkbox-row">
+            <input type="checkbox" id="ev-repeat" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} />
+            <label htmlFor="ev-repeat" style={{ fontSize: 13 }}>{t.repeat}</label>
+          </div>
+        )}
+        <div className={'recurrence-section' + (showRecurrence ? ' show' : '')} id="ev-repeat-section">
           <div className="field-sublabel">{t.weekdays}</div>
           <div className="weekday-row" id="ev-weekdays">
             {CHIPS.map((c) => (
@@ -123,7 +167,7 @@ export function EventPanel({ open, dateKey, onClose }: Props) {
       </div>
       <div className="btn-row" style={{ marginTop: 20 }}>
         <button className="reset-btn" onClick={onClose}>{t.cancel}</button>
-        <button className="save-btn" onClick={save}>{t.add}</button>
+        <button className="save-btn" id="ev-save" onClick={save}>{editing ? t.save : t.add}</button>
       </div>
     </Modal>
   );
