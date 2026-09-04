@@ -375,6 +375,7 @@ Schema flat funciona pro volume atual. Quando ficar lento, considerar subcollect
 
 ## Sempre
 
+- **Nunca criar uma pasta por teste ou por feature.** Checkout separado (git worktree) só se for indispensável, e aí **sempre na pasta única `study-pets/teste`**, reaproveitada por qualquer branch — e **apagada assim que o teste terminar** (`git worktree remove --force teste`). Nem pasta irmã em `Projetos/`, nem `teste-<algo>`. Vale também pra tarefas agendadas
 - Atualizar este arquivo quando uma decisão de design mudar
 - Testar em `npm run dev:teste` antes de commitar (e `npm test` + `npm run typecheck`)
 - Quando notar algo aqui que não bate com o código, perguntar ao usuário antes de "corrigir" — pode ser que o design tenha evoluído de propósito
