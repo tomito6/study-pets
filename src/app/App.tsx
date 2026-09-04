@@ -12,6 +12,7 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 import { SaveIndicator } from '../features/shell/SaveIndicator';
 import { FocusOverlay } from '../features/timer/FocusOverlay';
 import { TimerBar } from '../features/timer/TimerBar';
+import { TourBalloon } from '../features/tutorial/TourBalloon';
 import { useAppState } from '../store/store';
 import { Header } from './Header';
 
@@ -32,6 +33,8 @@ export function App() {
         <SettingsPage />
         <FocusOverlay />
         <OnboardingModal />
+        {/* Dentro de #app: some com o logout junto com o resto. Posição absoluta = coordenadas do documento. */}
+        <TourBalloon />
       </div>
       <SaveIndicator />
     </>

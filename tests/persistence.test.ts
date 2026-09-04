@@ -106,6 +106,16 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     });
   });
 
+  it('documento de antes do tour (sem tutorialSeen) começa sem nada visto — a conta antiga vê o tour uma vez', () => {
+    expect(hydrateUserDoc({ checks: { '2026-09-01': { '09:00': true } } }).tutorialSeen).toEqual({});
+  });
+
+  it('tutorialSeen: só áreas conhecidas com true passam', () => {
+    expect(hydrateUserDoc({ tutorialSeen: { plan: true, profile: true } }).tutorialSeen).toEqual({ plan: true, profile: true });
+    expect(hydrateUserDoc({ tutorialSeen: { plan: 'sim', loja: true, analytics: true } }).tutorialSeen).toEqual({ analytics: true });
+    expect(hydrateUserDoc({ tutorialSeen: ['plan'] }).tutorialSeen).toEqual({});
+  });
+
   it('eventSeries que não é array é descartado', () => {
     expect(hydrateUserDoc({ eventSeries: { oops: true } }).eventSeries).toEqual([]);
   });
@@ -140,6 +150,7 @@ describe('serializeState', () => {
     delete parcial.pets;
     delete parcial.coinsSpent;
     delete parcial.groups;
+    delete parcial.tutorialSeen;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -147,6 +158,7 @@ describe('serializeState', () => {
     expect(doc.coinsSpent).toBe(0);
     expect(doc).not.toHaveProperty('skills');
     expect(doc.groups).toEqual({});
+    expect(doc.tutorialSeen).toEqual({});
   });
 });
 
@@ -169,6 +181,7 @@ describe('ida e volta', () => {
       },
       coinsSpent: 300,
       groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
+      tutorialSeen: { plan: true, analytics: true },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });
