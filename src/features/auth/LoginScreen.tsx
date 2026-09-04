@@ -3,7 +3,8 @@
 // Mantém os mesmos ids/classes do markup antigo: o CSS e o smoke test dependem deles.
 
 import { useEffect, useMemo, useState } from 'react';
-import { signIn } from '../../application/session';
+import { resetPassword, signIn, signInWithEmail, signUpWithEmail } from '../../application/session';
+import type { AuthErrorReason } from '../../domain/auth';
 import { FORMS } from '../../domain/pets';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
@@ -69,6 +70,86 @@ function GoogleLogo() {
   );
 }
 
+type Mode = 'signin' | 'signup';
+
+function EmailForm() {
+  const t = strings.login;
+  const [mode, setMode] = useState<Mode>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<AuthErrorReason | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const clearFeedback = () => {
+    setError(null);
+    setResetSent(false);
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearFeedback();
+    setBusy(true);
+    const result = mode === 'signup' ? await signUpWithEmail(email, password) : await signInWithEmail(email, password);
+    setBusy(false);
+    if (!result.ok) setError(result.reason);
+  };
+
+  const forgotPassword = async () => {
+    clearFeedback();
+    setBusy(true);
+    const result = await resetPassword(email);
+    setBusy(false);
+    if (!result.ok) setError(result.reason);
+    else setResetSent(true);
+  };
+
+  const toggleMode = () => {
+    clearFeedback();
+    setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
+  };
+
+  return (
+    <>
+      <form className="ls-form" id="login-form" onSubmit={(e) => void submit(e)}>
+        <input
+          type="email"
+          id="login-email"
+          className="ls-input"
+          placeholder={t.emailPlaceholder}
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          id="login-password"
+          className="ls-input"
+          placeholder={t.passwordPlaceholder}
+          autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {error && <div className="ls-error" id="login-error">{t.errors[error]}</div>}
+        {resetSent && <div className="ls-info" id="login-reset-sent">{t.resetSent(email)}</div>}
+        <button type="submit" className="ls-submit-btn" id="login-submit" disabled={busy}>
+          {busy ? t.loading : mode === 'signup' ? t.signUp : t.signIn}
+        </button>
+      </form>
+      <div className="ls-links">
+        <button type="button" className="ls-link" id="login-toggle-mode" onClick={toggleMode}>
+          {mode === 'signup' ? t.haveAccount : t.needAccount}
+        </button>
+        <button type="button" className="ls-link" id="login-forgot" onClick={() => void forgotPassword()}>
+          {t.forgotPassword}
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function LoginScreen() {
   const { user, authReady } = useAppState((s, d) => ({ user: s.user, authReady: d.authReady }));
   if (!authReady || user) return null;
@@ -100,6 +181,8 @@ export function LoginScreen() {
             </div>
           ))}
         </div>
+        <EmailForm />
+        <div className="ls-divider"><span>{t.or}</span></div>
         <button className="ls-google-btn" onClick={() => void signIn()}>
           <GoogleLogo />
           {t.google}

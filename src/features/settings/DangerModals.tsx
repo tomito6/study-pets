@@ -6,6 +6,7 @@ import { deleteAccount } from '../../application/account';
 import { cancelSession } from '../../application/settings';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
+import { useAppState } from '../../store/store';
 import { Modal } from '../shell/Modal';
 
 const tc = strings.settings.cancel;
@@ -50,22 +51,25 @@ interface DeleteProps {
 }
 
 export function DeleteAccountModal({ open, onClose, onDone }: DeleteProps) {
+  const needsPassword = useAppState((s) => s.user?.provider === 'password');
   const [typed, setTyped] = useState('');
+  const [password, setPassword] = useState('');
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setTyped('');
+    setPassword('');
     setStatus('');
     setBusy(false);
   }, [open]);
 
-  const unlocked = typed.trim().toUpperCase() === td.keyword && !busy;
+  const unlocked = typed.trim().toUpperCase() === td.keyword && !busy && (!needsPassword || password.length > 0);
 
   const confirm = async () => {
     setBusy(true);
-    const result = await deleteAccount((stage) => setStatus(td.status[stage]));
+    const result = await deleteAccount((stage) => setStatus(td.status[stage]), needsPassword ? password : undefined);
     if (result === 'ok') {
       onClose();
       onDone();
@@ -88,6 +92,20 @@ export function DeleteAccountModal({ open, onClose, onDone }: DeleteProps) {
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.5 }}>
         {td.outro}<strong>{td.outroStrong}</strong>.
       </p>
+      {needsPassword && (
+        <>
+          <div className="field-sublabel">{td.passwordLabel}</div>
+          <input
+            type="password"
+            className="del-acc-input"
+            id="del-acc-password"
+            placeholder={td.passwordPlaceholder}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </>
+      )}
       <div className="field-sublabel">{td.typeToConfirm[0]}<strong>{td.typeToConfirm[1]}</strong>{td.typeToConfirm[2]}</div>
       <input
         type="text"

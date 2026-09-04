@@ -9,7 +9,15 @@ import { stopTimer } from './timer';
 
 export type DeleteAccountResult = 'ok' | 'no-user' | 'data-failed' | 'reauth-failed' | 'delete-failed';
 
-export async function deleteAccount(onStatus: (stage: 'deleting' | 'reauth') => void): Promise<DeleteAccountResult> {
+/**
+ * `password` só é usado (e só é pedido pela UI) quando o provedor da conta é
+ * 'password' — é o que a reautenticação exige nesse caso, no lugar do popup
+ * do Google.
+ */
+export async function deleteAccount(
+  onStatus: (stage: 'deleting' | 'reauth') => void,
+  password?: string,
+): Promise<DeleteAccountResult> {
   const user = auth.currentUser() ?? state.user;
   if (!user) return 'no-user';
 
@@ -28,7 +36,7 @@ export async function deleteAccount(onStatus: (stage: 'deleting' | 'reauth') => 
   }
 
   try {
-    await auth.deleteCurrentUser({ onReauthRequired: () => onStatus('reauth') });
+    await auth.deleteCurrentUser({ onReauthRequired: () => onStatus('reauth'), password });
   } catch (e) {
     if (e instanceof DeleteAccountError && e.stage === 'reauth') {
       console.error('Reauth/delete failed:', e.cause);

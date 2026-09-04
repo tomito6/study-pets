@@ -430,6 +430,15 @@ Desligar o hardcore no meio da sequência: pode, sem custo, ou é desistir?
 
 ## Conta com e-mail e senha, além do Google — 2026-09-03
 
+> **→ virou implementação** na branch `feat/login-email` (2026-09-03, plan em
+> `plans/2026-09-03_2000_login-email-senha.md`): `AuthPort` estendida com `signUpWithEmail`/
+> `signInWithEmail`/`sendPasswordReset`, motivo de erro tipado em `domain/auth.ts`, formulário na tela
+> de login com Entrar/Criar conta/Esqueci a senha, e a reautenticação por senha no apagar conta. Decisões
+> tomadas: e-mail já em uso (com Google ou senha) não vincula os provedores — só orienta a usar o outro;
+> "esqueci a senha" sempre confirma envio, mesmo sem conta, pra não revelar contas; verificação de
+> e-mail é disparada mas sem lembrete no perfil (fora do escopo). Falta abrir Email/Password no console
+> do Firebase antes do merge — ver o plan file.
+
 Ideia do Tomi: criar conta com e-mail e senha em vez de (só) conectar o Gmail. Faz sentido pra
 ambição de abrir pra qualquer estudante: nem todo mundo tem conta Google, e tem quem não queira ligar
 a conta do Google a um app de estudo. O Google continua como atalho; e-mail vira a porta padrão.
