@@ -153,10 +153,11 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-windows-panel .swc-end').fill('16:00');
     await page.locator('#day-windows-save').click();
     await expect(page.locator('#day-windows-panel')).toBeHidden();
-    // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 às 16:00.
+    // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 até 15:55
+    // (os 5 min finais são menos que meio pomo, e o gerador descarta).
     await expect(page.locator('.block-row').first()).toContainText('Almoço');
     await expect(page.locator('.block-row.session-block').first()).toContainText('14:00–14:25');
-    await expect(page.locator('.block-row.session-block').last()).toContainText('–16:00');
+    await expect(page.locator('.block-row.session-block').last()).toContainText('15:30–15:55');
   });
 
   test('4. clicar no bloco do momento inicia o pomodoro em modo foco', async ({ page }) => {
