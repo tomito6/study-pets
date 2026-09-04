@@ -5,10 +5,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkBlock, toggleBlockCheck } from '../src/application/checks';
 import { blocksForDay, rebuildWeeks } from '../src/application/plan';
-import { closeFocus, setVolume, startTimer, stopTimer, toggleMute, tryStartTimer } from '../src/application/timer';
+import { closeFocus, reconcileTimer, setVolume, startTimer, stopTimer, toggleMute, tryStartTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
 import { emptyPersistedState } from '../src/domain/persistence';
 import type { StudyBlock } from '../src/domain/types';
+import { wakeLockWanted } from '../src/infrastructure/wakeLock';
 import { derived, state, subscribe } from '../src/store/store';
 
 const HOJE = '2026-09-02';
@@ -142,6 +143,77 @@ describe('fim do bloco no modo foco', () => {
     expect(state.checks[HOJE]).toBeUndefined();
     expect(derived.timerBlock).toBeNull();
     expect(derived.focusOpen).toBe(false);
+  });
+});
+
+describe('reconcileTimer — ao voltar pra aba com o intervalo congelado', () => {
+  it('um bloco que terminou enquanto a aba dormia: marca, emenda, e resolve um por vez', () => {
+    startTimer(bloco); // 10:10, Estudo 3 (10:00–10:25)
+    // O relógio anda 21 min, mas o setInterval não dispara (aba em segundo plano / tela travada).
+    const volta = new Date(`${HOJE}T10:31:00`);
+    vi.setSystemTime(volta);
+    expect(derived.timerBlock).toBe(bloco);
+
+    reconcileTimer(volta);
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(true); // Estudo 3
+    expect(isChecked(state.checks, HOJE, '10:25')).toBe(true); // a pausa, que também passou
+    expect(derived.timerBlock).toMatchObject({ type: 'estudo', time: '10:30', endTime: '10:55' }); // Estudo 4, rodando
+    expect(derived.focusOpen).toBe(true);
+    expect(derived.timerCompleted).toMatchObject({ name: 'Pausa', type: 'pausa' });
+  });
+
+  it('nada terminou: não mexe em nada', () => {
+    startTimer(bloco);
+    const agora = new Date(`${HOJE}T10:20:00`);
+    vi.setSystemTime(agora);
+    reconcileTimer(agora);
+    expect(derived.timerBlock).toBe(bloco);
+    expect(state.checks[HOJE]).toBeUndefined();
+  });
+
+  it('com o foco fechado, o bloco terminado some sem check — o fim de sempre', () => {
+    startTimer(bloco);
+    closeFocus();
+    const volta = new Date(`${HOJE}T11:00:00`);
+    vi.setSystemTime(volta);
+    reconcileTimer(volta);
+    expect(state.checks[HOJE]).toBeUndefined();
+    expect(derived.timerBlock).toBeNull();
+  });
+
+  it('sem timer rodando é no-op', () => {
+    reconcileTimer(new Date(`${HOJE}T23:00:00`));
+    expect(derived.timerBlock).toBeNull();
+  });
+});
+
+describe('wake lock — só enquanto o foco está aberto', () => {
+  it('quer a tela ligada ao abrir o foco; solta ao sair do foco, parar ou terminar', () => {
+    startTimer(bloco);
+    expect(wakeLockWanted()).toBe(true);
+    closeFocus();
+    expect(wakeLockWanted()).toBe(false);
+
+    startTimer(bloco);
+    expect(wakeLockWanted()).toBe(true);
+    stopTimer();
+    expect(wakeLockWanted()).toBe(false);
+
+    const dia = blocksForDay(HOJE);
+    const ultimo = dia[dia.length - 1]!;
+    vi.setSystemTime(new Date(`${HOJE}T${ultimo.time}:30`));
+    startTimer(ultimo);
+    expect(wakeLockWanted()).toBe(true);
+    relogioEm(`${ultimo.endTime}:00`); // fim do dia: o foco fecha sozinho
+    expect(derived.focusOpen).toBe(false);
+    expect(wakeLockWanted()).toBe(false);
+  });
+
+  it('a emenda no bloco seguinte mantém a tela ligada', () => {
+    startTimer(bloco);
+    relogioEm('10:24:59');
+    expect(derived.timerBlock).toMatchObject({ type: 'pausa' });
+    expect(wakeLockWanted()).toBe(true);
   });
 });
 

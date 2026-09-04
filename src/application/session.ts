@@ -12,6 +12,7 @@ import { openOnboarding } from './onboarding';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
 import { blockSaves } from './save';
+import { watchVisibility } from './timer';
 
 export async function signIn(): Promise<void> {
   try {
@@ -74,6 +75,7 @@ let started = false;
 export function startSession(): void {
   if (started) return;
   started = true;
+  watchVisibility(); // o timer se acerta com o relógio ao voltar pra aba / destravar o celular
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       blockSaves(false);

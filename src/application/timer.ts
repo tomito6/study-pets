@@ -19,6 +19,9 @@ import type { StudyBlock } from '../domain/types';
 import { playSound as playSoundInfra } from '../infrastructure/audio/sounds';
 import type { SoundType } from '../infrastructure/audio/sounds';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
+import type { Unsubscribe } from '../infrastructure/ports';
+import { onVisible } from '../infrastructure/visibility';
+import { reacquireWakeLockIfWanted, releaseWakeLock, requestWakeLock } from '../infrastructure/wakeLock';
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
@@ -32,15 +35,37 @@ function clearWatcher(): void {
   endWatcher = null;
 }
 
-/** Põe o bloco no timer, abre o foco e fica de olho no fim. */
+/** Põe o bloco no timer, abre o foco (com a tela segura pelo Wake Lock) e fica de olho no fim. */
 function runBlock(block: StudyBlock): void {
   clearWatcher();
   derived.timerBlock = block;
   derived.focusOpen = true;
   notify();
-  endWatcher = setInterval(() => {
-    if (derived.timerBlock && timerProgress(derived.timerBlock, new Date()).done) finishTimer();
-  }, 1000);
+  void requestWakeLock();
+  endWatcher = setInterval(() => reconcileTimer(), 1000);
+}
+
+/**
+ * Acerta o timer com o relógio: se o bloco que está rodando já terminou, segue o
+ * mesmo caminho de fim que o intervalo segue. O intervalo é estrangulado em aba
+ * de fundo e congela com a tela travada, então isto roda também ao voltar pra
+ * visível — e se mais de um bloco passou, a emenda resolve um por vez, porque
+ * cada bloco seguinte cai no `done` de novo com o mesmo `now`.
+ */
+export function reconcileTimer(now: Date = new Date()): void {
+  let guard = 0;
+  while (derived.timerBlock && timerProgress(derived.timerBlock, now).done && guard++ < 100) finishTimer(now);
+}
+
+let visibilityWatch: Unsubscribe | null = null;
+
+/** Registra uma vez o "voltou pra visível" → reconciliar + pedir o Wake Lock de novo. */
+export function watchVisibility(): void {
+  if (visibilityWatch) return;
+  visibilityWatch = onVisible(() => {
+    reconcileTimer();
+    if (derived.focusOpen) reacquireWakeLockIfWanted();
+  });
 }
 
 /** Inicia o timer no bloco (sem validar — use `tryStartTimer` a partir da UI). */
@@ -63,15 +88,15 @@ export function tryStartTimer(block: StudyBlock, now: Date = new Date()): StartC
  * no próximo bloco — ou fecha, se a sequência acabou. Fora do foco: som do tipo
  * e notificação, e o timer some.
  */
-function finishTimer(): void {
+function finishTimer(now: Date = new Date()): void {
   const block = derived.timerBlock;
   clearWatcher();
   if (!block) {
     derived.focusOpen = false;
+    releaseWakeLock();
     notify();
     return;
   }
-  const now = new Date();
   const todayKey = dk(now);
   const n = strings.timer.notification;
   pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
@@ -99,6 +124,7 @@ function finishTimer(): void {
   derived.timerBlock = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
+  releaseWakeLock();
   notify();
 }
 
@@ -108,13 +134,15 @@ export function stopTimer(): void {
   derived.timerBlock = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
+  releaseWakeLock();
   notify();
 }
 
-/** "← Sair do foco": fecha o overlay, o timer continua. */
+/** "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo). */
 export function closeFocus(): void {
   if (!derived.focusOpen) return;
   derived.focusOpen = false;
+  releaseWakeLock();
   notify();
 }
 
