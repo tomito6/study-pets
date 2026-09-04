@@ -101,6 +101,32 @@ describe('repositório em memória (modo teste)', () => {
     await repo.delete('u1');
     expect(await repo.load('u1')).toBeNull();
   });
+
+  // Contrato compartilhado com o Firestore (setDoc SEM merge): salvar substitui o
+  // documento inteiro. Um check desmarcado não pode voltar no reload.
+  it('salvar substitui o doc inteiro — chave aninhada que sumiu não volta', async () => {
+    const repo = createMemoryUserRepository(null);
+    const base = emptyPersistedState();
+    await repo.save('u1', serializeState({
+      ...base,
+      checks: { '2026-09-01': { '09:00': { pet: null, bonus: 0 }, '10:00': { pet: null, bonus: 0 } } },
+      events: { '2026-09-01': [{ name: 'Aula', start: '14:00', end: '15:00', countsAsStudy: true }] },
+    }));
+    await repo.save('u1', serializeState({
+      ...base,
+      checks: { '2026-09-01': { '10:00': { pet: null, bonus: 0 } } },
+    }));
+    const loaded = (await repo.load('u1')) as { checks: Record<string, Record<string, unknown>>; events: Record<string, unknown> };
+    expect(loaded.checks['2026-09-01']).toEqual({ '10:00': { pet: null, bonus: 0 } });
+    expect(loaded.events).toEqual({});
+  });
+
+  it('campo legado que o app não manda mais some do doc salvo', async () => {
+    const repo = createMemoryUserRepository(null);
+    await repo.save('u1', { ...doc(), skills: { owl: 'noturno' } } as never);
+    await repo.save('u1', doc());
+    expect(await repo.load('u1')).not.toHaveProperty('skills');
+  });
 });
 
 describe('repositório em memória com sessionStorage (sobrevive ao reload)', () => {

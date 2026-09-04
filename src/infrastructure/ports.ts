@@ -38,7 +38,11 @@ export class DeleteAccountError extends Error {
 export interface UserRepository {
   /** Documento cru do usuário, ou null se a conta é nova. */
   load(uid: string): Promise<unknown | null>;
-  /** Salva com merge — campos não enviados são preservados. */
+  /**
+   * Substitui o documento inteiro pelo enviado. Chave que não vem some — é assim
+   * que desmarcar um check, apagar o último evento ou o último grupo do dia
+   * persistem. `serializeState` sempre monta o documento completo.
+   */
   save(uid: string, doc: UserDoc): Promise<void>;
   delete(uid: string): Promise<void>;
   /** true quando os dados não sobrevivem a um reload (modo teste). */

@@ -59,9 +59,10 @@ export function createMemoryUserRepository(
     },
 
     async save(uid, userDoc) {
-      // O app sempre manda o documento inteiro, então o "merge" do Firestore
-      // equivale a substituir campo a campo no nível de cima.
-      write(uid, { ...(read(uid) ?? {}), ...structuredClone(userDoc) } as UserDoc);
+      // Substitui o documento inteiro — a mesma semântica do repositório Firebase
+      // (setDoc sem merge). Antes fazia um merge raso no topo, e por isso o bug do
+      // check desmarcado que voltava nunca aparecia em teste nem no e2e.
+      write(uid, structuredClone(userDoc));
     },
 
     async delete(uid) {
