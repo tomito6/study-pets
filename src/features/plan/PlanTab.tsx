@@ -232,7 +232,7 @@ export function PlanTab() {
             {canGroup && (
               <button className="add-event-btn" id="group-mode-btn" onClick={selection.arm}>{tg.button}</button>
             )}
-            <button className="add-event-btn" onClick={() => setModal({ kind: 'event' })}>{t.addEvent}</button>
+            <button className="add-event-btn" id="add-event-btn" onClick={() => setModal({ kind: 'event' })}>{t.addEvent}</button>
           </>
         )}
       </div>

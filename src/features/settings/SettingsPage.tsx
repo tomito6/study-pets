@@ -8,6 +8,7 @@
 import { useRef, useState } from 'react';
 import { exportMyData } from '../../application/export';
 import { saveSettings } from '../../application/settings';
+import { restartTour } from '../../application/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
 import { strings } from '../../shared/strings';
@@ -57,6 +58,11 @@ export function SettingsPage() {
       showToast(t.incomplete);
       return;
     }
+    close();
+  };
+  // "Ver o tour de novo": zera o visto e fecha — o ⚙️ só existe no Plano, então o balão 1/3 aparece embaixo.
+  const restart = () => {
+    restartTour();
     close();
   };
 
@@ -208,6 +214,20 @@ export function SettingsPage() {
                 <div className="st-card">
                   <div className="st-field-label">{t.goal.label}</div>
                   <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15" value={draft.dailyStudyMin} onChange={(e) => patch({ dailyStudyMin: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{t.tour.title}</div></div>
+                <div className="st-section-desc">{t.tour.desc}</div>
+                <div className="st-card">
+                  <div className="st-action-row">
+                    <div>
+                      <div className="ar-title">{t.tour.rowTitle}</div>
+                      <div className="ar-desc">{t.tour.rowDesc}</div>
+                    </div>
+                    <button type="button" className="st-action-btn" id="tour-restart" onClick={restart}>{t.tour.button}</button>
+                  </div>
                 </div>
               </div>
 

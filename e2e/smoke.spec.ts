@@ -519,6 +519,54 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.group-header')).toContainText('Análise II · revisão');
   });
 
+  test('21. o tour contextual: três balões no Plano, um no Perfil, e "Ver o tour de novo"', async ({ page }) => {
+    await abrirApp(page);
+    const balao = page.locator('#tour-balloon');
+    await expect(balao).toBeVisible();
+    await expect(balao).toContainText('Seu dia já está montado');
+    await expect(balao).toContainText('1/3');
+    await expect(page.locator('.tour-ring')).toBeVisible(); // o anel na primeira linha do plano
+    await expect(balao).toHaveClass(/tour-above/);
+    // Não bloqueia a tela: o check embaixo continua clicável com o balão aberto.
+    await checksDeEstudo(page).first().click();
+    await expect(checksDeEstudo(page).first()).toHaveClass(/checked/);
+    await expect(balao).toContainText('1/3');
+
+    await page.locator('#tour-next').click();
+    await expect(balao).toContainText('A vida muda, o plano acompanha');
+    await expect(balao).toContainText('2/3');
+    await page.locator('#tour-next').click();
+    await expect(balao).toContainText('No fim do dia, encerre');
+    await expect(balao).toContainText('3/3');
+    await expect(page.locator('#tour-next')).toHaveText('Entendi');
+    await page.locator('#tour-next').click();
+    await expect(balao).toHaveCount(0);
+
+    // Visto fica salvo: recarregar não traz o balão de volta.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('.block-row').first()).toBeVisible();
+    await expect(balao).toHaveCount(0);
+
+    // Cada aba tem o seu, na primeira visita. "Pular" marca a aba inteira.
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(balao).toContainText('Pets são horas estudadas');
+    await expect(balao).not.toContainText('1/1'); // balão único não tem contador
+    await page.locator('#tour-skip').click();
+    await expect(balao).toHaveCount(0);
+    await page.getByRole('button', { name: /Plano/ }).click();
+    await expect(balao).toHaveCount(0);
+
+    // Configurações → Geral → "Ver o tour de novo": fecha e o 1/3 volta.
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Geral' }).click();
+    await page.locator('#tour-restart').click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+    await expect(balao).toContainText('Seu dia já está montado');
+    await expect(balao).toContainText('1/3');
+  });
+
   test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {
     // O menu de contexto do browser nunca pode aparecer — nem em cima do modal que abre ao soltar.
     await page.addInitScript(() => {

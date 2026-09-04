@@ -14,6 +14,8 @@ import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
+import { normalizeTutorialSeen } from './tutorial';
+import type { TutorialSeen } from './tutorial';
 import type {
   ChecksByDate,
   DateKey,
@@ -60,6 +62,8 @@ export interface PersistedState {
   groups: GroupsByDate;
   /** Janelas de estudo só de um dia; lista vazia = dia livre (ver domain/dayWindows.ts). */
   windowOverrides: WindowOverrides;
+  /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
+  tutorialSeen: TutorialSeen;
 }
 
 /**
@@ -105,6 +109,7 @@ export function emptyPersistedState(): PersistedState {
     coinsSpent: 0,
     groups: {},
     windowOverrides: {},
+    tutorialSeen: {},
   };
 }
 
@@ -215,6 +220,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
     groups: hydrateGroups(d.groups),
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
+    // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
+    tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
   };
 }
 
@@ -238,5 +245,6 @@ export function serializeState(s: PersistedState): UserDoc {
     coinsSpent: s.coinsSpent || 0,
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
+    tutorialSeen: s.tutorialSeen || {},
   };
 }

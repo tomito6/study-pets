@@ -43,9 +43,11 @@ describe('cancelSession', () => {
     state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
     state.coinsSpent = 150;
     state.windowOverrides = { '2026-09-01': { studyWindows: [] } };
+    state.tutorialSeen = { plan: true };
     cancelSession();
     expect(state.checks).toEqual({});
     expect(state.windowOverrides).toEqual({});
+    expect(state.tutorialSeen).toEqual({ plan: true }); // o tour visto fica: quem cancelou já conhece o app
     expect(state.pets).toEqual({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
     expect(state.coinsSpent).toBe(0);
     expect(state.config.periodStart).toBeNull(); // só aqui o início é redefinido

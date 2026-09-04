@@ -223,6 +223,35 @@ export const strings = {
     back: '← Trocar de pet',
     starterMissing: 'Escolhe um pet e dá um nome pra ele.',
   },
+  tutorial: {
+    next: 'Próximo',
+    done: 'Entendi',
+    skip: 'Pular',
+    counter: (i: number, n: number) => `${i}/${n}`,
+    /** Indexado pelo id do passo (`domain/tutorial.ts`). Duas linhas no máximo: explica o modelo, não o botão. */
+    steps: {
+      'plan-blocks': {
+        title: 'Seu dia já está montado',
+        text: 'Marque o check quando terminar um bloco. Tocar no bloco abre o modo foco.',
+      },
+      'plan-events': {
+        title: 'A vida muda, o plano acompanha',
+        text: 'Entrou uma aula, almoçou fora de hora? Registre aqui e o resto do dia se reorganiza. Sem culpa.',
+      },
+      'plan-finish': {
+        title: 'No fim do dia, encerre',
+        text: 'É aí que o XP e as moedas dos blocos marcados entram de verdade — pra você e pro seu pet.',
+      },
+      'profile-pet': {
+        title: 'Pets são horas estudadas',
+        text: 'O pet equipado ganha XP com cada bloco que você conclui. Com as moedas, adote outros na loja.',
+      },
+      'analytics-subnav': {
+        title: 'Tô fazendo o que planejei?',
+        text: 'Cumprido contra planejado, meta diária e os horários em que você mais rende.',
+      },
+    },
+  },
   dayEnd: {
     confirmTitle: 'Encerrar o dia?',
     confirmText: ['Isso vai ', 'creditar o XP', ' dos blocos marcados de hoje (no usuário e no pet equipado) e ', 'travar os checks', ' deste dia.'],
@@ -411,6 +440,13 @@ export const strings = {
       button: 'Baixar (JSON)',
       done: 'Arquivo gerado ✓',
       failed: 'Não deu pra gerar o arquivo neste navegador.',
+    },
+    tour: {
+      title: 'Tutorial',
+      desc: 'Os balões que apresentam cada aba na primeira vez que você entra nela.',
+      rowTitle: 'Ver o tour de novo',
+      rowDesc: 'Os cinco balões voltam, começando pelo Plano. Nada mais muda.',
+      button: 'Ver de novo',
     },
     danger: {
       title: 'Zona de perigo',

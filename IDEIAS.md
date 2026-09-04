@@ -469,6 +469,13 @@ formulário só é testado em `npm run dev`? (O e2e hoje pula o login inteiro.)
 
 ## Tutorial depois de criar a conta — 2026-09-03
 
+> **→ virou implementação** na branch `feat/tutorial` (2026-09-04, plan em
+> `plans/2026-09-04_0100_tutorial-contextual.md`): o tour contextual recomendado abaixo — cinco balões
+> em cima do app de verdade (3 no Plano, 1 no Perfil, 1 na Análise), na primeira visita a cada aba,
+> sem bloquear a tela, "Pular" sempre visível, `tutorialSeen` salvo (Cancelar sessão não zera) e
+> "Ver o tour de novo" em Configurações → Geral. Sem mascote: o pet não fala. A alternativa mínima
+> (card de três linhas) não foi feita — o tour saiu antes da conta por e-mail, porque o Tomi quis testar.
+
 Ideia do Tomi: quando a conta é criada, um passo a passo explicando como as coisas funcionam —
 explicações **bem gerais** — ou um tutorial. A dor é real e só aparece com um usuário que não é o
 autor: a conta nova cai num plano já gerado, com sessões coloridas, checks, XP, pet, e ninguém diz que
