@@ -3,6 +3,7 @@ import {
   SCHEMA_VERSION,
   emptyPersistedState,
   hydrateUserDoc,
+  readDocMeta,
   serializeState,
 } from '../src/domain/persistence';
 import type { PersistedState } from '../src/domain/persistence';
@@ -17,6 +18,17 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc(null)).toEqual(emptyPersistedState());
     expect(hydrateUserDoc('x')).toEqual(emptyPersistedState());
     expect(hydrateUserDoc([1, 2])).toEqual(emptyPersistedState());
+  });
+
+  it('o carimbo `meta` (sync) não entra no estado — com ou sem ele, o doc carrega igual', () => {
+    const meta = { writer: 'abc', writtenAt: 1_700_000_000_000 };
+    expect(hydrateUserDoc({ coinsSpent: 10, meta })).toEqual({ ...emptyPersistedState(), coinsSpent: 10 });
+    expect(hydrateUserDoc({ coinsSpent: 10 })).toEqual({ ...emptyPersistedState(), coinsSpent: 10 });
+    expect(readDocMeta({ meta })).toEqual(meta);
+    expect(readDocMeta({})).toBeNull();
+    expect(readDocMeta({ meta: { writer: '', writtenAt: 1 } })).toBeNull();
+    expect(readDocMeta({ meta: { writer: 'abc', writtenAt: 'ontem' } })).toBeNull();
+    expect(readDocMeta(null)).toBeNull();
   });
 
   it('config antiga sem studyWindows ganha a janela a partir de start/end', () => {

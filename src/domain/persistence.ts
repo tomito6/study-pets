@@ -59,9 +59,32 @@ export interface PersistedState {
   groups: GroupsByDate;
 }
 
+/**
+ * Carimbo de quem escreveu o documento por último. `writer` identifica uma carga
+ * da página (não o usuário): o snapshot que volta com o nosso próprio `writer` é
+ * eco da nossa escrita. `writtenAt` é o relógio de quem escreveu — só serve pra
+ * reconhecer a MESMA emissão de novo, nunca pra ordenar entre dispositivos.
+ */
+export interface DocMeta {
+  writer: string;
+  writtenAt: number;
+}
+
 /** O documento como é escrito. */
 export interface UserDoc extends PersistedState {
   schemaVersion: number;
+  meta?: DocMeta;
+}
+
+/** O carimbo de um documento cru, se ele tem um válido. */
+export function readDocMeta(raw: unknown): DocMeta | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const meta = (raw as { meta?: unknown }).meta;
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+  const { writer, writtenAt } = meta as { writer?: unknown; writtenAt?: unknown };
+  return typeof writer === 'string' && writer && typeof writtenAt === 'number' && Number.isFinite(writtenAt)
+    ? { writer, writtenAt }
+    : null;
 }
 
 export const emptyPets = (): PetsState => ({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });

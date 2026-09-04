@@ -65,6 +65,11 @@ export function createMemoryUserRepository(
       write(uid, structuredClone(userDoc));
     },
 
+    subscribe() {
+      // Cada aba é uma conta: não há outro dispositivo pra sincronizar.
+      return () => {};
+    },
+
     async delete(uid) {
       if (!storage) fallback.delete(uid);
       else storage.removeItem(PREFIX + uid);

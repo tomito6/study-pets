@@ -4,6 +4,7 @@
 import { auth, DeleteAccountError, users } from '../infrastructure';
 import { state } from '../store/store';
 import { blockSaves, cancelPendingSave } from './save';
+import { unsubscribeRemote } from './sync';
 import { stopTimer } from './timer';
 
 export type DeleteAccountResult = 'ok' | 'no-user' | 'data-failed' | 'reauth-failed' | 'delete-failed';
@@ -15,6 +16,7 @@ export async function deleteAccount(onStatus: (stage: 'deleting' | 'reauth') => 
   onStatus('deleting');
   blockSaves(true); // trava saves pendentes pra não recriar o doc
   cancelPendingSave();
+  unsubscribeRemote(); // o snapshot do doc apagado não tem o que aplicar
   stopTimer();
 
   try {

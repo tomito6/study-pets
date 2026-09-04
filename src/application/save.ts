@@ -11,6 +11,29 @@ let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 /** Depois de apagar a conta, nenhum save pendente pode recriar o documento. */
 let blocked = false;
+/** Um save já saiu e ainda não voltou do servidor. */
+let inFlight = false;
+
+function newClientId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch {
+    // sem crypto (contexto inseguro, ambiente antigo) — cai no fallback
+  }
+  return `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Identifica ESTA carga da página. Vai no `meta.writer` de cada save: o snapshot
+ * que volta do servidor com o nosso id é eco da nossa escrita, não novidade de
+ * outro dispositivo (ver `application/sync.ts`).
+ */
+export const CLIENT_ID: string = newClientId();
+
+/** Há um save agendado (debounce) ou em voo. O sync não aplica doc remoto por cima. */
+export function hasPendingSave(): boolean {
+  return saveTimeout !== null || inFlight;
+}
 
 function showStatus(text: string, done: boolean): void {
   derived.save = { text, visible: true };
@@ -34,12 +57,15 @@ export function scheduleSave(): void {
   saveTimeout = setTimeout(async () => {
     saveTimeout = null;
     if (!state.user || blocked) return;
+    inFlight = true;
     try {
-      await users.save(state.user.uid, serializeState(state));
+      await users.save(state.user.uid, { ...serializeState(state), meta: { writer: CLIENT_ID, writtenAt: Date.now() } });
       showStatus(users.ephemeral ? '💾 Modo teste (só nesta aba)' : 'Salvo ✓', true);
     } catch (e) {
       console.error('Save failed:', e);
       showStatus('⚠️ Erro ao salvar', true);
+    } finally {
+      inFlight = false;
     }
   }, DEBOUNCE_MS);
 }

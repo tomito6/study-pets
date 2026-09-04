@@ -121,6 +121,16 @@ describe('repositório em memória (modo teste)', () => {
     expect(loaded.events).toEqual({});
   });
 
+  it('subscribe é no-op: devolve um unsubscribe e nunca chama de volta', async () => {
+    const repo = createMemoryUserRepository(null);
+    const cb = vi.fn();
+    const off = repo.subscribe('u1', cb);
+    await repo.save('u1', doc());
+    await tick();
+    expect(cb).not.toHaveBeenCalled();
+    expect(() => off()).not.toThrow();
+  });
+
   it('campo legado que o app não manda mais some do doc salvo', async () => {
     const repo = createMemoryUserRepository(null);
     await repo.save('u1', { ...doc(), skills: { owl: 'noturno' } } as never);

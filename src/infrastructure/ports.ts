@@ -44,6 +44,13 @@ export interface UserRepository {
    * persistem. `serializeState` sempre monta o documento completo.
    */
   save(uid: string, doc: UserDoc): Promise<void>;
+  /**
+   * Chama `cb` com o documento cru toda vez que ele muda no servidor — vindo de
+   * outro dispositivo ou desta mesma conta em outra aba. A própria escrita ainda
+   * não confirmada não conta. A primeira emissão repete o doc atual; quem escuta
+   * decide o que fazer (ver `application/sync.ts`).
+   */
+  subscribe(uid: string, cb: (raw: unknown) => void): Unsubscribe;
   delete(uid: string): Promise<void>;
   /** true quando os dados não sobrevivem a um reload (modo teste). */
   readonly ephemeral: boolean;

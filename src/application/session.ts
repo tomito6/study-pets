@@ -12,6 +12,7 @@ import { openOnboarding } from './onboarding';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
 import { blockSaves } from './save';
+import { rememberDoc, subscribeRemote, unsubscribeRemote } from './sync';
 import { watchVisibility } from './timer';
 
 export async function signIn(): Promise<void> {
@@ -32,6 +33,7 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
   let isNew = false;
   try {
     const raw = await users.load(uid);
+    rememberDoc(raw); // a primeira emissão do snapshot repete este doc — o sync ignora
     if (raw) {
       // Qualquer formato antigo: a migração vive em src/domain/persistence.ts.
       Object.assign(state, hydrateUserDoc(raw));
@@ -85,7 +87,9 @@ export function startSession(): void {
       const isNew = await loadUserData(user.uid);
       initAfterLoad();
       if (isNew) openOnboarding();
+      subscribeRemote(user.uid); // depois do load: o que mudar no servidor daqui em diante entra sozinho
     } else {
+      unsubscribeRemote();
       resetToLoggedOut();
       markAuthReady();
       notify();

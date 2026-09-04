@@ -12,6 +12,7 @@ import {
   doc,
   getDoc,
   initializeFirestore,
+  onSnapshot,
   persistentLocalCache,
   persistentMultipleTabManager,
   setDoc,
@@ -39,6 +40,18 @@ export function createFirebaseUserRepository(app: FirebaseApp): UserRepository {
       // quando o dia fechava. Substituir é o comportamento certo; campos legados
       // (o `skills` do v1) caem fora, e é isso mesmo: já migraram na leitura.
       await setDoc(ref(uid), userDoc);
+    },
+
+    subscribe(uid, cb) {
+      return onSnapshot(
+        ref(uid),
+        (snap) => {
+          // Escrita local ainda sem ack do servidor: é a nossa, não é novidade.
+          if (snap.metadata.hasPendingWrites) return;
+          if (snap.exists()) cb(snap.data());
+        },
+        (e) => console.error('Snapshot failed:', e),
+      );
     },
 
     async delete(uid) {

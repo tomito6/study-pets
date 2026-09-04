@@ -135,6 +135,9 @@ export const strings = {
   session: {
     loadError: '⚠️ Erro ao carregar dados',
   },
+  sync: {
+    updated: 'Atualizado de outro dispositivo',
+  },
   errorBoundary: {
     title: 'Algo quebrou',
     text: 'Um erro inesperado derrubou a tela. Seus dados estão salvos — recarregar resolve na maioria das vezes.',
