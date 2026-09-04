@@ -503,6 +503,12 @@ novo. O resto é miúdo e pode entrar de carona.
 
 ### Sync entre dispositivos (hoje o último a salvar apaga o outro)
 
+> **→ virou implementação** na branch `feat/revisao-fundacao` (2026-09-04, plan em
+> `plans/2026-09-04_0600_revisao-fundacao.md`): `UserRepository.subscribe` com `onSnapshot`, carimbo
+> `meta: { writer, writtenAt }` em cada save pra reconhecer eco, e `application/sync.ts` aplicando o doc
+> remoto — a menos que o onboarding esteja aberto ou haja save local pendente (v1: o local vence). A
+> pendência 1 (save sem merge) foi junto.
+
 O doc é carregado **uma vez**, no login, e salvo inteiro com debounce. Celular e notebook abertos ao
 mesmo tempo: o que salvou por último ganha, e o outro perde o que fez sem aviso nenhum. O CLAUDE.md já
 lista "sync mais responsivo" como direção futura; isto é o argumento pra subir de prioridade — é perda
@@ -524,6 +530,12 @@ de dado, não conveniência.
 
 ### O alarme do pomodoro e o celular travado (PWA)
 
+> **→ virou implementação, em parte,** na branch `feat/revisao-fundacao` (2026-09-04, plan em
+> `plans/2026-09-04_0600_revisao-fundacao.md`): o app é PWA (manifest, ícones do personagem gerados por
+> `scripts/app-icon.mjs`, service worker via `vite-plugin-pwa` com precache e navegação network-first), o
+> timer se acerta ao voltar pra aba (`reconcileTimer`) e o Wake Lock segura a tela no modo foco. O que
+> continua ideia: notificação pelo service worker e o push do servidor (FCM).
+
 O que uma página web **não** consegue: tocar com o browser em segundo plano ou a tela travada. O
 `setInterval` congela, `new Notification` só dispara com a página viva, o Web Audio fica suspenso. As
 pendências 2 e 5 cobrem o que dá pra garantir sozinho (a tela não trava durante o foco; ao voltar, o
@@ -543,6 +555,13 @@ app reconcilia). Isto aqui é o passo seguinte:
   Anotar, não fazer.
 
 ### Janela de estudo só de hoje (e "dia livre")
+
+> **→ virou implementação** na branch `feat/revisao-fundacao` (2026-09-04, plan em
+> `plans/2026-09-04_0600_revisao-fundacao.md`): `windowOverrides[dia] = { studyWindows }` (vazio = dia
+> livre), botão "🕘 Janelas do dia" ao lado de "+ Evento" com o mesmo editor das Configurações, "Começar
+> agora" (próximo múltiplo de 5 min) e "Dia livre" (só sem check no dia). Decisão: dia livre é **neutro**
+> na sequência, como o fim de semana pausado; a alternativa (quebra) está na branch
+> `feat/revisao-fundacao-alt-dia-livre-quebra`.
 
 Almoço tem override por dia (`lunchOverrides`); janela não. "Acordei tarde, hoje começo às 10" hoje é
 mudar a config pra sempre ou criar um evento falso — e isso contradiz a promessa central ("almoçou
@@ -571,6 +590,8 @@ cedo? tudo bem, ajusta"). A assimetria é o bug de design mais visível que sobr
   `serializeState` (blob + `<a download>`). Substitui o `scripts/backup-firestore-console.js` pra quem
   não é o autor, e é a resposta pra "quero meus dados" que o GDPR exige de quem opera na Alemanha.
   Importar fica de fora até alguém pedir.
+  > **→ virou implementação** na branch `feat/revisao-fundacao` (2026-09-04): card "Meus dados" em
+  > Configurações → Geral, `application/export.ts` + `infrastructure/download.ts`.
 - **Inglês:** a ambição é qualquer estudante do mundo, e a TUM é internacional. `strings.ts` já é o
   lugar único da UI, então virar `strings[locale]` é mecânico. O que **não** está lá e teria de sair
   do domínio: nomes de bloco gerados pelo `planner.ts` ("📖 Estudo 3", "🍽️ Almoço"), `DEFAULT_GROUP_NAME`,
