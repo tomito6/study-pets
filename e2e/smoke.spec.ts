@@ -519,7 +519,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.group-header')).toContainText('Análise II · revisão');
   });
 
-  test('21. o tour contextual: três balões no Plano, um no Perfil, e "Ver o tour de novo"', async ({ page }) => {
+  test('27. o tour contextual: três balões no Plano, um no Perfil, e "Ver o tour de novo"', async ({ page }) => {
     await abrirApp(page);
     const balao = page.locator('#tour-balloon');
     await expect(balao).toBeVisible();

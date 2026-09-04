@@ -53,7 +53,9 @@ describe('os passos do tour', () => {
     // Um grupo de estudo põe o cabeçalho dele logo acima da primeira linha: ancorar na
     // linha cobriria o cabeçalho (e o clique nele) — na lista, o balão fica acima de tudo.
     const [first] = tourSteps('plan');
-    expect(first).toMatchObject({ anchor: '#blocks-list', side: 'above', align: 'start' });
+    // Acima da BARRA do dia (não da lista): a lista tem "Janelas do dia" logo acima, no canto esquerdo,
+    // e o balão alinhado à esquerda cobria esse botão.
+    expect(first).toMatchObject({ anchor: '.day-events-bar', side: 'above', align: 'start' });
     expect(first!.highlight).toContain('.block-row');
   });
 

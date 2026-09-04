@@ -37,7 +37,10 @@ export interface TourStep {
  * primeiro dia fica embaixo dele. O anel vai na primeira linha, que é o que o texto explica.
  */
 export const TOUR_STEPS: readonly TourStep[] = [
-  { id: 'plan-blocks', area: 'plan', anchor: '#blocks-list', highlight: '#blocks-list .block-row, #blocks-list .empty-day', side: 'above', align: 'start' },
+  // Ancorado na barra do dia (Janelas do dia / Agrupar / + Evento), não na lista: acima da lista o
+  // balão cobria o botão mais à esquerda da barra. Acima da barra, ela fica livre inteira — o balão
+  // cobre só o seletor de semana e as abas dos dias. O anel continua na primeira linha.
+  { id: 'plan-blocks', area: 'plan', anchor: '.day-events-bar', highlight: '#blocks-list .block-row, #blocks-list .empty-day', side: 'above', align: 'start' },
   { id: 'plan-events', area: 'plan', anchor: '#add-event-btn', side: 'below', align: 'end' },
   { id: 'plan-finish', area: 'plan', anchor: '#finish-day-wrap .finish-day-btn', side: 'above', align: 'center' },
   { id: 'profile-pet', area: 'profile', anchor: '#active-pet-card, #no-active-pet', side: 'above', align: 'start' },
