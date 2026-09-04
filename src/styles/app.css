@@ -738,3 +738,12 @@
   .blocks-list.selecting-mode .block-row{cursor:crosshair;}
   .block-row{-webkit-touch-callout:none;}
   .group-summary{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+  /* ERROR BOUNDARY — a tela de "Algo quebrou" (src/app/ErrorBoundary.tsx). */
+  .error-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--bg);color:var(--text);}
+  .error-card{width:100%;max-width:480px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;}
+  .error-title{font-size:18px;font-weight:600;margin-bottom:8px;}
+  .error-text{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+  .error-detail{font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;margin-bottom:16px;}
+  .error-reload{width:100%;padding:12px 16px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#0e0e0f;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .error-reload:hover{filter:brightness(1.08);}

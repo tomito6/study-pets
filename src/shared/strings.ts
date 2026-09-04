@@ -135,6 +135,11 @@ export const strings = {
   session: {
     loadError: '⚠️ Erro ao carregar dados',
   },
+  errorBoundary: {
+    title: 'Algo quebrou',
+    text: 'Um erro inesperado derrubou a tela. Seus dados estão salvos — recarregar resolve na maioria das vezes.',
+    reload: 'Recarregar',
+  },
   onboarding: {
     title: '👋 Bem-vindo!',
     intro: 'Vamos configurar quando você quer usar o app. Você pode mudar isso depois nas configurações.',
