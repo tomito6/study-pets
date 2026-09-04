@@ -3,6 +3,7 @@
 // formulário — o usuário confirma com Salvar, como no fluxo normal.
 
 import { useEffect, useState } from 'react';
+import { dayWindowsOverride } from '../../application/dayWindows';
 import { currentDayKey, getEventsForDate } from '../../application/plan';
 import { fitStudySuggestions, formatCompact } from '../../domain/settings';
 import type { FitSuggestion } from '../../domain/settings';
@@ -47,7 +48,10 @@ export function FitStudyModal({ open, cfgBase, onApply, onClose }: Props) {
       flex,
     };
     const key = currentDayKey();
-    setTop(fitStudySuggestions(cfgBase, getEventsForDate(key), ideal));
+    // O dia visível pode ter janelas só dele: a simulação usa as que valem pra ele.
+    const ov = dayWindowsOverride(key);
+    const cfg = ov && ov.studyWindows.length > 0 ? { ...cfgBase, studyWindows: ov.studyWindows } : cfgBase;
+    setTop(fitStudySuggestions(cfg, getEventsForDate(key), ideal));
   };
 
   const apply = (s: FitSuggestion) => {

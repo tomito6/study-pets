@@ -8,7 +8,7 @@ import type { EvolveRefusal } from '../domain/pets';
 import { dk } from '../domain/time';
 import type { PetId, PetInstance, PetInstanceId, SkillId } from '../domain/types';
 import { notify, state } from '../store/store';
-import { computeStatsNow, generateBlocks, getEventsForDate } from './plan';
+import { blocksForDay, computeStatsNow } from './plan';
 import { scheduleSave } from './save';
 
 export const petById = (id: PetInstanceId | null | undefined): PetInstance | null =>
@@ -20,7 +20,9 @@ export const activePet = (): PetInstance | null => petById(state.pets.active);
 /**
  * Credita nos pets o XP dos dias que já fecharam. Idempotente — pode rodar no
  * boot, ao abrir o perfil e ao encerrar o dia. Só o pet equipado NO CHECK ganha.
- * Atenção: usa a config atual sem o almoço editado do dia — como o original.
+ * Os blocos de cada dia são os mesmos que a UI e as estatísticas veem
+ * (`blocksForDay`: almoço editado e janelas do dia incluídos) — senão um check
+ * num horário que só existe com as janelas daquele dia não bateria com nada.
  */
 export function applyPendingPetXP(now: Date = new Date()): void {
   if (!state.pets) state.pets = emptyPets();
@@ -32,7 +34,7 @@ export function applyPendingPetXP(now: Date = new Date()): void {
     todayKey: dk(now),
     yesterdayKey: dk(yest),
     dayClosed: (k) => isDayClosed(state.closedDays, k),
-    getBlocks: (dayKey) => generateBlocks(state.config, getEventsForDate(dayKey)),
+    getBlocks: blocksForDay,
   });
   if (!pending) return;
   if (pending.resetXp) for (const p of state.pets.owned) p.xp = 0;

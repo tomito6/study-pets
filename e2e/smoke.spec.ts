@@ -112,6 +112,53 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
   });
 
+  test('25. janelas do dia: "Começar agora" muda o primeiro bloco de hoje, "Dia livre" esvazia, "Restaurar rotina" volta', async ({ page }) => {
+    await abrirApp(page, '10:07');
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+
+    // "Começar agora": o próximo múltiplo de 5 min é 10:10.
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-panel')).toBeVisible();
+    await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(1); // a janela da rotina, 09:00 → 18:00
+    await page.locator('#day-windows-start-now').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('.block-row').first()).toContainText('10:10–10:35');
+    await expect(page.locator('#day-windows-btn')).toContainText('editado');
+    await expect(page.locator('#toast')).toContainText('10:10');
+
+    // "Dia livre" pede confirmação e esvazia o dia.
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-windows-off').click();
+    await expect(page.locator('#day-windows-off-confirm-box')).toBeVisible();
+    await page.locator('#day-windows-off-confirm').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('.empty-day')).toContainText('Dia livre');
+    await expect(page.locator('.block-row')).toHaveCount(0);
+
+    // Sobrevive ao reload; "Restaurar rotina" traz o plano normal de volta.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('.empty-day')).toContainText('Dia livre');
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-off-note')).toBeVisible();
+    await page.locator('#day-windows-restore').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    await expect(page.locator('#day-windows-btn')).not.toContainText('editado');
+
+    // Editar as janelas à mão: hoje só das 14:00 às 16:00.
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-windows-panel .swc-start').fill('14:00');
+    await page.locator('#day-windows-panel .swc-end').fill('16:00');
+    await page.locator('#day-windows-save').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 às 16:00.
+    await expect(page.locator('.block-row').first()).toContainText('Almoço');
+    await expect(page.locator('.block-row.session-block').first()).toContainText('14:00–14:25');
+    await expect(page.locator('.block-row.session-block').last()).toContainText('–16:00');
+  });
+
   test('4. clicar no bloco do momento inicia o pomodoro em modo foco', async ({ page }) => {
     await abrirApp(page, '10:10');
     // Com pomo 25 / pausa 5, o bloco das 10:00–10:25 é o que está rolando às 10:10.

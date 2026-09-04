@@ -35,6 +35,13 @@ describe('meta diária — 7 dots', () => {
     expect(g.dots[5]!.kind).toBe('weekend');
     expect(g.dots[6]!.kind).toBe('weekend');
   });
+
+  it('dia declarado livre é neutro: sai da conta e o dot vira "off"', () => {
+    const g = goalWeek(stats, { now: QUA, skipWeekends: false, dayOff: (k) => k === '2026-09-01' });
+    expect(g).toMatchObject({ metCount: 2, totalDays: 6 });
+    expect(g.dots[1]!.kind).toBe('off');
+    expect(g.dots[0]!.kind).toBe('met');
+  });
 });
 
 describe('heatmap', () => {
@@ -65,6 +72,12 @@ describe('heatmap', () => {
   it('skipWeekends marca sáb/dom passados como fim de semana', () => {
     const c = heatmap({}, { now: QUA, goal: 60, skipWeekends: true }).find((c) => c.key === '2026-08-30')!;
     expect(c.kind).toBe('weekend-off');
+  });
+
+  it('dia declarado livre vira célula neutra "day-off"; no futuro continua "future"', () => {
+    const cells = heatmap({}, { now: QUA, goal: 60, skipWeekends: false, dayOff: (k) => k === '2026-09-01' || k === '2026-09-04' });
+    expect(cells.find((c) => c.key === '2026-09-01')!.kind).toBe('day-off');
+    expect(cells.find((c) => c.key === '2026-09-04')!.kind).toBe('future');
   });
 });
 

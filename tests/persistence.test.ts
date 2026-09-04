@@ -122,6 +122,24 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc({ eventSeries: { oops: true } }).eventSeries).toEqual([]);
   });
 
+  it('documento de antes das janelas do dia (sem windowOverrides) carrega com nenhuma', () => {
+    expect(hydrateUserDoc({ checks: { '2026-09-01': { '09:00': true } } }).windowOverrides).toEqual({});
+  });
+
+  it('windowOverrides: só entradas com lista de janelas; janela sem start/end de texto cai fora; vazio = dia livre', () => {
+    const raw = {
+      '2026-09-01': { studyWindows: [] },
+      '2026-09-02': { studyWindows: [{ start: '10:00', end: '12:00' }, { start: 15, end: '18:00' }, 'x'] },
+      '2026-09-03': { studyWindows: 'nao' },
+      '2026-09-04': null,
+    };
+    expect(hydrateUserDoc({ windowOverrides: raw }).windowOverrides).toEqual({
+      '2026-09-01': { studyWindows: [] },
+      '2026-09-02': { studyWindows: [{ start: '10:00', end: '12:00' }] },
+    });
+    expect(hydrateUserDoc({ windowOverrides: ['x'] }).windowOverrides).toEqual({});
+  });
+
   it('coinsSpent que não é número vira 0', () => {
     expect(hydrateUserDoc({ coinsSpent: '150' }).coinsSpent).toBe(0);
     expect(hydrateUserDoc({ coinsSpent: 150 }).coinsSpent).toBe(150);
@@ -152,6 +170,7 @@ describe('serializeState', () => {
     delete parcial.pets;
     delete parcial.coinsSpent;
     delete parcial.groups;
+    delete parcial.windowOverrides;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -159,6 +178,7 @@ describe('serializeState', () => {
     expect(doc.coinsSpent).toBe(0);
     expect(doc).not.toHaveProperty('skills');
     expect(doc.groups).toEqual({});
+    expect(doc.windowOverrides).toEqual({});
   });
 });
 
@@ -181,6 +201,7 @@ describe('ida e volta', () => {
       },
       coinsSpent: 300,
       groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
+      windowOverrides: { '2026-09-01': { studyWindows: [] }, '2026-09-03': { studyWindows: [{ start: '10:10', end: '12:00' }] } },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });

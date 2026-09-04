@@ -747,3 +747,16 @@
   .error-detail{font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;margin-bottom:16px;}
   .error-reload{width:100%;padding:12px 16px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#0e0e0f;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
   .error-reload:hover{filter:brightness(1.08);}
+
+  /* JANELAS DO DIA — botão na barra do dia e o modal #day-windows-panel (features/plan/DayWindowsPanel.tsx). */
+  .day-events-bar{flex-wrap:wrap;}
+  .add-event-btn.edited{color:var(--orange);border-color:var(--orange);}
+  .add-event-btn.edited:hover{background:var(--orange-bg);}
+  .dw-intro{font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .dw-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .dw-head label{margin:0;}
+  .dw-off-note{padding:14px;text-align:center;color:var(--muted);font-size:13px;background:var(--bg3);border:1px dashed var(--border);border-radius:var(--radius-sm);margin-bottom:10px;line-height:1.5;}
+  .dw-actions{display:grid;gap:8px;margin-top:6px;}
+  .dw-confirm{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--text);line-height:1.5;}
+  .dw-confirm .btn-row{margin-top:10px;}
+  .goal-dot.off{opacity:.35;}

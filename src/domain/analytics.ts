@@ -23,7 +23,8 @@ export function nextLevel(totalXP: number): { threshold: number; name: string } 
 
 // ---------------------------------------------------------------- meta diária (7 dots)
 
-export type GoalDotKind = 'weekend' | 'future' | 'met' | 'miss';
+/** `off` = dia declarado livre (janelas do dia vazias): neutro, como o fim de semana. */
+export type GoalDotKind = 'weekend' | 'off' | 'future' | 'met' | 'miss';
 
 export interface GoalDot {
   key: DateKey;
@@ -42,11 +43,12 @@ export interface GoalWeek {
 
 export function goalWeek(
   stats: Pick<Stats, 'dayMetGoal' | 'dayStudyDoneMins'>,
-  opts: { now: Date; skipWeekends: boolean },
+  opts: { now: Date; skipWeekends: boolean; dayOff?: (key: DateKey) => boolean },
 ): GoalWeek {
   const weekKeys = currentWeekKeys(opts.now);
   const todayKey = dk(opts.now);
-  const considered = weekKeys.filter((_, i) => !(opts.skipWeekends && i >= 5));
+  const isOff = (key: DateKey) => opts.dayOff?.(key) === true;
+  const considered = weekKeys.filter((k, i) => !(opts.skipWeekends && i >= 5) && !isOff(k));
   const passed = considered.filter((k) => k <= todayKey);
   return {
     metCount: passed.filter((k) => stats.dayMetGoal[k]).length,
@@ -54,7 +56,11 @@ export function goalWeek(
     dots: weekKeys.map((key, dayIdx) => {
       const done = stats.dayStudyDoneMins[key] || 0;
       const kind: GoalDotKind =
-        opts.skipWeekends && dayIdx >= 5 ? 'weekend' : key > todayKey ? 'future' : stats.dayMetGoal[key] ? 'met' : 'miss';
+        opts.skipWeekends && dayIdx >= 5 ? 'weekend'
+        : isOff(key) ? 'off'
+        : key > todayKey ? 'future'
+        : stats.dayMetGoal[key] ? 'met'
+        : 'miss';
       return { key, dayIdx, kind, done, isToday: key === todayKey };
     }),
   };
@@ -67,7 +73,8 @@ export const HEAT_COLORS = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e
 export interface HeatCell {
   key: DateKey;
   date: Date;
-  kind: 'future' | 'weekend-off' | 'value';
+  /** `day-off` = dia declarado livre, neutro como o fim de semana. */
+  kind: 'future' | 'weekend-off' | 'day-off' | 'value';
   /** 0–4, índice em HEAT_COLORS. */
   intensity: number;
   done: number;
@@ -78,7 +85,7 @@ export interface HeatCell {
 /** Células em ordem de coluna (semana) e depois linha (dia) — o grid usa `grid-auto-flow: column`. */
 export function heatmap(
   dayStudyDoneMins: Record<DateKey, number>,
-  opts: { now: Date; goal: number; skipWeekends: boolean; weeks?: number },
+  opts: { now: Date; goal: number; skipWeekends: boolean; weeks?: number; dayOff?: (key: DateKey) => boolean },
 ): HeatCell[] {
   const weeks = opts.weeks ?? 16;
   const today = new Date(opts.now);
@@ -100,6 +107,10 @@ export function heatmap(
       }
       if (opts.skipWeekends && (dow === 0 || dow === 6)) {
         cells.push({ key, date: d, kind: 'weekend-off', intensity: 0, done, pct: 0, isToday: false });
+        continue;
+      }
+      if (opts.dayOff?.(key)) {
+        cells.push({ key, date: d, kind: 'day-off', intensity: 0, done, pct: 0, isToday: false });
         continue;
       }
       let intensity: number;

@@ -2,7 +2,7 @@
 // prolongar?", e como prolongar. Puro.
 
 import { minsToTime, timeToMins } from './time';
-import type { StudyBlock, TimeString, UserConfig } from './types';
+import type { StudyBlock, StudyWindow, TimeString, UserConfig } from './types';
 
 /** Fim do último bloco de ESTUDO do dia (não pausa, não evento), ou null. */
 export function lastStudyEnd(blocks: StudyBlock[]): TimeString | null {
@@ -49,14 +49,19 @@ export function suggestedExtendTime(now: Date): TimeString {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-/** Estende o dia: `end` e o fim da última janela de estudo (a que começa mais tarde). */
-export function extendDayTo(config: UserConfig, newEnd: TimeString): UserConfig {
-  const windows = config.studyWindows.map((w) => ({ ...w }));
-  if (windows.length > 0) {
-    const last = windows.reduce((a, b) => (timeToMins(b.start) >= timeToMins(a.start) ? b : a));
+/** A última janela (a que começa mais tarde) passa a terminar em `newEnd`. */
+export function extendWindowsTo(windows: StudyWindow[], newEnd: TimeString): StudyWindow[] {
+  const out = windows.map((w) => ({ ...w }));
+  if (out.length > 0) {
+    const last = out.reduce((a, b) => (timeToMins(b.start) >= timeToMins(a.start) ? b : a));
     last.end = newEnd;
   }
-  return { ...config, end: newEnd, studyWindows: windows };
+  return out;
+}
+
+/** Estende o dia na rotina: `end` e o fim da última janela de estudo. */
+export function extendDayTo(config: UserConfig, newEnd: TimeString): UserConfig {
+  return { ...config, end: newEnd, studyWindows: extendWindowsTo(config.studyWindows, newEnd) };
 }
 
 /** Só pra manter a simetria de import; útil em testes. */

@@ -2,6 +2,7 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useEffect, useRef, useState } from 'react';
+import { canEditDayWindows, dayWindowsOverride } from '../../application/dayWindows';
 import { findEventEditTarget } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
@@ -24,6 +25,7 @@ import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
 import { SelectionRect } from '../groups/SelectionRect';
 import { useGroupSelection } from '../groups/useGroupSelection';
 import { BlockList, dayProgress } from './BlockList';
+import { DayWindowsPanel } from './DayWindowsPanel';
 import { useMinuteTick } from './useMinuteTick';
 
 /** Qual modal do Plano está aberto. Estado local: quem abre é sempre um clique aqui dentro. */
@@ -32,6 +34,7 @@ type PlanModal =
   | { kind: 'event'; edit?: EventEditTarget }
   | { kind: 'delete'; target: EventToDelete }
   | { kind: 'lunch'; dateKey: DateKey }
+  | { kind: 'windows'; dateKey: DateKey }
   | { kind: 'group'; target: GroupTarget };
 
 const t = strings.plan;
@@ -147,6 +150,8 @@ export function PlanTab() {
   const blocks = loaded ? blocksForDay(viewKey) : [];
   const groups = groupsForDay(viewKey);
   const canGroup = blocks.length > 0 && canEditGroups(viewKey);
+  const canWindows = loaded && canEditDayWindows(viewKey, now).ok;
+  const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
 
   // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
   const selection = useGroupSelection({
@@ -215,6 +220,15 @@ export function PlanTab() {
           </div>
         ) : (
           <>
+            {canWindows && (
+              <button
+                className={'add-event-btn' + (windowsEdited ? ' edited' : '')}
+                id="day-windows-btn"
+                onClick={() => setModal({ kind: 'windows', dateKey: viewKey })}
+              >
+                {windowsEdited ? t.dayWindowsEdited : t.dayWindows}
+              </button>
+            )}
             {canGroup && (
               <button className="add-event-btn" id="group-mode-btn" onClick={selection.arm}>{tg.button}</button>
             )}
@@ -253,6 +267,7 @@ export function PlanTab() {
         }}
       />
       <LunchPanel dateKey={modal.kind === 'lunch' ? modal.dateKey : null} onClose={closeModal} />
+      <DayWindowsPanel dateKey={modal.kind === 'windows' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
     </>
   );

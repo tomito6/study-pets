@@ -15,6 +15,7 @@ import {
   sparkline,
 } from '../../domain/analytics';
 import type { GoalWeek } from '../../domain/analytics';
+import { isDayOff } from '../../domain/dayWindows';
 import { getLevel, getLevelPct } from '../../domain/progression';
 import type { Stats } from '../../domain/stats';
 import { aggregateMins, dk } from '../../domain/time';
@@ -82,6 +83,7 @@ function GoalWeekCard({ goal, min, headlineId, dotsId, highlightToday }: { goal:
           const label = strings.plan.days[d.dayIdx]!;
           const title =
             d.kind === 'weekend' ? t.dotWeekend(label)
+              : d.kind === 'off' ? t.dotOff(label)
               : d.kind === 'future' ? t.dotFuture(label)
                 : d.kind === 'met' ? t.dotMet(label, d.done)
                   : t.dotMiss(label, d.done, min);
@@ -97,7 +99,7 @@ function GoalWeekCard({ goal, min, headlineId, dotsId, highlightToday }: { goal:
 }
 
 export function AnalyticsTab() {
-  const { tab, config } = useAppState((s) => ({ tab: s.uiTab, config: s.config }));
+  const { tab, config, windowOverrides } = useAppState((s) => ({ tab: s.uiTab, config: s.config, windowOverrides: s.windowOverrides }));
   const [view, setView] = useState<View>('hoje');
   const visible = tab === 'analise';
 
@@ -108,9 +110,10 @@ export function AnalyticsTab() {
   const allKeys = Object.keys(stats.dayStudyPlanned).filter((k) => k <= todayKey);
   const skip = config.skipWeekends === true;
   const min = config.dailyStudyMin || 60;
-  const goal = goalWeek(stats, { now, skipWeekends: skip });
+  const dayOff = (key: string) => isDayOff(windowOverrides[key]); // dia declarado livre: neutro, como o fim de semana
+  const goal = goalWeek(stats, { now, skipWeekends: skip, dayOff });
   const streaks = calcStreaksNow(stats.dayStudyMins, now);
-  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, skipWeekends: skip });
+  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, skipWeekends: skip, dayOff });
   const bars = hourBars(stats.hourCounts, config.start, config.end);
   const rows = dropoff(stats.sessionStats);
 
@@ -162,6 +165,7 @@ export function AnalyticsTab() {
               const day = fmtDay(c.date);
               if (c.kind === 'future') return <div key={c.key} className="heatmap-cell future" title={t.cellFuture(day)} />;
               if (c.kind === 'weekend-off') return <div key={c.key} className="heatmap-cell weekend-off" title={t.cellWeekend(day)} />;
+              if (c.kind === 'day-off') return <div key={c.key} className="heatmap-cell weekend-off day-off" title={t.cellOff(day)} />;
               return (
                 <div
                   key={c.key}

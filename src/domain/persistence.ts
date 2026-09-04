@@ -11,6 +11,7 @@
 // Todos são lidos normalmente.
 
 import { DEFAULT_CFG, migrateConfig } from './config';
+import type { WindowOverrides } from './dayWindows';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
 import type {
@@ -57,6 +58,8 @@ export interface PersistedState {
   coinsSpent: number;
   /** Grupos de estudo por dia (nome + objetivo num trecho). */
   groups: GroupsByDate;
+  /** Janelas de estudo só de um dia; lista vazia = dia livre (ver domain/dayWindows.ts). */
+  windowOverrides: WindowOverrides;
 }
 
 /**
@@ -101,6 +104,7 @@ export function emptyPersistedState(): PersistedState {
     pets: emptyPets(),
     coinsSpent: 0,
     groups: {},
+    windowOverrides: {},
   };
 }
 
@@ -176,6 +180,20 @@ function hydrateGroups(raw: unknown): GroupsByDate {
   return out;
 }
 
+/** Janelas por dia: só entradas com `studyWindows` em lista; janela sem start/end de texto cai fora. */
+function hydrateWindowOverrides(raw: unknown): WindowOverrides {
+  if (!isObj(raw)) return {};
+  const out: WindowOverrides = {};
+  for (const [day, v] of Object.entries(raw)) {
+    if (!isObj(v) || !Array.isArray(v.studyWindows)) continue;
+    const studyWindows = v.studyWindows
+      .filter(isObj)
+      .flatMap((w) => (typeof w.start === 'string' && typeof w.end === 'string' ? [{ start: w.start, end: w.end }] : []));
+    out[day] = { studyWindows };
+  }
+  return out;
+}
+
 /**
  * Lê um documento cru com tolerância a tudo que já existiu no Firestore: campos
  * ausentes, config sem `studyWindows`, checks como `true`, pets por espécie, etc.
@@ -196,6 +214,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     closedDays: isObj(d.closedDays) ? (d.closedDays as Record<DateKey, boolean>) : {},
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
     groups: hydrateGroups(d.groups),
+    windowOverrides: hydrateWindowOverrides(d.windowOverrides),
   };
 }
 
@@ -218,5 +237,6 @@ export function serializeState(s: PersistedState): UserDoc {
     },
     coinsSpent: s.coinsSpent || 0,
     groups: s.groups || {},
+    windowOverrides: s.windowOverrides || {},
   };
 }

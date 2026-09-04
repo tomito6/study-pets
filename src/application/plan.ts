@@ -1,6 +1,7 @@
 // O plano lido a partir do estado: semanas, blocos de cada dia e estatísticas.
 // Único lugar que liga o domínio ao store — React e legado consomem daqui.
 
+import { configForDay, isDayOff } from '../domain/dayWindows';
 import { expandEventsForDate } from '../domain/events';
 import { generateBlocks as generateBlocksPure } from '../domain/planner';
 import { computeStats, calcStreaks } from '../domain/stats';
@@ -44,6 +45,7 @@ export function rebuildWeeks(now: Date = new Date()): void {
       ...Object.keys(state.events),
       ...Object.keys(state.lunchOverrides),
       ...Object.keys(state.groups),
+      ...Object.keys(state.windowOverrides),
     ],
     today: now,
   });
@@ -55,7 +57,13 @@ export const dateForWeekDay = (weekN: number, dayIdx: number): Date =>
 
 export const findWeek = (date: Date): number => findWeekIn(derived.weeks, date);
 
-export const allDays = (): WeekDay[] => weekDays(derived.weeks, state.config.skipWeekends === true);
+/**
+ * Todos os dias que contam. Fim de semana com `skipWeekends` e dia declarado
+ * livre ficam de fora do mesmo jeito: neutros — não quebram a sequência nem
+ * contam como meta batida, e não têm minuto planejado.
+ */
+export const allDays = (): WeekDay[] =>
+  weekDays(derived.weeks, state.config.skipWeekends === true).filter((d) => !isDayOff(state.windowOverrides[d.key]));
 
 /** Compatibilidade com o legado, que itera dias com callback. */
 export function forEachDay(cb: (key: DateKey, date: Date, weekIdx: number, dayIdx: number) => void): void {
@@ -75,9 +83,12 @@ export function blocksForDay(dateKey: DateKey): StudyBlock[] {
     const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
     if (dow === 0 || dow === 6) return [];
   }
+  const windowOv = state.windowOverrides[dateKey];
+  if (isDayOff(windowOv)) return [];
   const events = getEventsForDate(dateKey);
+  const dayCfg = configForDay(state.config, windowOv); // as janelas só deste dia, se houver
   const lunchOv = state.lunchOverrides[dateKey];
-  const cfg = lunchOv ? { ...state.config, ...lunchOv } : state.config;
+  const cfg = lunchOv ? { ...dayCfg, ...lunchOv } : dayCfg;
   return generateBlocks(cfg, events);
 }
 

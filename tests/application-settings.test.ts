@@ -42,8 +42,10 @@ describe('cancelSession', () => {
     state.checks = { '2026-09-01': { '09:00': { pet: 'cat', bonus: 0 } } };
     state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Gato', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
     state.coinsSpent = 150;
+    state.windowOverrides = { '2026-09-01': { studyWindows: [] } };
     cancelSession();
     expect(state.checks).toEqual({});
+    expect(state.windowOverrides).toEqual({});
     expect(state.pets).toEqual({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
     expect(state.coinsSpent).toBe(0);
     expect(state.config.periodStart).toBeNull(); // só aqui o início é redefinido

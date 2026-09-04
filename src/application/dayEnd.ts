@@ -6,7 +6,7 @@
 import { isDayClosed } from '../domain/checks';
 import { daySummary } from '../domain/daySummary';
 import type { DaySummary, ProgressSnapshot } from '../domain/daySummary';
-import { extendDayTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
+import { extendDayTo, extendWindowsTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
 import { getLevelIdx } from '../domain/progression';
 import { dk } from '../domain/time';
 import type { TimeString } from '../domain/types';
@@ -127,10 +127,16 @@ export const closeEndOfDayPrompt = (): void => set({ promptOpen: false });
 /** "Encerrar o dia" no prompt: fecha o prompt e abre a confirmação normal. */
 export const promptFinish = (): void => set({ promptOpen: false, confirmOpen: true });
 
-/** "Prolongar": novo fim do dia; a última janela de estudo estica até lá. */
+/**
+ * "Prolongar": novo fim do dia; a última janela de estudo estica até lá. Num dia
+ * com as janelas editadas, é o override de hoje que estica — a rotina fica igual.
+ */
 export function extendDay(newEnd: TimeString, now: Date = new Date()): void {
   if (!newEnd) return;
-  state.config = extendDayTo(state.config, newEnd);
+  const todayKey = dk(now);
+  const ov = state.windowOverrides[todayKey];
+  if (ov && ov.studyWindows.length > 0) state.windowOverrides[todayKey] = { studyWindows: extendWindowsTo(ov.studyWindows, newEnd) };
+  else state.config = extendDayTo(state.config, newEnd);
   clearBlockCache();
   scheduleSave();
   set({ promptOpen: false });
