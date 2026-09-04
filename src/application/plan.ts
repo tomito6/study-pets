@@ -58,12 +58,12 @@ export const dateForWeekDay = (weekN: number, dayIdx: number): Date =>
 export const findWeek = (date: Date): number => findWeekIn(derived.weeks, date);
 
 /**
- * Todos os dias que contam. Fim de semana com `skipWeekends` e dia declarado
- * livre ficam de fora do mesmo jeito: neutros — não quebram a sequência nem
- * contam como meta batida, e não têm minuto planejado.
+ * Todos os dias que contam. Fim de semana com `skipWeekends` fica de fora.
+ * ALTERNATIVA: o dia declarado livre CONTA — 0 planejado, meta não batida —
+ * e por isso quebra a sequência como um dia sem estudo (na branch principal
+ * ele fica de fora, neutro como o fim de semana).
  */
-export const allDays = (): WeekDay[] =>
-  weekDays(derived.weeks, state.config.skipWeekends === true).filter((d) => !isDayOff(state.windowOverrides[d.key]));
+export const allDays = (): WeekDay[] => weekDays(derived.weeks, state.config.skipWeekends === true);
 
 /** Compatibilidade com o legado, que itera dias com callback. */
 export function forEachDay(cb: (key: DateKey, date: Date, weekIdx: number, dayIdx: number) => void): void {

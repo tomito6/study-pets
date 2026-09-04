@@ -15,7 +15,6 @@ import {
   sparkline,
 } from '../../domain/analytics';
 import type { GoalWeek } from '../../domain/analytics';
-import { isDayOff } from '../../domain/dayWindows';
 import { getLevel, getLevelPct } from '../../domain/progression';
 import type { Stats } from '../../domain/stats';
 import { aggregateMins, dk } from '../../domain/time';
@@ -99,7 +98,7 @@ function GoalWeekCard({ goal, min, headlineId, dotsId, highlightToday }: { goal:
 }
 
 export function AnalyticsTab() {
-  const { tab, config, windowOverrides } = useAppState((s) => ({ tab: s.uiTab, config: s.config, windowOverrides: s.windowOverrides }));
+  const { tab, config } = useAppState((s) => ({ tab: s.uiTab, config: s.config }));
   const [view, setView] = useState<View>('hoje');
   const visible = tab === 'analise';
 
@@ -110,10 +109,10 @@ export function AnalyticsTab() {
   const allKeys = Object.keys(stats.dayStudyPlanned).filter((k) => k <= todayKey);
   const skip = config.skipWeekends === true;
   const min = config.dailyStudyMin || 60;
-  const dayOff = (key: string) => isDayOff(windowOverrides[key]); // dia declarado livre: neutro, como o fim de semana
-  const goal = goalWeek(stats, { now, skipWeekends: skip, dayOff });
+  // ALTERNATIVA: dia livre não é neutro — aparece como dia sem meta batida (miss) nos dots e no heatmap.
+  const goal = goalWeek(stats, { now, skipWeekends: skip });
   const streaks = calcStreaksNow(stats.dayStudyMins, now);
-  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, skipWeekends: skip, dayOff });
+  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, skipWeekends: skip });
   const bars = hourBars(stats.hourCounts, config.start, config.end);
   const rows = dropoff(stats.sessionStats);
 

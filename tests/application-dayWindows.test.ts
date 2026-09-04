@@ -99,11 +99,11 @@ describe('startNow — "começar agora"', () => {
 });
 
 describe('setDayOff — dia livre', () => {
-  it('hoje sem check: o plano fica vazio e o dia sai das estatísticas (planejado 0)', () => {
+  it('hoje sem check: o plano fica vazio e o dia conta com 0 planejado (alternativa: não é neutro)', () => {
     expect(setDayOff(HOJE, AGORA)).toEqual({ ok: true });
     expect(isDayOffKey(HOJE)).toBe(true);
     expect(blocksForDay(HOJE)).toEqual([]);
-    expect(computeStatsNow(AGORA).dayStudyPlanned[HOJE]).toBeUndefined();
+    expect(computeStatsNow(AGORA).dayStudyPlanned[HOJE]).toBe(0);
   });
 
   it('hoje com bloco marcado não vira dia livre (seria streak freeze)', () => {
@@ -112,14 +112,11 @@ describe('setDayOff — dia livre', () => {
     expect(blocksForDay(HOJE).length).toBeGreaterThan(0);
   });
 
-  it('dia livre é neutro na sequência, igual ao fim de semana pausado', () => {
+  it('ALTERNATIVA: dia livre quebra a sequência, como um dia sem estudo', () => {
     // Segunda e quarta com a meta batida; terça declarada livre (como se tivesse sido na véspera).
     state.windowOverrides[ONTEM] = { studyWindows: [] };
     clearBlockCache();
     const mins = { '2026-08-31': 60, [HOJE]: 60 };
-    expect(calcStreaksNow(mins, AGORA)).toEqual({ cur: 2, best: 2 });
-    delete state.windowOverrides[ONTEM];
-    clearBlockCache();
     expect(calcStreaksNow(mins, AGORA)).toEqual({ cur: 1, best: 1 });
   });
 
