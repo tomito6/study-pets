@@ -6,6 +6,7 @@
 // ids/classes do markup antigo — CSS e smoke test dependem deles.
 
 import { useRef, useState } from 'react';
+import { exportMyData } from '../../application/export';
 import { saveSettings } from '../../application/settings';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
@@ -57,6 +58,10 @@ export function SettingsPage() {
       return;
     }
     close();
+  };
+
+  const exportData = () => {
+    showToast(exportMyData() ? t.data.done : t.data.failed);
   };
 
   const cfgPreview = normalizeConfig(draft, state.config.periodStart);
@@ -203,6 +208,20 @@ export function SettingsPage() {
                 <div className="st-card">
                   <div className="st-field-label">{t.goal.label}</div>
                   <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15" value={draft.dailyStudyMin} onChange={(e) => patch({ dailyStudyMin: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{t.data.title}</div></div>
+                <div className="st-section-desc">{t.data.desc}</div>
+                <div className="st-card">
+                  <div className="st-action-row">
+                    <div>
+                      <div className="ar-title">{t.data.rowTitle}</div>
+                      <div className="ar-desc">{t.data.rowDesc}</div>
+                    </div>
+                    <button type="button" className="st-action-btn" id="export-data-btn" onClick={exportData}>{t.data.button}</button>
+                  </div>
                 </div>
               </div>
 

@@ -384,6 +384,15 @@ export const strings = {
       desc: 'Quanto você precisa estudar num dia para manter a sequência e ganhar o bônus de moedas.',
       label: 'Minutos por dia (15–240)',
     },
+    data: {
+      title: 'Meus dados',
+      desc: 'Tudo que o app guarda sobre você, num arquivo seu.',
+      rowTitle: 'Baixar meus dados',
+      rowDesc: 'Um JSON com checks, eventos, pets, configurações — o documento inteiro, sem e-mail nem identificador.',
+      button: 'Baixar (JSON)',
+      done: 'Arquivo gerado ✓',
+      failed: 'Não deu pra gerar o arquivo neste navegador.',
+    },
     danger: {
       title: 'Zona de perigo',
       cancelTitle: 'Cancelar sessão',

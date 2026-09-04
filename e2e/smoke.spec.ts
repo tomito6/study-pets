@@ -4,6 +4,7 @@
 // no horário de que precisa — porque o plano do dia e o timer dependem de "agora".
 // 2026-09-02 é uma quarta-feira.
 
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 const DIA = '2026-09-02';
@@ -158,6 +159,28 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row').first()).toContainText('Almoço');
     await expect(page.locator('.block-row.session-block').first()).toContainText('14:00–14:25');
     await expect(page.locator('.block-row.session-block').last()).toContainText('15:30–15:55');
+  });
+
+  test('26. baixar meus dados gera um JSON com o documento do usuário', async ({ page }) => {
+    await abrirApp(page);
+    await checksDeEstudo(page).first().click();
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Geral' }).click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('#export-data-btn').click(),
+    ]);
+    expect(download.suggestedFilename()).toBe(`study-pets-${DIA}.json`);
+    const caminho = await download.path();
+    const doc = JSON.parse(readFileSync(caminho, 'utf8'));
+    expect(doc.schemaVersion).toBeGreaterThanOrEqual(2);
+    expect(doc.checks[DIA]['09:00']).toBeTruthy();
+    expect(doc.pets.owned[0].species).toBe('cat');
+    expect(typeof doc.exportedAt).toBe('string');
+    expect(doc).not.toHaveProperty('uid');
+    expect(doc).not.toHaveProperty('email');
+    await expect(page.locator('#toast')).toContainText('Arquivo gerado');
   });
 
   test('4. clicar no bloco do momento inicia o pomodoro em modo foco', async ({ page }) => {
