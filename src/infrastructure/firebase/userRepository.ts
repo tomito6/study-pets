@@ -1,11 +1,27 @@
 // Documento do usuário em `users/{uid}`, no Firestore.
+//
+// Cache local persistente (IndexedDB): sem rede, `load` devolve o que o
+// dispositivo já viu, e um `setDoc` feito offline fica na fila e sobe ao
+// reconectar. A promise do `setDoc` só resolve com o ack do servidor, então o
+// indicador fica em "Salvando…" até a rede voltar — é informação correta.
+// Conta nova offline continua falhando (não há o que cachear); o toast já cobre.
 
 import type { FirebaseApp } from 'firebase/app';
-import { deleteDoc, doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  setDoc,
+} from 'firebase/firestore';
 import type { UserRepository } from '../ports';
 
 export function createFirebaseUserRepository(app: FirebaseApp): UserRepository {
-  const db = getFirestore(app);
+  const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  });
   const ref = (uid: string) => doc(db, 'users', uid);
 
   return {
