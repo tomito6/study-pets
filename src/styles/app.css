@@ -866,8 +866,8 @@
      ================================================================================================ */
   #app.app-hidden{display:none;}
   @media (min-width:1100px){
-    /* as pontas (trilho e coluna da direita) absorvem a largura que sobrar; só a lista tem teto, porque mais larga não se lê */
-    #app{display:grid;grid-template-columns:minmax(190px,1fr) minmax(620px,800px) minmax(240px,1.3fr);grid-template-rows:auto 1fr;column-gap:clamp(32px,3vw,64px);align-items:start;padding:0 clamp(24px,3vw,64px);}
+    /* cada coluna cresce até um teto (a lista é a que mais estica); os vãos crescem com a tela, e só num monitor muito largo sobra margem centralizada */
+    #app{display:grid;grid-template-columns:minmax(190px,260px) minmax(620px,800px) minmax(240px,320px);grid-template-rows:auto 1fr;column-gap:clamp(32px,3.5vw,80px);justify-content:center;align-items:start;padding:0 clamp(24px,3vw,64px);}
 
     /* trilho: só texto, um traço na aba ativa, o personagem com o pet no pé */
     .topbar{grid-column:1;grid-row:1 / -1;position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:26px 0 24px;background:transparent;backdrop-filter:none;border-bottom:0;}
@@ -1002,7 +1002,7 @@
   /* Monitor grande (≥1600px): o grid cresce (a lista até 880px, que ainda se lê), as fontes sobem um degrau
      e a Semana ocupa a altura da janela. Entre 1100 e 1600 a coluna do meio já estica até 800px. */
   @media (min-width:1600px){
-    #app{grid-template-columns:minmax(240px,1fr) minmax(800px,900px) minmax(300px,1.5fr);}
+    #app{grid-template-columns:minmax(240px,320px) minmax(800px,960px) minmax(300px,380px);column-gap:clamp(48px,4vw,96px);}
     .topbar-left .sub{font-size:12px;}
     .nav-tab{font-size:19px;padding:9px 16px;}
     .xp-badge{font-size:16px;}
