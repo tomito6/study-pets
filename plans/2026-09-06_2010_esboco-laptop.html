@@ -1,0 +1,400 @@
+<title>Study Pets no laptop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Paleta e fontes do app (src/styles/app.css). Folha escura de propósito: o app só tem tema escuro. */
+  :root{
+    --bg:#0e0e0f; --bg2:#18181b; --bg3:#232328; --border:#2e2e35;
+    --text:#f0f0f0; --muted:#888; --accent:#a3e635; --accent2:#65a30d;
+    --blue:#60a5fa; --orange:#fb923c; --cyan:#67e8f9;
+    --page:#151517; --ink:#c9c9cf; --ink-dim:#8a8a92;
+    --sans:'DM Sans',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:40px 28px 64px}
+  .intro{max-width:66ch;margin-bottom:32px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h1{font-size:28px;font-weight:600;color:var(--text);letter-spacing:-.01em;line-height:1.15;text-wrap:balance;margin-bottom:12px}
+  .intro p,.cap p,.verdict p{margin-bottom:8px}
+  strong{color:var(--text);font-weight:600}
+  .cap{max-width:66ch;margin:16px 0 48px}
+  .cap h2,.verdict h2{font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px}
+  .cap h2 span{font-family:var(--mono);font-weight:400;font-size:12px;color:var(--ink-dim);margin-left:8px}
+  .cap .code{font-size:12.5px;color:var(--ink-dim);font-family:var(--mono);line-height:1.5}
+  .cap .code b{color:var(--ink);font-weight:500}
+
+  /* ---- a "tela": o app em 1180px ---- */
+  .deskwrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:var(--bg)}
+  .desk{width:1180px;height:720px;overflow:hidden;display:grid;grid-template-columns:190px 620px 240px;grid-template-rows:694px;gap:32px;padding:26px 30px 0;justify-content:center;position:relative;color:var(--text)}
+  .desk.week{grid-template-columns:190px 892px}
+  .desk::after{content:'';position:absolute;left:0;right:0;bottom:0;height:60px;background:linear-gradient(180deg,rgba(14,14,15,0),var(--bg));pointer-events:none}
+
+  /* trilho: só texto, um traço na aba ativa, o personagem embaixo */
+  .rail{display:flex;flex-direction:column;gap:22px;padding-bottom:26px}
+  .rail-date{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .rail-nav{display:flex;flex-direction:column;gap:2px;margin-left:-14px}
+  .rail-nav button{display:block;text-align:left;padding:8px 14px;border:0;border-left:3px solid transparent;background:none;color:var(--muted);font-size:17px;font-weight:600;letter-spacing:-.01em;transition:color .15s}
+  .rail-nav button:hover{color:var(--ink)}
+  .rail-nav button.active{color:var(--text);border-left-color:var(--accent)}
+  .rail-xp .n{font-family:var(--mono);font-size:15px;color:var(--accent);font-variant-numeric:tabular-nums}
+  .rail-xp .lvl{font-size:11px;color:var(--muted);margin-left:8px}
+  .bar{height:3px;background:var(--bg3);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .rail-xp .bar{margin:8px 0 6px}
+  .rail-xp .sub{font-size:11px;color:var(--muted)}
+  .rail-scene{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+  .rail-scene .sprites{display:flex;gap:14px;align-items:flex-end;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .rail-scene img{width:64px;height:64px;image-rendering:pixelated}
+  .rail-pet{font-size:12px;color:var(--ink)}
+  .rail-pet span{color:var(--muted)}
+  .rail-foot{display:flex;gap:16px;font-size:12px}
+  .rail-foot button{background:none;border:0;padding:0;color:var(--muted)}
+  .rail-foot button:hover{color:var(--ink)}
+
+  /* coluna do dia */
+  .col{display:flex;flex-direction:column}
+  .chead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .wknav{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--text)}
+  .wknav button{background:none;border:0;color:var(--muted);font-size:16px;padding:0 4px;line-height:1}
+  .wknav small{font-family:var(--mono);font-weight:400;font-size:12px;color:var(--muted)}
+  .mode{display:inline-flex;background:var(--bg2);border-radius:8px;padding:2px}
+  .mode button{background:none;border:0;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted);transition:color .15s,background .15s}
+  .mode button.on{background:var(--bg3);color:var(--text)}
+  .days{display:flex;gap:6px}
+  .days button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:6px 0 8px;color:var(--muted);font-size:13px;font-weight:500;text-align:center;transition:color .15s}
+  .days button b{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--ink-dim);margin-top:1px}
+  .days button:hover{color:var(--ink)}
+  .days button.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .days button.on b{color:var(--accent2)}
+  .acts{display:flex;justify-content:flex-end;gap:18px;padding:12px 0 2px;font-size:12px}
+  .acts button{background:none;border:0;padding:0;color:var(--muted)}
+  .acts button:hover{color:var(--ink)}
+  .acts button.add{color:var(--accent)}
+  .list{display:flex;flex-direction:column}
+  .sess{display:flex;align-items:center;gap:10px;margin:14px 0 4px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sc,var(--accent))}
+  .sess::after{content:'';flex:1;height:1px;background:currentColor;opacity:.25}
+  .sess.s1,.row.s1{--sc:var(--blue)}
+  .row{display:grid;grid-template-columns:20px 100px 1fr auto;align-items:center;gap:14px;padding:10px 12px;border-bottom:1px solid rgba(46,46,53,.6);font-size:14px;border-radius:6px}
+  .row .chk{width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px;display:grid;place-items:center;font-size:11px;color:#0e0e0f}
+  .row .t{font-family:var(--mono);font-size:12px;color:var(--sc,var(--accent));font-variant-numeric:tabular-nums}
+  .row .xp{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .row.break .name{color:var(--muted);font-size:13px}
+  .row.lunch .name,.row.lunch .t{color:var(--muted)}
+  .row.done{opacity:.5}
+  .row.done .chk{background:var(--accent);border-color:var(--accent)}
+  .row.now{background:rgba(163,230,53,.07);border-bottom-color:transparent;box-shadow:inset 3px 0 0 var(--accent)}
+  .row.now .name{color:var(--accent);font-weight:600}
+  .row.now .xp{color:var(--accent)}
+  .row .tag{font-family:var(--mono);font-size:10px;color:var(--accent);margin-left:10px;letter-spacing:.06em;text-transform:uppercase}
+  .grp-label{display:flex;gap:8px;align-items:baseline;margin:12px 0 2px 12px;font-size:12px;color:var(--cyan)}
+  .grp-label span{color:var(--muted)}
+  .grp-label b{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--muted);margin-left:auto}
+  .row.ingrp{box-shadow:inset 2px 0 0 rgba(103,232,249,.6)}
+
+  /* a direita: o timer é a única caixa; o resto é número e rótulo */
+  .side{display:flex;flex-direction:column;gap:26px;padding-bottom:26px}
+  .timer{background:var(--bg2);border-radius:12px;padding:16px 18px}
+  .timer .big{font-family:var(--mono);font-size:38px;font-weight:600;color:var(--accent);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .timer .name{font-size:14px;font-weight:600;margin-top:8px}
+  .timer .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+  .timer .bar{margin:12px 0 10px}
+  .timer .acts2{display:flex;gap:14px;font-size:12px}
+  .timer .acts2 button{background:none;border:0;padding:0;color:var(--accent)}
+  .timer .acts2 button.quiet{color:var(--muted)}
+  .kv{display:flex;flex-direction:column;gap:18px}
+  .kv .k{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .kv .v{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums}
+  .kv .v small{font-size:12px;color:var(--muted);font-family:var(--sans);margin-left:6px;font-weight:400}
+  .kv .v.pend{color:var(--orange)}
+  .kv .bar{margin-top:8px}
+  .dots{display:flex;gap:6px;margin-top:8px}
+  .dot{width:20px;height:20px;border-radius:50%;background:var(--bg3);display:grid;place-items:center;font-size:8px;color:var(--muted)}
+  .dot.met{background:var(--accent);color:#0e0e0f;font-weight:600}
+  .dot.today{box-shadow:0 0 0 2px var(--accent)}
+  .dot.off{opacity:.3}
+
+  /* semana */
+  .weekwrap{display:flex;flex-direction:column;padding-bottom:26px}
+  .weekgrid{display:grid;grid-template-columns:36px repeat(7,1fr);gap:8px;margin-top:8px}
+  .wg-head{font-size:13px;font-weight:500;color:var(--muted);text-align:center;padding:2px 0 8px}
+  .wg-head b{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--ink-dim)}
+  .wg-head.today{color:var(--accent)} .wg-head.today b{color:var(--accent2)}
+  .wg-axis{position:relative;height:600px}
+  .wg-axis span{position:absolute;right:4px;font-family:var(--mono);font-size:10px;color:var(--muted);transform:translateY(-50%)}
+  .wg-col{position:relative;height:600px;background:rgba(24,24,27,.6);border-radius:8px;overflow:hidden}
+  .wg-col.today{background:rgba(163,230,53,.05);box-shadow:inset 0 0 0 1px rgba(163,230,53,.25)}
+  .wg-col.off{display:grid;place-items:center;font-size:11px;color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1px var(--border)}
+  .wg-col .hl{position:absolute;left:0;right:0;height:1px;background:var(--border);opacity:.35}
+  .blk{position:absolute;left:5px;right:5px;border-radius:3px;font-size:10px;line-height:1.2;padding:2px 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .blk.estudo{background:rgba(163,230,53,.16);color:#c9f37a}
+  .blk.pausa{background:rgba(255,255,255,.04)}
+  .blk.longa{background:rgba(96,165,250,.18);color:#9cc4f7}
+  .blk.lunch{background:rgba(255,255,255,.06);color:#888}
+  .blk.event{background:rgba(251,146,60,.16);color:var(--orange)}
+  .blk.done{background:var(--accent2);color:#0e0e0f}
+  .nowline{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .nowline::before{content:'';position:absolute;left:-1px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+  .verdict{max-width:66ch;margin-top:8px;padding-top:24px;border-top:1px solid var(--border)}
+  .verdict ul{margin:8px 0 8px 20px} .verdict li{margin-bottom:6px}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <div class="eyebrow">Esboço · tela grande · segunda rodada</div>
+    <h1>Study Pets no laptop</h1>
+    <p>O Painel saiu. O que fazia ele parecer poluído não era a quantidade de informação, era a <strong>embalagem</strong>: doze caixas com borda, cada linha um bloco preenchido de cor, e três colunas disputando atenção. Aqui a mesma informação volta com outra embalagem: <strong>duas caixas na tela inteira</strong> (o toggle e o timer), hairlines em vez de bordas, e cor só onde ela diz alguma coisa (a sessão, o bloco de agora, o que está pendente).</p>
+    <p>O toggle <strong>Dia · Semana</strong> fica no topo da coluna. Dia é o de sempre, com espaço. Semana é o modo de planejamento: a agenda inteira, e clicar num dia abre o Dia dele. No celular a Semana também existe, mas deitada: uma linha por dia com uma faixa de horas (terceira tela).</p>
+  </header>
+
+  <!-- ===== Dia ===== -->
+  <div class="deskwrap"><div class="desk" id="deskA">
+    <aside class="rail">
+      <div class="rail-date">quarta-feira, 9 de setembro</div>
+      <nav class="rail-nav" id="railA"><button class="active">Plano</button><button>Análise</button><button>Perfil</button></nav>
+      <div class="rail-xp"><span class="n">1.250 XP</span><span class="lvl">Dedicado</span><div class="bar"><i style="width:67%"></i></div><div class="sub">faltam 250 XP pro próximo nível</div></div>
+      <div class="rail-scene">
+        <div class="sprites"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAcCAYAAABoMT8aAAABZElEQVR4nO2Uv0rDUBTGv5QOQgNxCUiUCheUZHCRdhR8hUyBPkCnzF0cxMGlFqdOfYO65A1cuhSagtBFHC4UbBYXU9JR4lDuJefmxio49luS8+f7JTnnEmCvvf5BhppgjOW7TJxz6aur5jg0SbN5dVgCuAFyAZGkollnKkPewTk36rpiNvncXt2uzB3ZT7LWGmZ4HZ/ADZCTNwCAODSl0bEtCUg+UgDAdfgIzrnBGMs550ZNmN/Gd/Kpjm0Rs4AVc2IGNRGcB7cQEADozD105h6BqLEEqE/6iwhgPXmQ94PmFIPmlDSrsQQUVyiGVTWHODTJYZNrbA0zAIB1+kxMs75PYtEnRI4yYyz37s9IQzJqYNb30e5FAIB0+VJ9lHVyuhu0exGc7mYLuKH10haqIMmooa39CvATpPQJ6/igEmJefiFd7gAIraIFiY/9C22fFrCKFmTSYu9qviTGWK77I1XlAeAb/qeF/WZqua4AAAAASUVORK5CYII="><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAw0lEQVR42mNgGAWjYKiBa5O8/uPCA2YxzR1CiuVUdQQ5FoPwggQN6jgE2SAY1pCT/A8C+MRg+kA0xQ54MW0BhmUgjE8Mpo8qDkAPga/3tuDENAkBXA6A+RqEaeYAbAmMFAfQJDcgBznIImxRQPOyAF/807REJMYBA2I5siPQEx6yvgFxALLeoekAcgsimEMo9v2gcwC+XIBcAlKtMCLXAVTLlpSEAM0aJSPHAejlOzEOQFZH1eoY3UJkdfiy42hHZtADANsB2/p6SD89AAAAAElFTkSuQmCC"></div>
+        <div class="rail-pet">Bolt · Lv. 3 <span>· Fiel ativa</span></div>
+      </div>
+      <div class="rail-foot"><button>Configurações</button><button>Sair</button></div>
+    </aside>
+    <main class="col">
+      <div class="chead">
+        <div class="wknav"><button>‹</button><span>Semana 2 <small>07/09 – 13/09</small></span><button>›</button></div>
+        <div class="mode"><button class="on">Dia</button><button>Semana</button></div>
+      </div>
+      <div class="days"><button>Seg<b>7</b></button><button>Ter<b>8</b></button><button class="on">Qua<b>9</b></button><button>Qui<b>10</b></button><button>Sex<b>11</b></button><button>Sáb<b>12</b></button><button>Dom<b>13</b></button></div>
+      <div class="acts"><button>Janelas do dia</button><button>Agrupar</button><button class="add">+ Evento</button></div>
+      <div class="list" id="listA"></div>
+    </main>
+    <aside class="side">
+      <div class="timer">
+        <div class="big">17:53</div>
+        <div class="name">Estudo 3</div>
+        <div class="lbl">Sessão 1 · Bloco 5 · +50 XP ao concluir</div>
+        <div class="bar"><i style="width:28%"></i></div>
+        <div class="acts2"><button>Abrir o foco</button><button class="quiet">Parar</button></div>
+      </div>
+      <div class="kv">
+        <div><div class="k">Hoje</div><div class="v pend">+110 XP<small>+50 moedas · pendente</small></div></div>
+                <div><div class="k">Meta diária · 60 min</div><div class="v">50<small>min · 2 de 5 dias esta semana</small></div><div class="bar"><i style="width:83%"></i></div><div class="dots"><span class="dot met">S</span><span class="dot met">T</span><span class="dot today">Q</span><span class="dot">Q</span><span class="dot">S</span><span class="dot off">S</span><span class="dot off">D</span></div></div>
+              </div>
+    </aside>
+  </div></div>
+  <div class="cap">
+    <h2>Dia <span>cheio, sem caixa</span></h2>
+    <p>A lista é a mesma de hoje, com o mesmo conteúdo por linha (check, horário, nome, XP), mas as linhas viraram texto separado por hairlines, em vez de blocos preenchidos. A sessão aparece na cor do horário e num rótulo pequeno. Só o bloco de agora ganha fundo, e é o único verde forte da lista. Um grupo (Análise II) vira um traço ciano na margem, não uma caixa em volta.</p>
+    <p>À direita, o timer é a única caixa, porque é a única coisa viva. O que sobra são o XP pendente de hoje e a meta com os dots da semana, como rótulo e valor, sem cartão. Estudos feitos e sequência saíram: a lista já mostra o que foi feito, e a sequência vive na Análise. O trilho perdeu as caixas também: aba ativa é um traço, o pet fica em cima de uma linha de chão.</p>
+    <p class="code">No código: CSS das <b>.block-row</b> (sem fundo/borda, hairline) e um grid pra 1100px+. O que está na direita já existe (timer, XP pendente, stats, dots). Decisão a tomar: a linha sem caixa também no celular, ou só no laptop.</p>
+  </div>
+
+  <!-- ===== Semana ===== -->
+  <div class="deskwrap"><div class="desk week" id="deskB">
+    <aside class="rail">
+      <div class="rail-date">quarta-feira, 9 de setembro</div>
+      <nav class="rail-nav" id="railB"><button class="active">Plano</button><button>Análise</button><button>Perfil</button></nav>
+      <div class="rail-xp"><span class="n">1.250 XP</span><span class="lvl">Dedicado</span><div class="bar"><i style="width:67%"></i></div><div class="sub">faltam 250 XP pro próximo nível</div></div>
+      <div class="rail-scene">
+        <div class="sprites"><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAcCAYAAABoMT8aAAABZElEQVR4nO2Uv0rDUBTGv5QOQgNxCUiUCheUZHCRdhR8hUyBPkCnzF0cxMGlFqdOfYO65A1cuhSagtBFHC4UbBYXU9JR4lDuJefmxio49luS8+f7JTnnEmCvvf5BhppgjOW7TJxz6aur5jg0SbN5dVgCuAFyAZGkollnKkPewTk36rpiNvncXt2uzB3ZT7LWGmZ4HZ/ADZCTNwCAODSl0bEtCUg+UgDAdfgIzrnBGMs550ZNmN/Gd/Kpjm0Rs4AVc2IGNRGcB7cQEADozD105h6BqLEEqE/6iwhgPXmQ94PmFIPmlDSrsQQUVyiGVTWHODTJYZNrbA0zAIB1+kxMs75PYtEnRI4yYyz37s9IQzJqYNb30e5FAIB0+VJ9lHVyuhu0exGc7mYLuKH10haqIMmooa39CvATpPQJ6/igEmJefiFd7gAIraIFiY/9C22fFrCKFmTSYu9qviTGWK77I1XlAeAb/qeF/WZqua4AAAAASUVORK5CYII="><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAw0lEQVR42mNgGAWjYKiBa5O8/uPCA2YxzR1CiuVUdQQ5FoPwggQN6jgE2SAY1pCT/A8C+MRg+kA0xQ54MW0BhmUgjE8Mpo8qDkAPga/3tuDENAkBXA6A+RqEaeYAbAmMFAfQJDcgBznIImxRQPOyAF/807REJMYBA2I5siPQEx6yvgFxALLeoekAcgsimEMo9v2gcwC+XIBcAlKtMCLXAVTLlpSEAM0aJSPHAejlOzEOQFZH1eoY3UJkdfiy42hHZtADANsB2/p6SD89AAAAAElFTkSuQmCC"></div>
+        <div class="rail-pet">Bolt · Lv. 3 <span>· Fiel ativa</span></div>
+      </div>
+      <div class="rail-foot"><button>Configurações</button><button>Sair</button></div>
+    </aside>
+    <main class="weekwrap">
+      <div class="chead">
+        <div class="wknav"><button>‹</button><span>Semana 2 <small>07/09 – 13/09</small></span><button>›</button></div>
+        <div style="display:flex;align-items:center;gap:22px"><div class="acts" style="padding:0"><button>Janelas do dia</button><button class="add">+ Evento</button></div><div class="mode"><button>Dia</button><button class="on">Semana</button></div></div>
+      </div>
+      <div class="weekgrid" id="gridB"></div>
+    </main>
+  </div></div>
+  <div class="cap">
+    <h2>Semana <span>o modo de planejar</span></h2>
+    <p>Mesma ideia da rodada passada, só mais calma: colunas sem borda, blocos como manchas de cor em vez de caixinhas, linhas de hora quase invisíveis. Hoje é a coluna com um leve tom verde e a linha do agora. O que já foi feito é verde cheio. Aula de terça e treino de quinta em laranja, almoço cinza.</p>
+    <p>Aqui você olha e planeja: onde cabe um evento, que dia está leve, se a semana fecha a meta. Pra estudar mesmo, volta pro Dia.</p>
+    <p class="code">No código: um <b>WeekView</b> novo em <b>features/plan</b>, lendo <b>blocksForDay</b> de cada dia (já memoizado); o toggle é estado local do PlanTab. O resto do app não muda.</p>
+  </div>
+
+  <!-- ===== Semana no celular ===== -->
+  <style>
+    .phonewrap{display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap}
+    .phone{width:390px;height:760px;flex-shrink:0;overflow:hidden;background:var(--bg);border:1px solid var(--border);border-radius:24px;color:var(--text);position:relative}
+    .phone::after{content:'';position:absolute;left:0;right:0;bottom:0;height:50px;background:linear-gradient(180deg,rgba(14,14,15,0),var(--bg));pointer-events:none}
+    .ptb{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .ptabs{display:flex;gap:4px;margin-bottom:2px}
+    .ptabs span{padding:6px 12px;border-radius:6px;font-size:13px;font-weight:500;color:var(--muted)}
+    .ptabs span.on{background:var(--accent);color:#0e0e0f;font-weight:600}
+    .pdate{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:1px}
+    .pxp{background:#1a2e1a;border:1px solid var(--accent2);border-radius:99px;padding:4px 10px;font-family:var(--mono);font-size:12px;color:var(--accent);white-space:nowrap;margin-top:4px}
+    .pxp small{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;margin-left:6px;font-family:var(--sans)}
+    .pmain{padding:16px 16px 0;display:flex;flex-direction:column;gap:10px}
+    .pcard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between}
+    .pcard .n{font-family:var(--mono);font-size:28px;color:var(--accent);line-height:1}
+    .pcard .s{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+    .pcard .r{text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
+    .pcard .r em{display:block;font-style:normal;color:var(--orange);margin-top:5px}
+    .ptiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .ptile{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 10px}
+    .ptile .l{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+    .ptile .v{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:1px}
+    .pweek{display:flex;gap:8px;align-items:center;margin-top:4px}
+    .pweek .sel{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;display:flex;justify-content:space-between}
+    .pweek .mode{flex-shrink:0}
+    .axis{display:grid;grid-template-columns:44px 1fr 48px;margin-top:6px}
+    .axis .ticks{position:relative;height:12px}
+    .axis .ticks span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--muted)}
+    .drow{display:grid;grid-template-columns:44px 1fr 48px;align-items:center;padding:9px 0 9px 8px;margin-left:-8px;border-bottom:1px solid rgba(46,46,53,.6);border-radius:6px}
+    .drow .d{font-size:13px;font-weight:500;color:var(--muted);line-height:1.15}
+    .drow .d b{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--ink-dim)}
+    .drow.today{background:rgba(163,230,53,.07);box-shadow:inset 3px 0 0 var(--accent);border-bottom-color:transparent}
+    .drow.today .d{color:var(--accent)} .drow.today .d b{color:var(--accent2)}
+    .drow .tot{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+    .drow.today .tot{color:var(--accent)}
+    .drow.past .tot{color:var(--accent2)}
+    .strip{position:relative;height:14px;border-radius:3px;background:rgba(255,255,255,.03)}
+    .seg{position:absolute;top:0;bottom:0;border-radius:2px}
+    .seg.estudo{background:rgba(163,230,53,.38)} .seg.done{background:var(--accent2)} .seg.longa{background:rgba(96,165,250,.4)} .seg.lunch{background:rgba(255,255,255,.08)} .seg.event{background:rgba(251,146,60,.5)}
+    .strip .tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent);box-shadow:0 0 6px var(--accent)}
+    .drow .ev{grid-column:2/4;font-size:11px;color:var(--orange);margin-top:5px}
+    .drow.off .strip{background:transparent;border:1px dashed var(--border)}
+    .drow.off .tot{color:var(--ink-dim)}
+    .phonecap{max-width:60ch}
+  </style>
+  <div class="phonewrap">
+    <div class="phone">
+      <div class="ptb">
+        <div><div class="ptabs"><span class="on">Plano</span><span>Análise</span><span>Perfil</span></div><div class="pdate">quarta-feira, 9 de setembro</div></div>
+        <div class="pxp">1.250 XP<small>Dedicado</small></div>
+      </div>
+      <div class="pmain">
+        <div class="pcard"><div><div class="n">1.250</div><div class="s">XP total</div></div><div class="r">Semana: 340 XP<em>Hoje: +110 XP · +50 moedas</em></div></div>
+        <div class="ptiles"><div class="ptile"><div class="l">Estudos</div><div class="v">2/15</div></div><div class="ptile"><div class="l">Pausas</div><div class="v">2/12</div></div><div class="ptile"><div class="l">Semana</div><div class="v">3 ✓</div></div></div>
+        <div class="pweek"><div class="sel"><span>Semana 2 · 07/09 – 13/09</span><span>▾</span></div><div class="mode"><button>Dia</button><button class="on">Semana</button></div></div>
+        <div class="axis"><div></div><div class="ticks"><span style="left:0%">9h</span><span style="left:30%">12h</span><span style="left:60%">15h</span><span style="left:100%">19h</span></div><div></div></div>
+        <div id="prows"></div>
+      </div>
+    </div>
+    <div class="cap phonecap">
+      <h2>Semana no celular <span>um dia por linha</span></h2>
+      <p>Sete colunas não cabem em 390px, e um grid rolando de lado com letra minúscula seria pior que não ter. Então a Semana no celular vira o eixo de tempo deitado: <strong>uma linha por dia</strong>, com uma faixa das 9h às 19h onde cada bloco é um traço na largura da duração. Verde é estudo (cheio = feito), azul a pausa longa, cinza o almoço, laranja evento. Hoje tem o risco do agora. O nome do evento vai embaixo da faixa, porque é a única coisa que precisa ser lida pra planejar.</p>
+      <p>O toggle Dia · Semana fica ao lado do seletor de semana, nos dois modos. Tocar numa linha abre o Dia daquele dia, que é o de sempre. Em cima, o cabeçalho, o card de XP e os três números ficam como estão hoje: no celular nada muda fora do que está abaixo do seletor.</p>
+      <p class="code">No código: o mesmo <b>WeekView</b> do laptop com outro CSS (faixa horizontal em vez de coluna). Os dados por dia vêm de <b>blocksForDay</b> igual.</p>
+    </div>
+  </div>
+
+  <section class="verdict">
+    <h2>O que mudou do Painel pra cá</h2>
+    <ul>
+      <li><strong>Caixas: 2 em vez de 12.</strong> Toggle e timer. Todo o resto é texto, hairline e espaço.</li>
+      <li><strong>Cor só com significado.</strong> Sessão no horário, verde forte só no bloco de agora, laranja só no pendente, ciano só no grupo.</li>
+      <li><strong>Quase a mesma informação.</strong> XP, meta, dots, grupo, timer, pet continuam. Saíram só o contador de estudos e a sequência, que o resto da tela já conta.</li>
+    </ul>
+    <p>Ordem que eu faria: primeiro a lista sem caixa (é CSS e já melhora o celular também, se você quiser), depois o grid de três colunas pro Dia em 1100px+, e a Semana por último, porque é a única parte nova de verdade.</p>
+  </section>
+</div>
+
+<script>
+  // Plano de um dia: pomo 25 / pausa 5 / longa 20 a cada 4 estudos; a longa abre a sessão seguinte; último bloco é estudo.
+  function plan(windows) {
+    const pomo = 25, sb = 5, lb = 20; const blocks = []; let session = 0, n = 0;
+    for (const [ws, we] of windows) {
+      let t = ws, k = 0; session++;
+      while (we - t >= 10) {
+        const dur = Math.min(pomo, we - t); n++; k++;
+        blocks.push({ s: t, e: t + dur, type: 'estudo', name: 'Estudo ' + n, session });
+        t += dur; if (t >= we) break;
+        const long = k % 4 === 0, bd = long ? lb : sb;
+        if (we - t - bd < 10) break;
+        if (long) session++;
+        blocks.push({ s: t, e: t + bd, type: long ? 'longa' : 'pausa', name: long ? 'Pausa longa' : 'Pausa', session });
+        t += bd;
+      }
+    }
+    return blocks;
+  }
+  const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const NOW = 10 * 60 + 7;
+  const LUNCH = [13 * 60, 14 * 60];
+  const days = [
+    { d: 'Seg', n: 7, w: [[540, 780], [840, 1110]] },
+    { d: 'Ter', n: 8, w: [[540, 600], [690, 780], [840, 1110]], ev: [{ s: 600, e: 690, name: 'Análise II', kind: 'event' }] },
+    { d: 'Qua', n: 9, w: [[540, 780], [840, 1110]], today: true },
+    { d: 'Qui', n: 10, w: [[540, 780], [840, 1020], [1080, 1110]], ev: [{ s: 1020, e: 1080, name: 'Treino', kind: 'event' }] },
+    { d: 'Sex', n: 11, w: [[540, 780], [840, 1020]] },
+    { d: 'Sáb', n: 12, off: true }, { d: 'Dom', n: 13, off: true },
+  ];
+
+  // Dia · a lista de hoje (grupo "Análise II" nos estudos 5–8)
+  (function () {
+    const el = document.getElementById('listA'); let html = '', lastS = 0, lunchDone = false, grpOpen = false;
+    const GRP = [11 * 60 + 15, 13 * 60 + 5];
+    for (const b of plan(days[2].w)) {
+      if (!lunchDone && b.s >= LUNCH[1]) { html += `<div class="row lunch"><span class="chk" style="visibility:hidden"></span><span class="t">${hm(LUNCH[0])}–${hm(LUNCH[1])}</span><span class="name">Almoço</span><span class="xp"></span></div>`; lunchDone = true; }
+      if (b.session !== lastS) { html += `<div class="sess ${b.session % 2 ? '' : 's1'}">Sessão ${b.session}</div>`; lastS = b.session; }
+      const inGrp = b.s >= GRP[0] && b.e <= GRP[1];
+      if (inGrp && !grpOpen) { html += `<div class="grp-label">Análise II <span>terminar a lista 3</span><b>0/4 · 100 min</b></div>`; grpOpen = true; }
+      const done = b.e <= NOW, now = b.s <= NOW && NOW < b.e; const xp = b.type === 'estudo' ? (b.e - b.s) * 2 : Math.max(1, b.e - b.s);
+      const cls = ['row', b.session % 2 ? '' : 's1', b.type === 'estudo' ? '' : 'break', done ? 'done' : '', now ? 'now' : '', inGrp ? 'ingrp' : ''].filter(Boolean).join(' ');
+      html += `<div class="${cls}"><span class="chk">${done ? '✓' : ''}</span><span class="t">${hm(b.s)}–${hm(b.e)}</span><span class="name">${b.name}${now ? '<span class="tag">agora</span>' : ''}</span><span class="xp">+${xp} XP</span></div>`;
+    }
+    el.innerHTML = html;
+  })();
+
+  // Semana
+  (function () {
+    const g = document.getElementById('gridB'); const T0 = 540, PX = 1; // 1px por minuto, 09:00 → 19:00
+    let html = '<div></div>' + days.map((d) => `<div class="wg-head${d.today ? ' today' : ''}">${d.d}<b>${d.n}/09</b></div>`).join('');
+    html += '<div class="wg-axis">' + [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((h) => `<span style="top:${(h * 60 - T0) * PX}px">${h}h</span>`).join('') + '</div>';
+    for (const d of days) {
+      if (d.off) { html += '<div class="wg-col off">Fim de semana</div>'; continue; }
+      let col = `<div class="wg-col${d.today ? ' today' : ''}">` + [10, 11, 12, 13, 14, 15, 16, 17, 18].map((h) => `<div class="hl" style="top:${(h * 60 - T0) * PX}px"></div>`).join('');
+      const items = plan(d.w).concat([{ s: LUNCH[0], e: LUNCH[1], type: 'lunch', name: 'Almoço' }], (d.ev || []).map((e) => ({ ...e, type: 'event' })));
+      for (const b of items) {
+        const done = d.today && b.e <= NOW && (b.type === 'estudo' || b.type === 'pausa' || b.type === 'longa');
+        const h = (b.e - b.s) * PX; const label = h >= 14 ? b.name : '';
+        col += `<div class="blk ${b.type}${done ? ' done' : ''}" style="top:${(b.s - T0) * PX}px;height:${h}px" title="${hm(b.s)}–${hm(b.e)} ${b.name}">${label}</div>`;
+      }
+      if (d.today) col += `<div class="nowline" style="top:${(NOW - T0) * PX}px"></div>`;
+      html += col + '</div>';
+    }
+    g.innerHTML = html;
+  })();
+
+  // Semana no celular: uma linha por dia, faixa horizontal das 9h às 19h
+  (function () {
+    const el = document.getElementById('prows'); const T0 = 540, SPAN = 600;
+    const pct = (m) => ((m - T0) / SPAN * 100).toFixed(2) + '%';
+    const fmt = (m) => { const h = Math.floor(m / 60), r = m % 60; return r ? `${h}h${String(r).padStart(2, '0')}` : `${h}h`; };
+    let html = '';
+    for (const d of days) {
+      if (d.off) { html += `<div class="drow off"><div class="d">${d.d}<b>${d.n}</b></div><div class="strip"></div><div class="tot">livre</div></div>`; continue; }
+      const past = d.n < 9;
+      const items = plan(d.w).concat([{ s: LUNCH[0], e: LUNCH[1], type: 'lunch', name: 'Almoço' }], (d.ev || []).map((e) => ({ ...e, type: 'event' })));
+      let segs = '', study = 0, done = 0;
+      for (const b of items) {
+        if (b.type === 'pausa') continue;
+        const isDone = (d.today && b.e <= NOW || past) && (b.type === 'estudo' || b.type === 'longa');
+        if (b.type === 'estudo' || b.type === 'event') { study += b.e - b.s; if (isDone || (past && b.type === 'event')) done += b.e - b.s; }
+        segs += `<span class="seg ${b.type === 'estudo' && isDone ? 'done' : b.type}" style="left:${pct(b.s)};width:${((b.e - b.s) / SPAN * 100).toFixed(2)}%"></span>`;
+      }
+      if (d.today) segs += `<span class="tick" style="left:${pct(NOW)}"></span>`;
+      const tot = d.today ? fmt(done) : past ? `${fmt(done)} ✓` : fmt(study);
+      const ev = (d.ev || []).map((e) => `${hm(e.s)}–${hm(e.e)} ${e.name}`).join(' · ');
+      html += `<div class="drow${d.today ? ' today' : ''}${past ? ' past' : ''}"><div class="d">${d.d}<b>${d.n}</b></div><div class="strip">${segs}</div><div class="tot">${tot}</div>${ev ? `<div class="ev">${ev}</div>` : ''}</div>`;
+    }
+    el.innerHTML = html;
+  })();
+
+  // trocar a aba ativa nos trilhos e nos toggles, só pra sentir
+  document.querySelectorAll('.rail-nav, .mode, .days').forEach((nav) => nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const on = nav.classList.contains('rail-nav') ? 'active' : 'on';
+    nav.querySelectorAll('button').forEach((b) => b.classList.toggle(on, b === btn));
+  }));
+</script>

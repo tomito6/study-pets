@@ -1,0 +1,234 @@
+<title>Cabeçalho do Study Pets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  /* Paleta do app (src/styles/app.css). A folha é escura de propósito: o app só tem tema escuro. */
+  :root{
+    --bg:#0e0e0f; --bg2:#18181b; --bg3:#232328; --border:#2e2e35;
+    --text:#f0f0f0; --muted:#888; --accent:#a3e635; --accent2:#65a30d; --green-bg:#1a2e1a;
+    --page:#151517; --ink:#c9c9cf; --ink-dim:#8a8a92;
+    --sans:'DM Sans',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,Menlo,monospace; --pixel:'Press Start 2P',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 24px 64px}
+  header.intro{max-width:64ch;margin-bottom:36px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h1{font-size:28px;font-weight:600;color:var(--text);letter-spacing:-.01em;line-height:1.15;text-wrap:balance;margin-bottom:12px}
+  .intro p{color:var(--ink);margin-bottom:8px}
+  .intro p strong{color:var(--text);font-weight:600}
+
+  .sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:40px 32px;align-items:start}
+  .opt{display:flex;flex-direction:column;gap:14px}
+  .opt.base{grid-column:1/-1;max-width:480px}
+  .cap h2{font-size:17px;font-weight:600;color:var(--text);margin-bottom:4px}
+  .cap h2 span{font-family:var(--mono);font-weight:400;font-size:12px;color:var(--ink-dim);margin-left:8px}
+  .cap p{margin-bottom:6px}
+  .cap .code{font-size:12.5px;color:var(--ink-dim);font-family:var(--mono);line-height:1.5}
+  .cap .code b{color:var(--ink);font-weight:500}
+
+  /* ---- o "celular": fundo do app + um pedaço da aba Plano apagado, pra ver o cabeçalho no contexto ---- */
+  .phone{width:100%;max-width:480px;background:var(--bg);border:1px solid var(--border);border-radius:16px;overflow:hidden;color:var(--text)}
+  .tb{background:rgba(14,14,15,.92);border-bottom:1px solid var(--border)}
+  .status{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 0}
+  .date{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .right{display:flex;align-items:center;gap:8px}
+  .xp{background:var(--green-bg);border:1px solid var(--accent2);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:500;color:var(--accent);font-family:var(--mono);display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .xp .lvl{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;font-family:var(--sans)}
+  .sair{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:12px;padding:4px 9px}
+
+  .ctx{padding:14px 20px 18px;opacity:.38;pointer-events:none;user-select:none}
+  .wk{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;display:flex;justify-content:space-between;margin-bottom:10px}
+  .days{display:flex;gap:4px;margin-bottom:14px}
+  .days span{flex:1;text-align:center;padding:6px 0;border-radius:6px;border:1px solid var(--border);color:var(--muted);font-size:12px}
+  .days span.on{background:var(--accent);border-color:var(--accent);color:#0e0e0f;font-weight:600}
+  .xpc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+  .xpc .n{font-family:var(--mono);font-size:30px;color:var(--accent);line-height:1}
+  .xpc .s{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
+  .xpc .r{text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .xpc .r em{display:block;font-style:normal;color:#fb923c;margin-top:6px}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:6px;margin-bottom:6px;font-size:13px}
+  .row .chk{width:16px;height:16px;border:1.5px solid var(--muted);border-radius:4px}
+  .row .t{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+  /* ---- como está hoje ---- */
+  .tb0{display:flex;align-items:center;justify-content:space-between;padding:14px 20px}
+  .tb0 .nav{display:flex;gap:4px;margin-bottom:2px}
+  .tb0 .nav button{background:transparent;border:1px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:6px 14px;border-radius:6px;letter-spacing:.01em}
+  .tb0 .nav button.active{background:var(--accent);border-color:var(--accent);color:#0e0e0f;font-weight:600}
+  .tb0 .date{margin-top:1px;display:block}
+
+  /* ---- A · Sublinhado ---- */
+  .tbA .nav{display:flex;gap:26px;padding:4px 20px 0}
+  .tbA .nav button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 0 11px;font-size:21px;font-weight:600;letter-spacing:-.015em;color:var(--muted);transition:color .15s;margin-bottom:-1px}
+  .tbA .nav button:hover{color:var(--ink)}
+  .tbA .nav button.active{color:var(--text);border-bottom-color:var(--accent)}
+
+  /* ---- B · Segmentado ---- */
+  .tbB .seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:3px;margin:10px 20px 14px}
+  .tbB .seg button{border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:600;padding:9px 0;border-radius:7px;transition:color .15s,background .15s}
+  .tbB .seg button:hover{color:var(--ink)}
+  .tbB .seg button.active{background:var(--accent);color:#0e0e0f}
+
+  /* ---- C · Pixel (Press Start 2P) ---- */
+  .tbC .nav{display:flex;gap:22px;padding:10px 20px 0}
+  .tbC .nav button{background:none;border:0;border-bottom:4px solid transparent;padding:8px 0 12px;font-family:var(--pixel);font-size:11px;line-height:1;text-transform:uppercase;color:#63636b;transition:color .15s;margin-bottom:-1px}
+  .tbC .nav button:hover{color:var(--ink)}
+  .tbC .nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  /* ---- D · Ícones em pixel ---- */
+  .tbD .nav{display:flex;gap:6px;padding:8px 14px 12px}
+  .tbD .nav button{display:flex;align-items:center;gap:9px;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--muted);font-size:15px;font-weight:600;padding:7px 12px;transition:color .15s,background .15s,border-color .15s}
+  .tbD .nav button:hover{color:var(--ink);border-color:var(--border)}
+  .tbD .nav button.active{color:var(--accent);background:var(--green-bg);border-color:var(--accent2)}
+  .tbD .nav svg{width:20px;height:20px;shape-rendering:crispEdges;display:block}
+  .tbD .nav img{width:26px;height:26px;margin:-3px 0;image-rendering:pixelated;display:block;filter:grayscale(1) opacity(.65);transition:filter .15s}
+  .tbD .nav button.active img{filter:none}
+
+  .verdict{max-width:64ch;margin-top:48px;padding-top:24px;border-top:1px solid var(--border)}
+  .verdict h2{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px}
+  .verdict p{margin-bottom:8px}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <div class="eyebrow">Esboço · topo do app</div>
+    <h1>Cabeçalho do Study Pets</h1>
+    <p>Quatro jeitos de desenhar a barra de cima sem os emojis, com as abas maiores. Tudo na paleta e nas fontes que o app já usa, então o que você vê aqui é o que ficaria no app.</p>
+    <p>O que é igual nas quatro: a barra vira <strong>duas linhas</strong>. A de cima é o status (data à esquerda, XP e Sair à direita) e a de baixo é só navegação, que ganha o espaço todo pra crescer. <strong>Toque nas abas</strong> de cada esboço pra sentir a troca.</p>
+  </header>
+
+  <div class="sheet">
+
+    <!-- Como está hoje -->
+    <div class="opt base">
+      <div class="phone">
+        <div class="tb tb0">
+          <div>
+            <div class="nav"><button class="active">📚 Plano</button><button>📊 Análise</button><button>🧑 Perfil</button></div>
+            <span class="date">domingo, 6 de setembro</span>
+          </div>
+          <div class="right"><span class="xp">1.250 XP<span class="lvl">Dedicado</span></span><button class="sair">Sair</button></div>
+        </div>
+      </div>
+      <div class="cap">
+        <h2>Como está hoje</h2>
+        <p>As abas dividem a linha com a data e com o XP, então nunca puderam crescer. Os emojis mudam de desenho conforme o celular e puxam pra um lado mais infantil do que o resto do app.</p>
+      </div>
+    </div>
+
+    <!-- A · Sublinhado -->
+    <div class="opt">
+      <div class="phone">
+        <div class="tb tbA">
+          <div class="status"><span class="date">domingo, 6 de setembro</span><div class="right"><span class="xp">1.250 XP<span class="lvl">Dedicado</span></span><button class="sair">Sair</button></div></div>
+          <div class="nav"><button class="active">Plano</button><button>Análise</button><button>Perfil</button></div>
+        </div>
+        <div class="ctx">
+          <div class="wk"><span>Semana 31 ago – 6 set</span><span>▾</span></div>
+          <div class="days"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span class="on">Dom</span></div>
+          <div class="xpc"><div><div class="n">1.250</div><div class="s">XP total</div></div><div class="r">+120 XP esta semana<em>Hoje: +50 XP · +25 moedas</em></div></div>
+          <div class="row"><span class="chk"></span>Estudo 1<span class="t">09:00–09:25</span></div>
+          <div class="row"><span class="chk"></span>Pausa curta<span class="t">09:25–09:30</span></div>
+        </div>
+      </div>
+      <div class="cap">
+        <h2>Sublinhado <span>DM Sans 21px</span></h2>
+        <p>Só texto, grande, e um traço verde embaixo da aba ativa que encosta na borda da barra. É o mais quieto dos quatro e o que mais parece ferramenta séria. A aba ativa fica branca; as outras, cinza.</p>
+        <p class="code">No código: <b>strings.tabs</b> sem emoji + CSS do <b>.nav-tab</b>. Ids e classes ficam iguais.</p>
+      </div>
+    </div>
+
+    <!-- B · Segmentado -->
+    <div class="opt">
+      <div class="phone">
+        <div class="tb tbB">
+          <div class="status"><span class="date">domingo, 6 de setembro</span><div class="right"><span class="xp">1.250 XP<span class="lvl">Dedicado</span></span><button class="sair">Sair</button></div></div>
+          <div class="seg"><button class="active">Plano</button><button>Análise</button><button>Perfil</button></div>
+        </div>
+        <div class="ctx">
+          <div class="wk"><span>Semana 31 ago – 6 set</span><span>▾</span></div>
+          <div class="days"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span class="on">Dom</span></div>
+          <div class="xpc"><div><div class="n">1.250</div><div class="s">XP total</div></div><div class="r">+120 XP esta semana<em>Hoje: +50 XP · +25 moedas</em></div></div>
+          <div class="row"><span class="chk"></span>Estudo 1<span class="t">09:00–09:25</span></div>
+          <div class="row"><span class="chk"></span>Pausa curta<span class="t">09:25–09:30</span></div>
+        </div>
+      </div>
+      <div class="cap">
+        <h2>Segmentado <span>DM Sans 15px</span></h2>
+        <p>Um controle só, de ponta a ponta, com a aba ativa preenchida de verde. É a mesma linguagem das abas dos dias logo abaixo, então o topo fica coerente com o resto do Plano. Alvo de toque grande no celular.</p>
+        <p class="code">No código: um <b>.nav-tabs</b> em grid de 3 colunas com fundo, e o <b>.nav-tab.active</b> que já existe.</p>
+      </div>
+    </div>
+
+    <!-- C · Pixel -->
+    <div class="opt">
+      <div class="phone">
+        <div class="tb tbC">
+          <div class="status"><span class="date">domingo, 6 de setembro</span><div class="right"><span class="xp">1.250 XP<span class="lvl">Dedicado</span></span><button class="sair">Sair</button></div></div>
+          <div class="nav"><button class="active">Plano</button><button>Análise</button><button>Perfil</button></div>
+        </div>
+        <div class="ctx">
+          <div class="wk"><span>Semana 31 ago – 6 set</span><span>▾</span></div>
+          <div class="days"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span class="on">Dom</span></div>
+          <div class="xpc"><div><div class="n">1.250</div><div class="s">XP total</div></div><div class="r">+120 XP esta semana<em>Hoje: +50 XP · +25 moedas</em></div></div>
+          <div class="row"><span class="chk"></span>Estudo 1<span class="t">09:00–09:25</span></div>
+          <div class="row"><span class="chk"></span>Pausa curta<span class="t">09:25–09:30</span></div>
+        </div>
+      </div>
+      <div class="cap">
+        <h2>Pixel <span>Press Start 2P 11px</span></h2>
+        <p>A fonte da tela de login vira a fonte das abas: caixa alta, verde na ativa, traço grosso embaixo. É a que mais grita "este app tem pets de pixel art". O risco é o oposto: fica pesada num lugar que você olha o dia inteiro.</p>
+        <p class="code">No código: só CSS do <b>.nav-tab</b> (a fonte já está carregada no index.html).</p>
+      </div>
+    </div>
+
+    <!-- D · Ícones em pixel -->
+    <div class="opt">
+      <div class="phone">
+        <div class="tb tbD">
+          <div class="status"><span class="date">domingo, 6 de setembro</span><div class="right"><span class="xp">1.250 XP<span class="lvl">Dedicado</span></span><button class="sair">Sair</button></div></div>
+          <div class="nav">
+            <button class="active"><svg viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor"><rect x="0" y="1" width="3" height="3"/><rect x="5" y="2" width="7" height="1"/><rect x="0" y="5" width="3" height="1"/><rect x="0" y="7" width="3" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="5" y="6" width="7" height="1"/><rect x="0" y="9" width="3" height="1"/><rect x="0" y="11" width="3" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="5" y="10" width="7" height="1"/></g></svg>Plano</button>
+            <button><svg viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor"><rect x="0" y="7" width="3" height="5"/><rect x="4" y="2" width="3" height="10"/><rect x="8" y="5" width="3" height="7"/></g></svg>Análise</button>
+            <button><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAcCAYAAABoMT8aAAABZElEQVR4nO2Uv0rDUBTGv5QOQgNxCUiUCheUZHCRdhR8hUyBPkCnzF0cxMGlFqdOfYO65A1cuhSagtBFHC4UbBYXU9JR4lDuJefmxio49luS8+f7JTnnEmCvvf5BhppgjOW7TJxz6aur5jg0SbN5dVgCuAFyAZGkollnKkPewTk36rpiNvncXt2uzB3ZT7LWGmZ4HZ/ADZCTNwCAODSl0bEtCUg+UgDAdfgIzrnBGMs550ZNmN/Gd/Kpjm0Rs4AVc2IGNRGcB7cQEADozD105h6BqLEEqE/6iwhgPXmQ94PmFIPmlDSrsQQUVyiGVTWHODTJYZNrbA0zAIB1+kxMs75PYtEnRI4yYyz37s9IQzJqYNb30e5FAIB0+VJ9lHVyuhu0exGc7mYLuKH10haqIMmooa39CvATpPQJ6/igEmJefiFd7gAIraIFiY/9C22fFrCKFmTSYu9qviTGWK77I1XlAeAb/qeF/WZqua4AAAAASUVORK5CYII=">Perfil</button>
+          </div>
+        </div>
+        <div class="ctx">
+          <div class="wk"><span>Semana 31 ago – 6 set</span><span>▾</span></div>
+          <div class="days"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span class="on">Dom</span></div>
+          <div class="xpc"><div><div class="n">1.250</div><div class="s">XP total</div></div><div class="r">+120 XP esta semana<em>Hoje: +50 XP · +25 moedas</em></div></div>
+          <div class="row"><span class="chk"></span>Estudo 1<span class="t">09:00–09:25</span></div>
+          <div class="row"><span class="chk"></span>Pausa curta<span class="t">09:25–09:30</span></div>
+        </div>
+      </div>
+      <div class="cap">
+        <h2>Ícones em pixel <span>DM Sans 15px + ícones 12×12</span></h2>
+        <p>No lugar do emoji, um ícone desenhado no mesmo padrão dos sprites: uma lista com check pro Plano, barras pra Análise, e no Perfil o seu próprio personagem, que acende em cor quando a aba está aberta e fica cinza nas outras. A aba ativa usa o mesmo verde-escuro do selo de XP.</p>
+        <p class="code">No código: dois SVGs inline no <b>Header.tsx</b> + o sprite <b>idle/user/0.png</b>. O botão continua contendo o texto, então o e2e (que clica por "Perfil") não muda.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <section class="verdict">
+    <h2>O que eu escolheria</h2>
+    <p>Ícones em pixel. É o único que mantém o calor que o emoji dava, mas com desenho autoral e consistente em qualquer celular, e o personagem no Perfil é uma coisa que só este app pode ter. A letra continua sendo a DM Sans, então não infantiliza.</p>
+    <p>Se preferir o mais limpo, o Sublinhado é a escolha segura. O Pixel vale ver, mas eu não deixaria uma fonte de 8 bits fixa no topo da tela o dia inteiro.</p>
+  </section>
+</div>
+
+<script>
+  // Troca de aba dentro de cada esboço: só pra sentir o estado ativo.
+  document.querySelectorAll('.tb .nav, .tb .seg').forEach(function (nav) {
+    nav.addEventListener('click', function (e) {
+      var btn = e.target.closest('button'); if (!btn) return;
+      nav.querySelectorAll('button').forEach(function (b) { b.classList.toggle('active', b === btn); });
+    });
+  });
+</script>
