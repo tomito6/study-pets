@@ -862,13 +862,13 @@
      Abaixo disso nada daqui se aplica: o celular continua exatamente como era.
      O #app vira um grid de três colunas em PORCENTAGEM da tela: trilho (o .topbar em coluna) · a página ·
      a coluna da direita do Plano (a barra do timer em cima, o .plan-side embaixo). E tudo do laptop é medido
-     em --s, "um pixel do desenho de referência" (janela de 1360px): fonte, altura de linha, espaço, sprite.
+     em --s, "um pixel do desenho de referência" (janela de 1480px): fonte, altura de linha, espaço, sprite.
      Assim a página é a mesma em qualquer largura, só maior ou menor — sem margem morta, sem parte miúda.
      Poucas caixas: o toggle e o timer. O resto é texto, hairline e espaço.
      ================================================================================================ */
   #app.app-hidden{display:none;}
   @media (min-width:1100px){
-    #app{--s:calc(100vw / 1360);display:grid;grid-template-columns:17% 54% 21%;grid-template-rows:auto 1fr;column-gap:2%;padding:0 2%;align-items:start;}
+    #app{--s:calc(100vw / 1480);display:grid;grid-template-columns:17% 54% 21%;grid-template-rows:auto 1fr;column-gap:2%;padding:0 2%;align-items:start;}
 
     /* trilho: só texto, um traço na aba ativa, o personagem com o pet no pé */
     .topbar{grid-column:1;grid-row:1 / -1;position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:calc(26 * var(--s)) 0 calc(24 * var(--s));background:transparent;backdrop-filter:none;border-bottom:0;}
@@ -895,7 +895,7 @@
 
     /* a página, na coluna do meio. Análise e Perfil escalam inteiras (zoom); o Plano é medido em --s regra a regra */
     .main,.analytics-page,.profile-page{grid-column:2;grid-row:1 / -1;max-width:none;margin:0;padding:calc(26 * var(--s)) 0 calc(100 * var(--s));}
-    .analytics-page,.profile-page{zoom:calc(100vw / 1360px);padding:26px 0 100px;}
+    .analytics-page,.profile-page{zoom:calc(100vw / 1480px);padding:26px 0 100px;}
     .xp-card,.stats-row{display:none;}
 
     /* semana e dias: texto, não caixa */
