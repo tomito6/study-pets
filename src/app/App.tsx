@@ -15,13 +15,17 @@ import { TimerBar } from '../features/timer/TimerBar';
 import { TourBalloon } from '../features/tutorial/TourBalloon';
 import { useAppState } from '../store/store';
 import { Header } from './Header';
+import { NavStyleSwitch } from './NavStyleSwitch';
+import { useNavStyle } from './navStyle';
 
 export function App() {
   const { loggedIn, tab } = useAppState((s) => ({ loggedIn: !!s.user, tab: s.uiTab }));
+  // Experimento: o estilo das abas vira data-nav aqui, porque o CSS do cabeçalho e o da barra do timer leem dele.
+  const navStyle = useNavStyle();
   return (
     <>
       <LoginScreen />
-      <div id="app" style={{ display: loggedIn ? 'block' : 'none' }}>
+      <div id="app" data-nav={navStyle} style={{ display: loggedIn ? 'block' : 'none' }}>
         <Header />
         <TimerBar />
         <div className="main" style={{ display: tab === 'plano' ? undefined : 'none' }}>
@@ -35,6 +39,7 @@ export function App() {
         <OnboardingModal />
         {/* Dentro de #app: some com o logout junto com o resto. Posição absoluta = coordenadas do documento. */}
         <TourBalloon />
+        <NavStyleSwitch />
       </div>
       <SaveIndicator />
     </>

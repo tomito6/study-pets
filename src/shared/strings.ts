@@ -36,9 +36,15 @@ export const strings = {
     finePrint: 'Dados salvos na nuvem · Sincronizado em todos os dispositivos',
   },
   tabs: {
-    plano: '📚 Plano',
-    analise: '📊 Análise',
-    perfil: '🧑 Perfil',
+    plano: 'Plano',
+    analise: 'Análise',
+    perfil: 'Perfil',
+  },
+  // Experimento temporário: o botão que alterna o estilo das abas (ver app/navStyle.ts)
+  navExperiment: {
+    names: { icons: 'Ícones', underline: 'Sublinhado' },
+    label: (name: string) => `Abas: ${name} ⇄`,
+    hint: 'Experimento: toca pra trocar o estilo das abas do cabeçalho',
   },
   header: {
     sair: 'Sair',
