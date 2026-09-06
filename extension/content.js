@@ -8,6 +8,7 @@ document.documentElement.dataset.studyPetsExt = '1';
 window.addEventListener('study-pets:hardcore', (e) => {
   try {
     const payload = JSON.parse(e.detail);
+    if (!payload || typeof payload !== 'object') return; // `null`/número é JSON válido, mas não é estado
     chrome.runtime.sendMessage({ type: 'hardcore', payload }).catch(() => {});
   } catch {
     // detail que não é JSON: não é nosso
