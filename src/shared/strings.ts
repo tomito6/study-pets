@@ -40,12 +40,6 @@ export const strings = {
     analise: 'Análise',
     perfil: 'Perfil',
   },
-  // Experimento temporário: o botão que alterna o estilo das abas (ver app/navStyle.ts)
-  navExperiment: {
-    names: { icons: 'Ícones', underline: 'Sublinhado', classic: 'Original' },
-    label: (name: string) => `Abas: ${name} ⇄`,
-    hint: 'Experimento: toca pra trocar o estilo das abas do cabeçalho',
-  },
   header: {
     sair: 'Sair',
     xp: (total: number) => `${total} XP`,

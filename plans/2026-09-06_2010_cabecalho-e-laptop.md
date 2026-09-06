@@ -12,19 +12,15 @@ Os esboços (HTML autocontido, na paleta e nas fontes do app) estão ao lado des
 `2026-09-06_2010_esboco-cabecalho.html` (as quatro direções do cabeçalho) e
 `2026-09-06_2010_esboco-laptop.html` (Dia e Semana no laptop, Semana no celular). Abrir no navegador.
 
-## O que está na branch (experimento, não decisão)
+## O que foi pro main
 
-- `strings.tabs` sem emoji: "Plano", "Análise", "Perfil".
-- O cabeçalho em duas linhas (status em cima: data, XP/nível, Sair; abas embaixo), com **três estilos
-  de aba** alternados por um botão flutuante no canto inferior esquerdo (`app/navStyle.ts`,
-  `app/NavStyleSwitch.tsx`, guardado em `localStorage`, só do dispositivo): `icons` (ícone em pixel +
-  rótulo; o Perfil com o próprio personagem, cinza fora da aba), `underline` (texto 21px com traço
-  verde) e `classic` (o de antes, sem emoji — CSS por cima do mesmo markup, com `display:contents`).
-- `--topbar-h` no `#app` (88 / 98 / 77px) no lugar do `top:57px` fixo da barra do timer.
-- Abaixo de 440px a data vira a forma curta ("qua., 9 de set.") pra caber ao lado do XP.
-- Ids e classes das abas não mudaram (`#tab-plano`, `.nav-tab.active`); o e2e continua passando.
+- `strings.tabs` sem emoji: "Plano", "Análise", "Perfil". O resto do cabeçalho é o de antes.
+- `--topbar-h` no `#app` (76px) no lugar do `top:57px` fixo da barra do timer.
+- Passou por aqui, e saiu no mesmo dia a pedido do Tomi ("pode tirar o botão de mudar o tipo de
+  aba, deixa só o modo original"): o cabeçalho em duas linhas com três estilos alternados por um botão
+  flutuante (`icons`, `underline`, `classic`). Os esboços continuam ao lado deste arquivo.
 
-## Decidido na conversa
+
 
 1. **Celular fica como era**, menos os emojis nas abas. O Tomi olhou os três estilos no laptop e
    preferiu o original; a diferença que ele sentia era a barra de borda a borda, não o cabeçalho.

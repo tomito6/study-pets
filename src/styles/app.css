@@ -8,17 +8,13 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-  /* TOPBAR — duas linhas: status (data, XP/nível, Sair) e, abaixo, as abas.
-     A altura vai em --topbar-h no #app: a barra do timer é sticky logo abaixo e precisa saber onde o topo acaba. */
-  #app{--topbar-h:88px;}
-  #app[data-nav="icons"]{--topbar-h:98px;}
-  .topbar{position:sticky;top:0;z-index:100;background:rgba(14,14,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 20px 0;display:flex;flex-direction:column;}
-  .topbar-status{display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .topbar-status .sub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;}
-  .topbar-status .date-short{display:none;}
-  @media (max-width:439px){ .topbar-status .date-long{display:none;} .topbar-status .date-short{display:inline;} }
-  .topbar-right{display:flex;align-items:center;gap:8px;}
-  .xp-badge{background:var(--green-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  /* TOPBAR — a altura vai em --topbar-h no #app: a barra do timer é sticky logo abaixo e precisa saber onde o topo acaba */
+  #app{--topbar-h:76px;}
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(14,14,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar-left h1{font-size:15px;font-weight:600;}
+  .topbar-left .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:'DM Mono',monospace;}
+  .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .xp-badge{background:var(--green-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px;}
   .xp-badge .level-tag{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;}
   .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
   .icon-btn:hover{border-color:#555;color:var(--text);}
@@ -190,34 +186,10 @@
   .checkbox-row label{font-size:13px;color:var(--muted);cursor:pointer;margin:0;padding:0;line-height:16px;display:flex;align-items:center;}
 
   /* NAV TABS */
-  /* NAV TABS — experimento (ver app/navStyle.ts). Base = "underline": texto grande, traço verde embaixo da ativa,
-     encostado na borda da barra. #app[data-nav="icons"] = ícone em pixel + rótulo, ativa no verde-escuro do selo de XP. */
-  .nav-tabs { display:flex; gap:26px; padding-top:4px; }
-  .nav-tab { display:flex; align-items:center; gap:9px; background:transparent; border:0; border-bottom:3px solid transparent; margin-bottom:-1px; padding:8px 0 11px; font-size:21px; line-height:1; font-weight:600; letter-spacing:-.015em; color:var(--muted); cursor:pointer; font-family:'DM Sans',sans-serif; transition:color .15s, background .15s, border-color .15s; }
-  .nav-tab:hover { color:#c9c9cf; }
-  .nav-tab.active { color:var(--text); border-bottom-color:var(--accent); }
-  #app[data-nav="icons"] .nav-tabs { gap:6px; padding:8px 0 12px; margin:0 -12px; }
-  #app[data-nav="icons"] .nav-tab { border:1px solid transparent; border-radius:8px; margin:0; padding:7px 12px; font-size:15px; letter-spacing:0; }
-  #app[data-nav="icons"] .nav-tab:hover { border-color:var(--border); }
-  #app[data-nav="icons"] .nav-tab.active { color:var(--accent); background:var(--green-bg); border-color:var(--accent2); }
-  .nav-icon { width:20px; height:20px; display:block; shape-rendering:crispEdges; }
-  .nav-sprite { width:26px; height:26px; margin:-3px 0; display:block; image-rendering:pixelated; filter:grayscale(1) opacity(.65); transition:filter .15s; }
-  .nav-tab.active .nav-sprite { filter:none; }
-  /* "classic" = o cabeçalho de antes (sem os emojis): abas pequenas em pílula com a data embaixo, XP e Sair à direita, uma linha só */
-  #app[data-nav="classic"]{--topbar-h:77px;}
-  #app[data-nav="classic"] .topbar{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nav right" "date right";align-items:center;column-gap:12px;padding:14px 20px;}
-  #app[data-nav="classic"] .topbar-status{display:contents;}
-  #app[data-nav="classic"] .topbar-status .sub{grid-area:date;margin-top:1px;}
-  #app[data-nav="classic"] .topbar-status .date-long{display:inline;}
-  #app[data-nav="classic"] .topbar-status .date-short{display:none;}
-  #app[data-nav="classic"] .topbar-right{grid-area:right;flex-wrap:wrap;justify-content:flex-end;}
-  #app[data-nav="classic"] .nav-tabs{grid-area:nav;gap:4px;padding:0;margin:0 0 2px;}
-  #app[data-nav="classic"] .nav-tab{border:1px solid transparent;border-radius:var(--radius-sm);margin:0;padding:6px 14px;font-size:13px;line-height:normal;font-weight:500;letter-spacing:.01em;transition:all .2s;}
-  #app[data-nav="classic"] .nav-tab:hover{color:var(--text);border-color:var(--border);}
-  #app[data-nav="classic"] .nav-tab.active{background:var(--accent);border-color:var(--accent);color:#0e0e0f;font-weight:600;}
-  /* Experimento: o botão flutuante que troca o estilo das abas (sai com a decisão) */
-  .nav-style-switch { position:fixed; left:16px; bottom:24px; z-index:90; background:var(--bg2); border:1px solid var(--border); border-radius:99px; color:var(--muted); font-size:11px; padding:7px 12px; cursor:pointer; font-family:'DM Mono',monospace; box-shadow:0 4px 16px rgba(0,0,0,.4); }
-  .nav-style-switch:hover { color:var(--text); border-color:#555; }
+  .nav-tabs { display:flex; gap:4px; margin-bottom:2px; }
+  .nav-tab { background:transparent; border:1px solid transparent; color:var(--muted); font-size:13px; font-weight:500; padding:6px 14px; border-radius:var(--radius-sm); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; letter-spacing:.01em; }
+  .nav-tab:hover { color:var(--text); border-color:var(--border); }
+  .nav-tab.active { background:var(--accent); border-color:var(--accent); color:#0e0e0f; font-weight:600; }
 
   /* ANALYTICS */
   .analytics-page { display:none; max-width:480px; margin:0 auto; padding:20px 16px 100px; }
