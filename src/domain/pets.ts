@@ -236,6 +236,15 @@ export function evolutionOf(pet: PetInstance): Evolution {
   return level >= next.level ? { kind: 'advance', level: next.level, form } : { kind: 'locked', level: next.level };
 }
 
+/** O pet pode evoluir agora — chegou no nível e há uma escolha ou um avanço esperando. */
+export function canEvolveNow(pet: PetInstance): boolean {
+  const evo = evolutionOf(pet);
+  return !!evo && evo.kind !== 'locked';
+}
+
+/** Os pets adotados que podem evoluir agora, na ordem de `owned`. É o que o Perfil sinaliza. */
+export const petsReadyToEvolve = (owned: readonly PetInstance[]): PetInstance[] => owned.filter(canEvolveNow);
+
 export type EvolveRefusal = 'none' | 'not-ready' | 'invalid-path';
 
 /**

@@ -9,6 +9,7 @@ import {
   FORMS,
   PETS,
   PET_LIST,
+  canEvolveNow,
   coinBalance as coinBalanceOf,
   evolutionOf,
   evolve,
@@ -22,6 +23,7 @@ import {
   petLevelStart,
   petProgress,
   petXpToNext,
+  petsReadyToEvolve,
   speciesForm,
   suggestPetName,
 } from '../src/domain/pets';
@@ -160,6 +162,15 @@ describe('forma, nome e evolução (puro)', () => {
     }
     expect(evolve(inst({ xp: petLevelStart(5), path: 'selvagem', stage: 1 }))).toEqual({ ok: false, reason: 'not-ready' });
     expect(evolve(inst({ species: 'xyz', xp: 999 }))).toEqual({ ok: false, reason: 'none' });
+  });
+
+  it('canEvolveNow / petsReadyToEvolve: só quem chegou no nível e tem escolha ou avanço esperando', () => {
+    const pronto = inst({ xp: petLevelStart(DOG_EVOLVE_LEVEL) });
+    expect(canEvolveNow(inst())).toBe(false);
+    expect(canEvolveNow(pronto)).toBe(true);
+    expect(canEvolveNow(inst({ id: 'cat', species: 'cat', xp: 9999 }))).toBe(false);
+    const fim = inst({ id: 'dog-2', xp: 9999, path: 'selvagem', stage: 1 });
+    expect(petsReadyToEvolve([inst(), pronto, fim]).map((p) => p.id)).toEqual(['dog']);
   });
 
   it('nome: apara espaços, 1 a 16 caracteres; sugestão vem da lista da espécie', () => {

@@ -358,6 +358,7 @@ test.describe('Study Pets — smoke', () => {
   });
 
   test('15. o pet ganha nome ao adotar, XP ao fechar o dia, e evolui escolhendo o caminho', async ({ page }) => {
+    test.slow(); // dois dias, adoção, resumo, modal do pet e evolução: passa de 30s com a suíte em paralelo
     await abrirApp(page);
     for (let i = 0; i < 7; i++) await checksDeEstudo(page).nth(i).click();
     await page.locator('.finish-day-btn').click();
@@ -393,23 +394,37 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
     await expect(page.locator('#day-summary-panel')).toContainText('Bolt');
     await expect(page.locator('#day-summary-panel')).toContainText('Lv. 1 → 5');
+    await expect(page.locator('#day-summary-panel .ds-pet-evo')).toBeVisible(); // chegou no nível da escolha
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
 
-    // Escolhe o caminho selvagem: vira lobo e continua sendo o Bolt.
+    // O Perfil sinaliza (selo no card do pet ativo, contagem em "Meus pets"); tocar no card abre o pet.
+    // O pet inicial também chegou no Lv. 5 no dia 1 — toda espécie evolui —, então são dois.
     await page.getByRole('button', { name: /Perfil/ }).click();
     await expect(page.locator('#ap-lv')).toHaveText('Lv. 5');
-    await page.getByRole('button', { name: /Meus pets/ }).click();
-    // O pet inicial também chegou no Lv. 5 (dia 1) e pode evoluir — mira no card do Bolt.
-    const bolt = page.locator('#my-pets-grid .shop-item', { hasText: 'Bolt' });
-    await bolt.locator('.shop-btn.evolve').click();
+    await expect(page.locator('#ap-evo-badge')).toBeVisible();
+    await expect(page.locator('#my-pets-evo')).toHaveText('2 podem evoluir');
+    await page.locator('#active-pet-card').click();
+    await expect(page.locator('#pet-detail-panel')).toBeVisible();
+    await expect(page.locator('#pet-detail-panel')).toContainText('Bolt');
+
+    // Escolhe o caminho selvagem dali mesmo: vira lobo e continua sendo o Bolt.
+    await page.locator('#pet-detail-panel .shop-btn.evolve').click();
     await expect(page.locator('#pet-evolve-panel')).toBeVisible();
     await page.locator('#pet-evolve-panel .evo-path', { hasText: 'Lobo' }).click();
     await page.locator('#pet-evolve-panel').getByRole('button', { name: 'Evoluir', exact: true }).click();
     await expect(page.locator('#pet-evolve-panel')).toBeHidden();
-    await expect(bolt).toContainText('Lobo');
-    await expect(bolt.locator('.shop-btn.evolve')).toHaveCount(0);
-    await expect(bolt.locator('.shop-item-evo-hint')).toHaveText('Evolui no Lv. 15'); // o lobo lunar vem depois
+    await expect(page.locator('#pet-detail-panel')).toBeVisible(); // volta pro modal do pet, não pro "Meus pets"
+    await expect(page.locator('#pet-detail-panel')).toContainText('Lobo');
+    await expect(page.locator('#pet-detail-panel .shop-btn.evolve')).toHaveCount(0);
+    await expect(page.locator('#pet-detail-panel .shop-item-evo-hint')).toHaveText('Evolui no Lv. 15'); // o lobo lunar vem depois
+    await page.locator('#pet-detail-all').click();
+    await expect(page.locator('#pet-detail-panel')).toBeHidden();
+    await expect(page.locator('#my-pets-panel')).toBeVisible();
+    await expect(page.locator('#my-pets-grid')).toContainText('Bolt');
+    await expect(page.locator('#my-pets-grid')).toContainText('Lobo');
     await page.locator('#my-pets-panel .panel-close').click();
+    await expect(page.locator('#ap-evo-badge')).toHaveCount(0); // o Bolt evoluiu: o selo some sozinho
+    await expect(page.locator('#my-pets-evo')).toHaveText('1 pode evoluir'); // o pet inicial ainda pode
     await expect(page.locator('#pet-sprite')).toHaveAttribute('src', /idle\/pets\/wolf\//);
   });
 

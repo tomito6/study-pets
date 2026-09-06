@@ -1,9 +1,9 @@
 // O resumo ao encerrar o dia: o que o usuário e os pets ganharam entre dois
 // instantâneos (antes e depois de fechar). Puro.
 
-import { petLevelFromXP } from './pets';
+import { canEvolveNow, petLevelFromXP } from './pets';
 import { LEVELS } from './progression';
-import type { PetInstanceId } from './types';
+import type { PetInstance, PetInstanceId } from './types';
 
 export interface ProgressSnapshot {
   totalXP: number;
@@ -19,6 +19,8 @@ export interface PetGain {
   oldLevel: number;
   newLevel: number;
   levelUp: boolean;
+  /** Com o XP de hoje o pet chegou no nível de uma evolução que estava trancada. */
+  evolutionUnlocked: boolean;
 }
 
 export interface DaySummary {
@@ -33,7 +35,11 @@ export interface DaySummary {
   empty: boolean;
 }
 
-export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot): DaySummary {
+/**
+ * `owned` são as instâncias depois de creditar: é delas que sai se a evolução
+ * destravou hoje (o snapshot só tem XP). Sem elas, `evolutionUnlocked` fica falso.
+ */
+export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot, owned: readonly PetInstance[] = []): DaySummary {
   const pets: PetGain[] = [];
   for (const id of Object.keys(after.petXP)) {
     const oldXP = before.petXP[id] || 0;
@@ -42,7 +48,9 @@ export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot): D
     if (gain <= 0) continue;
     const oldLevel = petLevelFromXP(oldXP);
     const newLevel = petLevelFromXP(newXP);
-    pets.push({ id, gain, oldLevel, newLevel, levelUp: newLevel > oldLevel });
+    const inst = owned.find((p) => p.id === id);
+    const evolutionUnlocked = !!inst && canEvolveNow({ ...inst, xp: newXP }) && !canEvolveNow({ ...inst, xp: oldXP });
+    pets.push({ id, gain, oldLevel, newLevel, levelUp: newLevel > oldLevel, evolutionUnlocked });
   }
   const userXP = after.totalXP - before.totalXP;
   const userCoins = after.coins - before.coins;

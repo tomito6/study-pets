@@ -60,7 +60,7 @@ export function closeDay(now: Date = new Date()): DaySummary {
   applyPendingPetXP(now);
   scheduleSave(); // notifica → o memo de stats invalida
   clearPromptTimer();
-  const summary = daySummary(before, snapshot(now));
+  const summary = daySummary(before, snapshot(now), state.pets.owned);
   set({ confirmOpen: false, promptOpen: false, summary });
   return summary;
 }

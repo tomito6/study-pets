@@ -1,4 +1,5 @@
-// Loja, "Meus pets", a confirmação de adoção (com o nome), renomear e evoluir.
+// Loja, "Meus pets", o modal de um pet só (aberto pelo card do pet ativo no Perfil),
+// a confirmação de adoção (com o nome), renomear e evoluir.
 // Filhos do ProfileTab, que guarda qual está aberto.
 
 import { useState } from 'react';
@@ -206,6 +207,31 @@ export function EvolvePetModal({ pet, onClose }: PetModalProps) {
   return (
     <Modal id="pet-evolve-panel" open={!!pet} title={pet ? t.evolveTitle(pet.name) : ''} onClose={onClose}>
       {pet && <EvolveBody key={pet.id} pet={pet} onClose={onClose} />}
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------- um pet só
+
+interface DetailProps {
+  pet: PetInstance | null;
+  onClose: () => void;
+  /** "Ver todos os pets": troca pelo modal "Meus pets". */
+  onAll: () => void;
+  onRename: (pet: PetInstance) => void;
+  onEvolve: (pet: PetInstance) => void;
+}
+
+/** O pet ativo de perto: o mesmo card de "Meus pets" (equipar, renomear, evoluir, skills), sozinho. */
+export function PetDetailModal({ pet, onClose, onAll, onRename, onEvolve }: DetailProps) {
+  return (
+    <Modal id="pet-detail-panel" open={!!pet} title={pet ? t.detailTitle(pet.name) : ''} onClose={onClose}>
+      {pet && (
+        <div className="pet-detail-body">
+          <OwnedPetCard pet={pet} onRename={onRename} onEvolve={onEvolve} />
+          <button type="button" className="pet-detail-all" id="pet-detail-all" onClick={onAll}>{t.detailAll}</button>
+        </div>
+      )}
     </Modal>
   );
 }
