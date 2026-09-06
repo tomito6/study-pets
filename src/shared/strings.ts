@@ -42,7 +42,7 @@ export const strings = {
   },
   // Experimento temporário: o botão que alterna o estilo das abas (ver app/navStyle.ts)
   navExperiment: {
-    names: { icons: 'Ícones', underline: 'Sublinhado' },
+    names: { icons: 'Ícones', underline: 'Sublinhado', classic: 'Original' },
     label: (name: string) => `Abas: ${name} ⇄`,
     hint: 'Experimento: toca pra trocar o estilo das abas do cabeçalho',
   },

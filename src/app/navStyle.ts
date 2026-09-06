@@ -1,18 +1,26 @@
-// Experimento temporário (2026-09-06): qual estilo de aba o cabeçalho usa — "icons" (ícones em pixel)
-// ou "underline" (texto grande sublinhado). Fica só neste dispositivo (localStorage), fora do doc e do
-// store de propósito: quando um dos dois for escolhido, este arquivo e o NavStyleSwitch saem juntos.
+// Experimento temporário (2026-09-06): qual estilo de aba o cabeçalho usa — "icons" (ícones em pixel),
+// "underline" (texto grande sublinhado) ou "classic" (o cabeçalho de antes, sem os emojis). Fica só neste
+// dispositivo (localStorage), fora do doc e do store de propósito: quando um for escolhido, este arquivo e o
+// NavStyleSwitch saem juntos.
 
 import { useSyncExternalStore } from 'react';
 
-export type NavStyle = 'icons' | 'underline';
+export type NavStyle = 'icons' | 'underline' | 'classic';
 
 const KEY = 'study-pets:nav-style';
 const DEFAULT: NavStyle = 'icons';
 
+/** A ordem em que o botão alterna: ícones → sublinhado → original → ícones. */
+export const NEXT_STYLE: Record<NavStyle, NavStyle> = { icons: 'underline', underline: 'classic', classic: 'icons' };
+
+function isNavStyle(v: unknown): v is NavStyle {
+  return v === 'icons' || v === 'underline' || v === 'classic';
+}
+
 function read(): NavStyle {
   try {
     const v = localStorage.getItem(KEY);
-    return v === 'icons' || v === 'underline' ? v : DEFAULT;
+    return isNavStyle(v) ? v : DEFAULT;
   } catch {
     return DEFAULT;
   }

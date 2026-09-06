@@ -203,6 +203,18 @@
   .nav-icon { width:20px; height:20px; display:block; shape-rendering:crispEdges; }
   .nav-sprite { width:26px; height:26px; margin:-3px 0; display:block; image-rendering:pixelated; filter:grayscale(1) opacity(.65); transition:filter .15s; }
   .nav-tab.active .nav-sprite { filter:none; }
+  /* "classic" = o cabeçalho de antes (sem os emojis): abas pequenas em pílula com a data embaixo, XP e Sair à direita, uma linha só */
+  #app[data-nav="classic"]{--topbar-h:77px;}
+  #app[data-nav="classic"] .topbar{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nav right" "date right";align-items:center;column-gap:12px;padding:14px 20px;}
+  #app[data-nav="classic"] .topbar-status{display:contents;}
+  #app[data-nav="classic"] .topbar-status .sub{grid-area:date;margin-top:1px;}
+  #app[data-nav="classic"] .topbar-status .date-long{display:inline;}
+  #app[data-nav="classic"] .topbar-status .date-short{display:none;}
+  #app[data-nav="classic"] .topbar-right{grid-area:right;flex-wrap:wrap;justify-content:flex-end;}
+  #app[data-nav="classic"] .nav-tabs{grid-area:nav;gap:4px;padding:0;margin:0 0 2px;}
+  #app[data-nav="classic"] .nav-tab{border:1px solid transparent;border-radius:var(--radius-sm);margin:0;padding:6px 14px;font-size:13px;line-height:normal;font-weight:500;letter-spacing:.01em;transition:all .2s;}
+  #app[data-nav="classic"] .nav-tab:hover{color:var(--text);border-color:var(--border);}
+  #app[data-nav="classic"] .nav-tab.active{background:var(--accent);border-color:var(--accent);color:#0e0e0f;font-weight:600;}
   /* Experimento: o botão flutuante que troca o estilo das abas (sai com a decisão) */
   .nav-style-switch { position:fixed; left:16px; bottom:24px; z-index:90; background:var(--bg2); border:1px solid var(--border); border-radius:99px; color:var(--muted); font-size:11px; padding:7px 12px; cursor:pointer; font-family:'DM Mono',monospace; box-shadow:0 4px 16px rgba(0,0,0,.4); }
   .nav-style-switch:hover { color:var(--text); border-color:#555; }
