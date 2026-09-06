@@ -263,6 +263,7 @@ export const strings = {
     coins: 'Moedas',
     levelUp: (level: number, name: string) => `Subiu pro nível ${level} — ${name}!`,
     petLevelUp: (from: number, to: number) => `Lv. ${from} → ${to} ✨`,
+    petCanEvolve: '✨ Pode evoluir — quando quiser',
     empty: ['Nenhum bloco marcado hoje.', 'Dia encerrado sem ganhos.'],
     continue: 'Continuar',
     promptTitle: '🌙 Passou do horário',
@@ -291,6 +292,8 @@ export const strings = {
     myPets: 'Meus pets',
     shop: 'Loja de pets',
     count: (owned: number, total: number) => `${owned}/${total} ✨`,
+    canEvolve: '✨ Pode evoluir',
+    canEvolveCount: (n: number) => (n === 1 ? '1 pode evoluir' : `${n} podem evoluir`),
   },
   pets: {
     shopTitle: '🛒 Loja de pets',
@@ -322,6 +325,8 @@ export const strings = {
     evolveAdvance: (form: string) => `Próximo estágio: ${form}. Nome, XP e nível continuam.`,
     evolveConfirm: 'Evoluir',
     evolved: (name: string, form: string) => `${name} evoluiu: ${form}! ✨`,
+    detailTitle: (name: string) => `🐾 ${name}`,
+    detailAll: 'Ver todos os pets ›',
   },
   analytics: {
     toNext: (xp: number, name: string) => `Faltam ${xp} XP para ${name}`,

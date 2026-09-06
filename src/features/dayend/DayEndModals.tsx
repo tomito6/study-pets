@@ -56,6 +56,7 @@ function DaySummaryModal() {
                   <div style={{ flex: 1 }}>
                     <div className="ds-pet-name">{pet?.name ?? p.id}</div>
                     <div className={'ds-pet-lv' + (p.levelUp ? ' up' : '')}>{p.levelUp ? t.petLevelUp(p.oldLevel, p.newLevel) : strings.pets.lv(p.newLevel)}</div>
+                    {p.evolutionUnlocked && <div className="ds-pet-evo">{t.petCanEvolve}</div>}
                   </div>
                   <div className="ds-pet-gain">{strings.plan.xpGain(p.gain)}</div>
                 </div>

@@ -13,6 +13,7 @@ import { finishOnboarding } from '../src/application/onboarding';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { initAfterLoad, loadUserData } from '../src/application/session';
 import { daySummary } from '../src/domain/daySummary';
+import type { PetInstance } from '../src/domain/types';
 import { extendDayTo, lastStudyEnd, shouldPromptEndOfDay, suggestedExtendTime } from '../src/domain/endOfDay';
 import { DEFAULT_CFG } from '../src/domain/config';
 import { emptyPersistedState } from '../src/domain/persistence';
@@ -40,7 +41,20 @@ describe('domínio do fim do dia', () => {
       { totalXP: 300, coins: 150, userLevelIdx: 1, petXP: { cat: 800, owl: 0 } },
     );
     expect(s).toMatchObject({ userXP: 100, userCoins: 50, userLevelUp: true, newLevel: 2, newLevelName: 'Iniciante', empty: false });
-    expect(s.pets).toEqual([{ id: 'cat', gain: 100, oldLevel: 7, newLevel: 8, levelUp: true }]); // curva própria do pet
+    expect(s.pets).toEqual([{ id: 'cat', gain: 100, oldLevel: 7, newLevel: 8, levelUp: true, evolutionUnlocked: false }]); // curva própria do pet
+  });
+
+  it('resumo: marca o pet que chegou hoje no nível de uma evolução — e só ele, só hoje', () => {
+    const dog: PetInstance = { id: 'dog', species: 'dog', name: 'Bolt', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 };
+    const cat: PetInstance = { ...dog, id: 'cat', species: 'cat', name: 'Mia' };
+    const snap = (dogXP: number, catXP: number) => ({ totalXP: 0, coins: 0, userLevelIdx: 0, petXP: { dog: dogXP, cat: catXP } });
+    const s = daySummary(snap(300, 300), snap(350, 350), [dog, cat]);
+    // 320 XP = Lv. 5, o nível da escolha do cachorro; o gato não evolui
+    expect(s.pets.map((p) => [p.id, p.levelUp, p.evolutionUnlocked])).toEqual([['dog', true, true], ['cat', true, false]]);
+    // Já podia evoluir antes de hoje: não é novidade, não marca
+    expect(daySummary(snap(350, 0), snap(400, 0), [dog]).pets[0]!.evolutionUnlocked).toBe(false);
+    // Sem as instâncias (chamada antiga), nunca marca
+    expect(daySummary(snap(300, 0), snap(350, 0)).pets[0]!.evolutionUnlocked).toBe(false);
   });
 
   it('resumo vazio quando nada mudou', () => {
@@ -82,7 +96,7 @@ describe('encerrar o dia', () => {
     const s = closeDay();
     expect(state.closedDays[HOJE]).toBe(true);
     expect(s).toMatchObject({ userXP: 50, userCoins: 25, empty: false });
-    expect(s.pets).toEqual([{ id: 'cat', gain: 50, oldLevel: 1, newLevel: 2, levelUp: true }]); // 50 XP = Lv. 2
+    expect(s.pets).toEqual([{ id: 'cat', gain: 50, oldLevel: 1, newLevel: 2, levelUp: true, evolutionUnlocked: false }]); // 50 XP = Lv. 2
     expect(state.pets.owned[0]!.xp).toBe(50);
     expect(derived.dayEnd).toMatchObject({ confirmOpen: false, promptOpen: false });
     expect(derived.dayEnd.summary).toBe(s);
