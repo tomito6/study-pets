@@ -8,7 +8,8 @@ import { useSyncExternalStore } from 'react';
 export type NavStyle = 'icons' | 'underline' | 'classic';
 
 const KEY = 'study-pets:nav-style';
-const DEFAULT: NavStyle = 'icons';
+// Padrão = o cabeçalho de antes: é o que o Tomi quer no celular; os outros dois ficam a um toque no botão.
+const DEFAULT: NavStyle = 'classic';
 
 /** A ordem em que o botão alterna: ícones → sublinhado → original → ícones. */
 export const NEXT_STYLE: Record<NavStyle, NavStyle> = { icons: 'underline', underline: 'classic', classic: 'icons' };
