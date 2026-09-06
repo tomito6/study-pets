@@ -112,7 +112,6 @@ function resetToLoggedOut(): void {
   state.penalties = {};
   state.checks = {};
   state.events = {};
-  state.lunchOverrides = {};
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
   state.pets = emptyPets();

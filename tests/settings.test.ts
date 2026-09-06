@@ -94,11 +94,11 @@ describe('resumo do dia', () => {
   it('avisa quando falta número, quando não há janela e quando não gera bloco', () => {
     expect(summarizeConfig({ ...DEFAULT_CFG, pomo: NaN })).toEqual({ kind: 'warn', reason: 'incomplete' });
     expect(summarizeConfig({ ...DEFAULT_CFG, studyWindows: [{ start: '12:00', end: '09:00' }] })).toEqual({ kind: 'warn', reason: 'no-windows' });
-    expect(summarizeConfig({ ...DEFAULT_CFG, studyWindows: [{ start: '13:00', end: '13:10' }], hasLunch: false, pomo: 25 })).toEqual({ kind: 'warn', reason: 'no-blocks' });
+    expect(summarizeConfig({ ...DEFAULT_CFG, studyWindows: [{ start: '13:00', end: '13:10' }],  pomo: 25 })).toEqual({ kind: 'warn', reason: 'no-blocks' });
   });
 
   it('conta pomos, minutos, XP e diz onde o dia termina', () => {
-    const s = summarizeConfig({ ...DEFAULT_CFG, hasLunch: false, studyWindows: [{ start: '09:00', end: '10:00' }], start: '09:00', end: '10:00' });
+    const s = summarizeConfig({ ...DEFAULT_CFG,  studyWindows: [{ start: '09:00', end: '10:00' }], start: '09:00', end: '10:00' });
     expect(s.kind).toBe('ok');
     if (s.kind !== 'ok') return;
     expect(s.pomos).toBe(2);
@@ -118,7 +118,7 @@ describe('resumo do dia', () => {
 });
 
 describe('encaixar estudo', () => {
-  const base = { ...DEFAULT_CFG, hasLunch: false, studyWindows: [{ start: '09:00', end: '12:00' }], start: '09:00', end: '12:00' };
+  const base = { ...DEFAULT_CFG,  studyWindows: [{ start: '09:00', end: '12:00' }], start: '09:00', end: '12:00' };
 
   it('devolve até 3 sugestões, a melhor primeiro, dentro da flexibilidade', () => {
     const top = fitStudySuggestions(base, [], { pomo: 25, short: 5, long: 20, flex: 10 });

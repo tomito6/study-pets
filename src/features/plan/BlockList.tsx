@@ -45,7 +45,6 @@ function CheckIcon() {
 /** O que o Plano faz quando uma linha pede um modal — ou quer iniciar o timer (o Plano decide se é hardcore). */
 export interface BlockActions {
   onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
-  onEditLunch: (dateKey: DateKey) => void;
   onEditGroup: (group: StudyGroup) => void;
   onStartBlock: (block: StudyBlock, now: Date) => void;
 }
@@ -62,16 +61,15 @@ interface RowProps extends BlockActions {
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, timerBlock, onDeleteEvent, onEditLunch, onStartBlock }: RowProps) {
+function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, timerBlock, onDeleteEvent, onStartBlock }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
-  const isA = b.type === 'almoco';
   const isEv = b.type === 'event';
-  const isI = b.type === 'intervalo';
+  const isI = b.type === 'intervalo'; // refeição, consulta, reunião: só ocupa o tempo
   const done = isChecked(state.checks, dateKey, b.time);
   const sIdx = b.session !== undefined ? b.session % NUM_SESSIONS : 0;
-  const isNow = isToday && (isE || isP || isA || isI) && isHappeningNow(b, now);
+  const isNow = isToday && (isE || isP || isI) && isHappeningNow(b, now);
   const timerActive = !!timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime;
   const closed = isDayClosed(state.closedDays, dateKey);
   const future = isFutureDay(dateKey, now);
@@ -81,7 +79,7 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
   const className =
     'block-row' +
     (isP ? ' pausa-row' : '') +
-    (isA || isI ? ' almoco-row' : '') +
+    (isI ? ' almoco-row' : '') +
     (isEv ? ' event-row' : '') +
     (done && (isE || isP || isEv) ? ' done' : '') +
     (isE || isP || isEv ? ` session-block s${sIdx}` : '') +
@@ -97,10 +95,6 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
   const onRowClick = (e: MouseEvent<HTMLDivElement>) => {
     if (selection.handleClick(idx)) return;
     if ((e.target as HTMLElement).closest('.check')) return;
-    if (isA) {
-      onEditLunch(dateKey);
-      return;
-    }
     const why = refusal(dateKey, now);
     if (why) {
       showToast(why);
@@ -140,17 +134,11 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
   let xpLabel: ReactNode;
   if (forfeited) xpLabel = <span className="block-xp forfeited-xp">{strings.hardcore.plan.forfeited}</span>;
   else if (isE || isP) xpLabel = <span className="block-xp session-xp">{t.xpGain(b.xp)}</span>;
-  else if (isA)
-    xpLabel = (
-      <span className="block-xp almoco-xp" style={{ cursor: 'pointer' }}>
-        {state.lunchOverrides[dateKey] ? t.lunchEdited : t.lunchEdit}
-      </span>
-    );
   else if (isI) xpLabel = <span className="block-xp almoco-xp">{t.free}</span>;
   else xpLabel = <span className="block-xp event-xp">{t.xpGain(b.xp)}</span>;
 
-  const clickable = isA || isEv || isI;
-  const title = isA ? t.lunchTitle : isEv || isI ? t.eventTitle : undefined;
+  const clickable = isEv || isI;
+  const title = clickable ? t.eventTitle : undefined;
 
   return (
     <div
@@ -160,7 +148,7 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
       title={title}
       {...selection.rowProps(idx)}
     >
-      {!(isA || isI) && (
+      {!isI && (
         <div className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')} onClick={onCheckClick}>
           {forfeited ? <span className="check-x">✕</span> : <CheckIcon />}
         </div>
@@ -181,10 +169,19 @@ interface ListProps extends BlockActions {
   selection: GroupSelection;
   now: Date;
   timerBlock: StudyBlock | null;
+  /** Dia sem blocos: o título (dia livre / fim de semana) e, se o dia é editável, como estudar mesmo assim. */
+  empty: { label: string; hint: string | null };
 }
 
-export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock, onDeleteEvent, onEditLunch, onEditGroup, onStartBlock }: ListProps) {
-  if (blocks.length === 0) return <div className="empty-day">{strings.plan.freeDay}</div>;
+export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
+  if (blocks.length === 0) {
+    return (
+      <div className="empty-day">
+        <div>{empty.label}</div>
+        {empty.hint && <div className="empty-day-hint">{empty.hint}</div>}
+      </div>
+    );
+  }
 
   const isToday = dateKey === dk(now);
   const dayChecks = state.checks[dateKey];
@@ -272,7 +269,6 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
         isToday={isToday}
         timerBlock={timerBlock}
         onDeleteEvent={onDeleteEvent}
-        onEditLunch={onEditLunch}
         onEditGroup={onEditGroup}
         onStartBlock={onStartBlock}
       />,

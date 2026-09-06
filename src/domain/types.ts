@@ -24,9 +24,6 @@ export interface UserConfig {
   /** Derivados da primeira/última janela — mantidos só pra retrocompat. */
   start: TimeString;
   end: TimeString;
-  lunch: TimeString;
-  lunchDur: number;
-  hasLunch: boolean;
   pomo: number;
   shortBreak: number;
   longBreak: number;
@@ -58,15 +55,13 @@ export interface PlannerConfig {
   studyWindows?: StudyWindow[];
   start: TimeString;
   end: TimeString;
-  lunch: TimeString;
-  lunchDur: number;
-  hasLunch?: boolean;
   pomo: number;
   shortBreak: number;
   longBreak: number;
 }
 
-export type BlockType = 'estudo' | 'pausa' | 'almoco' | 'event' | 'intervalo';
+/** `almoco` deixou de existir em 2026-09-06: a refeição é um evento sem XP, tipo `intervalo`. */
+export type BlockType = 'estudo' | 'pausa' | 'event' | 'intervalo';
 
 /** Um bloco do plano do dia. Gerado, nunca persistido. */
 export interface StudyBlock {
@@ -75,7 +70,7 @@ export interface StudyBlock {
   name: string;
   type: BlockType;
   xp: number;
-  /** Índice da sessão colorida. Ausente em almoço/intervalo. */
+  /** Índice da sessão colorida. Ausente em intervalo. */
   session?: number | undefined;
   /** Estudo menor que um pomo, encaixado num gap. */
   mini?: boolean;

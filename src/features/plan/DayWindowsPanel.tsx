@@ -7,7 +7,7 @@ import {
   clearDayWindows,
   dayWindowsOverride,
   effectiveWindows,
-  isDayOffKey,
+  restKindKey,
   setDayOff,
   setDayWindows,
   startNow,
@@ -40,7 +40,8 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
 
   const key = dateKey ?? '';
   const isToday = key === dk(new Date());
-  const off = key ? isDayOffKey(key) : false;
+  const rest = key ? restKindKey(key) : null; // fim de semana pausado ou dia livre
+  const off = rest !== null;
   const edited = key ? dayWindowsOverride(key) !== null : false;
   const refuse = (reason: DayWindowsRefusal) => showToast(t.refusal[reason]);
 
@@ -95,7 +96,7 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
         </div>
       ) : (
         <div className="field-group">
-          <div className="dw-off-note" id="day-windows-off-note">{t.offNote}</div>
+          <div className="dw-off-note" id="day-windows-off-note">{rest === 'weekend' ? t.weekendNote : t.offNote}</div>
           <button type="button" className="ghost-btn" id="day-windows-add" onClick={() => setWindows(appendWindow([]))}>{t.add}</button>
         </div>
       )}

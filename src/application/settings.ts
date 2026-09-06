@@ -41,7 +41,6 @@ export function cancelSession(): void {
   state.checks = {};
   state.events = {};
   state.eventSeries = [];
-  state.lunchOverrides = {};
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
   state.pets = emptyPets();

@@ -20,7 +20,7 @@ const pausa = (time: string, endTime: string, session = 0, longa = false): Study
   time, endTime, name: longa ? '☕ Pausa longa' : '🧘 Pausa', type: 'pausa', xp: 5, session,
 });
 const almoco = (time: string, endTime: string): StudyBlock => ({
-  time, endTime, name: '🍽️ Almoço', type: 'almoco', xp: 0, session: 0,
+  time, endTime, name: '🍽️ Almoço', type: 'intervalo', xp: 0, session: 0,
 });
 
 describe('timerProgress — o restante vem do relógio, não de um contador', () => {

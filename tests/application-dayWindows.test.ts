@@ -9,13 +9,14 @@ import {
   canEditDayWindows,
   clearDayWindows,
   effectiveWindows,
-  isDayOffKey,
+  isRestDayKey,
   setDayOff,
   setDayWindows,
   startNow,
 } from '../src/application/dayWindows';
 import { applyPendingPetXP } from '../src/application/pets';
 import { blocksForDay, calcStreaksNow, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
+import { mealSeries } from '../src/domain/eventPresets';
 import { emptyPersistedState } from '../src/domain/persistence';
 import { derived, state } from '../src/store/store';
 
@@ -40,23 +41,30 @@ afterEach(() => {
 
 describe('setDayWindows', () => {
   it('muda só aquele dia; a rotina e os outros dias continuam iguais', () => {
+    state.eventSeries.push(mealSeries('13:00', 60)); // a refeição de todo dia
+    clearBlockCache();
     expect(setDayWindows(HOJE, [w('10:00', '12:00')], AGORA)).toEqual({ ok: true });
     const hoje = blocksForDay(HOJE);
     expect(hoje[0]).toMatchObject({ time: '10:00', type: 'estudo' });
-    // O almoço (13:00) continua aparecendo como bloqueio fora da janela; os estudos param às 12:00.
+    // A refeição (13:00) continua aparecendo como bloqueio fora da janela; os estudos param às 12:00.
     const estudos = hoje.filter((b) => b.type === 'estudo' || b.type === 'pausa');
     expect(estudos[estudos.length - 1]!.endTime <= '12:00').toBe(true);
-    expect(hoje.find((b) => b.type === 'almoco')).toMatchObject({ time: '13:00' });
+    expect(hoje.find((b) => b.type === 'intervalo')).toMatchObject({ time: '13:00' });
     expect(blocksForDay(AMANHA)[0]).toMatchObject({ time: '09:00' });
     expect(state.config.studyWindows).toEqual([w('09:00', '18:00')]);
     expect(effectiveWindows(HOJE)).toEqual([w('10:00', '12:00')]);
     expect(effectiveWindows(AMANHA)).toEqual([w('09:00', '18:00')]);
   });
 
-  it('o almoço editado do dia continua valendo junto com as janelas do dia', () => {
-    state.lunchOverrides[HOJE] = { lunch: '11:00', lunchDur: 30 };
+  it('a refeição editada só deste dia (exceção + avulso) continua valendo junto com as janelas do dia', () => {
+    const s = mealSeries('13:00', 60);
+    s.exceptions = [HOJE];
+    state.eventSeries.push(s);
+    state.events[HOJE] = [{ name: '🍽️ Almoço', start: '11:00', end: '11:30', countsAsStudy: false }];
+    clearBlockCache();
     setDayWindows(HOJE, [w('10:00', '14:00')], AGORA);
-    expect(blocksForDay(HOJE).find((b) => b.type === 'almoco')).toMatchObject({ time: '11:00', endTime: '11:30' });
+    expect(blocksForDay(HOJE).find((b) => b.type === 'intervalo')).toMatchObject({ time: '11:00', endTime: '11:30' });
+    expect(blocksForDay(HOJE).filter((b) => b.type === 'intervalo')).toHaveLength(1);
   });
 
   it('valida: vazio, fim antes do início, sobreposição', () => {
@@ -101,7 +109,7 @@ describe('startNow — "começar agora"', () => {
 describe('setDayOff — dia livre', () => {
   it('hoje sem check: o plano fica vazio e o dia sai das estatísticas (planejado 0)', () => {
     expect(setDayOff(HOJE, AGORA)).toEqual({ ok: true });
-    expect(isDayOffKey(HOJE)).toBe(true);
+    expect(isRestDayKey(HOJE)).toBe(true);
     expect(blocksForDay(HOJE)).toEqual([]);
     expect(computeStatsNow(AGORA).dayStudyPlanned[HOJE]).toBeUndefined();
   });

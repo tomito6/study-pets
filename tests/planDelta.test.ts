@@ -5,7 +5,7 @@ import type { StudyBlock } from '../src/domain/types';
 const estudo = (time: string, endTime: string): StudyBlock => ({ time, endTime, name: 'e', type: 'estudo', xp: 50 });
 const pausa = (time: string, endTime: string): StudyBlock => ({ time, endTime, name: 'p', type: 'pausa', xp: 5 });
 const evento = (time: string, endTime: string): StudyBlock => ({ time, endTime, name: 'ev', type: 'event', xp: 100 });
-const almoco = (time: string, endTime: string): StudyBlock => ({ time, endTime, name: 'a', type: 'almoco', xp: 0 });
+const almoco = (time: string, endTime: string): StudyBlock => ({ time, endTime, name: 'a', type: 'intervalo', xp: 0 });
 
 describe('planDelta / describePlanDelta', () => {
   it('conta estudos e eventos, ignora pausas', () => {

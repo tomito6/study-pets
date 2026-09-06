@@ -98,8 +98,8 @@ export type SkillRule =
   | { kind: 'event' }
   /** Estudo logo depois de uma pausa longa. */
   | { kind: 'after-long-break' }
-  /** Estudo logo depois do almoço. */
-  | { kind: 'after-lunch' }
+  /** Estudo logo depois de uma refeição: um intervalo (evento sem XP) de `MEAL_MIN_MINS` ou mais. */
+  | { kind: 'after-meal' }
   /** O estudo/evento que faz o dia bater a meta diária. */
   | { kind: 'meets-goal' };
 
@@ -116,6 +116,9 @@ export interface SkillDefinition {
  * propósito — é reconhecimento, não "quem não tem tá perdendo". Num pomo de
  * 25 min (50 XP): +3 XP no Lv. 1, +5 no Lv. 5, +8 no teto.
  */
+/** Intervalo a partir desta duração conta como refeição pra Rumina (café de 15 min não é almoço). */
+export const MEAL_MIN_MINS = 30;
+
 export const SKILL_BONUS_BASE = 0.05;
 export const SKILL_BONUS_PER_LEVEL = 0.01;
 export const SKILL_BONUS_MAX = 0.15;
@@ -138,7 +141,7 @@ export const SKILLS: Record<SkillId, SkillDefinition> = {
   fiel: { id: 'fiel', name: 'Fiel', desc: 'no primeiro estudo do dia', rule: { kind: 'first-study' } },
   aula: { id: 'aula', name: 'Aula', desc: 'em eventos que contam como estudo', rule: { kind: 'event' } },
   preguica: { id: 'preguica', name: 'Preguiça', desc: 'no estudo logo depois de uma pausa longa', rule: { kind: 'after-long-break' } },
-  rumina: { id: 'rumina', name: 'Rumina', desc: 'no estudo logo depois do almoço', rule: { kind: 'after-lunch' } },
+  rumina: { id: 'rumina', name: 'Rumina', desc: 'no estudo logo depois de uma refeição (intervalo de 30 min ou mais)', rule: { kind: 'after-meal' } },
   constancia: { id: 'constancia', name: 'Constância', desc: 'no estudo que bate a meta do dia', rule: { kind: 'meets-goal' } },
 };
 
@@ -204,8 +207,8 @@ export function skillEligible(
       return b.type === 'event';
     case 'after-long-break':
       return study && !!ctx.prevBlock && ctx.prevBlock.type === 'pausa' && ctx.prevBlock.mins >= ctx.longBreakMins;
-    case 'after-lunch':
-      return study && ctx.prevBlock?.type === 'almoco';
+    case 'after-meal':
+      return study && !!ctx.prevBlock && ctx.prevBlock.type === 'intervalo' && ctx.prevBlock.mins >= MEAL_MIN_MINS;
     case 'meets-goal':
       return (
         (study || b.type === 'event') &&

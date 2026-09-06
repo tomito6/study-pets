@@ -37,7 +37,7 @@ function Switch({ id, checked, onChange }: { id: string; checked: boolean; onCha
 export function SettingsPage() {
   const tab = useAppState((s) => s.uiTab);
   const [open, setOpen] = useState(false);
-  const [stab, setStab] = useState<SettingsTab>('day');
+  const [stab, setStab] = useState<SettingsTab>('general');
   const [draft, setDraft] = useState<ConfigDraft>(() => draftFromConfig(state.config));
   const [modal, setModal] = useState<SettingsModal>('none');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -46,7 +46,7 @@ export function SettingsPage() {
 
   const openSettings = () => {
     setDraft(draftFromConfig(state.config));
-    setStab('day');
+    setStab('general'); // abre no Geral — a primeira aba; "Estrutura do dia" é a segunda
     setOpen(true);
   };
   const close = () => setOpen(false);
@@ -94,7 +94,7 @@ export function SettingsPage() {
         </div>
         <div className="st-tabs-wrap">
           <div className="st-tabs">
-            {(['day', 'general'] as const).map((k) => (
+            {(['general', 'day'] as const).map((k) => (
               <button
                 type="button"
                 key={k}
@@ -109,14 +109,8 @@ export function SettingsPage() {
         </div>
         <div className="st-scroll" ref={scrollRef}>
           <div className="st-body">
-            {/* ---------------- Rotina ---------------- */}
+            {/* ---------------- Estrutura do dia (id interno `day`, por compatibilidade) ---------------- */}
             <div className={'settings-tab-content' + (stab === 'day' ? ' active' : '')} data-tab-content="day">
-              <div className="st-section">
-                <div className="st-section-head"><div className="st-section-title">{t.summary.title}</div></div>
-                <div className="st-section-desc">{t.summary.desc}</div>
-                <ConfigPreview cfg={cfgPreview} />
-              </div>
-
               <div className="st-section">
                 <div className="st-section-head">
                   <div className="st-section-title">{t.windows.title}</div>
@@ -127,33 +121,6 @@ export function SettingsPage() {
                 <div className="st-section-desc">{t.windows.desc}</div>
                 <div className="st-card">
                   <StudyWindowsEditor windows={draft.studyWindows} onChange={(studyWindows) => patch({ studyWindows })} />
-                </div>
-              </div>
-
-              <div className="st-section">
-                <div className="st-section-head"><div className="st-section-title">{t.lunch.title}</div></div>
-                <div className="st-section-desc">{t.lunch.desc}</div>
-                <div className="st-card">
-                  <div className="st-toggle-row">
-                    <div>
-                      <div className="st-toggle-txt">{t.lunch.toggle}</div>
-                      <div className="st-toggle-sub">{t.lunch.toggleSub}</div>
-                    </div>
-                    <Switch id="cfg-has-lunch" checked={draft.hasLunch} onChange={(hasLunch) => patch({ hasLunch })} />
-                  </div>
-                  <div id="lunch-fields" style={{ opacity: draft.hasLunch ? 1 : 0.35, pointerEvents: draft.hasLunch ? 'auto' : 'none' }}>
-                    <div className="st-divider" />
-                    <div className="st-grid-2">
-                      <div>
-                        <div className="st-field-label">{t.lunch.start}</div>
-                        <input type="time" id="cfg-lunch" value={draft.lunch} disabled={!draft.hasLunch} onChange={(e) => patch({ lunch: e.target.value })} />
-                      </div>
-                      <div>
-                        <div className="st-field-label">{t.lunch.duration}</div>
-                        <input type="number" id="cfg-lunch-dur" min="15" max="180" step="5" value={draft.lunchDur} disabled={!draft.hasLunch} onChange={(e) => patch({ lunchDur: e.target.value })} />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -179,6 +146,13 @@ export function SettingsPage() {
                   <button type="button" className="fit-study-btn" onClick={() => setModal('fit')}>{t.rhythm.fit}</button>
                   <div className="st-hint">{t.rhythm.fitHint}</div>
                 </div>
+              </div>
+
+              {/* Por último, como resultado do que está acima. */}
+              <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{t.summary.title}</div></div>
+                <div className="st-section-desc">{t.summary.desc}</div>
+                <ConfigPreview cfg={cfgPreview} />
               </div>
             </div>
 

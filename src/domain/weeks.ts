@@ -23,7 +23,7 @@ export interface WeekDay {
 export interface BuildWeeksInput {
   periodStart: DateKey | null | undefined;
   periodEnd: DateKey | null | undefined;
-  /** Dias que têm checks, eventos ou almoço editado — pra nunca esconder dado antigo. */
+  /** Dias que têm checks, eventos, grupos ou janelas do dia — pra nunca esconder dado antigo. */
   dataKeys: DateKey[];
   today: Date;
 }

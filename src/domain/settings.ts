@@ -10,9 +10,6 @@ import type { DateKey, HardcoreMode, PlannerConfig, StudyEvent, StudyWindow, Tim
 /** O formulário como o usuário digita — números em string pra permitir campo vazio. */
 export interface ConfigDraft {
   studyWindows: StudyWindow[];
-  lunch: TimeString;
-  lunchDur: string;
-  hasLunch: boolean;
   pomo: string;
   shortBreak: string;
   longBreak: string;
@@ -33,9 +30,6 @@ export function draftFromConfig(cfg: UserConfig): ConfigDraft {
       : [{ start: cfg.start || '09:00', end: cfg.end || '18:00' }];
   return {
     studyWindows: windows,
-    lunch: cfg.lunch,
-    lunchDur: String(cfg.lunchDur),
-    hasLunch: cfg.hasLunch !== false,
     pomo: String(cfg.pomo),
     shortBreak: String(cfg.shortBreak),
     longBreak: String(cfg.longBreak),
@@ -111,12 +105,9 @@ export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null)
   return {
     ...deriveStartEnd(studyWindows),
     studyWindows,
-    lunch: draft.lunch,
-    lunchDur: parseInt(draft.lunchDur, 10),
     pomo: parseInt(draft.pomo, 10),
     shortBreak: parseInt(draft.shortBreak, 10),
     longBreak: parseInt(draft.longBreak, 10),
-    hasLunch: draft.hasLunch,
     periodStart,
     periodEnd: draft.periodEnd || null,
     skipWeekends: draft.skipWeekends,
@@ -130,7 +121,7 @@ export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null)
 }
 
 export const hasMissingNumbers = (cfg: PlannerConfig): boolean =>
-  [cfg.pomo, cfg.shortBreak, cfg.longBreak, cfg.lunchDur].some((n) => Number.isNaN(n));
+  [cfg.pomo, cfg.shortBreak, cfg.longBreak].some((n) => Number.isNaN(n));
 
 export type ConfigSummary =
   | { kind: 'warn'; reason: 'incomplete' | 'no-windows' | 'no-blocks' }
@@ -147,7 +138,7 @@ export type ConfigSummary =
       diffMins: number;
     };
 
-/** O "Resumo do dia": como fica um dia cheio com essa config (sem eventos). */
+/** "Como fica o dia": um dia só com as janelas e o ritmo (sem eventos — refeição inclusive). */
 export function summarizeConfig(cfg: PlannerConfig): ConfigSummary {
   if (hasMissingNumbers(cfg)) return { kind: 'warn', reason: 'incomplete' };
   const validWindows = (cfg.studyWindows || []).filter(isValidWindow);

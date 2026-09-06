@@ -4,7 +4,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkBlock, toggleBlockCheck } from '../src/application/checks';
-import { blocksForDay, rebuildWeeks } from '../src/application/plan';
+import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
+import { mealSeries } from '../src/domain/eventPresets';
 import { closeFocus, reconcileTimer, setVolume, startTimer, stopTimer, toggleMute, tryStartTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
 import { emptyPersistedState } from '../src/domain/persistence';
@@ -110,9 +111,11 @@ describe('fim do bloco no modo foco', () => {
     expect(derived.focusOpen).toBe(false);
   });
 
-  it('a sequência para no almoço: marca o bloco e fecha o foco', () => {
+  it('a sequência para na refeição (um intervalo): marca o bloco e fecha o foco', () => {
+    state.eventSeries.push(mealSeries('13:00', 60));
+    clearBlockCache();
     const dia = blocksForDay(HOJE);
-    const idxAlmoco = dia.findIndex((b) => b.type === 'almoco');
+    const idxAlmoco = dia.findIndex((b) => b.type === 'intervalo');
     const antes = dia[idxAlmoco - 1]!;
     expect(antes.type).toBe('estudo');
     vi.setSystemTime(new Date(`${HOJE}T${antes.time}:30`));

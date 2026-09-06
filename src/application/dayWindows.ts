@@ -6,17 +6,19 @@
 // Regras: dia encerrado é read-only; dia passado também (mexer nas janelas de
 // ontem só mudaria estatística); dia futuro pode — planejar é o ponto. Dia livre
 // só antes de qualquer check de hoje: declarar depois de falhar seria o "streak
-// freeze", padrão manipulativo que o app evita.
+// freeze", padrão manipulativo que o app evita. Fim de semana pausado (`skipWeekends`)
+// é um dia livre implícito: abrir janelas nele vale só pra aquele sábado — os outros
+// continuam de folga — e "Restaurar rotina" devolve a folga.
 
 import { isDayClosed } from '../domain/checks';
-import { isDayOff, startNowWindows, validateDayWindows } from '../domain/dayWindows';
-import type { DayWindowsOverride } from '../domain/dayWindows';
-import { dk } from '../domain/time';
+import { startNowWindows, validateDayWindows, windowsForDay } from '../domain/dayWindows';
+import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
+import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, StudyBlock, StudyWindow, TimeString } from '../domain/types';
 import { notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
-import { blocksForDay, clearBlockCache, rebuildWeeks } from './plan';
+import { blocksForDay, clearBlockCache, rebuildWeeks, restKindOf } from './plan';
 import { scheduleSave } from './save';
 
 export type DayWindowsRefusal =
@@ -34,11 +36,13 @@ export type StartNowOutcome = { ok: true; start: TimeString } | { ok: false; rea
 
 export const dayWindowsOverride = (dateKey: DateKey): DayWindowsOverride | null => state.windowOverrides[dateKey] ?? null;
 
-/** As janelas que valem pro dia: as editadas, ou as da rotina. */
+/** As janelas que valem pro dia: as editadas; nenhuma no fim de semana pausado; senão as da rotina. */
 export const effectiveWindows = (dateKey: DateKey): StudyWindow[] =>
-  dayWindowsOverride(dateKey)?.studyWindows ?? state.config.studyWindows;
+  windowsForDay(state.config, dayWindowsOverride(dateKey), isWeekendKey(dateKey));
 
-export const isDayOffKey = (dateKey: DateKey): boolean => isDayOff(dayWindowsOverride(dateKey));
+/** Por que o dia está sem blocos (fim de semana pausado / dia livre), ou null. */
+export const restKindKey = (dateKey: DateKey): RestKind | null => restKindOf(dateKey);
+export const isRestDayKey = (dateKey: DateKey): boolean => restKindOf(dateKey) !== null;
 
 export function canEditDayWindows(dateKey: DateKey, now: Date = new Date()): DayWindowsResult {
   if (isDayClosed(state.closedDays, dateKey)) return { ok: false, reason: 'closed' };

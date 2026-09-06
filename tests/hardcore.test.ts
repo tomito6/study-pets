@@ -60,7 +60,7 @@ describe('sessão no dispositivo', () => {
     expect(parseHardcoreSession(JSON.parse(JSON.stringify(s)))).toEqual(s);
     expect(parseHardcoreSession(null)).toBeNull();
     expect(parseHardcoreSession({ dateKey: HOJE })).toBeNull();
-    expect(parseHardcoreSession({ ...s, type: 'almoco' })).toBeNull();
+    expect(parseHardcoreSession({ ...s, type: 'intervalo' })).toBeNull();
     expect(parseHardcoreSession({ ...s, time: '10h' })).toBeNull();
   });
 

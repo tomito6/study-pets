@@ -2,7 +2,7 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useEffect, useRef, useState } from 'react';
-import { canEditDayWindows, dayWindowsOverride } from '../../application/dayWindows';
+import { canEditDayWindows, dayWindowsOverride, restKindKey } from '../../application/dayWindows';
 import { findEventEditTarget } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
@@ -22,7 +22,6 @@ import { showToast } from '../../shared/toast';
 import { setDay, setView, useAppState } from '../../store/store';
 import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal';
 import { EventPanel } from '../events/EventPanel';
-import { LunchPanel } from '../events/LunchPanel';
 import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
 import { SelectionRect } from '../groups/SelectionRect';
 import { useGroupSelection } from '../groups/useGroupSelection';
@@ -36,7 +35,6 @@ type PlanModal =
   | { kind: 'none' }
   | { kind: 'event'; edit?: EventEditTarget }
   | { kind: 'delete'; target: EventToDelete }
-  | { kind: 'lunch'; dateKey: DateKey }
   | { kind: 'windows'; dateKey: DateKey }
   | { kind: 'group'; target: GroupTarget }
   /** Modo hardcore ligado: o consentimento antes de abrir o foco. */
@@ -157,6 +155,7 @@ export function PlanTab() {
   const canGroup = blocks.length > 0 && canEditGroups(viewKey);
   const canWindows = loaded && canEditDayWindows(viewKey, now).ok;
   const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
+  const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
 
   // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
   const selection = useGroupSelection({
@@ -259,8 +258,8 @@ export function PlanTab() {
           selection={selection}
           now={now}
           timerBlock={timerBlock}
+          empty={{ label: rest === 'weekend' ? t.freeWeekend : t.freeDay, hint: canWindows ? t.freeDayHint : null }}
           onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
-          onEditLunch={(dateKey) => setModal({ kind: 'lunch', dateKey })}
           onEditGroup={openEditGroup}
           onStartBlock={startBlock}
         />
@@ -282,7 +281,6 @@ export function PlanTab() {
           setModal({ kind: 'event', edit });
         }}
       />
-      <LunchPanel dateKey={modal.kind === 'lunch' ? modal.dateKey : null} onClose={closeModal} />
       <DayWindowsPanel dateKey={modal.kind === 'windows' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
       <HardcoreStartModal block={modal.kind === 'hardcore' ? modal.block : null} onClose={closeModal} />

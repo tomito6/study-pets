@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { currentWeekKeys, dropoff, goalWeek, heatmap, hourBars, nextLevel, sparkline } from '../src/domain/analytics';
+import type { RestKind } from '../src/domain/dayWindows';
+import { isWeekendKey } from '../src/domain/time';
 
 const QUA = new Date('2026-09-02T15:00:00');
+/** Fim de semana pausado, sem janelas abertas em nenhum sábado. */
+const fimDeSemana = (k: string): RestKind | null => (isWeekendKey(k) ? 'weekend' : null);
 
 describe('semana atual e próximo nível', () => {
   it('lista segunda a domingo da semana de agora', () => {
@@ -23,21 +27,28 @@ describe('meta diária — 7 dots', () => {
   };
 
   it('conta só os dias já passados, e classifica cada dot', () => {
-    const g = goalWeek(stats, { now: QUA, skipWeekends: false });
+    const g = goalWeek(stats, { now: QUA });
     expect(g).toMatchObject({ metCount: 2, totalDays: 7 });
     expect(g.dots.map((d) => d.kind)).toEqual(['met', 'miss', 'met', 'future', 'future', 'future', 'future']);
     expect(g.dots[2]!.isToday).toBe(true);
   });
 
   it('com skipWeekends, sáb e dom ficam neutros e a semana tem 5 dias', () => {
-    const g = goalWeek(stats, { now: QUA, skipWeekends: true });
+    const g = goalWeek(stats, { now: QUA, restKind: fimDeSemana });
     expect(g.totalDays).toBe(5);
     expect(g.dots[5]!.kind).toBe('weekend');
     expect(g.dots[6]!.kind).toBe('weekend');
   });
 
+  it('sábado com janelas abertas é dia normal: entra na conta e o dot deixa de ser neutro', () => {
+    const g = goalWeek(stats, { now: QUA, restKind: (k) => (k === '2026-09-05' ? null : fimDeSemana(k)) });
+    expect(g.totalDays).toBe(6);
+    expect(g.dots[5]!.kind).toBe('future'); // o sábado ainda não chegou: futuro, não neutro
+    expect(g.dots[6]!.kind).toBe('weekend'); // o domingo continua pausado
+  });
+
   it('dia declarado livre é neutro: sai da conta e o dot vira "off"', () => {
-    const g = goalWeek(stats, { now: QUA, skipWeekends: false, dayOff: (k) => k === '2026-09-01' });
+    const g = goalWeek(stats, { now: QUA, restKind: (k) => (k === '2026-09-01' ? 'off' : null) });
     expect(g).toMatchObject({ metCount: 2, totalDays: 6 });
     expect(g.dots[1]!.kind).toBe('off');
     expect(g.dots[0]!.kind).toBe('met');
@@ -46,7 +57,7 @@ describe('meta diária — 7 dots', () => {
 
 describe('heatmap', () => {
   it('tem 7 × 16 células, em ordem de coluna, terminando na semana de hoje', () => {
-    const cells = heatmap({}, { now: QUA, goal: 60, skipWeekends: false });
+    const cells = heatmap({}, { now: QUA, goal: 60 });
     expect(cells).toHaveLength(112);
     expect(cells[0]!.key).toBe('2026-05-18'); // segunda, 15 semanas atrás
     expect(cells[111]!.key).toBe('2026-09-06'); // domingo desta semana
@@ -55,7 +66,7 @@ describe('heatmap', () => {
 
   it('intensidade por % da meta: 0/25/50/75/100+', () => {
     const done = { '2026-09-01': 10, '2026-08-31': 30, '2026-08-28': 45, '2026-08-27': 59, '2026-08-26': 120 };
-    const byKey = Object.fromEntries(heatmap(done, { now: QUA, goal: 60, skipWeekends: false }).map((c) => [c.key, c]));
+    const byKey = Object.fromEntries(heatmap(done, { now: QUA, goal: 60 }).map((c) => [c.key, c]));
     expect(byKey['2026-09-01']!.intensity).toBe(0);
     expect(byKey['2026-08-31']!.intensity).toBe(2);
     expect(byKey['2026-08-28']!.intensity).toBe(3);
@@ -65,17 +76,21 @@ describe('heatmap', () => {
   });
 
   it('meta zero: qualquer minuto acende no máximo', () => {
-    const c = heatmap({ '2026-09-01': 5 }, { now: QUA, goal: 0, skipWeekends: false }).find((c) => c.key === '2026-09-01')!;
+    const c = heatmap({ '2026-09-01': 5 }, { now: QUA, goal: 0 }).find((c) => c.key === '2026-09-01')!;
     expect(c.intensity).toBe(4);
   });
 
   it('skipWeekends marca sáb/dom passados como fim de semana', () => {
-    const c = heatmap({}, { now: QUA, goal: 60, skipWeekends: true }).find((c) => c.key === '2026-08-30')!;
+    const c = heatmap({}, { now: QUA, goal: 60, restKind: fimDeSemana }).find((c) => c.key === '2026-08-30')!;
     expect(c.kind).toBe('weekend-off');
+    // Sábado 29/08 com janelas abertas: célula normal, com a intensidade do que foi feito.
+    const aberto = (k: string) => (k === '2026-08-29' ? null : fimDeSemana(k));
+    const sab = heatmap({ '2026-08-29': 60 }, { now: QUA, goal: 60, restKind: aberto }).find((c) => c.key === '2026-08-29')!;
+    expect(sab).toMatchObject({ kind: 'value', intensity: 4 });
   });
 
   it('dia declarado livre vira célula neutra "day-off"; no futuro continua "future"', () => {
-    const cells = heatmap({}, { now: QUA, goal: 60, skipWeekends: false, dayOff: (k) => k === '2026-09-01' || k === '2026-09-04' });
+    const cells = heatmap({}, { now: QUA, goal: 60, restKind: (k) => (k === '2026-09-01' || k === '2026-09-04' ? 'off' : null) });
     expect(cells.find((c) => c.key === '2026-09-01')!.kind).toBe('day-off');
     expect(cells.find((c) => c.key === '2026-09-04')!.kind).toBe('future');
   });

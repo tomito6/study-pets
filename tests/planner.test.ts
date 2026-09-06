@@ -6,9 +6,6 @@ const base: PlannerConfig = {
   studyWindows: [{ start: '09:00', end: '18:00' }],
   start: '09:00',
   end: '18:00',
-  lunch: '13:00',
-  lunchDur: 60,
-  hasLunch: true,
   pomo: 25,
   shortBreak: 5,
   longBreak: 20,
@@ -19,7 +16,7 @@ const cfg = (over: Partial<PlannerConfig> = {}): PlannerConfig => ({ ...base, ..
 describe('generateBlocks — geração básica', () => {
   it('gera pomodoros de estudo com a duração configurada', () => {
     const blocks = generateBlocks(
-      cfg({ hasLunch: false, studyWindows: [{ start: '09:00', end: '11:00' }] }),
+      cfg({ studyWindows: [{ start: '09:00', end: '11:00' }] }),
     );
     const estudos = blocks.filter((b) => b.type === 'estudo');
     expect(estudos.length).toBeGreaterThan(0);
@@ -28,14 +25,14 @@ describe('generateBlocks — geração básica', () => {
 
   it('dá 2 XP por minuto de estudo', () => {
     const blocks = generateBlocks(
-      cfg({ hasLunch: false, pomo: 30, studyWindows: [{ start: '09:00', end: '11:00' }] }),
+      cfg({ pomo: 30, studyWindows: [{ start: '09:00', end: '11:00' }] }),
     );
     expect(blocks.find((b) => b.type === 'estudo')!.xp).toBe(60);
   });
 
   it('intercala pausa curta e usa pausa longa a cada 4 pomos', () => {
     const blocks = generateBlocks(
-      cfg({ hasLunch: false, studyWindows: [{ start: '09:00', end: '14:00' }] }),
+      cfg({ studyWindows: [{ start: '09:00', end: '14:00' }] }),
     );
     const pausas = blocks.filter((b) => b.type === 'pausa');
     expect(pausas.some((p) => p.name.includes('Pausa longa'))).toBe(true);
@@ -50,9 +47,9 @@ describe('generateBlocks — geração básica', () => {
 describe('generateBlocks — último bloco do dia é sempre estudo', () => {
   const casos: Array<[string, PlannerConfig]> = [
     ['dia padrão', cfg()],
-    ['sem almoço', cfg({ hasLunch: false })],
+    ['dia inteiro sem bloqueio', cfg()],
     ['pomo longo', cfg({ pomo: 50, shortBreak: 10, longBreak: 30 })],
-    ['dia curto', cfg({ hasLunch: false, studyWindows: [{ start: '09:00', end: '10:00' }] })],
+    ['dia curto', cfg({ studyWindows: [{ start: '09:00', end: '10:00' }] })],
     ['pausa longa grande', cfg({ longBreak: 45 })],
     [
       'duas janelas',
@@ -74,7 +71,6 @@ describe('generateBlocks — último bloco do dia é sempre estudo', () => {
 
 describe('generateBlocks — múltiplas janelas de estudo', () => {
   const duasJanelas = cfg({
-    hasLunch: false,
     studyWindows: [
       { start: '09:00', end: '12:00' },
       { start: '15:00', end: '20:00' },
@@ -96,7 +92,6 @@ describe('generateBlocks — múltiplas janelas de estudo', () => {
   it('ordena as janelas mesmo se vierem fora de ordem', () => {
     const blocks = generateBlocks(
       cfg({
-        hasLunch: false,
         studyWindows: [
           { start: '15:00', end: '18:00' },
           { start: '09:00', end: '12:00' },
@@ -107,26 +102,25 @@ describe('generateBlocks — múltiplas janelas de estudo', () => {
   });
 });
 
-describe('generateBlocks — almoço', () => {
-  it('emite o almoço como bloco próprio, sem XP', () => {
-    const almoco = generateBlocks(cfg()).find((b) => b.type === 'almoco');
-    expect(almoco).toMatchObject({ time: '13:00', endTime: '14:00', xp: 0 });
+describe('generateBlocks — refeição (um evento sem XP, desde que o almoço saiu da config)', () => {
+  const almoco: StudyEvent = { name: '🍽️ Almoço', start: '13:00', end: '14:00', countsAsStudy: false };
+
+  it('sem evento nenhum, o dia é só estudo e pausa', () => {
+    expect(generateBlocks(cfg()).every((b) => b.type === 'estudo' || b.type === 'pausa')).toBe(true);
   });
 
-  it('não emite almoço quando hasLunch é false', () => {
-    expect(generateBlocks(cfg({ hasLunch: false })).some((b) => b.type === 'almoco')).toBe(false);
+  it('a refeição entra como intervalo, sem XP, com o nome dela (sem 📅: já tem ícone)', () => {
+    const bloco = generateBlocks(cfg(), [almoco]).find((b) => b.type === 'intervalo');
+    expect(bloco).toMatchObject({ time: '13:00', endTime: '14:00', xp: 0, name: '🍽️ Almoço' });
   });
 
-  it('respeita a duração configurada', () => {
-    const blocks = generateBlocks(cfg({ lunch: '12:30', lunchDur: 90 }));
-    expect(blocks.find((b) => b.type === 'almoco')).toMatchObject({
-      time: '12:30',
-      endTime: '14:00',
-    });
+  it('respeita horário e duração do evento', () => {
+    const blocks = generateBlocks(cfg(), [{ ...almoco, start: '12:30', end: '14:00' }]);
+    expect(blocks.find((b) => b.type === 'intervalo')).toMatchObject({ time: '12:30', endTime: '14:00' });
   });
 
-  it('não gera estudo por cima do almoço', () => {
-    const blocks = generateBlocks(cfg());
+  it('não gera estudo por cima da refeição', () => {
+    const blocks = generateBlocks(cfg(), [almoco]);
     const invadindo = blocks.filter(
       (b) => b.type === 'estudo' && b.time >= '13:00' && b.time < '14:00',
     );
@@ -143,25 +137,25 @@ describe('generateBlocks — eventos', () => {
   });
 
   it('evento que conta como estudo vira bloco event com XP pela duração real', () => {
-    const bloco = generateBlocks(cfg({ hasLunch: false }), [ev()]).find((b) => b.type === 'event');
+    const bloco = generateBlocks(cfg(), [ev()]).find((b) => b.type === 'event');
     expect(bloco).toMatchObject({ time: '10:00', endTime: '11:30', xp: 180 });
     expect(bloco!.name).toContain('Aula de Cálculo');
   });
 
   it('evento que não conta como estudo vira intervalo sem XP', () => {
-    const blocks = generateBlocks(cfg({ hasLunch: false }), [ev({ countsAsStudy: false })]);
+    const blocks = generateBlocks(cfg(), [ev({ countsAsStudy: false })]);
     expect(blocks.find((b) => b.type === 'intervalo')).toMatchObject({ xp: 0 });
     expect(blocks.some((b) => b.type === 'event')).toBe(false);
   });
 
   it('trata countsAsStudy ausente como true (retrocompat)', () => {
     expect(
-      generateBlocks(cfg({ hasLunch: false }), [ev()]).some((b) => b.type === 'event'),
+      generateBlocks(cfg(), [ev()]).some((b) => b.type === 'event'),
     ).toBe(true);
   });
 
   it('não gera estudo dentro do horário do evento', () => {
-    const blocks = generateBlocks(cfg({ hasLunch: false }), [ev()]);
+    const blocks = generateBlocks(cfg(), [ev()]);
     const invadindo = blocks.filter(
       (b) => b.type === 'estudo' && b.time >= '10:00' && b.time < '11:30',
     );
@@ -173,7 +167,7 @@ describe('generateBlocks — eventos', () => {
       ev({ name: 'A', start: '10:00', end: '11:30' }),
       ev({ name: 'B', start: '11:00', end: '12:00' }),
     ];
-    const blocks = generateBlocks(cfg({ hasLunch: false }), eventos);
+    const blocks = generateBlocks(cfg(), eventos);
     const invadindo = blocks.filter(
       (b) => b.type === 'estudo' && b.time >= '10:00' && b.time < '12:00',
     );
@@ -182,13 +176,13 @@ describe('generateBlocks — eventos', () => {
   });
 
   it('preserva o _seriesId de ocorrências de série', () => {
-    const blocks = generateBlocks(cfg({ hasLunch: false }), [ev({ _seriesId: 'ser_123' })]);
+    const blocks = generateBlocks(cfg(), [ev({ _seriesId: 'ser_123' })]);
     expect(blocks.find((b) => b.type === 'event')!._seriesId).toBe('ser_123');
   });
 
   it('emite evento que acontece depois da última janela', () => {
     const blocks = generateBlocks(
-      cfg({ hasLunch: false, studyWindows: [{ start: '09:00', end: '12:00' }] }),
+      cfg({ studyWindows: [{ start: '09:00', end: '12:00' }] }),
       [ev({ name: 'Treino', start: '19:00', end: '20:00' })],
     );
     expect(blocks.some((b) => b.name.includes('Treino'))).toBe(true);
@@ -199,7 +193,7 @@ describe('generateBlocks — sobras menores que um pomodoro', () => {
   // Janela de 1h com pomo de 30: o evento no fim cria a sobra que queremos exercitar.
   const comEvento = (evStart: string, evEnd: string) =>
     generateBlocks(
-      cfg({ hasLunch: false, pomo: 30, shortBreak: 5, studyWindows: [{ start: '09:00', end: '10:00' }] }),
+      cfg({ pomo: 30, shortBreak: 5, studyWindows: [{ start: '09:00', end: '10:00' }] }),
       [{ name: 'Consulta', start: evStart, end: evEnd }],
     );
 
@@ -229,7 +223,7 @@ describe('generateBlocks — pausa nunca invade um bloqueio', () => {
 
   it('pomo que termina exatamente onde o evento começa: sem pausa, direto pro evento', () => {
     const blocks = generateBlocks(
-      cfg({ hasLunch: false, pomo: 30, shortBreak: 5, studyWindows: [{ start: '09:00', end: '11:00' }] }),
+      cfg({ pomo: 30, shortBreak: 5, studyWindows: [{ start: '09:00', end: '11:00' }] }),
       [{ name: 'Consulta', start: '10:00', end: '10:20' }],
     );
     expect(resumo(blocks)).toEqual([
@@ -271,9 +265,6 @@ describe('generateBlocks — config antiga sem studyWindows', () => {
     const antiga: PlannerConfig = {
       start: '08:00',
       end: '12:00',
-      lunch: '13:00',
-      lunchDur: 60,
-      hasLunch: false,
       pomo: 25,
       shortBreak: 5,
       longBreak: 20,
@@ -284,14 +275,14 @@ describe('generateBlocks — config antiga sem studyWindows', () => {
   });
 
   it('ignora studyWindows vazio e cai no fallback', () => {
-    const blocks = generateBlocks(cfg({ studyWindows: [], start: '08:00', end: '12:00', hasLunch: false }));
+    const blocks = generateBlocks(cfg({ studyWindows: [], start: '08:00', end: '12:00' }));
     expect(blocks[0]!.time).toBe('08:00');
   });
 });
 
 describe('calcActualEnd', () => {
   it('devolve o fim do último estudo, não o fim da janela', () => {
-    expect(calcActualEnd(cfg({ hasLunch: false, studyWindows: [{ start: '09:00', end: '10:00' }] }))).toBe(
+    expect(calcActualEnd(cfg({ studyWindows: [{ start: '09:00', end: '10:00' }] }))).toBe(
       '09:55',
     );
   });

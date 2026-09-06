@@ -2,6 +2,7 @@
 // Função pura — a memoização vive fora daqui, em quem chama.
 
 import type { BlockType, PlannerConfig, StudyBlock, StudyEvent, TimeString } from './types';
+import { startsWithEmoji } from './eventPresets';
 import { minsToTime, timeToMins } from './time';
 import { calcXP } from './progression';
 
@@ -19,7 +20,8 @@ interface BlockedSpan {
  * Regras que o comportamento original garante e que os testes protegem:
  * - as janelas de estudo são a fonte da verdade; `start`/`end` só entram como
  *   fallback pra config antiga sem `studyWindows`;
- * - almoço e eventos bloqueiam tempo e quebram a sessão;
+ * - eventos bloqueiam tempo e quebram a sessão (a refeição é um deles — o almoço
+ *   saiu da config em 2026-09-06);
  * - evento com `countsAsStudy !== false` vira bloco 'event' (dá XP); senão vira
  *   'intervalo' (só ocupa o espaço);
  * - sobra menor que um pomo vira mini-estudo (se >= metade do pomo) ou estica o
@@ -40,7 +42,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = []): S
 
   if (windows.length === 0) return [];
 
-  // Bloqueios: eventos (countsAsStudy=true→'event', false→'intervalo') + almoço.
+  // Bloqueios: eventos (countsAsStudy=true→'event', false→'intervalo').
   const blocked: BlockedSpan[] = [];
   for (const ev of events) {
     const counts = ev.countsAsStudy !== false; // default true (retrocompat)
@@ -53,31 +55,20 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = []): S
     if (ev._seriesId) entry._seriesId = ev._seriesId;
     blocked.push(entry);
   }
-  if (cfg.hasLunch !== false) {
-    const lunchStart = timeToMins(cfg.lunch);
-    blocked.push({
-      start: lunchStart,
-      end: lunchStart + cfg.lunchDur,
-      name: '🍽️ Almoço',
-      type: 'almoco',
-    });
-  }
   blocked.sort((a, b) => a.start - b.start);
 
   const blocks: StudyBlock[] = [];
   let sessionN = 0;
 
-  // Emite um bloqueio como block (almoço/evento/intervalo) preservando metadados úteis.
+  // Emite um bloqueio como block (evento/intervalo) preservando metadados úteis.
+  // Evento (e intervalo vindo de série) ganha 📅 na frente — a menos que o nome já traga o
+  // próprio ícone ("🍽️ Refeição"). Intervalo avulso fica com o nome cru (comportamento antigo).
   function emitBlocked(b: BlockedSpan): void {
+    const prefix = (b.type === 'event' || (b.type === 'intervalo' && b._seriesId)) && !startsWithEmoji(b.name);
     const out: StudyBlock = {
       time: minsToTime(b.start),
       endTime: minsToTime(b.end),
-      name:
-        b.type === 'event'
-          ? `📅 ${b.name}`
-          : b.type === 'intervalo' && b._seriesId
-            ? `📅 ${b.name}`
-            : b.name,
+      name: prefix ? `📅 ${b.name}` : b.name,
       type: b.type,
       xp: b.type === 'event' ? calcXP(b.end - b.start) : 0,
       session: b.type === 'event' ? sessionN : undefined,

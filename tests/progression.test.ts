@@ -34,7 +34,7 @@ describe('Moedas', () => {
 
   it('não rende moeda em pausa, almoço ou intervalo', () => {
     expect(coinsForBlock(bloco('pausa'), 20)).toBe(0);
-    expect(coinsForBlock(bloco('almoco'), 60)).toBe(0);
+    expect(coinsForBlock(bloco('intervalo'), 60)).toBe(0);
     expect(coinsForBlock(bloco('intervalo'), 60)).toBe(0);
   });
 });
@@ -179,13 +179,17 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     const c = (prevBlock: SkillContext['prevBlock']) => ctx({ activeSkill: 'preguica', prevBlock });
     expect(skillEligible(blocoManha, HOJE, c({ type: 'pausa', mins: 15 }))).toBe(true);
     expect(skillEligible(blocoManha, HOJE, c({ type: 'pausa', mins: 5 }))).toBe(false);
-    expect(skillEligible(blocoManha, HOJE, c({ type: 'almoco', mins: 60 }))).toBe(false);
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'intervalo', mins: 60 }))).toBe(false);
     expect(skillEligible(blocoManha, HOJE, c(null))).toBe(false);
   });
 
-  it('Rumina vale pro estudo logo depois do almoço', () => {
-    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'rumina', prevBlock: { type: 'almoco', mins: 60 } }))).toBe(true);
-    expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'rumina', prevBlock: { type: 'pausa', mins: 15 } }))).toBe(false);
+  it('Rumina vale pro estudo logo depois de uma refeição: intervalo de 30 min ou mais', () => {
+    const c = (prevBlock: SkillContext['prevBlock']) => ctx({ activeSkill: 'rumina', prevBlock });
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'intervalo', mins: 60 }))).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'intervalo', mins: 30 }))).toBe(true);
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'intervalo', mins: 15 }))).toBe(false); // um café não é almoço
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'pausa', mins: 60 }))).toBe(false);
+    expect(skillEligible(blocoManha, HOJE, c({ type: 'event', mins: 60 }))).toBe(false); // aula não é refeição
   });
 
   it('Constância vale pro bloco que faz o dia bater a meta', () => {

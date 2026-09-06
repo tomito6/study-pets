@@ -800,6 +800,28 @@
   .focus-overlay.hardcore .focus-timer-fill:not(.pausa) { stroke:#f87171; }
   .focus-overlay.hardcore .focus-chip:not(.pausa) { border-color:rgba(239,68,68,.55); color:#f87171; background:rgba(239,68,68,.1); }
   .focus-hc-actions { display:flex; justify-content:center; margin-top:clamp(14px, 2.5vmin, 24px); }
+  .empty-day-hint{font-size:12px;opacity:.75;margin-top:8px;line-height:1.5;}
+  /* Atalhos do Novo evento e o "Aplicar a" da edição de série: pills como as dos dias da semana */
+  .preset-row{display:flex;flex-wrap:wrap;gap:6px;}
+  /* LINHA DO TEMPO (Como fica o dia): uma régua de horas com um segmento por bloco */
+  .dtl{margin-bottom:12px;}
+  .dtl-track{position:relative;height:26px;background:var(--bg3);border-radius:6px;overflow:hidden;}
+  .dtl-seg{position:absolute;top:0;bottom:0;}
+  .dtl-seg.study{background:var(--accent);}
+  .dtl-seg.pause{background:#0e0e0f;}
+  .dtl-seg.event{background:var(--blue);}
+  .dtl-seg.interval{background:repeating-linear-gradient(135deg,#3a3a42 0 4px,#2a2a30 4px 8px);}
+  .dtl-now{position:absolute;top:0;bottom:0;width:2px;background:var(--orange);z-index:2;}
+  .dtl-hours{position:relative;height:14px;margin-top:4px;font-family:'DM Mono',monospace;font-size:9.5px;color:var(--muted);}
+  .dtl-hours span{position:absolute;transform:translateX(-50%);white-space:nowrap;}
+  .dtl-hours span:first-child{transform:none;}
+  .dtl-hours span:last-child{transform:translateX(-100%);}
+  .dtl-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:10.5px;color:var(--muted);margin-top:6px;}
+  .dtl-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .dtl-legend i.study{background:var(--accent);}
+  .dtl-legend i.pause{background:#0e0e0f;border:1px solid var(--border);}
+  .dtl-legend i.event{background:var(--blue);}
+  .dtl-legend i.interval{background:#3a3a42;}
   .focus-hc-quit { background:transparent; border:1px solid rgba(239,68,68,.5); color:#f87171; border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
   .focus-hc-quit:hover { background:rgba(239,68,68,.12); border-color:#ef4444; }
   .focus-hc-free { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }

@@ -42,15 +42,34 @@ const conjuntosDeEventos: StudyEvent[][] = [
   ],
 ];
 
+// O almoço saiu da config em 2026-09-06 e virou um evento sem XP. O gerador antigo ainda o
+// lê da config (`hasLunch`/`lunch`/`lunchDur`); o novo o recebe como evento 'intervalo' com o
+// mesmo nome. A comparação normaliza o tipo `almoco` do antigo pra `intervalo`.
 const almocos: Array<{ hasLunch: boolean; lunch: string; lunchDur: number }> = [
   { hasLunch: true, lunch: '13:00', lunchDur: 60 },
   { hasLunch: true, lunch: '12:00', lunchDur: 30 },
   { hasLunch: true, lunch: '11:45', lunchDur: 90 },
   { hasLunch: false, lunch: '13:00', lunchDur: 60 },
 ];
+const fimDoAlmoco = (lunch: string, dur: number) => {
+  const [h, m] = lunch.split(':').map(Number);
+  const t = (h as number) * 60 + (m as number) + dur;
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+};
 
-function todosOsCasos(): Array<{ nome: string; cfg: PlannerConfig; eventos: StudyEvent[] }> {
-  const casos: Array<{ nome: string; cfg: PlannerConfig; eventos: StudyEvent[] }> = [];
+interface Caso {
+  nome: string;
+  cfg: PlannerConfig;
+  /** A mesma config, com o almoço no formato antigo — só o gerador legado lê isso. */
+  cfgAntiga: PlannerConfig & { hasLunch: boolean; lunch: string; lunchDur: number };
+  /** Os eventos pro gerador novo: os do caso mais o almoço como evento, quando há. */
+  eventos: StudyEvent[];
+  /** Os eventos como o legado recebia (sem o almoço). */
+  eventosAntigos: StudyEvent[];
+}
+
+function todosOsCasos(): Caso[] {
+  const casos: Caso[] = [];
   for (const pomo of pomos) {
     for (const shortBreak of shorts) {
       for (const longBreak of longs) {
@@ -66,12 +85,17 @@ function todosOsCasos(): Array<{ nome: string; cfg: PlannerConfig; eventos: Stud
                 pomo,
                 shortBreak,
                 longBreak,
-                ...almoco,
               };
+              const eventosAntigos = conjuntosDeEventos[ei]!;
+              const eventos = almoco.hasLunch
+                ? [...eventosAntigos, { name: '🍽️ Almoço', start: almoco.lunch, end: fimDoAlmoco(almoco.lunch, almoco.lunchDur), countsAsStudy: false }]
+                : eventosAntigos;
               casos.push({
                 nome: `pomo=${pomo} short=${shortBreak} long=${longBreak} janelas=${ji} almoco=${ai} eventos=${ei}`,
                 cfg,
-                eventos: conjuntosDeEventos[ei]!,
+                cfgAntiga: { ...cfg, ...almoco },
+                eventos,
+                eventosAntigos,
               });
             }
           }
@@ -95,12 +119,14 @@ describe('equivalência com o gerador antigo', () => {
   // perto do fim da janela, deixava o bloqueio fora do plano. Nos casos em que isso não acontece
   // a saída tem que ser idêntica; nos outros, o novo só pode tirar essa pausa e devolver o bloqueio.
   type Bloco = { time: string; endTime: string; type: string; name: string; xp: number; mini?: boolean; session: number };
-  const BLOQUEIOS = ['event', 'intervalo', 'almoco'];
+  const BLOQUEIOS = ['event', 'intervalo'];
   // Sem `session`: devolver um bloqueio que o antigo perdia abre uma sessão a mais depois dele.
   const chave = (b: Bloco) => `${b.time}-${b.endTime} ${b.type} ${b.name} ${b.xp}${b.mini ? ' mini' : ''}`;
   const so = (bs: Bloco[], tipos: string[]) => bs.filter((b) => tipos.includes(b.type)).map(chave);
-  const inicioDeBloqueio = (cfg: PlannerConfig, eventos: StudyEvent[]) =>
-    new Set([...eventos.map((e) => e.start), ...(cfg.hasLunch ? [cfg.lunch] : [])]);
+  // `eventos` já traz o almoço como evento, então os inícios de bloqueio são só os deles.
+  const inicioDeBloqueio = (eventos: StudyEvent[]) => new Set(eventos.map((e) => e.start));
+  /** O antigo emitia o almoço como tipo próprio; hoje é um intervalo. */
+  const normaliza = (bs: Bloco[]): Bloco[] => bs.map((b) => (b.type === 'almoco' ? { ...b, type: 'intervalo' } : b));
 
   // O "tropeço" do antigo: um pomo termina exatamente onde um bloqueio começa, e o antigo
   // (a) emite a pausa por cima do bloqueio, ou (b) perde o bloqueio de vez — nesse caso, com
@@ -123,12 +149,12 @@ describe('equivalência com o gerador antigo', () => {
   it('só diverge do antigo onde ele tropeçava; até lá é idêntico, e o bloqueio volta pro plano', () => {
     const problemas: string[] = [];
     let divergentes = 0;
-    for (const { nome, cfg, eventos } of casos) {
-      const antigo = legacyGenerateBlocks(cfg, eventos) as Bloco[];
+    for (const { nome, cfg, cfgAntiga, eventos, eventosAntigos } of casos) {
+      const antigo = normaliza(legacyGenerateBlocks(cfgAntiga, eventosAntigos) as Bloco[]);
       const novo = generateBlocks(cfg, eventos) as Bloco[];
       if (JSON.stringify(antigo) === JSON.stringify(novo)) continue;
       divergentes++;
-      const inicios = inicioDeBloqueio(cfg, eventos);
+      const inicios = inicioDeBloqueio(eventos);
       const tropeco = tropecoDoAntigo(antigo, inicios);
       if (!tropeco) {
         problemas.push(`${nome}: divergiu sem o antigo ter tropeçado`);

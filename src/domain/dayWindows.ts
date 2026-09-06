@@ -1,6 +1,10 @@
 // Janelas de estudo só de um dia ("acordei tarde, hoje começo às 10"), o atalho
-// "começar agora" e o "dia livre". Mesmo padrão do almoço editado: é a config
-// daquele dia — nunca uma regra especial no gerador. Puro.
+// "começar agora" e o "dia livre". É a config daquele dia — nunca uma regra
+// especial no gerador. Puro.
+//
+// Também decide o que é dia de descanso: fim de semana pausado (`skipWeekends`) ou
+// dia declarado livre. Nos dois casos as janelas do dia mandam — abrir uma janela
+// num sábado pausado faz daquele sábado um dia de estudo (um "dia bônus").
 
 import { deriveStartEnd, isValidWindow } from './settings';
 import { minsToTime, timeToMins } from './time';
@@ -14,6 +18,46 @@ export interface DayWindowsOverride {
 export type WindowOverrides = Record<DateKey, DayWindowsOverride>;
 
 export const isDayOff = (ov: DayWindowsOverride | null | undefined): boolean => !!ov && ov.studyWindows.length === 0;
+
+/** Por que um dia não tem blocos: fim de semana pausado ou dia declarado livre. */
+export type RestKind = 'weekend' | 'off';
+
+export interface RestDayInput {
+  skipWeekends: boolean;
+  isWeekend: boolean;
+  override: DayWindowsOverride | null | undefined;
+}
+
+/**
+ * O dia é de descanso? As janelas do dia mandam: com override, o dia só é livre se a
+ * lista está vazia — janelas abertas num sábado desfazem a pausa daquele sábado. Sem
+ * override, o fim de semana pausado descansa.
+ */
+export function restDayKind({ skipWeekends, isWeekend, override }: RestDayInput): RestKind | null {
+  if (override) return override.studyWindows.length === 0 ? 'off' : null;
+  return skipWeekends && isWeekend ? 'weekend' : null;
+}
+
+export const isRestDay = (input: RestDayInput): boolean => restDayKind(input) !== null;
+
+/**
+ * Dia bônus: fim de semana pausado em que o usuário abriu janelas mesmo assim. É um dia
+ * a mais, não uma obrigação — conta se bateu a meta, e não quebra a sequência se não
+ * bateu. Estudar na folga nunca pode ser pior do que não estudar.
+ */
+export const isBonusDay = ({ skipWeekends, isWeekend, override }: RestDayInput): boolean =>
+  skipWeekends && isWeekend && !!override && override.studyWindows.length > 0;
+
+/** As janelas que valem pro dia: as editadas; nenhuma no fim de semana pausado; senão as da rotina. */
+export function windowsForDay(
+  config: Pick<UserConfig, 'studyWindows' | 'skipWeekends'>,
+  override: DayWindowsOverride | null | undefined,
+  isWeekend: boolean,
+): StudyWindow[] {
+  if (override) return override.studyWindows;
+  if (config.skipWeekends && isWeekend) return [];
+  return config.studyWindows;
+}
 
 /** A config efetiva do dia: as janelas do override no lugar das da rotina, com start/end derivados. */
 export function configForDay(config: UserConfig, ov: DayWindowsOverride | null | undefined): UserConfig {

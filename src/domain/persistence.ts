@@ -7,11 +7,14 @@
 //
 // `SCHEMA_VERSION` é gravado no doc. Docs sem o campo são v0 — o formato de antes
 // da migração pro Vite; v1 tinha pets por espécie (`owned: ['cat']`, `xp: {cat: 120}`,
-// `skills.owl`); v2 tem pets como instâncias, com nome, caminho e skill próprios.
-// Todos são lidos normalmente.
+// `skills.owl`); v2 tem pets como instâncias, com nome, caminho e skill próprios;
+// v3 tirou o almoço da config (`lunch`/`lunchDur`/`hasLunch` + `lunchOverrides`) —
+// virou uma série diária de evento sem XP, convertida na leitura. Todos são lidos.
 
 import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
+import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
+import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
@@ -26,11 +29,10 @@ import type {
   PetInstanceId,
   RecurringEventSeries,
   StudyEvent,
-  TimeString,
   UserConfig,
 } from './types';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export interface PetsState {
   owned: PetInstance[];
@@ -44,18 +46,11 @@ export interface PetsState {
   xpProcessedUntil: DateKey | null;
 }
 
-export interface LunchOverride {
-  lunch?: TimeString;
-  lunchDur?: number;
-  hasLunch?: boolean;
-}
-
 /** A parte do `state` que vai pro Firestore. Nada de UI aqui. */
 export interface PersistedState {
   checks: ChecksByDate;
   events: Record<DateKey, StudyEvent[]>;
   eventSeries: RecurringEventSeries[];
-  lunchOverrides: Record<DateKey, LunchOverride>;
   closedDays: Record<DateKey, boolean>;
   config: UserConfig;
   pets: PetsState;
@@ -106,7 +101,6 @@ export function emptyPersistedState(): PersistedState {
     checks: {},
     events: {},
     eventSeries: [],
-    lunchOverrides: {},
     closedDays: {},
     config: { ...DEFAULT_CFG },
     pets: emptyPets(),
@@ -211,12 +205,27 @@ function hydrateWindowOverrides(raw: unknown): WindowOverrides {
 export function hydrateUserDoc(raw: unknown): PersistedState {
   const d: Raw = isObj(raw) ? raw : {};
   const rawCfg = isObj(d.config) ? d.config : {};
+  const events: Record<DateKey, StudyEvent[]> = isObj(d.events) ? { ...(d.events as Record<DateKey, StudyEvent[]>) } : {};
+  const eventSeries: RecurringEventSeries[] = Array.isArray(d.eventSeries) ? [...(d.eventSeries as RecurringEventSeries[])] : [];
+
+  // v0–v2: o almoço morava na config (com ajustes por dia em `lunchOverrides`). Vira uma série
+  // diária sem XP — sem âncora, pra cobrir os dias já passados — mais um avulso em cada dia
+  // editado. Só pra doc que tem config de verdade: `{}` continua sendo conta nova.
+  if (num(d.schemaVersion) < 3 && isObj(d.config) && !eventSeries.some((s) => s.id === LUNCH_SERIES_ID)) {
+    const m = migrateLunch({
+      hasLunch: rawCfg.hasLunch !== false, // o default antigo era almoçar
+      lunch: str(rawCfg.lunch) ?? '13:00',
+      lunchDur: num(rawCfg.lunchDur, 60),
+      overrides: isObj(d.lunchOverrides) ? (d.lunchOverrides as LegacyLunch['overrides']) : {},
+    });
+    if (m.series) eventSeries.push(m.series);
+    for (const [day, evs] of Object.entries(m.events)) events[day] = [...(events[day] ?? []), ...evs];
+  }
 
   return {
     checks: (d.checks as ChecksByDate) || {},
-    events: (d.events as Record<DateKey, StudyEvent[]>) || {},
-    eventSeries: Array.isArray(d.eventSeries) ? (d.eventSeries as RecurringEventSeries[]) : [],
-    lunchOverrides: (d.lunchOverrides as Record<DateKey, LunchOverride>) || {},
+    events,
+    eventSeries,
     // Migra ANTES de aplicar os defaults: se o doc antigo só tem start/end, a janela
     // nasce deles. (O código original fazia ao contrário e a janela padrão 09–18
     // engolia os horários reais do usuário — corrigido na Fase 4.)
@@ -241,7 +250,6 @@ export function serializeState(s: PersistedState): UserDoc {
     checks: s.checks,
     events: s.events,
     eventSeries: s.eventSeries || [],
-    lunchOverrides: s.lunchOverrides,
     closedDays: s.closedDays || {},
     config: s.config,
     pets: {

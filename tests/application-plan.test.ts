@@ -4,6 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { blocksForDay, clearBlockCache, computeStatsNow, currentDayKey, rebuildWeeks } from '../src/application/plan';
 import { toggleBlockCheck } from '../src/application/checks';
+import { mealSeries } from '../src/domain/eventPresets';
 import { emptyPersistedState } from '../src/domain/persistence';
 import { derived, state } from '../src/store/store';
 
@@ -34,13 +35,18 @@ describe('blocksForDay', () => {
   it('gera os blocos do dia com a config do store', () => {
     const blocks = blocksForDay(HOJE);
     expect(blocks[0]).toMatchObject({ time: '09:00', type: 'estudo' });
-    expect(blocks.some((b) => b.type === 'almoco')).toBe(true);
+    expect(blocks.every((b) => b.type === 'estudo' || b.type === 'pausa')).toBe(true); // sem série nenhuma, nada bloqueia
   });
 
-  it('respeita o almoço editado só daquele dia', () => {
-    state.lunchOverrides[HOJE] = { lunch: '12:00', lunchDur: 30 };
-    expect(blocksForDay(HOJE).find((b) => b.type === 'almoco')).toMatchObject({ time: '12:00', endTime: '12:30' });
-    expect(blocksForDay('2026-09-03').find((b) => b.type === 'almoco')).toMatchObject({ time: '13:00' });
+  it('a refeição de todo dia é uma série: entra como intervalo, e a exceção + avulso mudam só aquele dia', () => {
+    state.eventSeries.push(mealSeries('13:00', 60));
+    clearBlockCache();
+    expect(blocksForDay(HOJE).find((b) => b.type === 'intervalo')).toMatchObject({ time: '13:00', endTime: '14:00', name: '🍽️ Almoço' });
+    state.eventSeries[0]!.exceptions = [HOJE];
+    state.events[HOJE] = [{ name: '🍽️ Almoço', start: '12:00', end: '12:30', countsAsStudy: false }];
+    clearBlockCache();
+    expect(blocksForDay(HOJE).find((b) => b.type === 'intervalo')).toMatchObject({ time: '12:00', endTime: '12:30' });
+    expect(blocksForDay('2026-09-03').find((b) => b.type === 'intervalo')).toMatchObject({ time: '13:00' });
   });
 
   it('fim de semana fica vazio com skipWeekends', () => {

@@ -43,9 +43,6 @@ const cfgBase: PlannerConfig = {
   studyWindows: [{ start: '09:00', end: '18:00' }],
   start: '09:00',
   end: '18:00',
-  lunch: '13:00',
-  lunchDur: 60,
-  hasLunch: true,
   pomo: 25,
   shortBreak: 5,
   longBreak: 20,
@@ -80,10 +77,11 @@ function gerarCenarios(): Cenario[] {
   for (let seed = 1; seed <= 40; seed++) {
     const rand = rng(seed * 7919);
     const dias = diasAte(14 + Math.floor(rand() * 14));
+    // O almoço é um evento sem XP em todos os dias do cenário (era config até 2026-09-06).
+    const comAlmoco = rand() > 0.3;
     const cfg: PlannerConfig = {
       ...cfgBase,
       pomo: pomos[Math.floor(rand() * pomos.length)]!,
-      hasLunch: rand() > 0.3,
       studyWindows:
         rand() > 0.5
           ? [{ start: '09:00', end: '18:00' }]
@@ -98,21 +96,22 @@ function gerarCenarios(): Cenario[] {
     const closedDays: Record<DateKey, boolean> = {};
 
     for (const { key } of dias) {
+      const evs: StudyEvent[] = [];
       if (rand() > 0.7) {
-        eventosPorDia[key] = [
-          {
-            name: 'Aula',
-            start: '10:00',
-            end: '11:30',
-            countsAsStudy: rand() > 0.3,
-          },
-        ];
+        evs.push({
+          name: 'Aula',
+          start: '10:00',
+          end: '11:30',
+          countsAsStudy: rand() > 0.3,
+        });
       }
+      if (comAlmoco) evs.push({ name: '🍽️ Almoço', start: '13:00', end: '14:00', countsAsStudy: false });
+      if (evs.length > 0) eventosPorDia[key] = evs;
       if (rand() > 0.75) closedDays[key] = true;
 
       const blocos = generateBlocks(cfg, eventosPorDia[key] || []);
       for (const b of blocos) {
-        if (b.type === 'almoco' || b.type === 'intervalo') continue;
+        if (b.type === 'intervalo') continue;
         if (rand() > 0.45) continue;
         if (!checks[key]) checks[key] = {};
         const sorteio = rand();

@@ -1,8 +1,11 @@
-// "Resumo do dia": 4 tiles + uma frase dizendo o que acontece no fim do dia.
+// "Como fica o dia": a linha do tempo da rotina, 4 tiles e uma frase dizendo o que
+// acontece no fim do dia. Só janelas e ritmo — refeições e eventos entram pelo Plano.
 
+import { generateBlocks } from '../../domain/planner';
 import { formatCompact, summarizeConfig } from '../../domain/settings';
 import type { PlannerConfig } from '../../domain/types';
 import { strings } from '../../shared/strings';
+import { DayTimeline } from './DayTimeline';
 
 const t = strings.settings.summary;
 
@@ -31,6 +34,7 @@ export function ConfigPreview({ cfg }: { cfg: PlannerConfig }) {
 
   return (
     <div className="st-card" id="config-preview">
+      <DayTimeline blocks={generateBlocks(cfg, [])} />
       <div className="st-summary">
         {tile(s.pomos, t.tiles.pomos)}
         {tile(formatCompact(s.studyMins), t.tiles.study)}

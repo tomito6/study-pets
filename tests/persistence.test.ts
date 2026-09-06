@@ -8,6 +8,7 @@ import {
 } from '../src/domain/persistence';
 import type { PersistedState } from '../src/domain/persistence';
 import { DEFAULT_CFG } from '../src/domain/config';
+import { LUNCH_NAME, LUNCH_SERIES_ID } from '../src/domain/eventPresets';
 
 describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
   it('documento vazio vira conta nova', () => {
@@ -48,6 +49,55 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
   it('config nova é preservada', () => {
     const cfg = { ...DEFAULT_CFG, pomo: 50, dailyStudyMin: 90, studyWindows: [{ start: '10:00', end: '12:00' }] };
     expect(hydrateUserDoc({ config: cfg }).config).toEqual(cfg);
+  });
+
+  describe('v0–v2: o almoço sai da config e vira uma série de evento (schema 3)', () => {
+    it('almoço na config vira a série diária sem XP, sem âncora; os campos somem da config', () => {
+      const s = hydrateUserDoc({ schemaVersion: 2, config: { ...DEFAULT_CFG, lunch: '12:30', lunchDur: 45, hasLunch: true } });
+      expect(s.eventSeries).toHaveLength(1);
+      expect(s.eventSeries[0]).toMatchObject({ id: LUNCH_SERIES_ID, name: LUNCH_NAME, start: '12:30', end: '13:15', countsAsStudy: false, exceptions: [] });
+      expect(s.eventSeries[0]!.anchor).toBeUndefined();
+      expect(s.config).not.toHaveProperty('lunch');
+      expect(s.config).not.toHaveProperty('hasLunch');
+      expect(s.config).not.toHaveProperty('lunchDur');
+    });
+
+    it('doc antigo sem os campos de almoço também almoçava (o default era 13:00, 60 min)', () => {
+      const s = hydrateUserDoc({ config: { start: '08:00', end: '16:00' } });
+      expect(s.eventSeries[0]).toMatchObject({ id: LUNCH_SERIES_ID, start: '13:00', end: '14:00' });
+    });
+
+    it('almoço editado por dia vira exceção na série + avulso naquele dia; os eventos que já existiam ficam', () => {
+      const s = hydrateUserDoc({
+        schemaVersion: 2,
+        config: { ...DEFAULT_CFG, lunch: '13:00', lunchDur: 60, hasLunch: true },
+        events: { '2026-09-01': [{ name: 'Aula', start: '10:00', end: '11:00' }] },
+        lunchOverrides: { '2026-09-01': { lunch: '12:00', lunchDur: 30 }, '2026-09-02': { hasLunch: false } },
+      });
+      expect(s.eventSeries[0]!.exceptions).toEqual(['2026-09-01', '2026-09-02']);
+      expect(s.events['2026-09-01']).toEqual([
+        { name: 'Aula', start: '10:00', end: '11:00' },
+        { name: LUNCH_NAME, start: '12:00', end: '12:30', countsAsStudy: false },
+      ]);
+      expect(s.events['2026-09-02']).toBeUndefined();
+    });
+
+    it('hasLunch false: nenhuma série', () => {
+      const s = hydrateUserDoc({ schemaVersion: 2, config: { ...DEFAULT_CFG, hasLunch: false } });
+      expect(s.eventSeries).toEqual([]);
+    });
+
+    it('doc já no schema 3 não migra de novo, mesmo que sobre um campo antigo por aí', () => {
+      const s = hydrateUserDoc({ schemaVersion: 3, config: { ...DEFAULT_CFG, lunch: '13:00', hasLunch: true }, eventSeries: [] });
+      expect(s.eventSeries).toEqual([]);
+      expect(s.config).not.toHaveProperty('lunch');
+    });
+
+    it('série de almoço já presente num doc antigo não é duplicada', () => {
+      const existing = { id: LUNCH_SERIES_ID, name: LUNCH_NAME, start: '13:00', end: '14:00', weekdays: [0, 1, 2, 3, 4, 5, 6], freq: 'weekly', until: null, exceptions: [], countsAsStudy: false };
+      const s = hydrateUserDoc({ schemaVersion: 2, config: { ...DEFAULT_CFG, hasLunch: true }, eventSeries: [existing] });
+      expect(s.eventSeries).toHaveLength(1);
+    });
   });
 
   it('doc de antes do modo hardcore: sem `penalties` → {}, e a config nasce desligada', () => {

@@ -12,6 +12,8 @@ export interface StatsDay {
   date: Date;
   /** Índice da semana, usado nos agregados por semana. */
   weekIdx: number;
+  /** Dia bônus (folga com janelas abertas, ver `isBonusDay`): entra na sequência se bateu a meta; se não bateu, não a zera. */
+  bonus?: boolean;
 }
 
 export interface StatsInput {
@@ -106,7 +108,7 @@ export function computeStats(input: StatsInput): Stats {
   const minDailyMins = input.dailyStudyMin || 60;
   let runningStreak = 0;
 
-  for (const { key, date: d, weekIdx: wi } of input.days) {
+  for (const { key, date: d, weekIdx: wi, bonus } of input.days) {
     // Dia "fechado" entra nos totais: dia passado OU encerrado manualmente hoje
     const isPast = key !== todayKey || dayClosed(key);
     const blocks = getBlocks(key);
@@ -191,7 +193,8 @@ export function computeStats(input: StatsInput): Stats {
       if (isPast) stats.coins += dailyBonusForStreak(runningStreak);
       // Pra hoje (ainda aberto), expõe o bônus como pendente
       else if (key === todayKey) stats.todayCoins += dailyBonusForStreak(runningStreak);
-    } else {
+    } else if (!bonus) {
+      // Dia bônus sem meta não zera a sequência: estudar na folga nunca é pior que não estudar.
       runningStreak = 0;
     }
     if (dayChecks > stats.bestDayChecks) {

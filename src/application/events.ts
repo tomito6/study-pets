@@ -1,10 +1,10 @@
-// Casos de uso de eventos e do almoço de um dia. Cada mutação: limpa o cache do
-// gerador, agenda o save, notifica, e conta ao usuário o que mudou no plano.
+// Casos de uso de eventos: avulsos e séries recorrentes (a refeição de todo dia é
+// uma série como outra qualquer). Cada mutação: limpa o cache do gerador, agenda
+// o save, notifica, e conta ao usuário o que mudou no plano.
 
 import { describePlanDelta, planDelta } from '../domain/planDelta';
 import { timeToMins } from '../domain/time';
 import type { DateKey, RecurrenceFreq, RecurringEventSeries, StudyBlock, StudyEvent, TimeString } from '../domain/types';
-import type { LunchOverride } from '../domain/persistence';
 import { showToast } from '../shared/toast';
 import { notify, state } from '../store/store';
 import { blocksForDay, clearBlockCache } from './plan';
@@ -171,18 +171,20 @@ export function updateSeries(seriesId: string, input: SeriesInput, dateKey: Date
   return { ok: true };
 }
 
-// ---- almoço do dia ----
-
-export function lunchForDay(dateKey: DateKey): Required<Pick<LunchOverride, 'lunch' | 'lunchDur'>> {
-  const ov = state.lunchOverrides[dateKey];
-  return {
-    lunch: ov?.lunch ?? state.config.lunch,
-    lunchDur: ov?.lunchDur ?? state.config.lunchDur,
-  };
-}
-
-export function setLunchOverride(dateKey: DateKey, lunch: TimeString, lunchDur: number): void {
+/**
+ * Edita só a ocorrência deste dia ("almocei mais cedo hoje"): o dia vira exceção da
+ * série e ganha um avulso com os valores novos. Os outros dias continuam iguais.
+ */
+export function updateSeriesOccurrence(seriesId: string, dateKey: DateKey, input: EventInput): EventUpdateResult {
+  const v = validateEvent(input);
+  if (!v.ok) return v;
+  const s = (state.eventSeries || []).find((x) => x.id === seriesId);
+  if (!s) return { ok: false, reason: 'not-found' };
   const before = blocksForDay(dateKey);
-  state.lunchOverrides[dateKey] = { lunch, lunchDur };
+  if (!Array.isArray(s.exceptions)) s.exceptions = [];
+  if (!s.exceptions.includes(dateKey)) s.exceptions.push(dateKey);
+  const day = state.events[dateKey] ?? (state.events[dateKey] = []);
+  day.push({ name: cleanName(input.name), start: input.start, end: input.end, countsAsStudy: input.countsAsStudy });
   commit(dateKey, before);
+  return { ok: true };
 }

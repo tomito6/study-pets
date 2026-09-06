@@ -166,6 +166,8 @@ test.describe('Study Pets — smoke', () => {
 
     await page.getByRole('button', { name: 'Configurações' }).click();
     await expect(page.locator('#settings-panel')).toBeVisible();
+    await page.locator('#settings-panel .settings-tab[data-tab="day"]').click(); // abre no Geral; o ritmo fica em "Estrutura do dia"
+    await expect(page.locator('#config-preview #day-timeline')).toBeVisible();
     await page.locator('#cfg-pomo').fill('50');
     await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
     await expect(page.locator('#settings-panel')).toBeHidden();
@@ -219,6 +221,90 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row').first()).toContainText('Almoço');
     await expect(page.locator('.block-row.session-block').first()).toContainText('14:00–14:25');
     await expect(page.locator('.block-row.session-block').last()).toContainText('15:30–15:55');
+  });
+
+  test('30. fim de semana pausado: dá pra abrir janelas só naquele sábado, e "Restaurar rotina" devolve a folga', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click(); // o balão do tour cobre as abas dos dias de propósito
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+    // Liga "Pular finais de semana".
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await page.locator('.st-switch', { has: page.locator('#cfg-skip-weekends') }).click(); // o input do switch é invisível: clica no trilho
+    await expect(page.locator('#cfg-skip-weekends')).toBeChecked();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+
+    // Sábado: sem blocos, com a dica de como estudar mesmo assim.
+    await page.locator('.day-tab', { hasText: 'Sáb' }).click();
+    await expect(page.locator('.empty-day')).toContainText('Fim de semana');
+    await expect(page.locator('.empty-day-hint')).toContainText('Janelas do dia');
+    await expect(page.locator('.block-row')).toHaveCount(0);
+
+    // Abre uma janela só neste sábado.
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-off-note')).toContainText('Fim de semana');
+    await page.locator('#day-windows-add').click();
+    await page.locator('#day-windows-panel .swc-start').fill('10:00');
+    await page.locator('#day-windows-panel .swc-end').fill('12:00');
+    await page.locator('#day-windows-save').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('.block-row.session-block').first()).toContainText('10:00–10:25');
+    await expect(page.locator('#day-windows-btn')).toContainText('editado');
+
+    // O domingo continua livre.
+    await page.locator('.day-tab', { hasText: 'Dom' }).click();
+    await expect(page.locator('.empty-day')).toContainText('Fim de semana');
+    await expect(page.locator('#day-windows-btn')).not.toContainText('editado');
+
+    // "Restaurar rotina" devolve a folga do sábado.
+    await page.locator('.day-tab', { hasText: 'Sáb' }).click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-windows-restore').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('.empty-day')).toContainText('Fim de semana');
+    await expect(page.locator('.block-row')).toHaveCount(0);
+  });
+
+  test('31. atalhos do evento: "Refeição" preenche o formulário e repete todo dia; editar só este dia não mexe nos outros', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click(); // o balão do tour cobre as abas dos dias
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+    // A refeição padrão das 13h já está no plano (conta nova).
+    await expect(page.locator('.block-row.almoco-row')).toContainText('Almoço');
+
+    await page.locator('#add-event-btn').click();
+    await expect(page.locator('#event-panel')).toBeVisible();
+    await page.locator('#ev-presets [data-preset="meal"]').click();
+    await expect(page.locator('#ev-name')).toHaveValue('🍽️ Refeição');
+    await expect(page.locator('#ev-start')).toHaveValue('13:00');
+    await expect(page.locator('#ev-end')).toHaveValue('14:00');
+    await expect(page.locator('#ev-counts')).not.toBeChecked();
+    await expect(page.locator('#ev-repeat')).toBeChecked();
+    await expect(page.locator('#ev-weekdays .weekday-chip.selected')).toHaveCount(7);
+    // Janta: 19:00–20:00, todo dia.
+    await page.locator('#ev-start').fill('19:00');
+    await page.locator('#ev-end').fill('20:00');
+    await page.locator('#ev-save').click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+    const janta = page.locator('.block-row.almoco-row', { hasText: 'Refeição' });
+    await expect(janta).toContainText('19:00–20:00');
+    await expect(janta).not.toContainText('📅'); // o nome já traz o ícone
+
+    // "Só este dia": hoje a refeição da noite é 19:30–20:15; amanhã continua 19:00.
+    await janta.click();
+    await expect(page.locator('#event-delete-confirm')).toBeVisible();
+    await page.locator('#event-edit-btn').click();
+    await expect(page.locator('#event-panel')).toContainText('Editar evento');
+    await expect(page.locator('#ev-scope [data-scope="day"]')).toHaveClass(/selected/);
+    await expect(page.locator('#ev-repeat-section')).not.toHaveClass(/show/); // só este dia: sem recorrência pra mexer
+    await page.locator('#ev-start').fill('19:30');
+    await page.locator('#ev-end').fill('20:15');
+    await page.locator('#ev-save').click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+    await expect(page.locator('.block-row.almoco-row', { hasText: 'Refeição' })).toContainText('19:30–20:15');
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    await expect(page.locator('.block-row.almoco-row', { hasText: 'Refeição' })).toContainText('19:00–20:00');
   });
 
   test('26. baixar meus dados gera um JSON com o documento do usuário', async ({ page }) => {

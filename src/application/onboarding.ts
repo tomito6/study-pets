@@ -2,6 +2,7 @@
 // Escolhe o pet inicial (quando não há pet nenhum), o período de uso e se pula
 // fins de semana; o resto é editável depois.
 
+import { LUNCH_SERIES_ID, mealSeries } from '../domain/eventPresets';
 import { PETS, normalizePetName } from '../domain/pets';
 import { dk } from '../domain/time';
 import type { DateKey, PetId } from '../domain/types';
@@ -52,7 +53,13 @@ export function finishOnboarding(input: OnboardingInput, now: Date = new Date())
     if (!normalizePetName(starter.name)) return { ok: false, reason: 'invalid-name' };
   }
 
-  if (starter) adoptStarter(starter.species, starter.name, now);
+  if (starter) {
+    adoptStarter(starter.species, starter.name, now);
+    // Conta nova (ou sessão recomeçada): a refeição das 13h já vem no plano, como o almoço
+    // padrão de antes — só que é um evento, e dá pra editar ou apagar como qualquer outro.
+    if (!state.eventSeries) state.eventSeries = [];
+    if (!state.eventSeries.some((s) => s.id === LUNCH_SERIES_ID)) state.eventSeries.push(mealSeries('13:00', 60));
+  }
   state.config = { ...state.config, periodStart, periodEnd, skipWeekends: input.skipWeekends };
   derived.onboardingOpen = false;
   rebuildWeeks(now);

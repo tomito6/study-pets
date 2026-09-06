@@ -15,10 +15,10 @@ import {
   sparkline,
 } from '../../domain/analytics';
 import type { GoalWeek } from '../../domain/analytics';
-import { isDayOff } from '../../domain/dayWindows';
+import { restDayKind } from '../../domain/dayWindows';
 import { getLevel, getLevelPct } from '../../domain/progression';
 import type { Stats } from '../../domain/stats';
-import { aggregateMins, dk } from '../../domain/time';
+import { aggregateMins, dk, isWeekendKey } from '../../domain/time';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 
@@ -110,10 +110,11 @@ export function AnalyticsTab() {
   const allKeys = Object.keys(stats.dayStudyPlanned).filter((k) => k <= todayKey);
   const skip = config.skipWeekends === true;
   const min = config.dailyStudyMin || 60;
-  const dayOff = (key: string) => isDayOff(windowOverrides[key]); // dia declarado livre: neutro, como o fim de semana
-  const goal = goalWeek(stats, { now, skipWeekends: skip, dayOff });
+  // Fim de semana pausado e dia declarado livre são neutros; um sábado com janelas abertas é dia normal.
+  const restKind = (key: string) => restDayKind({ skipWeekends: skip, isWeekend: isWeekendKey(key), override: windowOverrides[key] });
+  const goal = goalWeek(stats, { now, restKind });
   const streaks = calcStreaksNow(stats.dayStudyMins, now);
-  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, skipWeekends: skip, dayOff });
+  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, restKind });
   const bars = hourBars(stats.hourCounts, config.start, config.end);
   const rows = dropoff(stats.sessionStats);
 

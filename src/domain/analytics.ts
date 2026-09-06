@@ -1,6 +1,7 @@
 // Os cálculos da aba Análise. Recebem as estatísticas já computadas e devolvem
 // dados prontos pra desenhar — nada de DOM, nada de texto de UI.
 
+import type { RestKind } from './dayWindows';
 import { LEVELS } from './progression';
 import type { Stats } from './stats';
 import { dk, mondayOf } from './time';
@@ -23,8 +24,11 @@ export function nextLevel(totalXP: number): { threshold: number; name: string } 
 
 // ---------------------------------------------------------------- meta diária (7 dots)
 
-/** `off` = dia declarado livre (janelas do dia vazias): neutro, como o fim de semana. */
+/** `weekend` = fim de semana pausado; `off` = dia declarado livre. Os dois neutros. Um sábado com janelas abertas é dia normal. */
 export type GoalDotKind = 'weekend' | 'off' | 'future' | 'met' | 'miss';
+
+/** Por que um dia é neutro (fim de semana pausado / dia livre), ou null se ele conta. */
+export type RestKindOf = (key: DateKey) => RestKind | null;
 
 export interface GoalDot {
   key: DateKey;
@@ -43,21 +47,22 @@ export interface GoalWeek {
 
 export function goalWeek(
   stats: Pick<Stats, 'dayMetGoal' | 'dayStudyDoneMins'>,
-  opts: { now: Date; skipWeekends: boolean; dayOff?: (key: DateKey) => boolean },
+  opts: { now: Date; restKind?: RestKindOf },
 ): GoalWeek {
   const weekKeys = currentWeekKeys(opts.now);
   const todayKey = dk(opts.now);
-  const isOff = (key: DateKey) => opts.dayOff?.(key) === true;
-  const considered = weekKeys.filter((k, i) => !(opts.skipWeekends && i >= 5) && !isOff(k));
+  const rest: RestKindOf = (key) => opts.restKind?.(key) ?? null;
+  const considered = weekKeys.filter((k) => rest(k) === null);
   const passed = considered.filter((k) => k <= todayKey);
   return {
     metCount: passed.filter((k) => stats.dayMetGoal[k]).length,
     totalDays: considered.length,
     dots: weekKeys.map((key, dayIdx) => {
       const done = stats.dayStudyDoneMins[key] || 0;
+      const r = rest(key);
       const kind: GoalDotKind =
-        opts.skipWeekends && dayIdx >= 5 ? 'weekend'
-        : isOff(key) ? 'off'
+        r === 'weekend' ? 'weekend'
+        : r === 'off' ? 'off'
         : key > todayKey ? 'future'
         : stats.dayMetGoal[key] ? 'met'
         : 'miss';
@@ -85,7 +90,7 @@ export interface HeatCell {
 /** Células em ordem de coluna (semana) e depois linha (dia) — o grid usa `grid-auto-flow: column`. */
 export function heatmap(
   dayStudyDoneMins: Record<DateKey, number>,
-  opts: { now: Date; goal: number; skipWeekends: boolean; weeks?: number; dayOff?: (key: DateKey) => boolean },
+  opts: { now: Date; goal: number; weeks?: number; restKind?: RestKindOf },
 ): HeatCell[] {
   const weeks = opts.weeks ?? 16;
   const today = new Date(opts.now);
@@ -99,17 +104,17 @@ export function heatmap(
       const d = new Date(startMon);
       d.setDate(d.getDate() + col * 7 + row);
       const key = dk(d);
-      const dow = d.getDay();
       const done = dayStudyDoneMins[key] || 0;
       if (d > today) {
         cells.push({ key, date: d, kind: 'future', intensity: 0, done, pct: 0, isToday: false });
         continue;
       }
-      if (opts.skipWeekends && (dow === 0 || dow === 6)) {
+      const rest = opts.restKind?.(key) ?? null;
+      if (rest === 'weekend') {
         cells.push({ key, date: d, kind: 'weekend-off', intensity: 0, done, pct: 0, isToday: false });
         continue;
       }
-      if (opts.dayOff?.(key)) {
+      if (rest === 'off') {
         cells.push({ key, date: d, kind: 'day-off', intensity: 0, done, pct: 0, isToday: false });
         continue;
       }

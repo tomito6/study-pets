@@ -1,12 +1,13 @@
 // O plano lido a partir do estado: semanas, blocos de cada dia e estatísticas.
 // Único lugar que liga o domínio ao store — React e legado consomem daqui.
 
-import { configForDay, isDayOff } from '../domain/dayWindows';
+import { configForDay, isBonusDay, restDayKind } from '../domain/dayWindows';
+import type { RestKind } from '../domain/dayWindows';
 import { expandEventsForDate } from '../domain/events';
 import { generateBlocks as generateBlocksPure } from '../domain/planner';
 import { computeStats, calcStreaks } from '../domain/stats';
 import type { Stats } from '../domain/stats';
-import { dk } from '../domain/time';
+import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, PlannerConfig, StudyBlock, StudyEvent } from '../domain/types';
 import { buildWeeks, dateForWeekDay as dateForWeekDayIn, findWeek as findWeekIn, weekDays } from '../domain/weeks';
 import type { WeekDay } from '../domain/weeks';
@@ -43,7 +44,6 @@ export function rebuildWeeks(now: Date = new Date()): void {
     dataKeys: [
       ...Object.keys(state.checks),
       ...Object.keys(state.events),
-      ...Object.keys(state.lunchOverrides),
       ...Object.keys(state.groups),
       ...Object.keys(state.windowOverrides),
     ],
@@ -57,13 +57,37 @@ export const dateForWeekDay = (weekN: number, dayIdx: number): Date =>
 
 export const findWeek = (date: Date): number => findWeekIn(derived.weeks, date);
 
+// ---------------------------------------------------------------- descanso
+const restInputFor = (dateKey: DateKey, isWeekend = isWeekendKey(dateKey)) => ({
+  skipWeekends: state.config.skipWeekends === true,
+  isWeekend,
+  override: state.windowOverrides[dateKey],
+});
+
+/** Por que o dia está sem blocos — fim de semana pausado ou dia declarado livre — ou null se ele conta. */
+export const restKindOf = (dateKey: DateKey): RestKind | null => restDayKind(restInputFor(dateKey));
+
+/** Fim de semana pausado em que o usuário abriu janelas: um dia a mais, nunca uma obrigação. */
+export const isBonusDayKey = (dateKey: DateKey): boolean => isBonusDay(restInputFor(dateKey));
+
+/** Um dia que conta, com a marca de dia bônus (ver `isBonusDay`). */
+export type PlanDay = WeekDay & { bonus: boolean };
+
 /**
  * Todos os dias que contam. Fim de semana com `skipWeekends` e dia declarado
  * livre ficam de fora do mesmo jeito: neutros — não quebram a sequência nem
- * contam como meta batida, e não têm minuto planejado.
+ * contam como meta batida, e não têm minuto planejado. Um fim de semana em que
+ * o usuário abriu janelas entra, como dia bônus.
  */
-export const allDays = (): WeekDay[] =>
-  weekDays(derived.weeks, state.config.skipWeekends === true).filter((d) => !isDayOff(state.windowOverrides[d.key]));
+export function allDays(): PlanDay[] {
+  const out: PlanDay[] = [];
+  for (const d of weekDays(derived.weeks, false)) {
+    const input = restInputFor(d.key, d.dayIdx >= 5);
+    if (restDayKind(input) !== null) continue;
+    out.push({ ...d, bonus: isBonusDay(input) });
+  }
+  return out;
+}
 
 /** Compatibilidade com o legado, que itera dias com callback. */
 export function forEachDay(cb: (key: DateKey, date: Date, weekIdx: number, dayIdx: number) => void): void {
@@ -79,17 +103,11 @@ export function getEventsForDate(dateKey: DateKey): StudyEvent[] {
 }
 
 export function blocksForDay(dateKey: DateKey): StudyBlock[] {
-  if (state.config.skipWeekends) {
-    const dow = new Date(dateKey + 'T12:00:00').getDay(); // 0=dom, 6=sáb
-    if (dow === 0 || dow === 6) return [];
-  }
+  if (restKindOf(dateKey) !== null) return []; // fim de semana pausado (sem janelas do dia) ou dia livre
   const windowOv = state.windowOverrides[dateKey];
-  if (isDayOff(windowOv)) return [];
   const events = getEventsForDate(dateKey);
   const dayCfg = configForDay(state.config, windowOv); // as janelas só deste dia, se houver
-  const lunchOv = state.lunchOverrides[dateKey];
-  const cfg = lunchOv ? { ...dayCfg, ...lunchOv } : dayCfg;
-  return generateBlocks(cfg, events);
+  return generateBlocks(dayCfg, events);
 }
 
 // ---------------------------------------------------------------- estatísticas
@@ -117,10 +135,10 @@ export function computeStatsNow(now: Date = new Date()): Stats {
 }
 
 export function calcStreaksNow(dayStudyMins: Record<DateKey, number>, now: Date = new Date()) {
-  return calcStreaks(
-    dayStudyMins,
-    allDays().map((d) => d.key),
-    dk(now),
-    state.config.dailyStudyMin || 60,
-  );
+  const min = state.config.dailyStudyMin || 60;
+  // Dia bônus só entra se bateu a meta: estudar na folga nunca quebra a sequência.
+  const keys = allDays()
+    .filter((d) => !d.bonus || (dayStudyMins[d.key] || 0) >= min)
+    .map((d) => d.key);
+  return calcStreaks(dayStudyMins, keys, dk(now), min);
 }

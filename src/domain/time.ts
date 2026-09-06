@@ -35,6 +35,12 @@ export const monthKey = (d: Date): string =>
 /** Converte uma DateKey em Date ao meio-dia local — evita virada de dia por fuso/DST. */
 export const dateFromKey = (key: DateKey): Date => new Date(`${key}T12:00:00`);
 
+/** Sábado ou domingo? */
+export const isWeekendKey = (key: DateKey): boolean => {
+  const dow = dateFromKey(key).getDay();
+  return dow === 0 || dow === 6;
+};
+
 /** Soma minutos cumpridos e planejados num conjunto de dias, com o percentual. */
 export function aggregateMins(
   doneObj: Record<DateKey, number>,

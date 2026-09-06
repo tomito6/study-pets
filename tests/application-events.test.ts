@@ -6,10 +6,9 @@ import {
   deleteSeries,
   deleteSeriesOccurrence,
   findEventEditTarget,
-  lunchForDay,
-  setLunchOverride,
   updateEvent,
   updateSeries,
+  updateSeriesOccurrence,
   validateEvent,
   validateSeries,
 } from '../src/application/events';
@@ -135,12 +134,28 @@ describe('editar série inteira', () => {
   });
 });
 
-describe('almoço do dia', () => {
-  it('sem override, mostra a config; com override, só aquele dia muda', () => {
-    expect(lunchForDay(HOJE)).toEqual({ lunch: '13:00', lunchDur: 60 });
-    setLunchOverride(HOJE, '12:00', 30);
-    expect(lunchForDay(HOJE)).toEqual({ lunch: '12:00', lunchDur: 30 });
-    expect(lunchForDay('2026-09-03')).toEqual({ lunch: '13:00', lunchDur: 60 });
-    expect(blocksForDay(HOJE).find((b) => b.type === 'almoco')).toMatchObject({ time: '12:00', endTime: '12:30' });
+describe('updateSeriesOccurrence — editar só este dia', () => {
+  const serie = () => addEventSeries(HOJE, { name: 'Treino', start: '18:00', end: '19:00', countsAsStudy: false, weekdays: [3], freq: 'weekly', until: null });
+
+  it('o dia vira exceção e ganha um avulso com os valores novos; a série segue igual nas outras quartas', () => {
+    serie();
+    const id = state.eventSeries[0]!.id;
+    expect(updateSeriesOccurrence(id, HOJE, { name: 'Treino cedo', start: '07:00', end: '08:00', countsAsStudy: false })).toEqual({ ok: true });
+    expect(state.eventSeries[0]!.exceptions).toEqual([HOJE]);
+    expect(state.eventSeries[0]).toMatchObject({ name: 'Treino', start: '18:00' });
+    expect(state.events[HOJE]).toEqual([{ name: 'Treino cedo', start: '07:00', end: '08:00', countsAsStudy: false }]);
+    const hoje = blocksForDay(HOJE);
+    expect(hoje.find((b) => b.type === 'intervalo')).toMatchObject({ time: '07:00', name: 'Treino cedo' });
+    expect(hoje.some((b) => b._seriesId === id)).toBe(false);
+    expect(blocksForDay(PROXIMA_QUARTA).find((b) => b._seriesId === id)).toMatchObject({ time: '18:00' });
+  });
+
+  it('valida antes de mexer; série que não existe é recusada', () => {
+    serie();
+    const id = state.eventSeries[0]!.id;
+    expect(updateSeriesOccurrence(id, HOJE, { name: 'x', start: '19:00', end: '18:00', countsAsStudy: false })).toEqual({ ok: false, reason: 'end-before-start' });
+    expect(state.eventSeries[0]!.exceptions).toEqual([]);
+    expect(state.events[HOJE]).toBeUndefined();
+    expect(updateSeriesOccurrence('nao-existe', HOJE, { name: 'x', start: '18:00', end: '19:00', countsAsStudy: false })).toEqual({ ok: false, reason: 'not-found' });
   });
 });

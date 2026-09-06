@@ -21,7 +21,7 @@ export const activePet = (): PetInstance | null => petById(state.pets.active);
  * Credita nos pets o XP dos dias que já fecharam. Idempotente — pode rodar no
  * boot, ao abrir o perfil e ao encerrar o dia. Só o pet equipado NO CHECK ganha.
  * Os blocos de cada dia são os mesmos que a UI e as estatísticas veem
- * (`blocksForDay`: almoço editado e janelas do dia incluídos) — senão um check
+ * (`blocksForDay`: eventos e janelas daquele dia incluídos) — senão um check
  * num horário que só existe com as janelas daquele dia não bateria com nada.
  */
 export function applyPendingPetXP(now: Date = new Date()): void {
