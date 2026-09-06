@@ -868,7 +868,7 @@
      ================================================================================================ */
   #app.app-hidden{display:none;}
   @media (min-width:1100px){
-    #app{--s:calc(100vw / 1480);display:grid;grid-template-columns:15% 68% 13%;grid-template-rows:auto 1fr;column-gap:.5%;padding:0 1.5%;align-items:start;}
+    #app{--s:calc(100vw / 1480);display:grid;grid-template-columns:15% 66% 14%;grid-template-rows:auto 1fr;column-gap:1%;padding:0 1.5%;align-items:start;}
 
     /* trilho: só texto, um traço na aba ativa, o personagem com o pet no pé */
     .topbar{grid-column:1;grid-row:1 / -1;position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:calc(26 * var(--s)) 0 calc(24 * var(--s));background:transparent;backdrop-filter:none;border-bottom:0;}
