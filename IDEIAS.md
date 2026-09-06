@@ -645,6 +645,35 @@ principal — isso infla o app? O `CLAUDE.md` pede que feature nova resolva dor 
 evoluir" no Perfil e pela linha no resumo do dia. A aba só faz sentido quando houver mais coisa pra
 notificar do que cabe em toast e selo — hoje provavelmente não.
 
+## Mexer e manipular tudo direto na Semana (laptop) — 2026-09-07
+
+Pedido do Tomi logo depois de a Semana entrar no laptop (branch `feat/laptop`, 2026-09-06): hoje ela é
+só de olhar — um dia por coluna, blocos na altura da duração, e clicar num dia abre o Dia dele. A ideia
+é ela virar o lugar de **planejar com a mão**, no espírito de um app de calendário: arrastar pra criar,
+arrastar pra mover, puxar pra esticar.
+
+**O que faria sentido manipular** (só o que é dado do usuário — estudo e pausa são gerados pelo
+`planner`, então "arrastar um estudo" não tem significado; o que muda o plano são as janelas e os
+eventos):
+
+- **Arrastar num espaço vazio da coluna cria um evento** naquele dia e horário (abre o `EventPanel`
+  já preenchido, com os atalhos). É o gesto mais valioso: "tenho aula na quinta às 10" vira um traço
+  na coluna, sem trocar de dia nem abrir modal do zero.
+- **Arrastar um evento move** (outro horário, ou outro dia); **puxar a borda estica**. Avulso →
+  `updateEvent`; ocorrência de série → a mesma pergunta de hoje, "só este dia" ou "toda a série".
+- **Puxar o topo ou o pé da parte útil da coluna muda as janelas daquele dia** (`setDayWindows`):
+  "amanhã começo às 10" é um arrasto. Fim de semana pausado ganha janela do mesmo jeito.
+- **Clicar num bloco marca o check** (hoje e dias passados, com as mesmas recusas do Dia);
+  **arrastar sobre um trecho cria um grupo** (a seleção que já existe no Dia, deitada na coluna).
+
+**Antes de virar tarefa, decidir:** (1) se vale só no laptop — no celular a Semana nem existe ainda
+(ver o plano de 2026-09-06, item em aberto); (2) como o arrasto convive com o clique que abre o Dia
+(provável: clique curto abre, arrasto manipula, como no Google Agenda); (3) o quanto de `pointer`
+compartilhar com `useGroupSelection`, que já resolve toque longo, captura de ponteiro e auto-scroll
+no Dia; (4) a granularidade do arrasto (múltiplos de 5 min, como o "Começar agora" já faz). Tudo isso
+é UI em cima de casos de uso que já existem — `addEvent`/`updateEvent`, `setDayWindows`,
+`toggleBlockCheck`, `addGroup` — então o domínio não muda; o trabalho é o gesto.
+
 ## Como esse arquivo deve crescer
 
 - Adicionar ideias soltas como bullets ou parágrafos curtos. Não precisa ser formal.
