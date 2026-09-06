@@ -22,6 +22,15 @@ Os esboços (HTML autocontido, na paleta e nas fontes do app) estão ao lado des
 
 
 
+## Implementado na branch `feat/laptop` (2026-09-06, à noite)
+
+Depois do "pode fazer TUDO só com esse prompt": o modo Dia do laptop (trilho, lista sem caixa, coluna da
+direita com o timer, o XP pendente e a meta com os dots), o toggle Dia · Semana e a Semana no laptop.
+Tudo atrás de `@media (min-width:1100px)` + `useWide()`; o celular não muda. Detalhes em CLAUDE.md,
+"Tela grande (laptop)". O que ficou de fora: a Semana no celular (item 5 abaixo).
+
+## Decidido na conversa
+
 1. **Celular fica como era**, menos os emojis nas abas. O Tomi olhou os três estilos no laptop e
    preferiu o original; a diferença que ele sentia era a barra de borda a borda, não o cabeçalho.
    Quando a implementação começar, o experimento sai: `navStyle.ts`, `NavStyleSwitch.tsx` e o CSS dos

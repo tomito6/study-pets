@@ -43,6 +43,13 @@ export const strings = {
   header: {
     sair: 'Sair',
     xp: (total: number) => `${total} XP`,
+    /** O trilho da tela grande (≥1100px). */
+    rail: {
+      toNext: (xp: number, level: string) => `faltam ${xp} XP pro ${level}`,
+      maxLevel: 'nível máximo',
+      pet: (name: string, lv: number) => `${name} · Lv. ${lv}`,
+      noPet: 'Sem pet equipado',
+    },
   },
   plan: {
     xpTotal: 'XP Total',
@@ -71,6 +78,21 @@ export const strings = {
     dayClosedBanner: 'Dia encerrado',
     floatXp: (xp: number) => `+${xp} XP`,
     floatCoins: (coins: number) => `+${coins} 🪙`,
+    /** Tela grande: o toggle Dia · Semana, a coluna da direita e a Semana. */
+    view: { day: 'Dia', week: 'Semana' },
+    side: {
+      today: 'Hoje',
+      pendingCoins: (coins: number) => `+${coins} moedas · pendente`,
+      closed: 'Dia encerrado',
+      none: 'Nada marcado ainda',
+      goal: (min: number) => `Meta diária · ${min} min`,
+      goalDays: (met: number, total: number) => `min · ${met} de ${total} dias esta semana`,
+    },
+    week: {
+      hour: (h: number) => `${h}h`,
+      rest: { weekend: 'Fim de semana', off: 'Dia livre' },
+      open: (day: string) => `Abrir ${day}`,
+    },
   },
   groups: {
     button: 'Agrupar',

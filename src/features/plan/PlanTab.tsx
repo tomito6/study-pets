@@ -19,6 +19,7 @@ import type { Week } from '../../domain/weeks';
 import { openFinishDay } from '../../application/dayEnd';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
+import { useWide } from '../../shared/useWide';
 import { setDay, setView, useAppState } from '../../store/store';
 import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal';
 import { EventPanel } from '../events/EventPanel';
@@ -29,6 +30,7 @@ import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { useMinuteTick } from './useMinuteTick';
+import { WeekView } from './WeekView';
 
 /** Qual modal do Plano está aberto. Estado local: quem abre é sempre um clique aqui dentro. */
 type PlanModal =
@@ -39,6 +41,9 @@ type PlanModal =
   | { kind: 'group'; target: GroupTarget }
   /** Modo hardcore ligado: o consentimento antes de abrir o foco. */
   | { kind: 'hardcore'; block: StudyBlock };
+
+/** Dia (a lista de sempre) ou Semana (a agenda inteira). Só em tela grande; abaixo de 1100px é sempre Dia. */
+type ViewMode = 'day' | 'week';
 
 const t = strings.plan;
 const tg = strings.groups;
@@ -86,7 +91,19 @@ function XpCard({ stats, weekIdx, todayKey }: { stats: Stats; weekIdx: number; t
   );
 }
 
-function WeekDayPicker({ weeks, week, day }: { weeks: Week[]; week: number; day: number }) {
+interface PickerProps {
+  weeks: Week[];
+  week: number;
+  day: number;
+  /** Tela grande: o toggle Dia · Semana e o número do dia em cada aba. */
+  wide: boolean;
+  mode: ViewMode;
+  onMode: (mode: ViewMode) => void;
+  /** Na Semana as abas dos dias somem — a grade tem os dias em cima. */
+  weekMode: boolean;
+}
+
+function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode }: PickerProps) {
   const checksByDay = useAppState((s) => s.checks);
   const current = weeks[week - 1];
   return (
@@ -97,24 +114,33 @@ function WeekDayPicker({ weeks, week, day }: { weeks: Week[]; week: number; day:
             <option key={w.n} value={w.n}>{t.weekOption(w.n, fmtDay(w.start), fmtDay(w.end))}</option>
           ))}
         </select>
+        {wide && (
+          <div className="view-mode" id="view-mode">
+            <button className={'vm-btn' + (mode === 'day' ? ' on' : '')} id="view-day" onClick={() => onMode('day')}>{t.view.day}</button>
+            <button className={'vm-btn' + (mode === 'week' ? ' on' : '')} id="view-week" onClick={() => onMode('week')}>{t.view.week}</button>
+          </div>
+        )}
       </div>
-      <div className="day-tabs" id="day-tabs">
-        {t.days.map((label, i) => {
-          const d = current ? new Date(current.start) : new Date();
-          d.setDate(d.getDate() + i);
-          const done = Object.keys(checksByDay[dk(d)] ?? {}).length;
-          return (
-            <button
-              key={label}
-              className={'day-tab' + (i === day ? ' active' : '') + (done > 0 ? ' has-progress' : '')}
-              onClick={() => setDay(i)}
-            >
-              {label}
-              <span className="dot" />
-            </button>
-          );
-        })}
-      </div>
+      {!weekMode && (
+        <div className="day-tabs" id="day-tabs">
+          {t.days.map((label, i) => {
+            const d = current ? new Date(current.start) : new Date();
+            d.setDate(d.getDate() + i);
+            const done = Object.keys(checksByDay[dk(d)] ?? {}).length;
+            return (
+              <button
+                key={label}
+                className={'day-tab' + (i === day ? ' active' : '') + (done > 0 ? ' has-progress' : '')}
+                onClick={() => setDay(i)}
+              >
+                {label}
+                {wide && <b className="day-num">{d.getDate()}</b>}
+                <span className="dot" />
+              </button>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }
@@ -145,6 +171,9 @@ export function PlanTab() {
   }));
   const [modal, setModal] = useState<PlanModal>({ kind: 'none' });
   const closeModal = () => setModal({ kind: 'none' });
+  const wide = useWide();
+  const [mode, setMode] = useState<ViewMode>('day');
+  const weekMode = wide && mode === 'week';
 
   const now = new Date();
   const todayKey = dk(now);
@@ -225,7 +254,18 @@ export function PlanTab() {
         <div className="stat-box"><div className="s-label">{t.stats.pausas}</div><div className="s-val" id="stat-p">{pD}/{pT}</div></div>
         <div className="stat-box"><div className="s-label">{t.stats.semana}</div><div className="s-val" id="stat-w">{t.weekChecks(stats.weekChecksOfCurrent)}</div></div>
       </div>
-      <WeekDayPicker weeks={weeks} week={week} day={day} />
+      <WeekDayPicker weeks={weeks} week={week} day={day} wide={wide} mode={mode} onMode={setMode} weekMode={weekMode} />
+      {weekMode ? (
+        <WeekView
+          week={week}
+          now={now}
+          onPickDay={(i) => {
+            setDay(i);
+            setMode('day');
+          }}
+        />
+      ) : (
+        <>
       <div className="day-events-bar">
         {selection.active ? (
           <div className="group-hint" id="group-hint">
@@ -266,6 +306,8 @@ export function PlanTab() {
         <SelectionRect range={selection.range} listId="blocks-list" />
       </div>
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
+        </>
+      )}
 
       <EventPanel open={modal.kind === 'event'} dateKey={viewKey} edit={modal.kind === 'event' ? modal.edit ?? null : null} onClose={closeModal} />
       <EventDeleteModal
