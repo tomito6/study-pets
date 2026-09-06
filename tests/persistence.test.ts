@@ -50,6 +50,18 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc({ config: cfg }).config).toEqual(cfg);
   });
 
+  it('doc de antes do modo hardcore: sem `penalties` → {}, e a config nasce desligada', () => {
+    const s = hydrateUserDoc({ coinsSpent: 5, config: { pomo: 30 } });
+    expect(s.penalties).toEqual({});
+    expect(s.config.hardcore).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
+    // Lixo no campo também vira vazio; registro válido passa.
+    expect(hydrateUserDoc({ penalties: 'x' }).penalties).toEqual({});
+    expect(hydrateUserDoc({ penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'cat', petXp: 100, at: 1, reason: 'quit' }, 'lixo'] } }).penalties).toEqual({
+      '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'cat', petXp: 100, at: 1, reason: 'quit' }],
+    });
+    expect(hydrateUserDoc({ config: { hardcore: { enabled: true, mode: 'whitelist', sites: ['https://Wikipedia.org/x'] } } }).config.hardcore).toEqual({ enabled: true, mode: 'whitelist', sites: ['wikipedia.org'] });
+  });
+
   it('checks antigos salvos como `true` passam intactos', () => {
     const checks = { '2026-05-07': { '09:00': true } };
     expect(hydrateUserDoc({ checks }).checks).toEqual(checks);
@@ -215,6 +227,8 @@ describe('ida e volta', () => {
       groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
       windowOverrides: { '2026-09-01': { studyWindows: [] }, '2026-09-03': { studyWindows: [{ start: '10:10', end: '12:00' }] } },
       tutorialSeen: { plan: true, analytics: true },
+      penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
+      config: { ...DEFAULT_CFG, hardcore: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });

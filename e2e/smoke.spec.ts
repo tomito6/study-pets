@@ -294,6 +294,117 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).toContainText('Pausa');
   });
 
+  /**
+   * Dia 1 fechado com 7 estudos (350 XP; o gato inicial vai pro Lv. 5), dia 2 às 10:10 com o
+   * modo hardcore ligado em Configurações → Geral. O que os testes 28 e 29 precisam pra ter
+   * XP a perder — numa conta nova o total é 0 e a penalidade seria 0.
+   */
+  async function diaComXPEHardcore(page: Page) {
+    await abrirApp(page);
+    for (let i = 0; i < 7; i++) await checksDeEstudo(page).nth(i).click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.locator('#xp-total')).toHaveText('350');
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').closedDays?.['2026-09-02'] === true))
+      .toBe(true);
+
+    await page.clock.setFixedTime(new Date('2026-09-03T10:10:00'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#onboarding-panel')).toBeHidden();
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await page.locator('.st-switch', { has: page.locator('#cfg-hardcore') }).click(); // o input do switch é invisível: clica no trilho
+    await expect(page.locator('#cfg-hardcore')).toBeChecked();
+    await expect(page.locator('#hardcore-fields')).toBeVisible();
+    await page.locator('#cfg-hardcore-sites').fill('youtube.com\nhttps://www.instagram.com/');
+    await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+  }
+
+  test('28. modo hardcore: entrar pede consentimento, desistir custa XP do usuário e do pet, e o bloco fica abandonado', async ({ page }) => {
+    test.slow();
+    await diaComXPEHardcore(page);
+
+    // Tocar no bloco do momento não abre o foco direto: o custo vem escrito antes.
+    const estudo3 = page.locator('.block-row', { hasText: '10:00–10:25' });
+    await estudo3.locator('.block-name').click();
+    await expect(page.locator('#hardcore-start-confirm')).toBeVisible();
+    await expect(page.locator('#hardcore-start-block')).toHaveText('Estudo 3 · 25 min');
+    await expect(page.locator('#hardcore-start-cost')).toContainText('−100 XP pra você e −100 XP pro');
+    await page.locator('#hardcore-start-btn').click();
+    await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-hardcore')).toBeVisible();
+    await expect(page.locator('.focus-exit')).toHaveCount(0); // sem "Sair do foco"
+    await expect(page.locator('#timer-bar .timer-stop')).toHaveCount(0); // nem "Parar"
+
+    // Desistir mostra a conta exata; confirmar cobra na hora.
+    await page.locator('#hardcore-quit').click();
+    await expect(page.locator('#hardcore-quit-confirm')).toBeVisible();
+    await expect(page.locator('#hardcore-quit-confirm')).toContainText('Desistir de Estudo 3?');
+    await expect(page.locator('#hardcore-quit-confirm')).toContainText('Você perde 100 XP.');
+    await expect(page.locator('#hardcore-quit-confirm')).toContainText('perde 100 XP e cai do Lv. 5 pro Lv. 4.');
+    await page.locator('#hardcore-quit-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#timer-bar')).not.toHaveClass(/active/);
+    await expect(page.locator('#toast')).toContainText('Desistiu de Estudo 3 · −100 XP');
+    await expect(page.locator('#xp-total')).toHaveText('250');
+
+    // O bloco fica abandonado: sem check, e não aceita clique.
+    await expect(estudo3).toHaveClass(/forfeited/);
+    await expect(estudo3.locator('.block-xp')).toHaveText('desistiu');
+    await estudo3.locator('.check').click();
+    await expect(estudo3.locator('.check')).not.toHaveClass(/checked/);
+    await expect(page.locator('#toast')).toContainText('Você desistiu deste bloco');
+    await estudo3.locator('.block-name').click();
+    await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
+
+    // O pet desceu de nível na hora (a forma fica).
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(page.locator('#ap-lv')).toHaveText('Lv. 4');
+    await expect(page.locator('#ap-species')).toHaveText('Gato');
+  });
+
+  test('29. hardcore: fechar o app no meio do estudo e voltar depois do fim cobra o abandono', async ({ page }) => {
+    test.slow();
+    await diaComXPEHardcore(page);
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await page.locator('#hardcore-start-btn').click();
+    await expect(page.locator('#focus-hardcore')).toBeVisible();
+
+    // Recarregar no meio do bloco não é sair: o foco volta em hardcore.
+    page.on('dialog', (d) => void d.accept()); // o "certeza que quer sair?" do navegador
+    await page.clock.setFixedTime(new Date('2026-09-03T10:15:00'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-hardcore')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText(/^(09|10):\d\d$/);
+    await expect(page.locator('#xp-total')).toHaveText('350');
+
+    // Fechou e só voltou depois que o bloco acabou: abandono, cobrado ao abrir. O relógio só anda com
+    // a página fora do ar — com o app aberto, o tick do timer veria o fim e emendaria (não é abandono).
+    await page.goto('about:blank');
+    await page.clock.setFixedTime(new Date('2026-09-03T10:40:00'));
+    await page.goto('/');
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('O app fechou no meio de Estudo 3 · −100 XP');
+    await expect(page.locator('#xp-total')).toHaveText('250');
+    await expect(page.locator('.block-row', { hasText: '10:00–10:25' })).toHaveClass(/forfeited/);
+    await expect
+      .poll(() => page.evaluate(() => (JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').penalties?.['2026-09-03'] ?? []).length))
+      .toBe(1);
+
+    // Abrir de novo não cobra duas vezes.
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#xp-total')).toHaveText('250');
+  });
+
   test('5. concluir um bloco mostra XP e moedas pendentes de hoje', async ({ page }) => {
     await abrirApp(page);
     await expect(page.locator('#today-xp-val')).not.toContainText('XP');

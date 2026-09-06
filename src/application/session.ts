@@ -10,6 +10,8 @@ import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, markAuthReady, notify, state } from '../store/store';
 import { scheduleEndOfDayPrompt } from './dayEnd';
+import { resumeHardcoreOnBoot, watchExtensionQueries } from './hardcore';
+import { endHardcoreSession } from './hardcoreRuntime';
 import { openOnboarding } from './onboarding';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
@@ -101,10 +103,13 @@ export function initAfterLoad(now: Date = new Date()): void {
   const week = derived.weeks[state.uiWeek - 1];
   state.uiDay = week ? Math.min(6, Math.max(0, Math.floor((now.getTime() - week.start.getTime()) / 86400000))) : 0;
   notify();
+  resumeHardcoreOnBoot(now); // a sessão hardcore que ficou neste dispositivo: volta pro foco, ou cobra o abandono
 }
 
 function resetToLoggedOut(): void {
+  if (derived.hardcore) endHardcoreSession(); // antes de perder o uid: limpa a sessão do dispositivo
   state.user = null;
+  state.penalties = {};
   state.checks = {};
   state.events = {};
   state.lunchOverrides = {};
@@ -121,6 +126,7 @@ export function startSession(): void {
   if (started) return;
   started = true;
   watchVisibility(); // o timer se acerta com o relógio ao voltar pra aba / destravar o celular
+  watchExtensionQueries(); // a extensão do navegador pergunta o estado do hardcore ao carregar
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       blockSaves(false);

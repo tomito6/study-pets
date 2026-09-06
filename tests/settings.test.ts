@@ -22,6 +22,20 @@ describe('rascunho ↔ config', () => {
     expect(d.studyWindows).not.toBe(DEFAULT_CFG.studyWindows);
   });
 
+  it('o modo hardcore vai e volta: a lista de sites vira texto no rascunho e domínios na config', () => {
+    const d = draftFromConfig({ ...DEFAULT_CFG, hardcore: { enabled: true, mode: 'whitelist', sites: ['wikipedia.org', 'moodle.tum.de'] } });
+    expect(d.hardcore).toBe(true);
+    expect(d.hardcoreMode).toBe('whitelist');
+    expect(d.hardcoreSites).toBe('wikipedia.org\nmoodle.tum.de');
+    const cfg = normalizeConfig({ ...d, hardcoreSites: 'https://www.YouTube.com/x, wikipedia.org\n\nwikipedia.org' }, null);
+    expect(cfg.hardcore).toEqual({ enabled: true, mode: 'whitelist', sites: ['youtube.com', 'wikipedia.org'] });
+    // Config de antes do modo (sem o campo): desligado.
+    const antiga = draftFromConfig({ ...DEFAULT_CFG, hardcore: undefined as never });
+    expect(antiga.hardcore).toBe(false);
+    expect(antiga.hardcoreSites).toBe('');
+    expect(defaultDraft().hardcore).toBe(false);
+  });
+
   it('config antiga sem studyWindows vira uma janela start→end', () => {
     const d = draftFromConfig({ ...DEFAULT_CFG, studyWindows: [], start: '08:00', end: '12:00' });
     expect(d.studyWindows).toEqual([{ start: '08:00', end: '12:00' }]);

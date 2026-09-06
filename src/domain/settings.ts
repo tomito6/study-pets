@@ -2,9 +2,10 @@
 // o dia que essa config gera, e o "Encaixar estudo" — tudo puro.
 
 import { DEFAULT_CFG } from './config';
+import { normalizeHardcoreConfig, normalizeSites } from './hardcore';
 import { calcActualEnd, generateBlocks } from './planner';
 import { timeToMins } from './time';
-import type { DateKey, PlannerConfig, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
+import type { DateKey, HardcoreMode, PlannerConfig, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
 
 /** O formulário como o usuário digita — números em string pra permitir campo vazio. */
 export interface ConfigDraft {
@@ -18,9 +19,14 @@ export interface ConfigDraft {
   periodEnd: string;
   skipWeekends: boolean;
   dailyStudyMin: string;
+  hardcore: boolean;
+  hardcoreMode: HardcoreMode;
+  /** A lista de sites como o usuário digita (uma por linha); vira domínios ao salvar. */
+  hardcoreSites: string;
 }
 
 export function draftFromConfig(cfg: UserConfig): ConfigDraft {
+  const hc = normalizeHardcoreConfig(cfg.hardcore);
   const windows =
     Array.isArray(cfg.studyWindows) && cfg.studyWindows.length > 0
       ? cfg.studyWindows.map((w) => ({ ...w }))
@@ -36,6 +42,9 @@ export function draftFromConfig(cfg: UserConfig): ConfigDraft {
     periodEnd: cfg.periodEnd || '',
     skipWeekends: cfg.skipWeekends === true,
     dailyStudyMin: String(cfg.dailyStudyMin || 60),
+    hardcore: hc.enabled,
+    hardcoreMode: hc.mode,
+    hardcoreSites: hc.sites.join('\n'),
   };
 }
 
@@ -112,6 +121,11 @@ export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null)
     periodEnd: draft.periodEnd || null,
     skipWeekends: draft.skipWeekends,
     dailyStudyMin: sanitizeDailyStudyMin(parseInt(draft.dailyStudyMin, 10)),
+    hardcore: {
+      enabled: draft.hardcore === true,
+      mode: draft.hardcoreMode === 'whitelist' ? 'whitelist' : 'blacklist',
+      sites: normalizeSites(draft.hardcoreSites || ''),
+    },
   };
 }
 

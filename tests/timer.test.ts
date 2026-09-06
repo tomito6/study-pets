@@ -83,6 +83,11 @@ describe('canStartBlock — bloco de hoje que ainda não terminou', () => {
   it('recusa bloco que já terminou', () => {
     expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:25:00'))).toEqual({ ok: false, reason: 'ended' });
   });
+
+  it('recusa bloco abandonado no modo hardcore (depois das outras recusas)', () => {
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:10:00'), true)).toEqual({ ok: false, reason: 'forfeited' });
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:25:00'), true)).toEqual({ ok: false, reason: 'ended' });
+  });
 });
 
 describe('helpers', () => {

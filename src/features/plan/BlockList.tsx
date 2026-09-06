@@ -3,8 +3,9 @@
 
 import type { MouseEvent, ReactNode } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
-import { playSound, tryStartTimer } from '../../application/timer';
+import { playSound } from '../../application/timer';
 import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
+import { isForfeited } from '../../domain/hardcore';
 import { blockInGroup, groupHeaderPositions, groupProgress } from '../../domain/groups';
 import type { GroupHeaderPosition } from '../../domain/groups';
 import { dk, timeToMins } from '../../domain/time';
@@ -41,11 +42,12 @@ function CheckIcon() {
   );
 }
 
-/** O que o Plano faz quando uma linha pede um modal. */
+/** O que o Plano faz quando uma linha pede um modal — ou quer iniciar o timer (o Plano decide se é hardcore). */
 export interface BlockActions {
   onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
   onEditLunch: (dateKey: DateKey) => void;
   onEditGroup: (group: StudyGroup) => void;
+  onStartBlock: (block: StudyBlock, now: Date) => void;
 }
 
 interface RowProps extends BlockActions {
@@ -60,7 +62,7 @@ interface RowProps extends BlockActions {
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, timerBlock, onDeleteEvent, onEditLunch }: RowProps) {
+function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, timerBlock, onDeleteEvent, onEditLunch, onStartBlock }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -73,6 +75,8 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
   const timerActive = !!timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime;
   const closed = isDayClosed(state.closedDays, dateKey);
   const future = isFutureDay(dateKey, now);
+  // Abandonado no modo hardcore: sem check, sem timer, e fica marcado como "desistiu".
+  const forfeited = (isE || isP) && isForfeited(state.penalties, dateKey, b.time);
 
   const className =
     'block-row' +
@@ -85,6 +89,7 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
     (timerActive ? ' timer-active' : '') +
     (closed ? ' day-closed' : '') +
     (future ? ' day-future' : '') +
+    (forfeited ? ' forfeited' : '') +
     (inGroup ? ' in-group' : '') +
     (selection.isSelected(idx) ? ' selecting' : '') +
     (selection.isAnchor(idx) ? ' selecting-anchor' : '');
@@ -101,10 +106,12 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
       showToast(why);
       return;
     }
-    if (isE || isP) {
-      const r = tryStartTimer(b, now);
-      if (!r.ok) showToast(strings.timer.refusal(r));
-    } else if (isEv || isI) onDeleteEvent(dateKey, b);
+    if (forfeited) {
+      showToast(strings.hardcore.plan.forfeitedToast);
+      return;
+    }
+    if (isE || isP) onStartBlock(b, now);
+    else if (isEv || isI) onDeleteEvent(dateKey, b);
   };
 
   const onCheckClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -114,6 +121,10 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
     const why = refusal(dateKey, now);
     if (why) {
       showToast(why);
+      return;
+    }
+    if (forfeited) {
+      showToast(strings.hardcore.plan.forfeitedToast);
       return;
     }
     // A posição é capturada ANTES do toggle: o re-render pode mexer na linha.
@@ -127,7 +138,8 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
   };
 
   let xpLabel: ReactNode;
-  if (isE || isP) xpLabel = <span className="block-xp session-xp">{t.xpGain(b.xp)}</span>;
+  if (forfeited) xpLabel = <span className="block-xp forfeited-xp">{strings.hardcore.plan.forfeited}</span>;
+  else if (isE || isP) xpLabel = <span className="block-xp session-xp">{t.xpGain(b.xp)}</span>;
   else if (isA)
     xpLabel = (
       <span className="block-xp almoco-xp" style={{ cursor: 'pointer' }}>
@@ -149,8 +161,8 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
       {...selection.rowProps(idx)}
     >
       {!(isA || isI) && (
-        <div className={'check' + (done ? ' checked' : '')} onClick={onCheckClick}>
-          <CheckIcon />
+        <div className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')} onClick={onCheckClick}>
+          {forfeited ? <span className="check-x">✕</span> : <CheckIcon />}
         </div>
       )}
       <span className="block-time">
@@ -171,7 +183,7 @@ interface ListProps extends BlockActions {
   timerBlock: StudyBlock | null;
 }
 
-export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock, onDeleteEvent, onEditLunch, onEditGroup }: ListProps) {
+export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock, onDeleteEvent, onEditLunch, onEditGroup, onStartBlock }: ListProps) {
   if (blocks.length === 0) return <div className="empty-day">{strings.plan.freeDay}</div>;
 
   const isToday = dateKey === dk(now);
@@ -262,6 +274,7 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
         onDeleteEvent={onDeleteEvent}
         onEditLunch={onEditLunch}
         onEditGroup={onEditGroup}
+        onStartBlock={onStartBlock}
       />,
     );
   });

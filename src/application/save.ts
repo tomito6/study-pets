@@ -48,26 +48,42 @@ function showStatus(text: string, done: boolean): void {
   notify();
 }
 
+async function persist(): Promise<void> {
+  if (!state.user || blocked) return;
+  inFlight = true;
+  try {
+    await users.save(state.user.uid, { ...serializeState(state), meta: { writer: CLIENT_ID, writtenAt: Date.now() } });
+    showStatus(users.ephemeral ? '💾 Modo teste (só nesta aba)' : 'Salvo ✓', true);
+  } catch (e) {
+    console.error('Save failed:', e);
+    showStatus('⚠️ Erro ao salvar', true);
+  } finally {
+    inFlight = false;
+  }
+}
+
 /** Agenda um save do estado inteiro. Chamadas em sequência viram um save só. */
 export function scheduleSave(): void {
   if (blocked) return;
   notify();
   showStatus('Salvando...', false);
   if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
+  saveTimeout = setTimeout(() => {
     saveTimeout = null;
-    if (!state.user || blocked) return;
-    inFlight = true;
-    try {
-      await users.save(state.user.uid, { ...serializeState(state), meta: { writer: CLIENT_ID, writtenAt: Date.now() } });
-      showStatus(users.ephemeral ? '💾 Modo teste (só nesta aba)' : 'Salvo ✓', true);
-    } catch (e) {
-      console.error('Save failed:', e);
-      showStatus('⚠️ Erro ao salvar', true);
-    } finally {
-      inFlight = false;
-    }
+    void persist();
   }, DEBOUNCE_MS);
+}
+
+/**
+ * Salva agora, sem debounce — pro que não pode ficar 800ms na mão de quem fecha a
+ * aba em seguida (a penalidade do modo hardcore). Devolve a promessa do save.
+ */
+export function saveNow(): Promise<void> {
+  if (blocked) return Promise.resolve();
+  cancelPendingSave();
+  notify();
+  showStatus('Salvando...', false);
+  return persist();
 }
 
 export function cancelPendingSave(): void {

@@ -793,6 +793,39 @@
   .tour-next:hover{filter:brightness(1.08);}
   @keyframes tour-fade{from{opacity:0;}to{opacity:1;}}
 
+  /* MODO HARDCORE — sair do foco custa XP (CLAUDE.md, "Modo hardcore").
+     O overlay do foco ganha o chip, perde o "Sair" e ganha "Desistir…" embaixo; a confirmação é filha do overlay
+     (stacking context acima dos modais). Na lista, o bloco abandonado vira "desistiu" com um ✕ no lugar do check. */
+  .focus-hc-chip { display:inline-flex; align-items:center; gap:6px; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.55); color:#f87171; border-radius:99px; padding:clamp(4px, .8vmin, 7px) clamp(10px, 1.8vmin, 16px); font-family:'DM Mono',monospace; font-size:clamp(10px, 1.5vmin, 13px); text-transform:uppercase; letter-spacing:.08em; }
+  .focus-overlay.hardcore .focus-timer-fill:not(.pausa) { stroke:#f87171; }
+  .focus-overlay.hardcore .focus-chip:not(.pausa) { border-color:rgba(239,68,68,.55); color:#f87171; background:rgba(239,68,68,.1); }
+  .focus-hc-actions { display:flex; justify-content:center; margin-top:clamp(14px, 2.5vmin, 24px); }
+  .focus-hc-quit { background:transparent; border:1px solid rgba(239,68,68,.5); color:#f87171; border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
+  .focus-hc-quit:hover { background:rgba(239,68,68,.12); border-color:#ef4444; }
+  .focus-hc-free { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
+  .focus-hc-free:hover { border-color:#555; color:var(--text); }
+  .hc-quit-line { font-size:13px; color:var(--text); line-height:1.55; margin-bottom:6px; }
+  .hc-quit-final { font-size:12px; color:var(--muted); line-height:1.5; margin:8px 0 18px; }
+  .hc-start-block { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); margin-bottom:10px; }
+  .hc-start-cost { font-size:14px; font-weight:600; color:#f87171; line-height:1.5; margin-bottom:8px; }
+  .hc-start-rules { font-size:12px; color:var(--muted); line-height:1.55; margin-bottom:18px; }
+  .hc-start-btn { background:#ef4444; border-color:#ef4444; color:#fff; }
+  .hc-start-btn:hover { background:#dc2626; }
+  .hc-start-normal { margin-top:10px; }
+  .block-row.forfeited { opacity:.6; }
+  .block-row.forfeited .block-name { text-decoration:line-through; color:var(--muted); }
+  .block-row.forfeited .check { border-color:rgba(239,68,68,.6); background:transparent; cursor:default; }
+  .block-row.forfeited .check .check-x { color:#f87171; font-size:12px; font-weight:700; line-height:1; }
+  .block-xp.forfeited-xp { color:#f87171; }
+  .hc-mode { display:flex; gap:8px; margin:6px 0 10px; }
+  .hc-mode-chip { flex:1; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:7px 10px; font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .hc-mode-chip.active { border-color:#ef4444; color:#f87171; background:rgba(239,68,68,.1); }
+  .hc-sites { width:100%; resize:vertical; min-height:88px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); padding:10px 12px; font-family:'DM Mono',monospace; font-size:12.5px; line-height:1.5; }
+  .hc-sites:focus { outline:none; border-color:#ef4444; }
+  .hc-ext-status { margin-top:10px; font-size:11.5px; line-height:1.5; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); color:var(--muted); }
+  .hc-ext-status.ok { color:var(--accent); border-color:var(--accent2); background:var(--green-bg); }
+  .hc-ext-status.missing { color:var(--orange); border-color:var(--orange); background:var(--orange-bg); }
+
   /* Configurações → Geral → linhas de ação ("Ver o tour de novo", "Meus dados"): texto à esquerda, botão à direita. */
   .st-action-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .st-action-row .ar-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}

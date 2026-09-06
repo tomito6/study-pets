@@ -1,6 +1,6 @@
 // Caso de uso: marcar/desmarcar um bloco.
 
-import { canToggleCheck } from '../domain/checks';
+import { canCheckBlock } from '../domain/checks';
 import { petLevel } from '../domain/pets';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
 import { timeToMins } from '../domain/time';
@@ -55,11 +55,12 @@ function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, 
 
 /**
  * Marca ou desmarca o bloco. Devolve `null` se o dia não aceita mudança (encerrado
- * ou futuro). Ao marcar, grava o pet equipado e o bônus decidido AGORA — o XP do
- * pet é creditado só quando o dia fechar (ver `computePendingPetXP`).
+ * ou futuro) ou o bloco foi abandonado no hardcore. Ao marcar, grava o pet equipado
+ * e o bônus decidido AGORA — o XP do pet é creditado só quando o dia fechar (ver
+ * `computePendingPetXP`).
  */
 export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
-  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now })) return null;
+  if (!canCheckBlock(dateKey, block.time, { closedDays: state.closedDays, penalties: state.penalties, now })) return null;
 
   const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
   if (day[block.time]) {
@@ -77,7 +78,7 @@ export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date 
  * `null` = nada mudou (já marcado, ou o dia não aceita).
  */
 export function checkBlock(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
-  if (!canToggleCheck(dateKey, { closedDays: state.closedDays, now })) return null;
+  if (!canCheckBlock(dateKey, block.time, { closedDays: state.closedDays, penalties: state.penalties, now })) return null;
   if (state.checks[dateKey]?.[block.time]) return null;
   const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
   return markBlock(dateKey, block, day, now);

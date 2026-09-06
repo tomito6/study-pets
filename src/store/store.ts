@@ -6,6 +6,7 @@
 
 import { useSyncExternalStore } from 'react';
 import type { DaySummary } from '../domain/daySummary';
+import type { HardcoreRuntime } from '../domain/hardcore';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
 import type { BlockType, StudyBlock } from '../domain/types';
@@ -72,6 +73,8 @@ export interface Derived {
   authReady: boolean;
   onboardingOpen: boolean;
   dayEnd: DayEndUi;
+  /** A sequência hardcore em andamento (o foco não tem saída livre); null fora dela. */
+  hardcore: HardcoreRuntime | null;
 }
 
 export const derived: Derived = {
@@ -84,6 +87,7 @@ export const derived: Derived = {
   authReady: false,
   onboardingOpen: false,
   dayEnd: { confirmOpen: false, promptOpen: false, promptLastEnd: '', summary: null },
+  hardcore: null,
 };
 
 let version = 0;

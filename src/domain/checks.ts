@@ -1,7 +1,8 @@
 // Regras de check: quem pode ser marcado, e quando o XP dos pets é creditado.
 // Puro — o estado e a persistência ficam em quem chama.
 
-import type { ChecksByDate, DateKey, PetInstanceId, StudyBlock, TimeString } from './types';
+import type { ChecksByDate, DateKey, PenaltiesByDate, PetInstanceId, StudyBlock, TimeString } from './types';
+import { isForfeited } from './hardcore';
 import { checkPetOf, xpFromCheck } from './progression';
 import { dk } from './time';
 
@@ -32,6 +33,19 @@ export function canToggleCheck(
   if (isDayClosed(ctx.closedDays, dateKey)) return false;
   if (isFutureDay(dateKey, ctx.now)) return false;
   return true;
+}
+
+/**
+ * `canToggleCheck` mais a regra do bloco: um bloco abandonado no modo hardcore
+ * não pode ser marcado depois — senão desistir seria de graça.
+ */
+export function canCheckBlock(
+  dateKey: DateKey,
+  blockTime: TimeString,
+  ctx: { closedDays?: Record<DateKey, boolean>; penalties?: PenaltiesByDate; now: Date },
+): boolean {
+  if (!canToggleCheck(dateKey, ctx)) return false;
+  return !isForfeited(ctx.penalties, dateKey, blockTime);
 }
 
 export interface PendingPetXPInput {

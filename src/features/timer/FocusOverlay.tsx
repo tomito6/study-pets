@@ -2,12 +2,19 @@
 // Sem controles centrais (sem pausar, sem pular) — decisão consciente do produto.
 // "← Sair do foco" só fecha o overlay; o timer segue na barra.
 //
+// No modo hardcore não há "Sair do foco": a única porta é "Desistir…" (com a conta
+// na confirmação), "Parar aqui" numa pausa ou "Cancelar" enquanto espera — os dois
+// últimos de graça. A confirmação vive aqui dentro (o overlay é um stacking context
+// acima dos modais do app, então o modal precisa ser filho dele).
+//
 // Aberto antes da hora, mostra a contagem até o início (anel cheio, apagado) e
 // começa sozinho. Quando um bloco acaba aqui dentro, o caso de uso emenda no
 // seguinte e deixa em `timerCompleted` o que foi ganho — a faixa "✓ … concluído"
 // fica uns segundos na tela, derivada do relógio (sem timeout próprio).
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { quitHardcore } from '../../application/hardcore';
+import { petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
 import { closeFocus } from '../../application/timer';
 import { coinsForStudyBlock } from '../../domain/progression';
@@ -21,6 +28,7 @@ import {
 } from '../../domain/timer';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
+import { HardcoreQuitModal } from './HardcoreModals';
 import { useSecondTick } from './useSecondTick';
 
 const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7, o perímetro do círculo do SVG
@@ -29,13 +37,18 @@ const NUM_SESSIONS = 6;
 const COMPLETED_BANNER_MS = 4000;
 
 export function FocusOverlay() {
-  const { block, open, completed } = useAppState((_, d) => ({
+  const { block, open, completed, hardcore } = useAppState((_, d) => ({
     block: d.timerBlock,
     open: d.focusOpen,
     completed: d.timerCompleted,
+    hardcore: d.hardcore,
   }));
   const showing = open && !!block;
   useSecondTick(showing);
+  const [quitOpen, setQuitOpen] = useState(false);
+  useEffect(() => {
+    if (!hardcore) setQuitOpen(false); // a sequência acabou (ou emendou): a confirmação não faz mais sentido
+  }, [hardcore]);
 
   useEffect(() => {
     document.body.style.overflow = showing ? 'hidden' : '';
@@ -64,13 +77,19 @@ export function FocusOverlay() {
   const next = nextBlockAfter(dayBlocks, block);
   const p = timerProgress(block, now);
   const waiting = p.phase === 'waiting';
+  const th = strings.hardcore.focus;
+  const hcPet = hardcore ? petById(hardcore.pet) : null;
 
   return (
-    <div className={'focus-overlay' + (showing ? ' open' : '')} id="focus-overlay">
+    <div className={'focus-overlay' + (showing ? ' open' : '') + (hardcore ? ' hardcore' : '')} id="focus-overlay">
       <div className="focus-inner">
         <div className="focus-topbar">
           <span id="focus-clock">{formatClock(now)}</span>
-          <button className="focus-exit" onClick={closeFocus}>{t.exit}</button>
+          {hardcore ? (
+            <span className="focus-hc-chip" id="focus-hardcore">{th.chip}</span>
+          ) : (
+            <button className="focus-exit" onClick={closeFocus}>{t.exit}</button>
+          )}
         </div>
         {completed && now.getTime() - completed.at < COMPLETED_BANNER_MS && (
           <div className="focus-done" id="focus-done">{strings.timer.completed(completed)}</div>
@@ -122,7 +141,19 @@ export function FocusOverlay() {
           <div className="focus-next-name" id="focus-next-name">{next ? cleanBlockName(next.name) : t.endOfDay}</div>
           <div className="focus-next-dur" id="focus-next-dur">{next ? t.minutes(blockDurationMin(next)) : '—'}</div>
         </div>
+        {hardcore && (
+          <div className="focus-hc-actions">
+            {waiting ? (
+              <button type="button" className="focus-hc-free" id="hardcore-cancel" onClick={() => quitHardcore()}>{th.cancel}</button>
+            ) : isPausa ? (
+              <button type="button" className="focus-hc-free" id="hardcore-stop" onClick={() => quitHardcore()}>{th.stop}</button>
+            ) : (
+              <button type="button" className="focus-hc-quit" id="hardcore-quit" onClick={() => setQuitOpen(true)}>{th.quit}</button>
+            )}
+          </div>
+        )}
       </div>
+      <HardcoreQuitModal open={quitOpen && !!hardcore} petName={hcPet?.name ?? null} blockName={cleanBlockName(block.name)} onClose={() => setQuitOpen(false)} />
     </div>
   );
 }

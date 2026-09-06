@@ -383,6 +383,14 @@ de feature:
 
 ## Modo hardcore: sair do foco custa XP (bem pro futuro) — 2026-09-03
 
+> **→ virou implementação** na branch `feat/hardcore` (2026-09-06, plan em
+> `plans/2026-09-06_1357_modo-hardcore.md`). O que o Tomi decidiu na conversa, diferente do rabisco
+> abaixo: a penalidade é **2× o XP do bloco** (não 1×), sai **na hora** (não no fim do dia), e **nível
+> pode cair** — do usuário e do pet; a devolução do pet foi cogitada e descartada (a forma fica).
+> Pausa e espera são saídas livres; o bloco abandonado fica trancado; fechar a aba pede confirmação
+> e voltar depois do fim cobra o abandono; trocar de aba não pune. Bloquear sites virou a extensão
+> em `extension/` (Chromium, MV3), com a tela do pet no lugar do site.
+
 Ideia do Tomi, na linha do Forest: um modo em que **sair do foco tem consequência**. No Forest a
 árvore morre; aqui ninguém morre — o usuário **e o pet** recebem XP negativo. Junto vêm duas coisas:
 bloquear sites específicos do computador enquanto o foco roda, e o foco deixar de permitir interação

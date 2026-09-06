@@ -48,6 +48,7 @@ export function cancelSession(): void {
   state.coinsSpent = 0;
   state.groups = {};
   state.windowOverrides = {};
+  state.penalties = {};
   rebuildWeeks();
   clearBlockCache();
   scheduleSave();

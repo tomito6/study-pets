@@ -11,6 +11,7 @@ import { saveSettings } from '../../application/settings';
 import { restartTour } from '../../application/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
+import { extensionDetected } from '../../infrastructure/extensionBridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state, useAppState } from '../../store/store';
@@ -20,6 +21,7 @@ import { FitStudyModal } from './FitStudyModal';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
 
 const t = strings.settings;
+const th = strings.hardcore.settings;
 type SettingsTab = 'day' | 'general';
 type SettingsModal = 'none' | 'fit' | 'cancel' | 'delete';
 
@@ -72,6 +74,7 @@ export function SettingsPage() {
 
   const cfgPreview = normalizeConfig(draft, state.config.periodStart);
   const periodStart = state.config.periodStart || '';
+  const extOk = open && extensionDetected();
 
   return (
     <>
@@ -214,6 +217,52 @@ export function SettingsPage() {
                 <div className="st-card">
                   <div className="st-field-label">{t.goal.label}</div>
                   <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15" value={draft.dailyStudyMin} onChange={(e) => patch({ dailyStudyMin: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{th.title}</div></div>
+                <div className="st-section-desc">{th.desc}</div>
+                <div className="st-card">
+                  <div className="st-toggle-row">
+                    <div>
+                      <div className="st-toggle-txt">{th.toggle}</div>
+                      <div className="st-toggle-sub">{th.toggleSub}</div>
+                    </div>
+                    <Switch id="cfg-hardcore" checked={draft.hardcore} onChange={(hardcore) => patch({ hardcore })} />
+                  </div>
+                  {draft.hardcore && (
+                    <div id="hardcore-fields">
+                      <div className="st-divider" />
+                      <div className="st-field-label">{th.sitesLabel}</div>
+                      <div className="hc-mode" id="cfg-hardcore-mode" role="radiogroup">
+                        {(['blacklist', 'whitelist'] as const).map((m) => (
+                          <button
+                            type="button"
+                            key={m}
+                            role="radio"
+                            aria-checked={draft.hardcoreMode === m}
+                            className={'hc-mode-chip' + (draft.hardcoreMode === m ? ' active' : '')}
+                            data-mode={m}
+                            onClick={() => patch({ hardcoreMode: m })}
+                          >
+                            {th.modes[m]}
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        id="cfg-hardcore-sites"
+                        className="hc-sites"
+                        rows={4}
+                        placeholder={th.sitesPlaceholder}
+                        value={draft.hardcoreSites}
+                        onChange={(e) => patch({ hardcoreSites: e.target.value })}
+                        spellCheck={false}
+                      />
+                      <div className="st-hint">{th.sitesHint}</div>
+                      <div className={'hc-ext-status' + (extOk ? ' ok' : ' missing')} id="hardcore-ext-status">{extOk ? th.extOk : th.extMissing}</div>
+                    </div>
+                  )}
                 </div>
               </div>
 

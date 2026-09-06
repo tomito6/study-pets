@@ -10,6 +10,10 @@
 // "deu certo" e emenda no bloco seguinte (estudo → pausa → estudo…) até o dia
 // mudar de assunto (almoço, evento, gap, fim). Com o foco fechado (só a barra),
 // o fim continua como sempre foi: som do tipo, notificação, e o timer some.
+//
+// No modo hardcore (`derived.hardcore`) o foco não tem saída livre: "Sair do foco"
+// e "Parar" viram no-op — a porta é `quitHardcore`, que cobra. A emenda e o fim
+// natural avisam a sessão (application/hardcoreRuntime.ts).
 
 import { canToggleCheck } from '../domain/checks';
 import { dk } from '../domain/time';
@@ -26,6 +30,7 @@ import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { checkBlock } from './checks';
+import { armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { blocksForDay, currentDayKey } from './plan';
 
 let endWatcher: ReturnType<typeof setInterval> | null = null;
@@ -53,6 +58,7 @@ function runBlock(block: StudyBlock): void {
  * cada bloco seguinte cai no `done` de novo com o mesmo `now`.
  */
 export function reconcileTimer(now: Date = new Date()): void {
+  if (derived.hardcore) armHardcoreIfRunning(now); // o bloco em espera começou: a sessão passa a valer
   let guard = 0;
   while (derived.timerBlock && timerProgress(derived.timerBlock, now).done && guard++ < 100) finishTimer(now);
 }
@@ -115,12 +121,14 @@ function finishTimer(now: Date = new Date()): void {
     if (next) {
       derived.timerCompleted = completed;
       runBlock(next);
+      if (derived.hardcore) hardcoreChained(next, now);
       return;
     }
     showToast(strings.timer.completed(completed));
   } else {
     playSound(soundForBlock(block));
   }
+  if (derived.hardcore) endHardcoreSession(); // a sequência acabou por conta própria: nada a cobrar
   derived.timerBlock = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
@@ -128,8 +136,9 @@ function finishTimer(now: Date = new Date()): void {
   notify();
 }
 
-/** "✕ Parar": cancela sem som nem notificação. */
+/** "✕ Parar": cancela sem som nem notificação. No hardcore não existe — só `quitHardcore`. */
 export function stopTimer(): void {
+  if (derived.hardcore) return;
   clearWatcher();
   derived.timerBlock = null;
   derived.focusOpen = false;
@@ -138,9 +147,9 @@ export function stopTimer(): void {
   notify();
 }
 
-/** "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo). */
+/** "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo). No hardcore não existe. */
 export function closeFocus(): void {
-  if (!derived.focusOpen) return;
+  if (!derived.focusOpen || derived.hardcore) return;
   derived.focusOpen = false;
   releaseWakeLock();
   notify();

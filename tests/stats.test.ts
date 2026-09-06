@@ -96,6 +96,33 @@ describe('computeStats — XP e moedas só entram quando o dia fecha', () => {
   });
 });
 
+describe('computeStats — desistências do modo hardcore', () => {
+  const desistencia = (xp: number) => ({ time: '09:00', endTime: '09:30', name: 'Estudo', xp, pet: 'cat', petXp: xp, at: 0, reason: 'quit' as const });
+
+  it('saem do total na hora — inclusive as de hoje, com o dia aberto', () => {
+    const stats = computeStats(entrada({ checks: marcandoTudo(ONTEM, ['09:00', '09:35']), penalties: { [HOJE]: [desistencia(100)] } }));
+    expect(stats.totalXP).toBe(20); // 120 − 100
+    expect(stats.penaltyXP).toBe(100);
+    expect(stats.quits).toBe(1);
+    expect(stats.todayXP).toBe(0); // o pendente de hoje não muda
+    expect(stats.weekXP[0]).toBe(120); // os ganhos por semana continuam sendo ganhos
+  });
+
+  it('o total não fica negativo', () => {
+    const stats = computeStats(entrada({ penalties: { [ONTEM]: [desistencia(100), desistencia(50)] } }));
+    expect(stats.totalXP).toBe(0);
+    expect(stats.penaltyXP).toBe(150);
+    expect(stats.quits).toBe(2);
+  });
+
+  it('sem desistências, nada muda', () => {
+    const stats = computeStats(entrada({ checks: marcandoTudo(ONTEM, ['09:00']) }));
+    expect(stats.penaltyXP).toBe(0);
+    expect(stats.quits).toBe(0);
+    expect(stats.totalXP).toBe(60);
+  });
+});
+
 describe('computeStats — o que conta como estudo', () => {
   it('pausa marcada dá XP mas não moeda nem minuto de estudo', () => {
     const stats = computeStats(entrada({ checks: marcandoTudo(ONTEM, ['09:30']) }));

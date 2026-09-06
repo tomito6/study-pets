@@ -168,7 +168,8 @@ function rodarLegado(c: Cenario) {
 }
 
 function rodarNovo(c: Cenario) {
-  return computeStats({
+  // `penaltyXP`/`quits` (modo hardcore) não existiam no legado: ficam de fora da comparação.
+  const { penaltyXP: _p, quits: _q, ...stats } = computeStats({
     days: c.dias,
     getBlocks: (key) => generateBlocks(c.cfg, c.eventosPorDia[key] || []),
     checks: c.checks,
@@ -178,6 +179,7 @@ function rodarNovo(c: Cenario) {
     currentWeekIdx: c.uiWeek - 1,
     dailyStudyMin: c.dailyStudyMin,
   });
+  return stats;
 }
 
 describe('equivalência do computeStats com a versão antiga', () => {

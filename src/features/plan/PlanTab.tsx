@@ -6,13 +6,15 @@ import { canEditDayWindows, dayWindowsOverride } from '../../application/dayWind
 import { findEventEditTarget } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
+import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
+import { tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
 import { dk } from '../../domain/time';
 import type { Stats } from '../../domain/stats';
-import type { DateKey, StudyGroup } from '../../domain/types';
+import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
 import { openFinishDay } from '../../application/dayEnd';
 import { strings } from '../../shared/strings';
@@ -24,6 +26,7 @@ import { LunchPanel } from '../events/LunchPanel';
 import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
 import { SelectionRect } from '../groups/SelectionRect';
 import { useGroupSelection } from '../groups/useGroupSelection';
+import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { useMinuteTick } from './useMinuteTick';
@@ -35,7 +38,9 @@ type PlanModal =
   | { kind: 'delete'; target: EventToDelete }
   | { kind: 'lunch'; dateKey: DateKey }
   | { kind: 'windows'; dateKey: DateKey }
-  | { kind: 'group'; target: GroupTarget };
+  | { kind: 'group'; target: GroupTarget }
+  /** Modo hardcore ligado: o consentimento antes de abrir o foco. */
+  | { kind: 'hardcore'; block: StudyBlock };
 
 const t = strings.plan;
 const tg = strings.groups;
@@ -185,6 +190,16 @@ export function PlanTab() {
   const stats = computeStatsNow(now);
   const { eD, eT, pD, pT } = dayProgress(viewKey, blocks);
 
+  // Tocar num estudo/pausa: com o hardcore ligado, o consentimento vem antes; senão, o foco abre direto.
+  const startBlock = (b: StudyBlock, at: Date) => {
+    if (hardcoreEnabled()) {
+      setModal({ kind: 'hardcore', block: b });
+      return;
+    }
+    const r = tryStartTimer(b, at);
+    if (!r.ok) showToast(strings.timer.refusal(r));
+  };
+
   const openEditGroup = (g: StudyGroup) => {
     if (selection.active) {
       selection.cancel();
@@ -247,6 +262,7 @@ export function PlanTab() {
           onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
           onEditLunch={(dateKey) => setModal({ kind: 'lunch', dateKey })}
           onEditGroup={openEditGroup}
+          onStartBlock={startBlock}
         />
         <SelectionRect range={selection.range} listId="blocks-list" />
       </div>
@@ -269,6 +285,7 @@ export function PlanTab() {
       <LunchPanel dateKey={modal.kind === 'lunch' ? modal.dateKey : null} onClose={closeModal} />
       <DayWindowsPanel dateKey={modal.kind === 'windows' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
+      <HardcoreStartModal block={modal.kind === 'hardcore' ? modal.block : null} onClose={closeModal} />
     </>
   );
 }

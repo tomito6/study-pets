@@ -9,7 +9,7 @@ import { useAppState } from '../../store/store';
 import { useSecondTick } from './useSecondTick';
 
 export function TimerBar() {
-  const { block, tab, audio } = useAppState((s, d) => ({ block: d.timerBlock, tab: s.uiTab, audio: d.audio }));
+  const { block, tab, audio, hardcore } = useAppState((s, d) => ({ block: d.timerBlock, tab: s.uiTab, audio: d.audio, hardcore: !!d.hardcore }));
   const active = !!block && tab === 'plano';
   useSecondTick(!!block);
 
@@ -43,7 +43,8 @@ export function TimerBar() {
           onChange={(e) => setVolume(parseFloat(e.target.value))}
         />
       </div>
-      <button className="timer-stop" onClick={stopTimer}>{t.stop}</button>
+      {/* No hardcore o foco cobre tudo e "Parar" não existe — a saída é "Desistir" lá dentro. */}
+      {!hardcore && <button className="timer-stop" onClick={stopTimer}>{t.stop}</button>}
     </div>
   );
 }

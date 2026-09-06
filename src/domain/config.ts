@@ -17,6 +17,7 @@ export const DEFAULT_CFG: UserConfig = {
   periodEnd: null,
   skipWeekends: false,
   dailyStudyMin: 60,
+  hardcore: { enabled: false, mode: 'blacklist', sites: [] },
 };
 
 /**

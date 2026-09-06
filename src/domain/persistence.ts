@@ -13,6 +13,7 @@
 import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
 import { DEFAULT_GROUP_NAME } from './groups';
+import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
 import { normalizeTutorialSeen } from './tutorial';
 import type { TutorialSeen } from './tutorial';
@@ -20,6 +21,7 @@ import type {
   ChecksByDate,
   DateKey,
   GroupsByDate,
+  PenaltiesByDate,
   PetInstance,
   PetInstanceId,
   RecurringEventSeries,
@@ -64,6 +66,8 @@ export interface PersistedState {
   windowOverrides: WindowOverrides;
   /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
   tutorialSeen: TutorialSeen;
+  /** Desistências no modo hardcore, por dia (ver domain/hardcore.ts). */
+  penalties: PenaltiesByDate;
 }
 
 /**
@@ -110,6 +114,7 @@ export function emptyPersistedState(): PersistedState {
     groups: {},
     windowOverrides: {},
     tutorialSeen: {},
+    penalties: {},
   };
 }
 
@@ -205,6 +210,7 @@ function hydrateWindowOverrides(raw: unknown): WindowOverrides {
  */
 export function hydrateUserDoc(raw: unknown): PersistedState {
   const d: Raw = isObj(raw) ? raw : {};
+  const rawCfg = isObj(d.config) ? d.config : {};
 
   return {
     checks: (d.checks as ChecksByDate) || {},
@@ -214,7 +220,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     // Migra ANTES de aplicar os defaults: se o doc antigo só tem start/end, a janela
     // nasce deles. (O código original fazia ao contrário e a janela padrão 09–18
     // engolia os horários reais do usuário — corrigido na Fase 4.)
-    config: { ...DEFAULT_CFG, ...migrateConfig(isObj(d.config) ? d.config : {}) } as UserConfig,
+    // `hardcore` sempre normalizado: doc de antes do modo (sem o campo) fica desligado.
+    config: { ...DEFAULT_CFG, ...migrateConfig(rawCfg), hardcore: normalizeHardcoreConfig(rawCfg.hardcore) } as UserConfig,
     pets: hydratePets(d),
     closedDays: isObj(d.closedDays) ? (d.closedDays as Record<DateKey, boolean>) : {},
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
@@ -222,6 +229,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
+    penalties: normalizePenalties(d.penalties),
   };
 }
 
@@ -246,5 +254,6 @@ export function serializeState(s: PersistedState): UserDoc {
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
     tutorialSeen: s.tutorialSeen || {},
+    penalties: s.penalties || {},
   };
 }

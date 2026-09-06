@@ -35,6 +35,19 @@ export interface UserConfig {
   skipWeekends: boolean;
   /** Minutos de estudo/dia pra contar streak e bônus. */
   dailyStudyMin: number;
+  /** Modo hardcore: sair de um estudo no foco custa XP (ver domain/hardcore.ts). */
+  hardcore: HardcoreConfig;
+}
+
+export type HardcoreMode = 'blacklist' | 'whitelist';
+
+/** O que o usuário escolheu em Configurações → Geral → Modo hardcore. */
+export interface HardcoreConfig {
+  enabled: boolean;
+  /** `blacklist` = bloquear os sites da lista durante o estudo; `whitelist` = permitir só eles. */
+  mode: HardcoreMode;
+  /** Domínios normalizados ("youtube.com"). Só a extensão do navegador aplica. */
+  sites: string[];
 }
 
 /**
@@ -121,6 +134,29 @@ export interface StudyGroup {
 
 /** Grupos por dia. */
 export type GroupsByDate = Record<DateKey, StudyGroup[]>;
+
+/**
+ * Uma desistência no modo hardcore, salva em `users/{uid}.penalties`. É o único
+ * XP negativo do app: entra no total na hora (não espera o dia fechar). `xp` e
+ * `petXp` são o que de fato saiu — limitados ao saldo que havia.
+ */
+export interface PenaltyRecord {
+  time: TimeString;
+  endTime: TimeString;
+  /** Nome do bloco sem emoji ("Estudo 3"). */
+  name: string;
+  xp: number;
+  /** Pet equipado na hora (instância), ou null. */
+  pet: PetInstanceId | null;
+  petXp: number;
+  /** ms de quando aconteceu. */
+  at: number;
+  /** `quit` = "Desistir" no foco; `abandon` = o app foi fechado e o bloco acabou sem ele. */
+  reason: 'quit' | 'abandon';
+}
+
+/** Desistências por dia. Um bloco com registro aqui está abandonado: sem check, e não pode ser marcado. */
+export type PenaltiesByDate = Record<DateKey, PenaltyRecord[]>;
 
 /** Forma de um pet: o que aparece na tela (sprite) e quais skills ela pode ter. */
 export type FormId = string;

@@ -84,7 +84,11 @@ export function timerProgress(block: Pick<StudyBlock, 'time' | 'endTime'>, now: 
   };
 }
 
-export type StartRefusal = { ok: false; reason: 'not-today' } | { ok: false; reason: 'ended' };
+export type StartRefusal =
+  | { ok: false; reason: 'not-today' }
+  | { ok: false; reason: 'ended' }
+  /** Abandonado no modo hardcore: sem check e sem timer, o bloco já era. */
+  | { ok: false; reason: 'forfeited' };
 
 export type StartCheck = { ok: true } | StartRefusal;
 
@@ -93,9 +97,11 @@ export function canStartBlock(
   block: Pick<StudyBlock, 'time' | 'endTime'>,
   viewKey: DateKey,
   now: Date,
+  forfeited = false,
 ): StartCheck {
   if (viewKey !== dk(now)) return { ok: false, reason: 'not-today' };
   if (now >= todayAt(block.endTime, now)) return { ok: false, reason: 'ended' };
+  if (forfeited) return { ok: false, reason: 'forfeited' };
   return { ok: true };
 }
 

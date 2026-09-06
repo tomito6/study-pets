@@ -110,6 +110,7 @@ export function computeStatsNow(now: Date = new Date()): Stats {
     currentDayKey: currentDayKey(),
     currentWeekIdx: state.uiWeek - 1,
     dailyStudyMin: state.config.dailyStudyMin || 60,
+    penalties: state.penalties,
   });
   statsCache = { key, stats };
   return stats;

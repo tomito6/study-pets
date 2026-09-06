@@ -522,8 +522,10 @@ export const strings = {
     startsIn: 'Começa em',
     stop: '✕ Parar',
     mute: 'Silenciar',
-    refusal: (r: { reason: 'not-today' } | { reason: 'ended' }) =>
-      r.reason === 'not-today' ? 'Só dá pra iniciar timer em blocos de hoje 📅' : 'Este bloco já terminou ⏎',
+    refusal: (r: { reason: 'not-today' } | { reason: 'ended' } | { reason: 'forfeited' }) =>
+      r.reason === 'not-today' ? 'Só dá pra iniciar timer em blocos de hoje 📅'
+      : r.reason === 'forfeited' ? 'Você desistiu deste bloco 🔥'
+      : 'Este bloco já terminou ⏎',
     /** "✓ Estudo 3 concluído · +50 XP · +25 🪙" — a faixa no foco e o toast no plano. */
     completed: (c: { name: string; type: string; xp: number; coins: number }) =>
       `✓ ${c.name} ${c.type === 'pausa' ? 'concluída' : 'concluído'}` +
@@ -544,6 +546,56 @@ export const strings = {
       next: 'Em seguida',
       endOfDay: 'Fim do dia 🌙',
       minutes: (min: number) => `${min} min`,
+    },
+  },
+  hardcore: {
+    settings: {
+      title: 'Modo hardcore',
+      desc: 'Dificuldade escolhida: sair de um estudo no modo foco custa XP. Nada muda enquanto estiver desligado.',
+      toggle: 'Ativar modo hardcore',
+      toggleSub: 'Desistir de um estudo custa 2× o XP do bloco — pra você e pro pet equipado, na hora. Pausa é saída livre.',
+      sitesLabel: 'Sites durante o estudo',
+      modes: { blacklist: 'Bloquear estes', whitelist: 'Permitir só estes' },
+      sitesPlaceholder: 'youtube.com\ninstagram.com\ntwitter.com',
+      sitesHint: 'Um por linha. Só o domínio importa ("youtube.com" cobre www e m.).',
+      extOk: '✓ Extensão do navegador encontrada — a lista vale neste computador.',
+      extMissing: 'Extensão do navegador não encontrada. Sem ela a lista não bloqueia nada: veja extension/README.md no repositório.',
+    },
+    start: {
+      title: '🔥 Modo hardcore',
+      block: (name: string, min: number) => `${name} · ${min} min`,
+      cost: (xp: number, pet: string | null) =>
+        pet ? `Sair antes do fim custa −${xp} XP pra você e −${xp} XP pro ${pet}.` : `Sair antes do fim custa −${xp} XP.`,
+      rules: 'Sem "Sair do foco" até o bloco acabar. Na pausa você pode parar de graça; fechar a aba conta como sair.',
+      confirm: 'Começar',
+      normal: 'Só desta vez, sem hardcore',
+      cancel: 'Cancelar',
+    },
+    focus: {
+      chip: '🔥 Hardcore',
+      quit: 'Desistir…',
+      stop: 'Parar aqui (sem custo)',
+      cancel: 'Cancelar (sem custo)',
+      quitTitle: (name: string) => `Desistir de ${name}?`,
+      quitUser: (xp: number, from: number, to: number) =>
+        `Você perde ${xp} XP` + (to < from ? ` e desce do nível ${from} pro ${to}` : '') + '.',
+      quitUserNothing: 'Você não tem XP a perder — mas o bloco fica sem check.',
+      quitPet: (name: string, xp: number, from: number, to: number) =>
+        `${name} perde ${xp} XP` + (to < from ? ` e cai do Lv. ${from} pro Lv. ${to}` : '') + '.',
+      quitPetNothing: (name: string) => `${name} não tem XP a perder.`,
+      quitFinal: 'O bloco fica sem check e não pode ser marcado depois.',
+      keepGoing: 'Continuar estudando',
+      quitConfirm: 'Desistir',
+    },
+    plan: {
+      forfeited: 'desistiu',
+      forfeitedToast: 'Você desistiu deste bloco 🔥',
+    },
+    toast: {
+      quit: (name: string, cost: { userXp: number; petXp: number }, pet: string | null) =>
+        `🔥 Desistiu de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
+      abandoned: (name: string, cost: { userXp: number; petXp: number }, pet: string | null) =>
+        `🔥 O app fechou no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
     },
   },
 } as const;

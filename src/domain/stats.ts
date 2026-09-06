@@ -1,7 +1,7 @@
 // Estatísticas do app, calculadas numa passada só sobre os dias.
 // Puro: recebe os dias, os blocos de cada dia e os checks, e devolve números.
 
-import type { ChecksByDate, DateKey, StudyBlock } from './types';
+import type { ChecksByDate, DateKey, PenaltiesByDate, StudyBlock } from './types';
 import { coinsForBlock, dailyBonusForStreak, xpFromCheck } from './progression';
 import { timeToMins } from './time';
 import { isChecked } from './checks';
@@ -27,6 +27,8 @@ export interface StatsInput {
   /** Índice da semana visível na UI. */
   currentWeekIdx: number;
   dailyStudyMin: number;
+  /** Desistências no modo hardcore — XP negativo, descontado do total na hora. */
+  penalties?: PenaltiesByDate;
 }
 
 export interface Stats {
@@ -54,6 +56,10 @@ export interface Stats {
   dayStudyDoneMins: Record<DateKey, number>;
   dayMetGoal: Record<DateKey, boolean>;
   sessionStats: Record<number, { done: number; total: number }>;
+  /** XP perdido em desistências (hardcore), já descontado de `totalXP`. */
+  penaltyXP: number;
+  /** Quantas desistências. */
+  quits: number;
 }
 
 /**
@@ -67,6 +73,10 @@ export interface Stats {
  *
  * Aderência (`dayStudyPlanned`/`dayStudyDoneMins`) inclui hoje de propósito: não
  * é recompensa, é diagnóstico.
+ *
+ * A exceção ao "só dia fechado": as desistências do modo hardcore saem do total
+ * na hora — inclusive as de hoje. A dor é o ponto; e cada registro já guarda só
+ * o que havia pra perder, então o total não fica negativo (o `max` é cinto).
  */
 export function computeStats(input: StatsInput): Stats {
   const { checks, todayKey, currentDayKey, getBlocks, dayClosed } = input;
@@ -89,6 +99,8 @@ export function computeStats(input: StatsInput): Stats {
     dayStudyDoneMins: {},
     dayMetGoal: {},
     sessionStats: {},
+    penaltyXP: 0,
+    quits: 0,
   };
 
   const minDailyMins = input.dailyStudyMin || 60;
@@ -163,6 +175,11 @@ export function computeStats(input: StatsInput): Stats {
       }
     });
 
+    for (const p of input.penalties?.[key] ?? []) {
+      stats.penaltyXP += p.xp || 0;
+      stats.quits++;
+    }
+
     stats.dayCheckCounts[key] = dayChecks;
     stats.dayStudyMins[key] = dayStudyMins;
     stats.dayStudyPlanned[key] = dayPlanned;
@@ -187,6 +204,7 @@ export function computeStats(input: StatsInput): Stats {
   }
 
   stats.weekChecksOfCurrent = stats.weekChecks[input.currentWeekIdx] || 0;
+  stats.totalXP = Math.max(0, stats.totalXP - stats.penaltyXP);
   return stats;
 }
 
