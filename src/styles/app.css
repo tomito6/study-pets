@@ -868,7 +868,7 @@
      ================================================================================================ */
   #app.app-hidden{display:none;}
   @media (min-width:1100px){
-    #app{--s:calc(100vw / 1480);display:grid;grid-template-columns:15% 66% 14%;grid-template-rows:auto 1fr;column-gap:1%;padding:0 1.5%;align-items:start;}
+    #app{--s:calc(100vw / 1480);display:grid;grid-template-columns:15% 66% 15%;grid-template-rows:auto 1fr;column-gap:1%;padding:0 .5% 0 1.5%;align-items:start;}
 
     /* trilho: só texto, um traço na aba ativa, o personagem com o pet no pé */
     .topbar{grid-column:1;grid-row:1 / -1;position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:calc(26 * var(--s)) 0 calc(24 * var(--s));background:transparent;backdrop-filter:none;border-bottom:0;}
@@ -959,7 +959,7 @@
     .finish-day-btn,.finish-day-banner{font-size:calc(14 * var(--s));padding:calc(14 * var(--s));}
 
     /* a coluna da direita: o timer é a única caixa; o resto é rótulo e valor */
-    .timer-bar{grid-column:3;grid-row:1;position:static;margin-top:calc(26 * var(--s));margin-left:calc(16 * var(--s));background:var(--bg2);border:0;border-radius:12px;padding:calc(16 * var(--s)) calc(18 * var(--s));flex-direction:column;align-items:flex-start;gap:calc(6 * var(--s));}
+    .timer-bar{grid-column:3;grid-row:1;position:static;margin-top:calc(26 * var(--s));margin-left:calc(24 * var(--s));background:var(--bg2);border:0;border-radius:12px;padding:calc(16 * var(--s)) calc(18 * var(--s));flex-direction:column;align-items:flex-start;gap:calc(6 * var(--s));}
     .timer-bar > div:first-child{order:1;}
     .timer-bar > div:first-child > div:first-child{font-size:calc(10 * var(--s)) !important;}
     .timer-time{order:0;font-size:max(28px,calc(34 * var(--s)));text-align:left;min-width:0;letter-spacing:-.02em;line-height:1;}
@@ -969,7 +969,7 @@
     .vol-slider{width:calc(60 * var(--s));}
     .timer-stop{order:3;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);}
     .timer-stop:hover{color:var(--text);}
-    .plan-side{grid-column:3;grid-row:2;margin-left:calc(16 * var(--s));padding:calc(26 * var(--s)) 0 calc(40 * var(--s));display:flex;flex-direction:column;gap:calc(22 * var(--s));}
+    .plan-side{grid-column:3;grid-row:2;margin-left:calc(24 * var(--s));padding:calc(26 * var(--s)) 0 calc(40 * var(--s));display:flex;flex-direction:column;gap:calc(22 * var(--s));}
     .timer-bar.active ~ .plan-side{padding-top:calc(18 * var(--s));}
     .side-k{font-family:'DM Mono',monospace;font-size:calc(10 * var(--s));letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:calc(4 * var(--s));}
     .side-v{font-family:'DM Mono',monospace;font-size:max(18px,calc(20 * var(--s)));font-weight:500;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums;}
