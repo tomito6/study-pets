@@ -1,6 +1,7 @@
 // Caso de uso: marcar/desmarcar um bloco.
 
 import { canToggleCheck } from '../domain/checks';
+import { petLevel } from '../domain/pets';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
 import { timeToMins } from '../domain/time';
 import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/types';
@@ -39,6 +40,8 @@ function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, 
     activeSkill: pet?.skill ?? null,
     // A skill vale desde a troca dela OU desde que o pet foi equipado — o mais recente.
     activatedAt: Math.max(pet?.skillActivatedAt ?? 0, state.pets.activeSince ?? 0),
+    // O nível pelo XP já creditado: o de hoje só entra quando o dia fecha (anti-exploit).
+    petLevel: pet ? petLevel(pet) : 1,
     ...dayContext(dateKey, block, day),
     dailyStudyMin: state.config.dailyStudyMin ?? 0,
     longBreakMins: state.config.longBreak,

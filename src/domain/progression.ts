@@ -110,19 +110,36 @@ export interface SkillDefinition {
   rule: SkillRule;
 }
 
-/** Bônus aditivo de XP de toda skill elegível. */
-export const SKILL_BONUS = 0.05;
+/**
+ * Bônus aditivo de XP de uma skill elegível, pelo nível do pet: 5% no Lv. 1,
+ * +1% por nível, teto de 15% no Lv. 11 (~13h de estudo com o pet). Pequeno de
+ * propósito — é reconhecimento, não "quem não tem tá perdendo". Num pomo de
+ * 25 min (50 XP): +3 XP no Lv. 1, +5 no Lv. 5, +8 no teto.
+ */
+export const SKILL_BONUS_BASE = 0.05;
+export const SKILL_BONUS_PER_LEVEL = 0.01;
+export const SKILL_BONUS_MAX = 0.15;
+
+export function skillBonusForLevel(level: number): number {
+  const l = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
+  return Math.min(SKILL_BONUS_MAX, Math.round((SKILL_BONUS_BASE + SKILL_BONUS_PER_LEVEL * (l - 1)) * 100) / 100);
+}
+
+/** O texto da skill como o pet a vê hoje: "+9% XP em estudos a partir das 18h". `desc` guarda só a condição. */
+export function skillDesc(skill: Pick<SkillDefinition, 'desc'>, level: number): string {
+  return `+${Math.round(skillBonusForLevel(level) * 100)}% XP ${skill.desc}`;
+}
 
 /** Catálogo de skills. As formas dos pets (`pets.ts`) referenciam estes ids. */
 export const SKILLS: Record<SkillId, SkillDefinition> = {
-  noturno: { id: 'noturno', name: 'Noturno', desc: '+5% XP em estudos a partir das 18h', rule: { kind: 'after-hour', hour: 18 } },
-  'lua-cheia': { id: 'lua-cheia', name: 'Lua cheia', desc: '+5% XP em estudos a partir das 21h', rule: { kind: 'after-hour', hour: 21 } },
-  madrugador: { id: 'madrugador', name: 'Madrugador', desc: '+5% XP em estudos antes das 9h', rule: { kind: 'before-hour', hour: 9 } },
-  fiel: { id: 'fiel', name: 'Fiel', desc: '+5% XP no primeiro estudo do dia', rule: { kind: 'first-study' } },
-  aula: { id: 'aula', name: 'Aula', desc: '+5% XP em eventos que contam como estudo', rule: { kind: 'event' } },
-  preguica: { id: 'preguica', name: 'Preguiça', desc: '+5% XP no estudo logo depois de uma pausa longa', rule: { kind: 'after-long-break' } },
-  rumina: { id: 'rumina', name: 'Rumina', desc: '+5% XP no estudo logo depois do almoço', rule: { kind: 'after-lunch' } },
-  constancia: { id: 'constancia', name: 'Constância', desc: '+5% XP no estudo que bate a meta do dia', rule: { kind: 'meets-goal' } },
+  noturno: { id: 'noturno', name: 'Noturno', desc: 'em estudos a partir das 18h', rule: { kind: 'after-hour', hour: 18 } },
+  'lua-cheia': { id: 'lua-cheia', name: 'Lua cheia', desc: 'em estudos a partir das 21h', rule: { kind: 'after-hour', hour: 21 } },
+  madrugador: { id: 'madrugador', name: 'Madrugador', desc: 'em estudos antes das 9h', rule: { kind: 'before-hour', hour: 9 } },
+  fiel: { id: 'fiel', name: 'Fiel', desc: 'no primeiro estudo do dia', rule: { kind: 'first-study' } },
+  aula: { id: 'aula', name: 'Aula', desc: 'em eventos que contam como estudo', rule: { kind: 'event' } },
+  preguica: { id: 'preguica', name: 'Preguiça', desc: 'no estudo logo depois de uma pausa longa', rule: { kind: 'after-long-break' } },
+  rumina: { id: 'rumina', name: 'Rumina', desc: 'no estudo logo depois do almoço', rule: { kind: 'after-lunch' } },
+  constancia: { id: 'constancia', name: 'Constância', desc: 'no estudo que bate a meta do dia', rule: { kind: 'meets-goal' } },
 };
 
 /** Contexto necessário pra decidir o bônus no momento do check. */
@@ -134,6 +151,12 @@ export interface SkillContext {
    * momento em que o pet foi equipado, o que for mais recente.
    */
   activatedAt: number;
+  /**
+   * Nível do pet equipado pelo XP **já creditado** (dias fechados). Durante o dia
+   * ele fica "atrasado" de propósito: o XP de hoje só entra ao fechar, então
+   * marcar/desmarcar não sobe o bônus no meio do dia.
+   */
+  petLevel: number;
   /** Estudos/eventos já marcados hoje antes deste check. */
   studiesCheckedToday: number;
   /** Minutos de estudo/evento já marcados hoje antes deste check. */
@@ -199,5 +222,5 @@ export function bonusForCheck(
   dateKey: DateKey,
   ctx: SkillContext,
 ): number {
-  return skillEligible(b, dateKey, ctx) ? SKILL_BONUS : 0;
+  return skillEligible(b, dateKey, ctx) ? skillBonusForLevel(ctx.petLevel) : 0;
 }

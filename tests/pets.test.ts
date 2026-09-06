@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { closeDay } from '../src/application/dayEnd';
 import { adoptStarter, applyPendingPetXP, buyPet, coinBalance, evolvePet, needsStarter, renamePet, toggleEquip, toggleSkill } from '../src/application/pets';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { toggleBlockCheck } from '../src/application/checks';
@@ -17,6 +18,7 @@ import {
   normalizePetInstance,
   normalizePetName,
   petForm,
+  petLevel,
   petLevelFromXP,
   petLevelStart,
   petProgress,
@@ -279,6 +281,26 @@ describe('casos de uso dos pets', () => {
     expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.05 });
     expect(toggleBlockCheck(HOJE, b2!, AGORA)).toMatchObject({ checked: true, xp: 50 });
     expect(state.checks[HOJE]![b2!.time]).toEqual({ pet: 'dog', bonus: 0 });
+  });
+
+  it('o bônus da skill cresce com o nível do pet — o nível já creditado, não o do XP pendente de hoje', () => {
+    // Lv. 4, faltando 10 XP pro Lv. 5. Fiel: o primeiro estudo do dia.
+    state.pets.owned = [inst({ skill: 'fiel', skillActivatedAt: OITO_DA_MANHA, xp: petLevelStart(5) - 10 })];
+    state.pets.active = 'dog';
+    state.pets.activeSince = OITO_DA_MANHA;
+    state.pets.xpProcessedUntil = ONTEM;
+    const [b1] = blocksForDay(HOJE).filter((x) => x.type === 'estudo');
+    // Lv. 4 → 5% + 3% = 8%: 50 XP viram 54
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true, xp: 54 });
+    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.08 });
+    // Esse check cruzaria o Lv. 5, mas o XP só entra quando o dia fecha: desmarcar e marcar de novo continua 8%
+    toggleBlockCheck(HOJE, b1!, AGORA);
+    expect(petLevel(state.pets.owned[0]!)).toBe(4);
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ xp: 54 });
+    // Dia fechado: o pet vira Lv. 5 (o próximo check já valeria 9%), e o bônus salvo no check não muda
+    closeDay(AGORA);
+    expect(petLevel(state.pets.owned[0]!)).toBe(5);
+    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.08 });
   });
 
   it('Preguiça: o estudo logo depois da pausa longa ganha o bônus, o seguinte não', () => {

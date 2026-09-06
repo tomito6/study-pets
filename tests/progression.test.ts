@@ -8,6 +8,8 @@ import {
   getLevel,
   getLevelIdx,
   getLevelPct,
+  skillBonusForLevel,
+  skillDesc,
   skillEligible,
   xpFromCheck,
 } from '../src/domain/progression';
@@ -136,6 +138,7 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     dailyStudyMin: 60,
     prevBlock: null,
     longBreakMins: 15,
+    petLevel: 1,
     now: agora,
     ...over,
   });
@@ -211,8 +214,18 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     expect(skillEligible(blocoNoturno, HOJE, ctx({ activatedAt: antes }))).toBe(true);
   });
 
-  it('bonusForCheck traduz elegibilidade em 0.05 ou 0', () => {
+  it('bonusForCheck: elegível vale o bônus do nível do pet; senão 0', () => {
     expect(bonusForCheck(blocoNoturno, HOJE, ctx())).toBe(0.05);
-    expect(bonusForCheck(blocoNoturno, HOJE, ctx({ activeSkill: null }))).toBe(0);
+    expect(bonusForCheck(blocoNoturno, HOJE, ctx({ petLevel: 5 }))).toBe(0.09);
+    expect(bonusForCheck(blocoNoturno, HOJE, ctx({ petLevel: 30 }))).toBe(0.15);
+    expect(bonusForCheck(blocoNoturno, HOJE, ctx({ activeSkill: null, petLevel: 30 }))).toBe(0);
+  });
+
+  it('skillBonusForLevel: 5% no Lv. 1, +1% por nível, teto de 15% no Lv. 11; nível inválido vale o Lv. 1', () => {
+    expect([1, 2, 5, 10, 11, 12, 40].map(skillBonusForLevel)).toEqual([0.05, 0.06, 0.09, 0.14, 0.15, 0.15, 0.15]);
+    expect(skillBonusForLevel(0)).toBe(0.05);
+    expect(skillBonusForLevel(NaN)).toBe(0.05);
+    expect(skillDesc({ desc: 'em estudos a partir das 18h' }, 5)).toBe('+9% XP em estudos a partir das 18h');
+    expect(skillDesc({ desc: 'no primeiro estudo do dia' }, 1)).toBe('+5% XP no primeiro estudo do dia');
   });
 });
