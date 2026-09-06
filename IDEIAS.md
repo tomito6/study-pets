@@ -630,6 +630,21 @@ cedo? tudo bem, ajusta"). A assimetria é o bug de design mais visível que sobr
 
 ---
 
+## Aba de notificações — 2026-09-06
+
+Ideia do Tomi, ainda sem decisão (veio da branch `docs/pendencias-pets`, apagada em 2026-09-06 depois
+que os outros dois itens dela — avisar quando o pet pode evoluir, e o bônus da skill subindo com o nível
+— viraram código). Um lugar onde os avisos se acumulam em vez de passarem voando num toast: pet pode
+evoluir, subiu de nível, bateu a meta, recorde novo, streak num marco de bônus, e agora também as
+desistências do modo hardcore.
+
+**Antes de virar tarefa, decidir:** é uma quarta aba no cabeçalho (hoje são Plano / Análise / Perfil)
+ou um sininho com painel? Notificação é lida e some, ou fica como histórico? O que entra nela? E o
+principal — isso infla o app? O `CLAUDE.md` pede que feature nova resolva dor real. A dor que existia
+(ninguém ficava sabendo que o pet podia evoluir) já foi resolvida caso a caso pelo selo "✨ Pode
+evoluir" no Perfil e pela linha no resumo do dia. A aba só faz sentido quando houver mais coisa pra
+notificar do que cabe em toast e selo — hoje provavelmente não.
+
 ## Como esse arquivo deve crescer
 
 - Adicionar ideias soltas como bullets ou parágrafos curtos. Não precisa ser formal.
