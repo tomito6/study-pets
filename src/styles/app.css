@@ -866,7 +866,7 @@
      ================================================================================================ */
   #app.app-hidden{display:none;}
   @media (min-width:1100px){
-    #app{display:grid;grid-template-columns:190px 620px 240px;grid-template-rows:auto 1fr;column-gap:32px;justify-content:center;align-items:start;padding:0 30px;}
+    #app{display:grid;grid-template-columns:190px minmax(620px,800px) 240px;grid-template-rows:auto 1fr;column-gap:32px;justify-content:center;align-items:start;padding:0 30px;}
 
     /* trilho: só texto, um traço na aba ativa, o personagem com o pet no pé */
     .topbar{grid-column:1;grid-row:1 / -1;position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:26px 0 24px;background:transparent;backdrop-filter:none;border-bottom:0;}
@@ -889,7 +889,6 @@
     .rail-foot{order:11;display:flex;gap:16px;margin-top:12px;}
     .rail-foot .icon-btn{background:none;border:0;padding:0;font-size:12px;color:var(--muted);}
     .rail-foot .icon-btn:hover{color:var(--text);}
-    .fab-config{display:none;}
 
     /* a página, na coluna do meio */
     .main,.analytics-page,.profile-page{grid-column:2;grid-row:1 / -1;max-width:none;margin:0;padding:26px 0 100px;}
@@ -998,4 +997,43 @@
     .wv-blk.event.done{background:var(--orange);color:#0e0e0f;}
     .wv-blk.pausa.done,.wv-blk.longa.done{background:rgba(255,255,255,.14);color:#c9c9cf;}
     .wv-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent);pointer-events:none;}
+  }
+  /* Monitor grande (≥1600px): o grid cresce (a lista até 880px, que ainda se lê), as fontes sobem um degrau
+     e a Semana ocupa a altura da janela. Entre 1100 e 1600 a coluna do meio já estica até 800px. */
+  @media (min-width:1600px){
+    #app{grid-template-columns:240px minmax(800px,880px) 300px;column-gap:64px;padding:0 40px;}
+    .topbar-left .sub{font-size:12px;}
+    .nav-tab{font-size:19px;padding:9px 16px;}
+    .xp-badge{font-size:16px;}
+    .xp-badge .level-tag{font-size:12px;}
+    .rail-xp-sub{font-size:12px;}
+    .rail-char,.rail-pet{width:80px;height:80px;}
+    .rail-pet-name,.rail-foot .icon-btn{font-size:13px;}
+    .week-row select{font-size:16px;}
+    .vm-btn{font-size:13px;padding:6px 14px;}
+    .day-tab{font-size:14px;padding:8px 0 10px;}
+    .day-tab .day-num{font-size:12px;}
+    .add-event-btn{font-size:13px;}
+    .session-divider{font-size:11px;}
+    .block-row{padding:12px 14px;gap:16px;}
+    .block-time{font-size:13px;min-width:110px;}
+    .block-name{font-size:15px;}
+    .block-row.pausa-row .block-name{font-size:14px;}
+    .block-xp{font-size:12px;}
+    .check{width:20px !important;height:20px !important;}
+    .check svg{width:11px !important;height:11px !important;}
+    .group-header .gh-name{font-size:15px;}
+    .timer-time{font-size:44px;}
+    .timer-block-name{font-size:15px;}
+    .side-k{font-size:11px;}
+    .side-v{font-size:26px;}
+    .side-v small{font-size:13px;}
+    .side-dot{width:26px;height:26px;font-size:10px;}
+    .week-view{--wv-h:max(560px,calc(100vh - 210px));}
+    .wv-head,.wv-grid{grid-template-columns:40px repeat(7,1fr);gap:10px;}
+    .wv-day{font-size:14px;}
+    .wv-day b{font-size:12px;}
+    .wv-axis span{font-size:11px;}
+    .wv-blk{font-size:11.5px;padding:3px 7px;left:6px;right:6px;}
+    .wv-rest{font-size:12px;}
   }

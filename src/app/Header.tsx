@@ -41,11 +41,6 @@ function RailScene() {
   );
 }
 
-/** Configurações no trilho: aciona o ⚙️ flutuante (que o CSS esconde em tela grande) — o estado da página é dele. */
-function openSettings() {
-  document.getElementById('fab-config')?.click();
-}
-
 export function Header() {
   // computeStatsNow é memoizado por versão do store: o Plano e o cabeçalho pagam uma passada só.
   const { tab, totalXP } = useAppState((s) => ({ tab: s.uiTab, totalXP: computeStatsNow().totalXP }));
@@ -87,16 +82,8 @@ export function Header() {
             <div className="rail-xp-sub">{next ? strings.header.rail.toNext(next.threshold - totalXP, next.name) : strings.header.rail.maxLevel}</div>
           </div>
         )}
-        {wide ? (
-          <div className="rail-foot">
-            {tab === 'plano' && (
-              <button className="icon-btn" onClick={openSettings}>{strings.settings.fab}</button>
-            )}
-            {sair}
-          </div>
-        ) : (
-          sair
-        )}
+        {/* No pé do trilho só o Sair: o ⚙️ flutuante continua no laptop (o Tomi preferiu). */}
+        {wide ? <div className="rail-foot">{sair}</div> : sair}
       </div>
       {wide && <RailScene />}
     </div>
