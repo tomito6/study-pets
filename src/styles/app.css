@@ -866,7 +866,8 @@
      ================================================================================================ */
   #app.app-hidden{display:none;}
   @media (min-width:1100px){
-    #app{display:grid;grid-template-columns:190px minmax(620px,800px) 240px;grid-template-rows:auto 1fr;column-gap:32px;justify-content:center;align-items:start;padding:0 30px;}
+    /* as pontas (trilho e coluna da direita) absorvem a largura que sobrar; só a lista tem teto, porque mais larga não se lê */
+    #app{display:grid;grid-template-columns:minmax(190px,1fr) minmax(620px,800px) minmax(240px,1.3fr);grid-template-rows:auto 1fr;column-gap:clamp(32px,3vw,64px);align-items:start;padding:0 clamp(24px,3vw,64px);}
 
     /* trilho: só texto, um traço na aba ativa, o personagem com o pet no pé */
     .topbar{grid-column:1;grid-row:1 / -1;position:sticky;top:0;height:100vh;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:26px 0 24px;background:transparent;backdrop-filter:none;border-bottom:0;}
@@ -1001,13 +1002,13 @@
   /* Monitor grande (≥1600px): o grid cresce (a lista até 880px, que ainda se lê), as fontes sobem um degrau
      e a Semana ocupa a altura da janela. Entre 1100 e 1600 a coluna do meio já estica até 800px. */
   @media (min-width:1600px){
-    #app{grid-template-columns:240px minmax(800px,880px) 300px;column-gap:64px;padding:0 40px;}
+    #app{grid-template-columns:minmax(240px,1fr) minmax(800px,900px) minmax(300px,1.5fr);}
     .topbar-left .sub{font-size:12px;}
     .nav-tab{font-size:19px;padding:9px 16px;}
     .xp-badge{font-size:16px;}
     .xp-badge .level-tag{font-size:12px;}
     .rail-xp-sub{font-size:12px;}
-    .rail-char,.rail-pet{width:80px;height:80px;}
+    .rail-char,.rail-pet{width:96px;height:96px;}
     .rail-pet-name,.rail-foot .icon-btn{font-size:13px;}
     .week-row select{font-size:16px;}
     .vm-btn{font-size:13px;padding:6px 14px;}
@@ -1023,12 +1024,18 @@
     .check{width:20px !important;height:20px !important;}
     .check svg{width:11px !important;height:11px !important;}
     .group-header .gh-name{font-size:15px;}
-    .timer-time{font-size:44px;}
-    .timer-block-name{font-size:15px;}
-    .side-k{font-size:11px;}
-    .side-v{font-size:26px;}
-    .side-v small{font-size:13px;}
-    .side-dot{width:26px;height:26px;font-size:10px;}
+    .timer-bar{padding:20px 22px;}
+    .timer-time{font-size:52px;}
+    .timer-block-name{font-size:16px;}
+    .timer-stop,.vol-btn{font-size:14px;}
+    .plan-side{gap:30px;}
+    .side-k{font-size:12px;margin-bottom:6px;}
+    .side-v{font-size:32px;}
+    .side-v small{font-size:14px;margin-left:8px;}
+    .side-v.side-none,.side-v.side-closed{font-size:16px;}
+    .side-item .bar-track{height:4px;margin-top:10px;}
+    .side-dots{gap:8px;margin-top:12px;}
+    .side-dot{width:32px;height:32px;font-size:11px;}
     .week-view{--wv-h:max(560px,calc(100vh - 210px));}
     .wv-head,.wv-grid{grid-template-columns:40px repeat(7,1fr);gap:10px;}
     .wv-day{font-size:14px;}
