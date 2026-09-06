@@ -399,14 +399,16 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: /Perfil/ }).click();
     await expect(page.locator('#ap-lv')).toHaveText('Lv. 5');
     await page.getByRole('button', { name: /Meus pets/ }).click();
-    await page.locator('#my-pets-grid .shop-btn.evolve').click();
+    // O pet inicial também chegou no Lv. 5 (dia 1) e pode evoluir — mira no card do Bolt.
+    const bolt = page.locator('#my-pets-grid .shop-item', { hasText: 'Bolt' });
+    await bolt.locator('.shop-btn.evolve').click();
     await expect(page.locator('#pet-evolve-panel')).toBeVisible();
     await page.locator('#pet-evolve-panel .evo-path', { hasText: 'Lobo' }).click();
     await page.locator('#pet-evolve-panel').getByRole('button', { name: 'Evoluir', exact: true }).click();
     await expect(page.locator('#pet-evolve-panel')).toBeHidden();
-    await expect(page.locator('#my-pets-grid')).toContainText('Bolt');
-    await expect(page.locator('#my-pets-grid')).toContainText('Lobo');
-    await expect(page.locator('#my-pets-grid .shop-btn.evolve')).toHaveCount(0);
+    await expect(bolt).toContainText('Lobo');
+    await expect(bolt.locator('.shop-btn.evolve')).toHaveCount(0);
+    await expect(bolt.locator('.shop-item-evo-hint')).toHaveText('Evolui no Lv. 15'); // o lobo lunar vem depois
     await page.locator('#my-pets-panel .panel-close').click();
     await expect(page.locator('#pet-sprite')).toHaveAttribute('src', /idle\/pets\/wolf\//);
   });

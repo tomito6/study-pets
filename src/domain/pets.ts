@@ -10,23 +10,67 @@ import type { EvolutionPath, FormId, PetForm, PetId, PetInstance, PetSpecies } f
 
 const spriteOf = (form: FormId) => (i: number) => `idle/pets/${form}/${i}.png`;
 
+const form = (id: FormId, name: string, emoji: string, skills: string[]): PetForm => ({ id, name, emoji, frames: 4, sprite: spriteOf(id), skills });
+
+/**
+ * Toda forma que aparece na tela. Ao longo de um caminho, a forma seguinte
+ * **herda** as skills da anterior e ganha uma — evoluir nunca tira skill
+ * (teste garante). Os caminhos "selvagem"/"mítico" puxam pras skills de horário
+ * (noturno, lua cheia, madrugador); os de "companhia" pras de rotina.
+ */
 export const FORMS: Record<FormId, PetForm> = {
-  cat: { id: 'cat', name: 'Gato', emoji: '🐱', frames: 4, sprite: spriteOf('cat'), skills: ['preguica'] },
-  cow: { id: 'cow', name: 'Vaca', emoji: '🐮', frames: 4, sprite: spriteOf('cow'), skills: ['rumina'] },
-  snake: { id: 'snake', name: 'Cobra', emoji: '🐍', frames: 4, sprite: spriteOf('snake'), skills: ['constancia'] },
-  dove: { id: 'dove', name: 'Pomba', emoji: '🕊️', frames: 4, sprite: spriteOf('dove'), skills: ['madrugador', 'aula'] },
-  dog: { id: 'dog', name: 'Cachorro', emoji: '🐶', frames: 4, sprite: spriteOf('dog'), skills: ['fiel'] },
-  'dog-shepherd': { id: 'dog-shepherd', name: 'Pastor alemão', emoji: '🐕', frames: 4, sprite: spriteOf('dog-shepherd'), skills: ['fiel', 'aula'] },
-  wolf: { id: 'wolf', name: 'Lobo', emoji: '🐺', frames: 4, sprite: spriteOf('wolf'), skills: ['noturno', 'lua-cheia'] },
+  // cachorro
+  dog: form('dog', 'Cachorro', '🐶', ['fiel']),
+  'dog-shepherd': form('dog-shepherd', 'Pastor alemão', '🐕', ['fiel', 'aula']),
+  'dog-legend': form('dog-legend', 'Cão lendário', '🦮', ['fiel', 'aula', 'constancia']),
+  wolf: form('wolf', 'Lobo', '🐺', ['noturno', 'lua-cheia']),
+  'wolf-lunar': form('wolf-lunar', 'Lobo lunar', '🌙', ['noturno', 'lua-cheia', 'madrugador']),
+  // gato
+  cat: form('cat', 'Gato', '🐱', ['preguica']),
+  'cat-egyptian': form('cat-egyptian', 'Gato egípcio', '🐈‍⬛', ['preguica', 'aula']),
+  sphinx: form('sphinx', 'Esfinge', '🦁', ['preguica', 'aula', 'constancia']),
+  lynx: form('lynx', 'Lince', '🐈', ['preguica', 'noturno']),
+  tiger: form('tiger', 'Tigre', '🐯', ['preguica', 'noturno', 'lua-cheia']),
+  // cobra
+  snake: form('snake', 'Cobra', '🐍', ['constancia']),
+  naja: form('naja', 'Naja', '🐍', ['constancia', 'rumina']),
+  basilisk: form('basilisk', 'Basilisco', '👑', ['constancia', 'rumina', 'aula']),
+  'snake-wyrm': form('snake-wyrm', 'Serpe', '🐉', ['constancia', 'noturno']),
+  dragon: form('dragon', 'Dragão', '🐲', ['constancia', 'noturno', 'lua-cheia']),
+  // vaca
+  cow: form('cow', 'Vaca', '🐮', ['rumina']),
+  'cow-prize': form('cow-prize', 'Vaca premiada', '🐄', ['rumina', 'fiel']),
+  'cow-golden': form('cow-golden', 'Vaca dourada', '🏆', ['rumina', 'fiel', 'constancia']),
+  bull: form('bull', 'Touro', '🐂', ['rumina', 'madrugador']),
+  bison: form('bison', 'Bisão', '🦬', ['rumina', 'madrugador', 'noturno']),
+  // pomba
+  dove: form('dove', 'Pomba', '🕊️', ['madrugador', 'aula']),
+  'dove-fire': form('dove-fire', 'Pássaro de fogo', '🔥', ['madrugador', 'aula', 'lua-cheia']),
+  phoenix: form('phoenix', 'Fênix', '🐦‍🔥', ['madrugador', 'aula', 'lua-cheia', 'constancia']),
+  falcon: form('falcon', 'Falcão', '🦅', ['madrugador', 'aula', 'fiel']),
+  eagle: form('eagle', 'Águia', '🦅', ['madrugador', 'aula', 'fiel', 'constancia']),
 };
 
 /**
- * Nível em que o cachorro escolhe o caminho: 5 (320 XP ≈ 2h40 de estudo com o
- * pet equipado) — cedo o bastante pra dar senso de evolução. A transformação
- * maior (Lv. 30) é ideia futura — ver IDEIAS.md, "Pets: nome, evolução…".
+ * Os níveis dos dois estágios de todo caminho. O primeiro (a escolha) é 5
+ * (320 XP ≈ 2h40 de estudo com o pet equipado — cedo o bastante pra dar senso de
+ * evolução). O segundo é 15 (2520 XP ≈ 21h — umas três semanas de uso com o
+ * mesmo pet). IDEIAS.md falava em Lv. 30 pra transformação; 15 é a metade, pela
+ * mesma razão que a escolha desceu de 10 pra 5.
  */
-export const DOG_EVOLVE_LEVEL = 5;
+export const EVOLVE_LEVELS: readonly [number, number] = [5, 15];
 
+const twoStages = (id: string, name: string, desc: string, first: FormId, second: FormId): EvolutionPath => ({
+  id,
+  name,
+  desc,
+  stages: [
+    { level: EVOLVE_LEVELS[0], form: first },
+    { level: EVOLVE_LEVELS[1], form: second },
+  ],
+});
+
+/** Toda espécie tem dois caminhos, cada um com dois estágios (Lv. 5 e Lv. 15). */
 export const PETS: Record<PetId, PetSpecies> = {
   dog: {
     id: 'dog',
@@ -34,24 +78,50 @@ export const PETS: Record<PetId, PetSpecies> = {
     form: 'dog',
     names: ['Bolt', 'Thor', 'Mel', 'Pipoca', 'Rex', 'Luna', 'Caramelo', 'Nico'],
     paths: [
-      {
-        id: 'companheiro',
-        name: 'Companheiro',
-        desc: 'Continua cachorro e cresce: vira um pastor alemão, guardião da rotina.',
-        stages: [{ level: DOG_EVOLVE_LEVEL, form: 'dog-shepherd' }],
-      },
-      {
-        id: 'selvagem',
-        name: 'Selvagem',
-        desc: 'Atende ao chamado e vira lobo — mais forte à noite.',
-        stages: [{ level: DOG_EVOLVE_LEVEL, form: 'wolf' }],
-      },
+      twoStages('companheiro', 'Companheiro', 'Continua cachorro e cresce: pastor alemão, depois o cão lendário — o veterano da rotina.', 'dog-shepherd', 'dog-legend'),
+      twoStages('selvagem', 'Selvagem', 'Atende ao chamado: vira lobo, depois lobo lunar — mais forte à noite.', 'wolf', 'wolf-lunar'),
     ],
   },
-  cat: { id: 'cat', price: 150, form: 'cat', paths: [], names: ['Mia', 'Tom', 'Frida', 'Nina', 'Simba', 'Jade', 'Luna', 'Salem'] },
-  cow: { id: 'cow', price: 150, form: 'cow', paths: [], names: ['Mimosa', 'Malhada', 'Berta', 'Estrela', 'Dona', 'Preta'] },
-  snake: { id: 'snake', price: 150, form: 'snake', paths: [], names: ['Sibila', 'Ísis', 'Ônix', 'Zig', 'Medusa', 'Naja'] },
-  dove: { id: 'dove', price: 150, form: 'dove', paths: [], names: ['Paz', 'Alva', 'Nuvem', 'Cora', 'Pipo', 'Branca'] },
+  cat: {
+    id: 'cat',
+    price: 150,
+    form: 'cat',
+    names: ['Mia', 'Tom', 'Frida', 'Nina', 'Simba', 'Jade', 'Luna', 'Salem'],
+    paths: [
+      twoStages('sabio', 'Sábio', 'Guardião de templos: gato egípcio, depois esfinge — a que guarda os enigmas.', 'cat-egyptian', 'sphinx'),
+      twoStages('selvagem', 'Selvagem', 'Volta pra mata: lince, depois tigre.', 'lynx', 'tiger'),
+    ],
+  },
+  snake: {
+    id: 'snake',
+    price: 150,
+    form: 'snake',
+    names: ['Sibila', 'Ísis', 'Ônix', 'Zig', 'Medusa', 'Naja'],
+    paths: [
+      twoStages('ancestral', 'Ancestral', 'Ergue o capuz: naja, depois basilisco — a serpente coroada.', 'naja', 'basilisk'),
+      twoStages('mitico', 'Mítico', 'Cria chifres e escamas de brasa: serpe, depois dragão.', 'snake-wyrm', 'dragon'),
+    ],
+  },
+  cow: {
+    id: 'cow',
+    price: 150,
+    form: 'cow',
+    names: ['Mimosa', 'Malhada', 'Berta', 'Estrela', 'Dona', 'Preta'],
+    paths: [
+      twoStages('campea', 'Campeã', 'Estrela da feira: vaca premiada, depois vaca dourada.', 'cow-prize', 'cow-golden'),
+      twoStages('selvagem', 'Selvagem', 'Sai do pasto: touro, depois bisão.', 'bull', 'bison'),
+    ],
+  },
+  dove: {
+    id: 'dove',
+    price: 150,
+    form: 'dove',
+    names: ['Paz', 'Alva', 'Nuvem', 'Cora', 'Pipo', 'Branca'],
+    paths: [
+      twoStages('solar', 'Solar', 'Voa pro sol: pássaro de fogo, depois fênix.', 'dove-fire', 'phoenix'),
+      twoStages('rapina', 'Rapina', 'Vira ave de rapina: falcão, depois águia.', 'falcon', 'eagle'),
+    ],
+  },
 };
 
 export const PET_LIST: PetSpecies[] = Object.values(PETS);
@@ -122,6 +192,8 @@ export function petForm(pet: Pick<PetInstance, 'species' | 'path' | 'stage'>): P
 export interface EvolutionOption {
   path: EvolutionPath;
   form: PetForm;
+  /** O estágio seguinte do caminho (o que vem depois desta escolha), se houver. */
+  next: { form: PetForm; level: number } | null;
 }
 
 /**
@@ -147,7 +219,10 @@ export function evolutionOf(pet: PetInstance): Evolution {
     for (const path of species.paths) {
       const first = path.stages[0];
       const form = first && FORMS[first.form];
-      if (form) options.push({ path, form });
+      if (!form) continue;
+      const second = path.stages[1];
+      const nextForm = second && FORMS[second.form];
+      options.push({ path, form, next: second && nextForm ? { form: nextForm, level: second.level } : null });
     }
     if (options.length === 0) return null;
     const at = Math.min(...options.map((o) => o.path.stages[0]!.level));

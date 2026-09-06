@@ -124,13 +124,13 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `tests/` — Vitest sobre o domínio e a infra em memória
 - `e2e/` + `playwright.config.ts` — smoke test de ponta a ponta no modo teste
 - `public/idle/` — sprites (era `idle/` na raiz). O Vite copia `public/` pro `dist` preservando os caminhos, então o código continua pedindo `idle/user/0.png`
-- `public/idle/pets/{form}/` — convenção pra sprites de pets (uma pasta por **forma**: `dog`, `dog-shepherd`, `wolf`, `cat`, `snake`, `cow`, `dove`)
+- `public/idle/pets/{form}/` — convenção pra sprites de pets (uma pasta por **forma**, 25 hoje: as 5 espécies `dog`, `cat`, `snake`, `cow`, `dove` e as 4 formas de evolução de cada — ver "Evolução" em "Sistema de pets")
 - Sprites são frames sequenciais nomeados `0.png`, `1.png`, ...
 - `firestore.rules` — regras de acesso (só o dono lê/escreve `users/{uid}`)
 - `scripts/backup-firestore-console.js` — snippet pra baixar seu doc do Firestore pelo DevTools (pra quem não é o autor, o botão "Baixar meus dados" em Configurações → Geral faz o mesmo)
 - `scripts/app-icon.mjs` — gera os ícones do PWA em `public/icons/` a partir do personagem (`node scripts/app-icon.mjs`, Chromium headless do Playwright). Arte autoral; um ícone à mão substitui os PNGs
 - `public/manifest.webmanifest` e `public/icons/` — o manifest do PWA (estático) e os ícones 192/512/512-maskable/apple-touch
-- `scripts/pixel-sprites.mjs` — desenha em código os sprites placeholder de todas as formas (cachorro, pastor alemão, lobo, gato, cobra, vaca, pomba; `node scripts/pixel-sprites.mjs` → `public/idle/pets/{form}/`). Cada forma é uma função `(frame) → grid`. Arte autoral, 32×32 com transparência, no padrão do personagem; trocar por arte à mão quando houver
+- `scripts/pixel-sprites.mjs` — desenha em código os sprites placeholder das 25 formas (`node scripts/pixel-sprites.mjs` → `public/idle/pets/{form}/`). Cada forma é uma função `(frame) → grid`; as evoluções reaproveitam o corpo da família (`dogBody`, `catBody`, `snakeCoil`+`snakeHead`, `cowBody`, `doveBody`+`doveHead`) e mudam paleta + detalhes, e a forma-base de cada família sai pixel a pixel igual à anterior. Arte autoral, 32×32 com transparência, no padrão do personagem; trocar por arte à mão quando houver. Teste garante que toda forma do catálogo tem os 4 frames no disco
 - `dist/` — saída do build, não versionada
 
 ## Workflow
@@ -237,7 +237,7 @@ Valores e thresholds estão definidos no código (`LEVELS`, `calcXP`, etc.). Aqu
 **Modelo**: espécie ≠ forma ≠ instância.
 
 - **Espécie** (`PETS`) é o que a loja vende: preço, forma base, caminhos de evolução, sugestões de nome.
-- **Forma** (`FORMS`) é o que aparece na tela: nome, emoji, sprite, skills possíveis. Cachorro, Pastor alemão e Lobo são três formas; só Cachorro é espécie. Espécies hoje: Cachorro, Gato, Cobra, Vaca, Pomba (todas com sprite e pelo menos uma skill).
+- **Forma** (`FORMS`) é o que aparece na tela: nome, emoji, sprite, skills possíveis. Cachorro, Pastor alemão e Lobo são três formas; só Cachorro é espécie. Espécies hoje: Cachorro, Gato, Cobra, Vaca, Pomba (todas com sprite e pelo menos uma skill), cada uma com 4 formas de evolução — 25 formas ao todo.
 - **Espécie renomeada** passa por `SPECIES_RENAMES` (`owl` → `dove`: a coruja virou pomba em 2026-09-03). `normalizePetInstance` traduz na leitura e desliga skill que a forma atual não tem; o **id da instância continua o antigo** (`owl`), então checks salvos seguem creditando.
 - **Instância** (`PetInstance`, em `state.pets.owned`) é o pet adotado: `{ id, species, name, xp, path, stage, skill, skillActivatedAt, adoptedAt }`. Dá pra ter dois cachorros — cada um com nome e XP próprios. O id é o da espécie se estiver livre (`dog`), senão `dog-2`, `dog-3`. `state.pets.active` é o id da instância; `activeSince` marca quando foi equipada.
 
@@ -250,7 +250,22 @@ Adicionar um pet novo:
 
 **Nível do pet**: curva própria, separada da do usuário — o próximo nível custa `50 + 20·(nível−1)` XP (`petXpToNext`/`petLevelStart`/`petLevelFromXP`). Lv. 2 = 1 pomo, Lv. 10 ≈ 10h, Lv. 30 ≈ 80h. Sem teto.
 
-**Evolução**: a espécie declara `paths` (caminhos), cada um com `stages: [{ level, form }]`. `evolutionOf(pet)` diz o que está disponível: `choose` (chegou no nível e ainda não tem caminho — escolhe entre as opções), `advance` (próximo estágio do caminho), `locked` (falta nível) ou `null` (não evolui / fim do caminho). `evolve` devolve a instância nova: nome, XP e nível continuam; só `path`/`stage` mudam (a forma é derivada por `petForm`); skill que a forma nova não tem é desligada. **Definitivo.** Hoje: Cachorro → *Companheiro* (Pastor alemão) ou *Selvagem* (Lobo), no **Lv. 5** (`DOG_EVOLVE_LEVEL`; 320 XP ≈ 2h40 de estudo com o pet equipado — cedo o bastante pra dar senso de evolução). Uma transformação maior no Lv. 30 é ideia futura — ver IDEIAS.md. UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills); "Evolui no Lv. N" enquanto trancado.
+**Evolução**: a espécie declara `paths` (caminhos), cada um com `stages: [{ level, form }]`. `evolutionOf(pet)` diz o que está disponível: `choose` (chegou no nível e ainda não tem caminho — escolhe entre as opções), `advance` (próximo estágio do caminho), `locked` (falta nível) ou `null` (não evolui / fim do caminho). `evolve` devolve a instância nova: nome, XP e nível continuam; só `path`/`stage` mudam (a forma é derivada por `petForm`); skill que a forma nova não tem é desligada. **Definitivo.** **Toda espécie tem dois caminhos, cada um com dois estágios** (`EVOLVE_LEVELS = [5, 15]`, montados por `twoStages`): a **escolha** no **Lv. 5** (320 XP ≈ 2h40 de estudo com o pet equipado — cedo o bastante pra dar senso de evolução) e o **avanço** no **Lv. 15** (2520 XP ≈ 21h — umas três semanas com o mesmo pet; IDEIAS.md falava em Lv. 30, e 15 é a metade pela mesma razão que a escolha desceu de 10 pra 5). A árvore (protótipo de 2026-09-06):
+
+| Espécie | Caminho | Lv. 5 | Lv. 15 |
+|---|---|---|---|
+| Cachorro | Companheiro | Pastor alemão | Cão lendário (bandana, medalha, grisalho) |
+| Cachorro | Selvagem | Lobo | Lobo lunar (prateado, lua na testa) |
+| Gato | Sábio | Gato egípcio | Esfinge (nemes) |
+| Gato | Selvagem | Lince | Tigre |
+| Cobra | Ancestral | Naja | Basilisco (coroa) |
+| Cobra | Mítico | Serpe (chifres, brasa) | Dragão (asa, fogo) |
+| Vaca | Campeã | Vaca premiada (flor, sino) | Vaca dourada |
+| Vaca | Selvagem | Touro | Bisão |
+| Pomba | Solar | Pássaro de fogo | Fênix |
+| Pomba | Rapina | Falcão | Águia |
+
+Regra das skills ao longo do caminho: a **escolha** pode trocar (o lobo larga a Fiel e pega Noturno/Lua cheia — o selvagem é transformação), mas o **avanço** do Lv. 15 nunca tira, só acrescenta uma (teste garante). Os caminhos selvagem/mítico puxam pras skills de horário; os de companhia pras de rotina. UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills, e a linha `.evo-path-next` "depois: Tigre · Lv. 15" com o sprite do segundo estágio — `EvolutionOption.next`); no Lv. 15 o mesmo modal mostra só o próximo estágio (`advance`); "Evolui no Lv. N" enquanto trancado.
 
 A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). Os cards são `ShopPetCard` (espécie, com preço) e `OwnedPetCard` (instância, em "Meus pets").
 
@@ -296,7 +311,7 @@ Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPrompt
 
 ## Sistema de skills
 
-Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, rule }`. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma (Coruja e Lobo têm Noturno). Hoje: `noturno` (+5% em estudos a partir das 18h), `lua-cheia` (idem, 21h), `madrugador` (antes das 9h), `fiel` (+5% no 1º estudo do dia), `aula` (+5% em eventos que contam como estudo), `preguica` (estudo logo depois de uma pausa longa), `rumina` (estudo logo depois do almoço), `constancia` (o estudo/evento que faz o dia bater a meta). Quem tem: Cachorro → fiel · Pastor alemão → fiel, aula · Lobo → noturno, lua-cheia · Gato → preguica · Cobra → constancia · Vaca → rumina · Pomba → madrugador, aula. Toda espécie tem pelo menos uma (teste garante).
+Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, rule }`. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma (Coruja e Lobo têm Noturno). Hoje: `noturno` (+5% em estudos a partir das 18h), `lua-cheia` (idem, 21h), `madrugador` (antes das 9h), `fiel` (+5% no 1º estudo do dia), `aula` (+5% em eventos que contam como estudo), `preguica` (estudo logo depois de uma pausa longa), `rumina` (estudo logo depois do almoço), `constancia` (o estudo/evento que faz o dia bater a meta). Quem tem (a base, e o que cada estágio acrescenta): Cachorro → fiel · Pastor alemão +aula · Cão lendário +constancia · Lobo → noturno, lua-cheia · Lobo lunar +madrugador · Gato → preguica · Gato egípcio +aula · Esfinge +constancia · Lince +noturno · Tigre +lua-cheia · Cobra → constancia · Naja +rumina · Basilisco +aula · Serpe +noturno · Dragão +lua-cheia · Vaca → rumina · Vaca premiada +fiel · Vaca dourada +constancia · Touro +madrugador · Bisão +noturno · Pomba → madrugador, aula · Pássaro de fogo +lua-cheia · Fênix +constancia · Falcão +fiel · Águia +constancia. Toda espécie tem pelo menos uma (teste garante).
 
 **Uma skill ativa por pet**, guardada na instância (`pet.skill`); `pet.skillActivatedAt` marca a troca. Clicar na ativa desliga; clicar em outra troca; `toggleSkill` recusa skill que a forma não tem. Evoluir pra uma forma que não tem a skill ativa desliga ela.
 

@@ -94,7 +94,9 @@ Marcar um check dentro de algo com nome pesa mais do que dentro de "Sessão 2".
 > `plans/2026-09-03_1300_pets-instancias-evolucao.md`): instâncias + nome + curva de nível própria +
 > evolução do cachorro (Pastor alemão / Lobo) no **Lv. 5** — o Tomi preferiu 5 a 10: "as pessoas têm um
 > senso maior de evolução". Depois vieram os sprites de todo o catálogo e o pet inicial (ver seção
-> abaixo). Ainda por fazer: a transformação do Lv. 30, "XP em dobro pro pet", skins, faixas de preço.
+> abaixo). **2026-09-06**: a transformação virou o **segundo estágio de todo caminho, no Lv. 15** (metade
+> do 30, pela mesma razão do 5) — toda espécie tem dois caminhos de dois estágios; a árvore está no
+> CLAUDE.md ("Evolução"). Ainda por fazer: "XP em dobro pro pet", skins, faixas de preço.
 
 Rabisco a partir de quatro pedidos do Tomi: (1) obrigar a nomear o pet ao adotar, (2) pets evoluem em
 certos níveis com **escolha** (o cachorro pode continuar cachorro e pegar umas skills, ou virar lobo e

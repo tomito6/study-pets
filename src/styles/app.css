@@ -515,6 +515,8 @@
   .evo-path-sub { font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
   .evo-path-desc { font-size:11px; color:var(--muted); line-height:1.4; }
   .evo-path-skills { font-size:10px; color:var(--text); font-family:'DM Mono',monospace; margin-top:2px; }
+  .evo-path-next { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); font-size:10px; color:var(--muted); }
+  .evo-path-next img { width:24px; height:24px; image-rendering:pixelated; }
 
   /* ONBOARDING: pet inicial */
   .onb-intro { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.5; }

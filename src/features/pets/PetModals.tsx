@@ -139,7 +139,17 @@ export function RenamePetModal({ pet, onClose }: PetModalProps) {
 
 // ---------------------------------------------------------------- evoluir
 
-function PathCard({ form, sub, desc, selected, onSelect }: { form: PetForm; sub?: string; desc?: string; selected: boolean; onSelect?: () => void }) {
+interface PathCardProps {
+  form: PetForm;
+  sub?: string;
+  desc?: string;
+  /** O estágio que vem depois deste, quando o caminho tem mais de um. */
+  next?: { form: PetForm; level: number } | null;
+  selected: boolean;
+  onSelect?: () => void;
+}
+
+function PathCard({ form, sub, desc, next, selected, onSelect }: PathCardProps) {
   const skills = form.skills.map((id) => SKILLS[id]?.name).filter(Boolean).join(' · ');
   return (
     <button type="button" className={'evo-path' + (selected ? ' selected' : '')} onClick={onSelect} disabled={!onSelect}>
@@ -148,6 +158,12 @@ function PathCard({ form, sub, desc, selected, onSelect }: { form: PetForm; sub?
       {sub && <div className="evo-path-sub">{sub}</div>}
       {desc && <div className="evo-path-desc">{desc}</div>}
       {skills && <div className="evo-path-skills">{skills}</div>}
+      {next && (
+        <div className="evo-path-next">
+          <img src={next.form.sprite(0)} alt="" />
+          <span>{t.evolveNext(next.form.name, next.level)}</span>
+        </div>
+      )}
     </button>
   );
 }
@@ -170,7 +186,7 @@ function EvolveBody({ pet, onClose }: { pet: PetInstance; onClose: () => void })
       {evo.kind === 'choose' ? (
         <div className="evo-paths">
           {evo.options.map((o) => (
-            <PathCard key={o.path.id} form={o.form} sub={o.path.name} desc={o.path.desc} selected={chosen === o.path.id} onSelect={() => setChosen(o.path.id)} />
+            <PathCard key={o.path.id} form={o.form} sub={o.path.name} desc={o.path.desc} next={o.next} selected={chosen === o.path.id} onSelect={() => setChosen(o.path.id)} />
           ))}
         </div>
       ) : (

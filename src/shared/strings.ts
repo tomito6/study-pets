@@ -320,6 +320,7 @@ export const strings = {
     evolveTitle: (name: string) => `✨ ${name} pode evoluir`,
     evolveChoose: 'Escolha o caminho. A escolha é definitiva — nome, XP e nível continuam.',
     evolveAdvance: (form: string) => `Próximo estágio: ${form}. Nome, XP e nível continuam.`,
+    evolveNext: (form: string, level: number) => `depois: ${form} · Lv. ${level}`,
     evolveConfirm: 'Evoluir',
     evolved: (name: string, form: string) => `${name} evoluiu: ${form}! ✨`,
   },
