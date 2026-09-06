@@ -48,8 +48,8 @@ describe('domínio do fim do dia', () => {
     const dog: PetInstance = { id: 'dog', species: 'dog', name: 'Bolt', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 };
     const cat: PetInstance = { ...dog, id: 'cat', species: 'cat', name: 'Mia' };
     const snap = (dogXP: number, catXP: number) => ({ totalXP: 0, coins: 0, userLevelIdx: 0, petXP: { dog: dogXP, cat: catXP } });
-    const s = daySummary(snap(300, 300), snap(350, 350), [dog, cat]);
-    // 320 XP = Lv. 5, o nível da escolha do cachorro; o gato não evolui
+    const s = daySummary(snap(300, 100), snap(350, 160), [dog, cat]);
+    // 320 XP = Lv. 5, o nível da escolha; o gato subiu (Lv. 2 → 3) mas não chegou no dele
     expect(s.pets.map((p) => [p.id, p.levelUp, p.evolutionUnlocked])).toEqual([['dog', true, true], ['cat', true, false]]);
     // Já podia evoluir antes de hoje: não é novidade, não marca
     expect(daySummary(snap(350, 0), snap(400, 0), [dog]).pets[0]!.evolutionUnlocked).toBe(false);

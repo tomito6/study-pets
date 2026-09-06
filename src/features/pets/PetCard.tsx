@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { toggleEquip, toggleSkill } from '../../application/pets';
 import { evolutionOf, petForm, petLevel, speciesForm } from '../../domain/pets';
-import { SKILLS } from '../../domain/progression';
+import { SKILLS, skillDesc } from '../../domain/progression';
 import type { PetForm, PetInstance, PetSpecies } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
@@ -57,6 +57,7 @@ interface OwnedProps {
 export function OwnedPetCard({ pet, onRename, onEvolve }: OwnedProps) {
   const active = useAppState((s) => s.pets.active === pet.id);
   const form = petForm(pet);
+  const level = petLevel(pet);
   const evo = evolutionOf(pet);
   const skills = form.skills.map((id) => SKILLS[id]).filter((s): s is NonNullable<typeof s> => !!s);
 
@@ -66,7 +67,7 @@ export function OwnedPetCard({ pet, onRename, onEvolve }: OwnedProps) {
       <PetSprite form={form} />
       <div className="shop-item-name-row">
         <span className="shop-item-name">{pet.name}</span>
-        <span className="shop-item-lv">{t.lv(petLevel(pet))}</span>
+        <span className="shop-item-lv">{t.lv(level)}</span>
       </div>
       <div className="shop-item-species">
         <span>{form.name}</span>
@@ -88,7 +89,7 @@ export function OwnedPetCard({ pet, onRename, onEvolve }: OwnedProps) {
               <button type="button" key={skill.id} className={'pet-skill-row' + (on ? ' active' : '')} onClick={() => toggleSkill(pet.id, skill.id)}>
                 <span className="ps-info">
                   <span className="ps-name">{skill.name}</span>
-                  <span className="ps-desc">{skill.desc}</span>
+                  <span className="ps-desc">{skillDesc(skill, level)}</span>
                 </span>
                 <span className={'ps-toggle' + (on ? ' on' : '')}><span className="ps-knob" /></span>
               </button>
