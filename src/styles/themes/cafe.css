@@ -622,6 +622,7 @@
 }
 
 :root[data-theme="cafe"] .active-pet-card{border-color:var(--sage-line-2);}
+:root[data-theme="cafe"] .habitat .ap-sprite{background:none;}
 :root[data-theme="cafe"] .active-pet-card[role="button"]:hover,
 :root[data-theme="cafe"] .active-pet-card[role="button"]:focus-visible{border-color:var(--accent);}
 :root[data-theme="cafe"] .profile-stat-mini.coins-stat{border-color:var(--gold-border-soft);}

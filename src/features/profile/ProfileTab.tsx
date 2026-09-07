@@ -46,7 +46,12 @@ function ActivePetCard({ pet, onOpen }: { pet: PetInstance; onOpen: () => void }
   };
   return (
     <div className="active-pet-card" id="active-pet-card" role="button" tabIndex={0} onClick={onOpen} onKeyDown={onKey}>
-      {!spriteFailed && <img className="ap-sprite" id="ap-sprite" src={form.sprite(0)} alt={form.name} onError={() => setSpriteFailed(true)} />}
+      {/* A casa do pet: uma cena de campo (data-habitat — no futuro, outros habitats por aqui). */}
+      <div className="habitat" data-habitat="campo" aria-hidden="true">
+        <i className="hb-sun" /><i className="hb-hill hb-hill-b" /><i className="hb-hill hb-hill-a" /><i className="hb-tree" /><i className="hb-ground" />
+        {!spriteFailed && <img className="ap-sprite" id="ap-sprite" src={form.sprite(0)} alt={form.name} onError={() => setSpriteFailed(true)} />}
+      </div>
+      <div className="ap-body">
       <div className="ap-info">
         <div className="ap-tag">{t.activeTag}</div>
         <div className="ap-name-row">
@@ -59,6 +64,7 @@ function ActivePetCard({ pet, onOpen }: { pet: PetInstance; onOpen: () => void }
         <div className="ap-xp" id="ap-xp">{t.apXp(p.xp, p.nextThreshold, p.remaining, p.level + 1)}</div>
       </div>
       <span className="ap-chevron" aria-hidden="true">›</span>
+      </div>
     </div>
   );
 }

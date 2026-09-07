@@ -183,6 +183,9 @@
     --room-floor:#d3b38d; --room-floor-line:#b89a73; --room-rug:#c99979; --room-wood:#8c6447;
     --room-leaf:#71835c; --room-pot:#b78569; --room-mug:#fffaf0; --room-mug-line:#7b513a;
     --room-book-a:#5c724f; --room-book-b:#fff6df; --room-book-c:#b37655;
+    /* o habitat do pet no Perfil (features/profile/ProfileTab.tsx, .habitat[data-habitat=campo]) — arte, igual nos dois temas */
+    --hb-sky:#dfe8dc; --hb-sky-2:#eef1e6; --hb-sun:#f3dca0; --hb-hill:#b2c1a3; --hb-hill-2:#c9d4bb;
+    --hb-leaf:#71835c; --hb-grass:#9db387; --hb-grass-line:#7f9a6c;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;}
@@ -510,12 +513,26 @@
     background:linear-gradient(135deg, var(--accent-surface-a) 0%, var(--accent-surface-b) 100%);
     border:1px solid var(--accent2);
     border-radius:var(--radius);
-    padding:14px 16px;
+    padding:0;
     margin-bottom:12px;
     display:flex;
-    align-items:center;
-    gap:14px;
+    flex-direction:column;
+    align-items:stretch;
+    overflow:hidden;
   }
+  .active-pet-card .ap-body { display:flex; align-items:center; gap:14px; padding:14px 16px; }
+  /* O HABITAT: a casa do pet — céu, sol, dois morros, uma árvore e a grama; o pet parado no meio.
+     `data-habitat` é o gancho pra outros cenários no futuro (só "campo" existe hoje). */
+  .habitat { position:relative; height:150px; background:linear-gradient(var(--hb-sky) 0%, var(--hb-sky-2) 75%); overflow:hidden; }
+  .habitat i { position:absolute; display:block; }
+  .hb-sun { right:28px; top:18px; width:34px; height:34px; border-radius:50%; background:var(--hb-sun); }
+  .hb-hill { bottom:34px; border-radius:50% 50% 0 0; background:var(--hb-hill); }
+  .hb-hill-a { left:-40px; width:270px; height:72px; }
+  .hb-hill-b { right:-70px; width:320px; height:58px; background:var(--hb-hill-2); }
+  .hb-tree { left:38px; bottom:44px; width:8px; height:36px; border-radius:2px; background:var(--room-wood); }
+  .hb-tree::before { content:''; position:absolute; left:-19px; top:-32px; width:46px; height:42px; border-radius:50% 50% 45% 45%; background:var(--hb-leaf); }
+  .hb-ground { left:0; right:0; bottom:0; height:40px; background:var(--hb-grass); border-top:3px solid var(--hb-grass-line); }
+  .habitat .ap-sprite { position:absolute; left:50%; bottom:22px; width:64px; height:64px; transform:translateX(-50%); z-index:2; }
   .active-pet-card .ap-sprite { image-rendering:pixelated; image-rendering:crisp-edges; width:54px; height:54px; object-fit:contain; flex-shrink:0; }
   .active-pet-card .ap-info { flex:1; min-width:0; }
   .active-pet-card .ap-tag { font-size:9px; color:var(--accent2); text-transform:uppercase; letter-spacing:.1em; font-weight:600; margin-bottom:3px; }
@@ -1188,6 +1205,8 @@
     .timer-stop:hover{color:var(--text);}
     .plan-side{grid-column:1;grid-row:2;margin:0;padding:calc(26 * var(--s)) 0 0;display:flex;flex-direction:column;gap:calc(20 * var(--s));}
     .side-sub{font-size:calc(12 * var(--s));color:var(--muted);margin-top:calc(6 * var(--s));}
+    .habitat{height:calc(170 * var(--s));}
+    .habitat .ap-sprite{width:96px;height:96px;bottom:20px;}
     .side-k{font-family:var(--font-mono);font-size:calc(10 * var(--s));letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:calc(4 * var(--s));}
     .side-v{font-family:var(--font-mono);font-size:max(18px,calc(20 * var(--s)));font-weight:500;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums;}
     .side-v small{display:inline-block;font-family:var(--font-ui);font-size:calc(12 * var(--s));font-weight:400;color:var(--muted);margin-left:6px;}
