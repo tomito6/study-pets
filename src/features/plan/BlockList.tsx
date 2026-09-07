@@ -36,7 +36,7 @@ function refusal(dateKey: DateKey, now: Date): string | null {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 10 10" fill="none" stroke="#0e0e0f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="1.5,5 4,7.5 8.5,2.5" />
     </svg>
   );

@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { calcStreaksNow, computeStatsNow } from '../../application/plan';
 import {
-  HEAT_COLORS,
+  HEAT_LEVELS,
   currentWeekKeys,
   dropoff,
   goalWeek,
@@ -170,8 +170,7 @@ export function AnalyticsTab() {
               return (
                 <div
                   key={c.key}
-                  className="heatmap-cell"
-                  style={{ background: HEAT_COLORS[c.intensity] }}
+                  className={'heatmap-cell heat-' + c.intensity}
                   title={t.cellValue(day, c.isToday, c.done, min, c.pct)}
                 />
               );
@@ -179,7 +178,7 @@ export function AnalyticsTab() {
           </div>
           <div className="heatmap-legend">
             <span>0%</span>
-            {HEAT_COLORS.map((color) => <div key={color} className="lc" style={{ background: color }} />)}
+            {Array.from({ length: HEAT_LEVELS }, (_, i) => <div key={i} className={'lc heat-' + i} />)}
             <span>100%+</span>
           </div>
         </div>

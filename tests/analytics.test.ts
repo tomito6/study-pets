@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentWeekKeys, dropoff, goalWeek, heatmap, hourBars, nextLevel, sparkline } from '../src/domain/analytics';
+import { HEAT_LEVELS, currentWeekKeys, dropoff, goalWeek, heatmap, hourBars, nextLevel, sparkline } from '../src/domain/analytics';
 import type { RestKind } from '../src/domain/dayWindows';
 import { isWeekendKey } from '../src/domain/time';
 
@@ -73,6 +73,15 @@ describe('heatmap', () => {
     expect(byKey['2026-08-27']!.intensity).toBe(3);
     expect(byKey['2026-08-26']!.intensity).toBe(4);
     expect(byKey['2026-08-26']!.pct).toBe(200);
+  });
+
+  it('a intensidade fica entre 0 e HEAT_LEVELS − 1 — a cor de cada degrau mora no CSS, não no domínio', () => {
+    const done = { '2026-09-01': 10, '2026-08-31': 30, '2026-08-26': 120, '2026-08-25': 9999 };
+    for (const c of heatmap(done, { now: QUA, goal: 60 })) {
+      expect(c.intensity).toBeGreaterThanOrEqual(0);
+      expect(c.intensity).toBeLessThan(HEAT_LEVELS);
+    }
+    expect(HEAT_LEVELS).toBe(5);
   });
 
   it('meta zero: qualquer minuto acende no máximo', () => {

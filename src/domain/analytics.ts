@@ -73,14 +73,19 @@ export function goalWeek(
 
 // ---------------------------------------------------------------- heatmap 7 × N semanas
 
-export const HEAT_COLORS = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e635'] as const;
+/**
+ * Degraus de intensidade do heatmap: 0 = nada feito, 4 = meta batida. A cor de cada
+ * degrau mora no CSS (`--heat-0`…`--heat-4`, por tema) — o domínio só diz o degrau.
+ */
+export const HEAT_LEVELS = 5;
+const HEAT_MAX = HEAT_LEVELS - 1;
 
 export interface HeatCell {
   key: DateKey;
   date: Date;
   /** `day-off` = dia declarado livre, neutro como o fim de semana. */
   kind: 'future' | 'weekend-off' | 'day-off' | 'value';
-  /** 0–4, índice em HEAT_COLORS. */
+  /** 0–`HEAT_LEVELS - 1`; vira a classe `heat-N` da célula. */
   intensity: number;
   done: number;
   pct: number;
@@ -121,11 +126,11 @@ export function heatmap(
       let intensity: number;
       let pct: number;
       if (opts.goal <= 0) {
-        intensity = done > 0 ? 4 : 0;
+        intensity = done > 0 ? HEAT_MAX : 0;
         pct = done > 0 ? 100 : 0;
       } else {
         const raw = (done / opts.goal) * 100;
-        intensity = raw >= 100 ? 4 : Math.min(4, Math.floor(raw / 25));
+        intensity = raw >= 100 ? HEAT_MAX : Math.min(HEAT_MAX, Math.floor(raw / 25));
         pct = Math.round(raw);
       }
       cells.push({ key, date: d, kind: 'value', intensity, done, pct, isToday: key === todayKey });
