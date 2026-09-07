@@ -307,6 +307,29 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row.almoco-row', { hasText: 'Refeição' })).toContainText('19:00–20:00');
   });
 
+  test('32. aparência: escolher "Lamparina" troca o tema na hora, salva na conta e volta no reload', async ({ page }) => {
+    await abrirApp(page);
+    const html = page.locator('html');
+    await expect(html).toHaveAttribute('data-theme', 'dark'); // conta nova nasce no escuro
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Geral' }).click();
+    await expect(page.locator('#theme-picker .theme-option.selected')).toHaveAttribute('data-theme-id', 'dark');
+    await page.locator('#theme-picker .theme-option[data-theme-id="lamp"]').click();
+    // Aplica na hora, sem Salvar: o <html>, o card e a cor da barra do sistema (o --bg da Lamparina).
+    await expect(html).toHaveAttribute('data-theme', 'lamp');
+    await expect(page.locator('#theme-picker .theme-option.selected')).toHaveAttribute('data-theme-id', 'lamp');
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#17130f');
+    await page.locator('#settings-panel .st-back').click();
+
+    // Salvo na conta: mesmo sem o atalho do localStorage, o documento traz o tema de volta.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.evaluate(() => localStorage.removeItem('study-pets:theme'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(html).toHaveAttribute('data-theme', 'lamp');
+  });
+
   test('26. baixar meus dados gera um JSON com o documento do usuário', async ({ page }) => {
     await abrirApp(page);
     await checksDeEstudo(page).first().click();
