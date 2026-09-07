@@ -1,13 +1,48 @@
-// A coluna da direita do Plano no laptop: o XP pendente de hoje e a meta diária com os dots da semana.
-// Só existe em tela grande (o App só monta a partir de 1100px). A barra do timer fica logo acima, via CSS.
-// Rótulo e valor, sem cartão: a única caixa da coluna é o timer.
+// A coluna da esquerda do Plano no laptop (layout B7, 2026-09-07): o XP pendente de hoje, a meta diária,
+// e o quarto ilustrado com o personagem e o pet equipado. A barra do timer (o cartão "Agora · Iniciar")
+// vem logo abaixo, via CSS. Só existe em tela grande (o App só monta a partir de 1100px).
 
+import { activePet } from '../../application/pets';
 import { computeStatsNow, restKindOf } from '../../application/plan';
 import { goalWeek } from '../../domain/analytics';
 import { isDayClosed } from '../../domain/checks';
+import { petForm, petLevel } from '../../domain/pets';
 import { dk } from '../../domain/time';
 import { strings } from '../../shared/strings';
-import { useAppState } from '../../store/store';
+import { setTab, useAppState } from '../../store/store';
+import { useSpriteFrame } from '../profile/useSpriteFrame';
+
+const CHAR_FRAMES = 4;
+
+/** O quarto do pacote "Café de casa", em CSS: janela, mesa, planta, caneca — e os sprites de verdade. */
+function RoomCard() {
+  const pet = useAppState(() => activePet());
+  const form = pet ? petForm(pet) : null;
+  const charFrame = useSpriteFrame(CHAR_FRAMES, true);
+  const petFrame = useSpriteFrame(form?.frames ?? 1, !!form);
+  const t = strings.plan.room;
+  return (
+    <div className="room-card" id="room-card">
+      <div className="room" aria-hidden="true">
+        <div className="room-win"><i /></div>
+        <div className="room-floor" />
+        <div className="room-rug" />
+        <div className="room-plant"><b /><b /><b /><span /></div>
+        <div className="room-table"><div className="room-books" /><div className="room-mug" /></div>
+        <img className="room-char" src={`idle/user/${charFrame}.png`} alt="" />
+        {pet && form && <img className="room-pet" src={form.sprite(petFrame)} alt="" />}
+      </div>
+      <div className="room-copy">
+        <div className="room-head">
+          <h4>{pet ? pet.name : t.noPet}</h4>
+          {pet && <span className="room-lv">{t.level(petLevel(pet))}</span>}
+        </div>
+        <p>{pet ? t.tagline : t.noPetHint}</p>
+        <button className="room-link" onClick={() => setTab('perfil')}>{pet ? t.seePets : t.adopt}</button>
+      </div>
+    </div>
+  );
+}
 
 export function PlanSidebar() {
   const now = new Date();
@@ -21,7 +56,6 @@ export function PlanSidebar() {
   const done = stats.dayStudyDoneMins[todayKey] || 0;
   const pending = stats.todayXP > 0 || stats.todayCoins > 0;
   const t = strings.plan.side;
-  const days = strings.plan.days;
 
   return (
     <aside className="plan-side" id="plan-side">
@@ -42,19 +76,14 @@ export function PlanSidebar() {
         <div className="side-k">{t.goal(min)}</div>
         <div className="side-v">
           {done}
-          <small>{t.goalDays(goal.metCount, goal.totalDays)}</small>
+          <small>{t.goalMin}</small>
         </div>
         <div className="bar-track">
           <div className="bar-fill" style={{ width: `${Math.min(100, Math.round((done / min) * 100))}%` }} />
         </div>
-        <div className="side-dots">
-          {goal.dots.map((d) => (
-            <span key={d.key} className={'side-dot ' + d.kind + (d.isToday ? ' today' : '')} title={days[d.dayIdx]}>
-              {days[d.dayIdx]![0]}
-            </span>
-          ))}
-        </div>
+        <div className="side-sub">{t.goalDaysShort(goal.metCount, goal.totalDays)}</div>
       </div>
+      <RoomCard />
     </aside>
   );
 }

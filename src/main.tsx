@@ -3,13 +3,8 @@
 import './styles/app.css';
 import './styles/login.css';
 
-// Os pacotes de tema. Cada um só vale sob `:root[data-theme="<slug>"]`, então importar
-// todos é inofensivo: sem o atributo no `<html>`, o app fica no escuro original.
+// O tema Café de casa (o padrão). Só vale sob `:root[data-theme="cafe"]`; sem o atributo, o escuro.
 import './styles/themes/cafe.css';
-import './styles/themes/noturno.css';
-import './styles/themes/papel.css';
-import './styles/themes/salvia.css';
-import './styles/themes/misto.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

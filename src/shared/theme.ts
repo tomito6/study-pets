@@ -1,14 +1,14 @@
-// O tema visual do app: o escuro original mais os cinco pacotes de `src/styles/themes/`.
+// O tema visual do app: o Café de casa (claro, o padrão desde 2026-09-07) e o escuro original.
 //
 // Cada arquivo de tema só vale sob `:root[data-theme="<slug>"]`, então trocar de tema é
 // trocar um atributo no `<html>` — nenhum CSS é carregado ou descarregado, nada de geometria
-// muda. O escuro original é a ausência do atributo (é o que `src/styles/app.css` já pinta).
+// muda. O escuro é a ausência do atributo (é o que `src/styles/app.css` pinta por padrão).
 //
 // Isolado de propósito: sem React, sem store, sem persistência na nuvem. O tema é uma
 // preferência DESTE dispositivo (localStorage), como a sessão hardcore — e a querystring
-// `?tema=<slug>` existe pra comparar os pacotes lado a lado sem entrar em Configurações.
+// `?tema=<slug>` existe pra abrir num tema específico sem entrar em Configurações.
 
-export type ThemeId = 'escuro' | 'cafe' | 'noturno' | 'papel' | 'salvia' | 'misto';
+export type ThemeId = 'cafe' | 'escuro';
 
 export type ThemeInfo = {
   id: ThemeId;
@@ -16,22 +16,18 @@ export type ThemeInfo = {
   descricao: string;
 };
 
-/** O catálogo, na ordem em que aparece no seletor. `escuro` é o padrão e vem primeiro. */
+/** O catálogo, na ordem em que aparece no seletor. `cafe` é o padrão e vem primeiro. */
 export const TEMAS: ThemeInfo[] = [
-  { id: 'escuro', nome: 'Original', descricao: 'O escuro de sempre, com o verde-limão.' },
-  { id: 'cafe', nome: 'Café de casa', descricao: 'Papel creme, tinta marrom, verde sálvia.' },
-  { id: 'noturno', nome: 'Café noturno', descricao: 'O mesmo café, à noite: escuro quente.' },
-  { id: 'papel', nome: 'Papel', descricao: 'Caderno de estudo: fio e respiro, sem caixa.' },
-  { id: 'salvia', nome: 'Sálvia', descricao: 'Claro, com o verde como superfície.' },
-  { id: 'misto', nome: 'Misto', descricao: 'O café de casa com o verde-limão do app.' },
+  { id: 'cafe', nome: 'Café de casa', descricao: 'Claro: papel creme, tinta marrom, verde sálvia.' },
+  { id: 'escuro', nome: 'Escuro', descricao: 'O escuro de sempre, com o verde-limão.' },
 ];
 
 const STORAGE_KEY = 'sp-theme';
 const QUERY_KEY = 'tema';
-const DEFAULT_THEME: ThemeId = 'escuro';
+const DEFAULT_THEME: ThemeId = 'cafe';
 
 /** Os temas cujo fundo é claro — vira o `color-scheme` do documento (inputs nativos). */
-const LIGHT: ThemeId[] = ['cafe', 'papel', 'salvia', 'misto'];
+const LIGHT: ThemeId[] = ['cafe'];
 
 const IDS = TEMAS.map((t) => t.id);
 
@@ -73,7 +69,7 @@ function readQuery(): ThemeId | null {
 
 /**
  * O tema que vale agora: `?tema=<slug>` vence (e fica gravado, pra sobreviver ao reload),
- * senão o que estiver no localStorage, senão o escuro original.
+ * senão o que estiver no localStorage, senão o Café de casa.
  */
 export function readTheme(): ThemeId {
   const fromQuery = readQuery();
@@ -94,7 +90,7 @@ export function applyTheme(id: ThemeId): void {
   const root = globalThis.document?.documentElement;
   if (!root) return;
 
-  if (id === DEFAULT_THEME) root.removeAttribute('data-theme');
+  if (id === 'escuro') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', id);
 
   root.style.colorScheme = LIGHT.includes(id) ? 'light' : 'dark';

@@ -42,6 +42,7 @@ export const strings = {
   },
   header: {
     sair: 'Sair',
+    brand: 'study pets',
     xp: (total: number) => `${total} XP`,
     /** O trilho da tela grande (≥1100px). */
     rail: {
@@ -52,6 +53,15 @@ export const strings = {
     },
   },
   plan: {
+    /** O quarto do pacote "Café de casa", na coluna do laptop. */
+    room: {
+      tagline: 'Boa companhia para o seu próximo passo.',
+      seePets: 'Ver meus pets →',
+      noPet: 'Sem pet equipado',
+      noPetHint: 'Adote um na loja e ele vem morar aqui.',
+      adopt: 'Adotar um pet →',
+      level: (lv: number) => `Lv. ${lv}`,
+    },
     xpTotal: 'XP Total',
     weekXp: (xp: number) => `Semana: ${xp} XP`,
     todayNone: 'Hoje: —',
@@ -87,6 +97,8 @@ export const strings = {
       none: 'Nada marcado ainda',
       goal: (min: number) => `Meta diária · ${min} min`,
       goalDays: (met: number, total: number) => `min · ${met} de ${total} dias esta semana`,
+      goalMin: 'min',
+      goalDaysShort: (met: number, total: number) => `${met} de ${total} dias`,
     },
     week: {
       hour: (h: number) => `${h}h`,
@@ -541,6 +553,13 @@ export const strings = {
     },
   },
   timer: {
+    /** O cartão "Agora · Iniciar" do laptop, quando nenhum timer roda. */
+    now: {
+      kicker: (time: string) => `Agora · ${time}`,
+      next: (time: string) => `Próximo · ${time}`,
+      dur: (min: number, type: string) => `${min} min de ${type === 'pausa' ? 'pausa' : 'estudo'}`,
+      start: 'Iniciar',
+    },
     inProgress: 'Em andamento',
     startsIn: 'Começa em',
     stop: '✕ Parar',
