@@ -7,6 +7,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Study Pets">
 <meta name="theme-color" content="#0e0e0f">
+<!-- Aparência: aplica o tema guardado antes do primeiro paint (senão o app pisca no escuro até o documento chegar).
+     As chaves são as de src/infrastructure/theme.ts, que grava aqui a cada troca; o documento do usuário confirma ou corrige depois. -->
+<script>
+  try {
+    var t = localStorage.getItem('study-pets:theme');
+    if (t) document.documentElement.setAttribute('data-theme', t);
+    var c = localStorage.getItem('study-pets:theme-color');
+    if (c) document.querySelector('meta[name="theme-color"]').setAttribute('content', c);
+  } catch (e) {}
+</script>
 <title>Study Pets</title>
 <!-- PWA: ícones gerados por scripts/app-icon.mjs a partir do personagem; o manifest é estático em public/. -->
 <link rel="manifest" href="/manifest.webmanifest">

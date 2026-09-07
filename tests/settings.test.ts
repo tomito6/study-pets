@@ -55,6 +55,9 @@ describe('rascunho ↔ config', () => {
 
   it('campo numérico vazio vira NaN (quem salva decide)', () => {
     expect(Number.isNaN(normalizeConfig({ ...defaultDraft(), pomo: '' }, null).pomo)).toBe(true);
+    // o tema não passa pelo formulário: vem de fora (padrão escuro)
+    expect(normalizeConfig(defaultDraft(), null).theme).toBe('dark');
+    expect(normalizeConfig(defaultDraft(), null, 'oat').theme).toBe('oat');
   });
 
   it('meta diária é grampeada em 15–240 e cai em 60 se não for número', () => {

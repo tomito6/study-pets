@@ -16,11 +16,12 @@ import { scheduleSave } from './save';
 export type SaveSettingsResult = { ok: true } | { ok: false; reason: 'incomplete' };
 
 /**
- * Salva a rotina. `periodStart` é fixo por sessão: vem do estado, nunca do
- * formulário. Campo numérico vazio não é salvo — antes isso gravava NaN.
+ * Salva a rotina. `periodStart` é fixo por sessão e `theme` é preferência (o card
+ * Aparência aplica e salva na hora): os dois vêm do estado, nunca do formulário.
+ * Campo numérico vazio não é salvo — antes isso gravava NaN.
  */
 export function saveSettings(draft: ConfigDraft): SaveSettingsResult {
-  const newCfg = normalizeConfig(draft, state.config.periodStart);
+  const newCfg = normalizeConfig(draft, state.config.periodStart, state.config.theme);
   if (hasMissingNumbers(newCfg)) return { ok: false, reason: 'incomplete' };
 
   const visibleKey = currentDayKey();
@@ -42,7 +43,7 @@ export function cancelSession(): void {
   state.events = {};
   state.eventSeries = [];
   state.closedDays = {};
-  state.config = { ...DEFAULT_CFG };
+  state.config = { ...DEFAULT_CFG, theme: state.config.theme }; // a aparência é preferência: fica, como o tour visto
   state.pets = emptyPets();
   state.coinsSpent = 0;
   state.groups = {};

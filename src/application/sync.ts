@@ -20,6 +20,7 @@ import type { Unsubscribe } from '../infrastructure/ports';
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
+import { syncThemeFromState } from './appearance';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, rebuildWeeks } from './plan';
 import { CLIENT_ID, hasPendingSave } from './save';
@@ -70,6 +71,7 @@ export function applyRemoteDoc(raw: unknown, now: Date = new Date()): SyncOutcom
   rebuildWeeks(now);
   clearBlockCache();
   applyPendingPetXP(now); // idempotente — rodar de novo é seguro
+  syncThemeFromState(); // o tema escolhido no outro dispositivo entra junto
   notify();
   showToast(strings.sync.updated);
   return 'applied';

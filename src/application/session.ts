@@ -9,6 +9,7 @@ import { auth, users } from '../infrastructure';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, markAuthReady, notify, state } from '../store/store';
+import { syncThemeFromState } from './appearance';
 import { scheduleEndOfDayPrompt } from './dayEnd';
 import { resumeHardcoreOnBoot, watchExtensionQueries } from './hardcore';
 import { endHardcoreSession } from './hardcoreRuntime';
@@ -98,6 +99,7 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
 /** O que acontece depois de carregar: XP pendente, prompt de fim de dia, dia visível. */
 export function initAfterLoad(now: Date = new Date()): void {
   applyPendingPetXP(now);
+  syncThemeFromState(); // o doc é a fonte da verdade da aparência; o <html> passa a refletir o que ele diz
   setTimeout(() => scheduleEndOfDayPrompt(), 600);
   state.uiWeek = findWeek(now);
   const week = derived.weeks[state.uiWeek - 1];

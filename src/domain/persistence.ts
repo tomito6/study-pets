@@ -18,6 +18,7 @@ import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
+import { normalizeTheme } from './theme';
 import { normalizeTutorialSeen } from './tutorial';
 import type { TutorialSeen } from './tutorial';
 import type {
@@ -230,7 +231,13 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     // nasce deles. (O código original fazia ao contrário e a janela padrão 09–18
     // engolia os horários reais do usuário — corrigido na Fase 4.)
     // `hardcore` sempre normalizado: doc de antes do modo (sem o campo) fica desligado.
-    config: { ...DEFAULT_CFG, ...migrateConfig(rawCfg), hardcore: normalizeHardcoreConfig(rawCfg.hardcore) } as UserConfig,
+    // `theme` idem: doc de antes dos temas (sem o campo, ou com id desconhecido) fica no escuro.
+    config: {
+      ...DEFAULT_CFG,
+      ...migrateConfig(rawCfg),
+      hardcore: normalizeHardcoreConfig(rawCfg.hardcore),
+      theme: normalizeTheme(rawCfg.theme),
+    } as UserConfig,
     pets: hydratePets(d),
     closedDays: isObj(d.closedDays) ? (d.closedDays as Record<DateKey, boolean>) : {},
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,

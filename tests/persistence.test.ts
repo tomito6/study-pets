@@ -112,6 +112,14 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc({ config: { hardcore: { enabled: true, mode: 'whitelist', sites: ['https://Wikipedia.org/x'] } } }).config.hardcore).toEqual({ enabled: true, mode: 'whitelist', sites: ['wikipedia.org'] });
   });
 
+  it('documento de antes dos temas (config sem `theme`) nasce no escuro; id desconhecido também; id válido fica', () => {
+    expect(hydrateUserDoc({ config: { pomo: 40 } }).config.theme).toBe('dark');
+    expect(hydrateUserDoc({ config: { ...DEFAULT_CFG, theme: undefined } }).config.theme).toBe('dark');
+    expect(hydrateUserDoc({ config: { ...DEFAULT_CFG, theme: 'neon' } }).config.theme).toBe('dark');
+    expect(hydrateUserDoc({ config: { ...DEFAULT_CFG, theme: 'paper' } }).config.theme).toBe('paper');
+    expect(serializeState({ ...emptyPersistedState(), config: { ...DEFAULT_CFG, theme: 'oat' } }).config.theme).toBe('oat');
+  });
+
   it('checks antigos salvos como `true` passam intactos', () => {
     const checks = { '2026-05-07': { '09:00': true } };
     expect(hydrateUserDoc({ checks }).checks).toEqual(checks);

@@ -3,6 +3,8 @@
 // os formatos antigos que ainda precisam carregar. Nada aqui conhece DOM, React,
 // Firebase ou estado global.
 
+import type { ThemeId } from './theme';
+
 /** Horário no formato "HH:MM" (relógio local do usuário). */
 export type TimeString = string;
 
@@ -34,6 +36,8 @@ export interface UserConfig {
   dailyStudyMin: number;
   /** Modo hardcore: sair de um estudo no foco custa XP (ver domain/hardcore.ts). */
   hardcore: HardcoreConfig;
+  /** Aparência: o tema do app (ver domain/theme.ts). É preferência, não configuração do dia. */
+  theme: ThemeId;
 }
 
 export type HardcoreMode = 'blacklist' | 'whitelist';

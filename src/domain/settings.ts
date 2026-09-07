@@ -4,6 +4,8 @@
 import { DEFAULT_CFG } from './config';
 import { normalizeHardcoreConfig, normalizeSites } from './hardcore';
 import { calcActualEnd, generateBlocks } from './planner';
+import { DEFAULT_THEME } from './theme';
+import type { ThemeId } from './theme';
 import { timeToMins } from './time';
 import type { DateKey, HardcoreMode, PlannerConfig, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
 
@@ -99,8 +101,12 @@ export function deriveStartEnd(windows: StudyWindow[]): { start: TimeString; end
   };
 }
 
-/** O formulário vira config. Campo numérico vazio vira NaN — quem salva decide o que fazer. */
-export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null): UserConfig {
+/**
+ * O formulário vira config. Campo numérico vazio vira NaN — quem salva decide o que fazer.
+ * `periodStart` (fixo por sessão) e `theme` (preferência, aplicada na hora pelo card Aparência)
+ * não passam pelo formulário: vêm de fora, do estado.
+ */
+export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null, theme: ThemeId = DEFAULT_THEME): UserConfig {
   const studyWindows = draft.studyWindows.filter(isValidWindow);
   return {
     ...deriveStartEnd(studyWindows),
@@ -109,6 +115,7 @@ export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null)
     shortBreak: parseInt(draft.shortBreak, 10),
     longBreak: parseInt(draft.longBreak, 10),
     periodStart,
+    theme,
     periodEnd: draft.periodEnd || null,
     skipWeekends: draft.skipWeekends,
     dailyStudyMin: sanitizeDailyStudyMin(parseInt(draft.dailyStudyMin, 10)),

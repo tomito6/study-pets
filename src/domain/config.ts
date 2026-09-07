@@ -1,5 +1,6 @@
 // Config padrão e migração de configs antigas.
 
+import { DEFAULT_THEME } from './theme';
 import type { PlannerConfig, StudyWindow, UserConfig } from './types';
 
 export const DEFAULT_CFG: UserConfig = {
@@ -15,6 +16,7 @@ export const DEFAULT_CFG: UserConfig = {
   skipWeekends: false,
   dailyStudyMin: 60,
   hardcore: { enabled: false, mode: 'blacklist', sites: [] },
+  theme: DEFAULT_THEME,
 };
 
 /**
