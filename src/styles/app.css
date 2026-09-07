@@ -1116,7 +1116,7 @@
   .avatar-menu #avatar-sair{color:var(--danger-soft);}
 
   @media (min-width:1100px){
-    #app{--s:calc(100vw / 1480);--topbar-h:68px;display:grid;grid-template-columns:calc(300 * var(--s)) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:calc(36 * var(--s));padding:0 calc(48 * var(--s));align-items:start;}
+    #app{--s:calc(100vw / 1480);--topbar-h:68px;--col-k:1;display:grid;grid-template-columns:calc(300 * var(--s) * var(--col-k)) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:calc(36 * var(--s));padding:0 calc(48 * var(--s));align-items:start;}
 
     /* a barra do topo (layout B7): a marca à esquerda, as abas como texto no meio, XP e avatar à direita —
        medidas do pacote (padding 19×28, marca 20px, abas 12px, XP 11px, avatar 30px) */
@@ -1213,12 +1213,9 @@
     .timer-stop:hover{color:var(--text);}
     /* a coluna é um painel da altura da janela: Hoje/Meta e o quarto em cima (rolam por dentro se não couberem,
        sem barra), o cartão Agora sempre no pé. O quarto encolhe com a altura da janela (clamp em vh). */
-    .plan-col{grid-column:1;grid-row:2 / 4;align-self:start;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));display:flex;flex-direction:column;align-items:stretch;}
+    .plan-col{grid-column:1;grid-row:2 / 4;align-self:start;position:sticky;zoom:var(--col-k);top:calc(var(--topbar-h) / var(--col-k));height:calc((100vh - var(--topbar-h)) / var(--col-k));display:flex;flex-direction:column;align-items:stretch;}
     .plan-side{flex:1 1 auto;min-height:0;overflow:auto;scrollbar-width:none;}
     .plan-side::-webkit-scrollbar{display:none;}
-    .room{height:calc(190px * var(--room-k, 1));}
-    .room-stage{top:auto;bottom:0;height:190px;transform:translateX(-50%) scale(var(--room-k, 1));transform-origin:50% 100%;}
-    .room-floor{height:calc(58px * var(--room-k, 1));border-top-width:calc(4px * var(--room-k, 1));}
     .plan-side{margin:0;padding:calc(26 * var(--s)) 0 0;display:flex;flex-direction:column;gap:calc(20 * var(--s));}
     .side-sub{font-size:calc(12 * var(--s));color:var(--muted);margin-top:calc(6 * var(--s));}
     .habitat{height:calc(170 * var(--s));}
@@ -1266,17 +1263,8 @@
     .wv-blk.pausa.done,.wv-blk.longa.done{background:var(--surface-strong);color:var(--text-soft);}
     .wv-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow-tight);pointer-events:none;}
   }
-  /* laptop: o quarto encolhe por faixa de altura da janela (a composição inteira, proporcional) */
-  @media (min-width:1100px) and (max-height:900px){ .plan-col{--room-k:.84;} }
-  /* laptop com pouca altura (tela pequena, escala do Windows): a coluna encolhe pra caber sem cobrir nada */
-  @media (min-width:1100px) and (max-height:760px){
-    .plan-side{padding-top:calc(16 * var(--s));gap:calc(12 * var(--s));}
-    .plan-col{--room-k:.62;}
-    .room-copy{padding:10px 16px;}
-    .room-copy p,.room-link{display:none;}
-    .room-head{margin-bottom:0;}
-    .room-head h4{font-size:16px;}
-    .timer-bar{margin:calc(12 * var(--s)) 0 calc(16 * var(--s));padding:calc(16 * var(--s)) calc(18 * var(--s));}
-    .timer-bar.idle .timer-block-name{font-size:20px;margin-top:4px;}
-    .agora-start{margin-top:12px;min-height:44px;font-size:15px;}
-  }
+  /* laptop com pouca altura (tela pequena, escala do Windows): a coluna da esquerda encolhe INTEIRA — zoom, como
+     Análise e Perfil — mantendo as proporções (o card do pet, o Agora, Hoje/Meta), e a lista ganha a largura que sobra */
+  @media (min-width:1100px) and (max-height:900px){ #app{--col-k:.92;} }
+  @media (min-width:1100px) and (max-height:820px){ #app{--col-k:.85;} }
+  @media (min-width:1100px) and (max-height:720px){ #app{--col-k:.75;} }
