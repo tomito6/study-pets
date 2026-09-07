@@ -1,5 +1,12 @@
 # Temas de aparência (Escuro · Lamparina · Papel · Aveia)
 
+> **Branch de reserva — não vai pra `main`.** Em 2026-09-07 estes commits chegaram a entrar na `main`
+> (PR #1, fast-forward) e foram retirados de lá no mesmo dia: o Tomi preferiu seguir com a linguagem
+> visual do **Café de casa** (branch `feat/tema-cafe`, que tem a tokenização própria dela). Esta branch
+> fica parada como reserva, pra caso alguma destas paletas seja aproveitada depois. Se um dia for
+> reaproveitada: a tokenização daqui (item 1) e a do Café de casa mexem nas mesmas linhas do `app.css`,
+> então é escolher uma das duas como base, não juntar as duas.
+
 Branch `feat/temas`, a partir de `origin/main` (835cb30, 2026-09-07). Cinco commits, um por item.
 
 ## O que entrou
