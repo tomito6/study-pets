@@ -1,4 +1,4 @@
-:root {
+:root, .tp-preview[data-theme="dark"] {
     /* ==================== TOKENS DE COR ====================
        Toda cor do app lê daqui (CLAUDE.md, "Aparência (temas)"). Os temas em `:root[data-theme="…"]`,
        no fim deste arquivo, só redefinem tokens — nunca estilo de componente. Os `--x-rgb` são o mesmo
@@ -1061,6 +1061,26 @@
     .wv-blk.pausa.done,.wv-blk.longa.done{background:var(--overlay-mid);color:var(--text-soft);}
     .wv-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent);pointer-events:none;}
   }
+
+  /* APARÊNCIA — o card dos temas (Configurações → Geral; features/settings/SettingsPage.tsx). Aplicar é imediato
+     e já salva. A miniatura .tp-preview leva data-theme e é pintada com os tokens do próprio tema (o bloco de
+     cada tema, abaixo, também casa com ela); o resto do cartão é o tema atual. */
+  .theme-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .theme-option{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif;text-align:left;transition:border-color .15s,box-shadow .15s;}
+  .theme-option:hover{border-color:var(--border-hover);}
+  .theme-option.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .theme-option:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .tp-preview{display:block;height:64px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border);padding:8px 10px;}
+  .tp-card{display:flex;flex-direction:column;justify-content:center;gap:4px;height:100%;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:6px 8px;}
+  .tp-sw{display:block;height:5px;border-radius:99px;}
+  .tp-sw-accent{width:70%;background:var(--accent);}
+  .tp-sw-text{width:55%;background:var(--text);}
+  .tp-sw-muted{width:40%;background:var(--muted);}
+  .tp-sw-orange{width:28%;background:var(--orange);}
+  .tp-name{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;font-weight:600;margin-top:2px;}
+  .tp-check{color:var(--accent-text);font-size:12px;}
+  .tp-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+  @media (max-width:360px){ .theme-picker{grid-template-columns:1fr;} }
 
   /* ================================================================================================
      TEMAS — só tokens, nunca estilo de componente (CLAUDE.md, "Aparência (temas)").

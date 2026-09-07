@@ -456,6 +456,16 @@ export const strings = {
       desc: 'Quanto você precisa estudar num dia para manter a sequência e ganhar o bônus de moedas.',
       label: 'Minutos por dia (15–240)',
     },
+    appearance: {
+      title: 'Aparência',
+      desc: 'A cara do app. Muda na hora e fica salva na sua conta, em todos os dispositivos.',
+      themes: {
+        dark: { name: 'Escuro', desc: 'O de sempre: preto com verde-lima.' },
+        lamp: { name: 'Lamparina', desc: 'Escuro e quente, âmbar no lugar do lima.' },
+        paper: { name: 'Papel', desc: 'Claro e editorial, verde-musgo no acento.' },
+        oat: { name: 'Aveia', desc: 'Claro e aconchegante, creme com sálvia.' },
+      },
+    },
     data: {
       title: 'Meus dados',
       desc: 'Tudo que o app guarda sobre você, num arquivo seu.',

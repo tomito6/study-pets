@@ -6,11 +6,13 @@
 // ids/classes do markup antigo — CSS e smoke test dependem deles.
 
 import { useRef, useState } from 'react';
+import { setTheme } from '../../application/appearance';
 import { exportMyData } from '../../application/export';
 import { saveSettings } from '../../application/settings';
 import { restartTour } from '../../application/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
+import { THEME_IDS } from '../../domain/theme';
 import { extensionDetected } from '../../infrastructure/extensionBridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
@@ -36,6 +38,7 @@ function Switch({ id, checked, onChange }: { id: string; checked: boolean; onCha
 
 export function SettingsPage() {
   const tab = useAppState((s) => s.uiTab);
+  const theme = useAppState((s) => s.config.theme);
   const [open, setOpen] = useState(false);
   const [stab, setStab] = useState<SettingsTab>('general');
   const [draft, setDraft] = useState<ConfigDraft>(() => draftFromConfig(state.config));
@@ -191,6 +194,42 @@ export function SettingsPage() {
                 <div className="st-card">
                   <div className="st-field-label">{t.goal.label}</div>
                   <input type="number" id="cfg-daily-study-min" min="15" max="240" step="15" value={draft.dailyStudyMin} onChange={(e) => patch({ dailyStudyMin: e.target.value })} />
+                </div>
+              </div>
+
+              {/* Aparência: diferente do resto do formulário, aplicar é imediato e já salva (como equipar pet) — não entra no rascunho. */}
+              <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{t.appearance.title}</div></div>
+                <div className="st-section-desc">{t.appearance.desc}</div>
+                <div className="st-card">
+                  <div className="theme-picker" id="theme-picker" role="radiogroup" aria-label={t.appearance.title}>
+                    {THEME_IDS.map((id) => (
+                      <button
+                        type="button"
+                        key={id}
+                        role="radio"
+                        aria-checked={theme === id}
+                        className={'theme-option' + (theme === id ? ' selected' : '')}
+                        data-theme-id={id}
+                        onClick={() => setTheme(id)}
+                      >
+                        {/* a miniatura é pintada com os tokens do próprio tema (data-theme casa com o bloco dele no CSS) */}
+                        <span className="tp-preview" data-theme={id} aria-hidden="true">
+                          <span className="tp-card">
+                            <i className="tp-sw tp-sw-accent" />
+                            <i className="tp-sw tp-sw-text" />
+                            <i className="tp-sw tp-sw-muted" />
+                            <i className="tp-sw tp-sw-orange" />
+                          </span>
+                        </span>
+                        <span className="tp-name">
+                          {t.appearance.themes[id].name}
+                          {theme === id && <span className="tp-check">✓</span>}
+                        </span>
+                        <span className="tp-desc">{t.appearance.themes[id].desc}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
