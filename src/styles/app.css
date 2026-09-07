@@ -1192,7 +1192,7 @@
     .finish-day-btn,.finish-day-banner{font-size:calc(14 * var(--s));padding:calc(14 * var(--s));}
 
     /* a coluna da direita: o timer é a única caixa; o resto é rótulo e valor */
-    .timer-bar{position:sticky;top:calc(var(--topbar-h) + 20 * var(--s));bottom:calc(24 * var(--s));margin:calc(18 * var(--s)) 0 0;background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
+    .timer-bar{position:relative;top:auto;flex-shrink:0;margin:calc(18 * var(--s)) 0 calc(24 * var(--s));background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
     .timer-bar.idle{display:flex;}
     .timer-bar.active > div:first-child{order:1;}
     .timer-bar > div:first-child > div:first-child{font-size:calc(10 * var(--s)) !important;}
@@ -1203,7 +1203,12 @@
     .vol-slider{width:calc(60 * var(--s));}
     .timer-stop{order:3;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);}
     .timer-stop:hover{color:var(--text);}
-    .plan-col{grid-column:1;grid-row:2 / 4;align-self:stretch;display:flex;flex-direction:column;align-items:stretch;}
+    /* a coluna é um painel da altura da janela: Hoje/Meta e o quarto em cima (rolam por dentro se não couberem,
+       sem barra), o cartão Agora sempre no pé. O quarto encolhe com a altura da janela (clamp em vh). */
+    .plan-col{grid-column:1;grid-row:2 / 4;align-self:start;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));display:flex;flex-direction:column;align-items:stretch;}
+    .plan-side{flex:1 1 auto;min-height:0;overflow:auto;scrollbar-width:none;}
+    .plan-side::-webkit-scrollbar{display:none;}
+    .room{height:clamp(112px, 22vh, 190px);}
     .plan-side{margin:0;padding:calc(26 * var(--s)) 0 0;display:flex;flex-direction:column;gap:calc(20 * var(--s));}
     .side-sub{font-size:calc(12 * var(--s));color:var(--muted);margin-top:calc(6 * var(--s));}
     .habitat{height:calc(170 * var(--s));}
@@ -1250,4 +1255,18 @@
     .wv-blk.event.done{background:var(--orange);color:var(--on-orange);}
     .wv-blk.pausa.done,.wv-blk.longa.done{background:var(--surface-strong);color:var(--text-soft);}
     .wv-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow-tight);pointer-events:none;}
+  }
+  /* laptop com pouca altura (zoom do navegador, tela pequena): a coluna encolhe pra caber sem cobrir nada */
+  @media (min-width:1100px) and (max-height:760px){
+    .plan-side{padding-top:calc(16 * var(--s));gap:calc(12 * var(--s));}
+    .room{height:112px;}
+    .room-stage{transform:translateX(-50%) scale(.8);transform-origin:50% 100%;}
+    .room-floor{height:46px;}
+    .room-copy{padding:10px 16px;}
+    .room-copy p,.room-link{display:none;}
+    .room-head{margin-bottom:0;}
+    .room-head h4{font-size:16px;}
+    .timer-bar{margin:calc(12 * var(--s)) 0 calc(16 * var(--s));padding:calc(16 * var(--s)) calc(18 * var(--s));}
+    .timer-bar.idle .timer-block-name{font-size:20px;margin-top:4px;}
+    .agora-start{margin-top:12px;min-height:44px;font-size:15px;}
   }

@@ -137,6 +137,22 @@ function finishTimer(now: Date = new Date()): void {
 }
 
 /** "✕ Parar": cancela sem som nem notificação. No hardcore não existe — só `quitHardcore`. */
+/**
+ * "Iniciar" pedido fora da lista (o cartão Agora do laptop). Quem decide o caminho é o PlanTab, que é
+ * dono do consentimento do hardcore: ele lê `derived.startRequest`, chama o mesmo `startBlock` do
+ * clique na linha e limpa. Assim o cartão nunca fura o hardcore.
+ */
+export function requestStartBlock(block: StudyBlock): void {
+  derived.startRequest = block;
+  notify();
+}
+
+export function clearStartRequest(): void {
+  if (!derived.startRequest) return;
+  derived.startRequest = null;
+  notify();
+}
+
 export function stopTimer(): void {
   if (derived.hardcore) return;
   clearWatcher();

@@ -8,7 +8,7 @@ import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
-import { tryStartTimer } from '../../application/timer';
+import { clearStartRequest, tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
@@ -213,11 +213,6 @@ export function PlanTab() {
     cancelSelection(); // trocou de dia: a seleção era do outro
   }, [viewKey, cancelSelection]);
 
-  if (!loaded) return null;
-
-  const stats = computeStatsNow(now);
-  const { eD, eT, pD, pT } = dayProgress(viewKey, blocks);
-
   // Tocar num estudo/pausa: com o hardcore ligado, o consentimento vem antes; senão, o foco abre direto.
   const startBlock = (b: StudyBlock, at: Date) => {
     if (hardcoreEnabled()) {
@@ -227,6 +222,20 @@ export function PlanTab() {
     const r = tryStartTimer(b, at);
     if (!r.ok) showToast(strings.timer.refusal(r));
   };
+
+  // O cartão Agora (laptop) pede o início pelo store; aqui ele vira o mesmo caminho do clique na linha.
+  const startRequest = useAppState((_s, d) => d.startRequest);
+  useEffect(() => {
+    if (!startRequest || !loaded) return;
+    clearStartRequest();
+    startBlock(startRequest, new Date());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startRequest]);
+
+  if (!loaded) return null;
+
+  const stats = computeStatsNow(now);
+  const { eD, eT, pD, pT } = dayProgress(viewKey, blocks);
 
   const openEditGroup = (g: StudyGroup) => {
     if (selection.active) {

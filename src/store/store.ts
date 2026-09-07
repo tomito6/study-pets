@@ -68,6 +68,8 @@ export interface Derived {
   focusOpen: boolean;
   /** Preenchido quando o foco emenda de um bloco no seguinte; limpo ao parar/iniciar. */
   timerCompleted: CompletedBlock | null;
+  /** Um "Iniciar" pedido fora da lista (o cartão Agora do laptop); o PlanTab atende e limpa. */
+  startRequest: StudyBlock | null;
   audio: AudioSettings;
   save: SaveStatus;
   authReady: boolean;
@@ -82,6 +84,7 @@ export const derived: Derived = {
   timerBlock: null,
   focusOpen: false,
   timerCompleted: null,
+  startRequest: null,
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,

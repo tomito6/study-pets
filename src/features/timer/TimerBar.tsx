@@ -5,12 +5,11 @@
 // que está acontecendo (ou o próximo) e um botão pra entrar nele — a mesma porta do clique na lista.
 
 import { blocksForDay } from '../../application/plan';
-import { setVolume, stopTimer, toggleMute, tryStartTimer } from '../../application/timer';
+import { requestStartBlock, setVolume, stopTimer, toggleMute } from '../../application/timer';
 import { blockDurationMin, canStartBlock, cleanBlockName, timerProgress } from '../../domain/timer';
 import { dk } from '../../domain/time';
 import type { StudyBlock } from '../../domain/types';
 import { strings } from '../../shared/strings';
-import { showToast } from '../../shared/toast';
 import { useWide } from '../../shared/useWide';
 import { useAppState } from '../../store/store';
 import { useMinuteTick } from '../plan/useMinuteTick';
@@ -27,12 +26,11 @@ function agoraBlock(now: Date): StudyBlock | null {
 }
 
 export function TimerBar() {
-  const { block, tab, audio, hardcore, hardcoreOn } = useAppState((s, d) => ({
+  const { block, tab, audio, hardcore } = useAppState((s, d) => ({
     block: d.timerBlock,
     tab: s.uiTab,
     audio: d.audio,
     hardcore: !!d.hardcore,
-    hardcoreOn: !!s.config.hardcore?.enabled,
   }));
   const wide = useWide();
   const active = !!block && tab === 'plano';
@@ -49,22 +47,17 @@ export function TimerBar() {
     const b = agoraBlock(now);
     if (!b) return <div className="timer-bar" id="timer-bar" />;
     const running = timerProgress(b, now).phase === 'running';
-    const start = () => {
-      const r = tryStartTimer(b, new Date());
-      if (!r.ok) showToast(t.refusal(r));
-    };
+    // O PlanTab atende: com hardcore ligado abre o consentimento, senão inicia (e mostra o motivo se recusar).
+    const start = () => requestStartBlock(b);
     return (
       <div className="timer-bar idle" id="timer-bar">
         <div className="agora-k">{running ? t.now.kicker(b.time) : t.now.next(b.time)}</div>
         <div className="timer-block-name" id="timer-block-name">{cleanBlockName(b.name)}</div>
         <div className="agora-dur">{t.now.dur(blockDurationMin(b), b.type)}</div>
-        {/* No hardcore o começo passa pelo consentimento da lista (custo escrito) — aqui só mostra. */}
-        {!hardcoreOn && (
-          <button className="agora-start" id="agora-start" onClick={start}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
-            <span>{t.now.start}</span>
-          </button>
-        )}
+        <button className="agora-start" id="agora-start" onClick={start}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+          <span>{t.now.start}</span>
+        </button>
       </div>
     );
   }
