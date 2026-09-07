@@ -1116,7 +1116,7 @@
   .avatar-menu #avatar-sair{color:var(--danger-soft);}
 
   @media (min-width:1100px){
-    #app{--s:calc(100vw / 1480);--topbar-h:68px;--col-k:1;display:grid;grid-template-columns:calc(300 * var(--s) * var(--col-k)) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:calc(36 * var(--s));padding:0 calc(48 * var(--s));align-items:start;}
+    #app{--s:calc(100vw / 1480);--topbar-h:68px;--col-k:1;display:grid;grid-template-columns:calc(272 * var(--s) * var(--col-k)) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:calc(36 * var(--s));padding:0 calc(48 * var(--s));align-items:start;}
 
     /* a barra do topo (layout B7): a marca à esquerda, as abas como texto no meio, XP e avatar à direita —
        medidas do pacote (padding 19×28, marca 20px, abas 12px, XP 11px, avatar 30px) */
