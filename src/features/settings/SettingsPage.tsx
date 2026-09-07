@@ -5,9 +5,9 @@
 // O formulário é um rascunho (`ConfigDraft`) que só vira config ao Salvar. Mesmos
 // ids/classes do markup antigo — CSS e smoke test dependem deles.
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { exportMyData } from '../../application/export';
-import { saveSettings } from '../../application/settings';
+import { clearSettingsRequest, saveSettings } from '../../application/settings';
 import { restartTour } from '../../application/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
@@ -51,6 +51,14 @@ export function SettingsPage() {
     setOpen(true);
   };
   const close = () => setOpen(false);
+  // A barra do laptop (engrenagem, menu do avatar) pede pra abrir pelo store: atende com o mesmo openSettings.
+  const settingsRequest = useAppState((_s, d) => d.settingsRequest);
+  useEffect(() => {
+    if (!settingsRequest) return;
+    clearSettingsRequest();
+    openSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsRequest]);
   const switchTab = (next: SettingsTab) => {
     setStab(next);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;

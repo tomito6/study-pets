@@ -70,6 +70,8 @@ export interface Derived {
   timerCompleted: CompletedBlock | null;
   /** Um "Iniciar" pedido fora da lista (o cartão Agora do laptop); o PlanTab atende e limpa. */
   startRequest: StudyBlock | null;
+  /** "Abrir Configurações" pedido pela barra do laptop; a SettingsPage atende e limpa. */
+  settingsRequest: boolean;
   audio: AudioSettings;
   save: SaveStatus;
   authReady: boolean;
@@ -85,6 +87,7 @@ export const derived: Derived = {
   focusOpen: false,
   timerCompleted: null,
   startRequest: null,
+  settingsRequest: false,
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,

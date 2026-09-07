@@ -43,6 +43,8 @@ export const strings = {
   header: {
     sair: 'Sair',
     brand: 'study pets',
+    settings: 'Configurações',
+    menu: 'Conta',
     xp: (total: number) => `${total} XP`,
     /** O trilho da tela grande (≥1100px). */
     rail: {

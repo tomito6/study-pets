@@ -24,13 +24,16 @@ function RoomCard() {
   return (
     <div className="room-card" id="room-card">
       <div className="room" aria-hidden="true">
-        <div className="room-win"><i /></div>
         <div className="room-floor" />
-        <div className="room-rug" />
-        <div className="room-plant"><b /><b /><b /><span /></div>
-        <div className="room-table"><div className="room-books" /><div className="room-mug" /></div>
-        <img className="room-char" src={`idle/user/${charFrame}.png`} alt="" />
-        {pet && form && <img className="room-pet" src={form.sprite(petFrame)} alt="" />}
+        {/* O palco é a composição de 300×190; em janela baixa o CSS encolhe ele inteiro (escala), não corta. */}
+        <div className="room-stage">
+          <div className="room-win"><i /></div>
+          <div className="room-rug" />
+          <div className="room-plant"><b /><b /><b /><span /></div>
+          <div className="room-table"><div className="room-books" /><div className="room-mug" /></div>
+          <img className="room-char" src={`idle/user/${charFrame}.png`} alt="" />
+          {pet && form && <img className="room-pet" src={form.sprite(petFrame)} alt="" />}
+        </div>
       </div>
       <div className="room-copy">
         <div className="room-head">

@@ -5,9 +5,10 @@
 // esquerda, as abas como texto no meio, e à direita o XP com o avatar (que é o Sair). Abaixo disso o
 // DOM é o de sempre — o celular não muda.
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { computeStatsNow } from '../application/plan';
 import { signOut } from '../application/session';
+import { requestSettings } from '../application/settings';
 import { getLevel } from '../domain/progression';
 import { strings } from '../shared/strings';
 import { useWide } from '../shared/useWide';
@@ -15,6 +16,44 @@ import { setTab, TABS, useAppState } from '../store/store';
 
 function todayLabel(): string {
   return new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+/** A engrenagem da barra (traço, estilo lucide). */
+function GearIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+/** O avatar com a inicial: abre um menu (Configurações · Sair). Clicar fora ou Esc fecha. */
+function AvatarMenu({ initial }: { initial: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  const t = strings.header;
+  return (
+    <div className="avatar-wrap" ref={ref}>
+      <button className="avatar-btn" id="avatar-btn" onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} aria-label={t.menu}>
+        {initial}
+      </button>
+      {open && (
+        <div className="avatar-menu" role="menu" id="avatar-menu">
+          <button role="menuitem" onClick={() => { setOpen(false); requestSettings(); }}>{t.settings}</button>
+          <button role="menuitem" id="avatar-sair" onClick={() => { setOpen(false); void signOut(); }}>{t.sair}</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** A pata da marca (traço, estilo lucide — o mesmo do pacote). */
@@ -63,10 +102,8 @@ export function Header() {
         <div className="topbar-right">
           <span className="sub" id="today-label" hidden>{today}</span>
           {xp}
-          {/* O avatar é o Sair: o pacote tem só a inicial no círculo, sem botão de texto. */}
-          <button className="avatar-btn" onClick={() => void signOut()} aria-label={strings.header.sair} title={strings.header.sair}>
-            {initial}
-          </button>
+          <button className="gear-btn" id="gear-btn" onClick={requestSettings} aria-label={strings.header.settings} title={strings.header.settings}><GearIcon /></button>
+          <AvatarMenu initial={initial} />
         </div>
       </div>
     );

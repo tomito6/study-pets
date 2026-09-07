@@ -6,7 +6,7 @@ import { hasMissingNumbers, normalizeConfig } from '../domain/settings';
 import type { ConfigDraft } from '../domain/settings';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
-import { notify, state } from '../store/store';
+import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
 import { openOnboarding } from './onboarding';
@@ -54,4 +54,16 @@ export function cancelSession(): void {
   notify();
   openOnboarding();
   showToast(strings.settings.cancel.done);
+}
+
+/** A barra do laptop pede pra abrir as Configurações; a página (dona do estado "aberta") atende e limpa. */
+export function requestSettings(): void {
+  derived.settingsRequest = true;
+  notify();
+}
+
+export function clearSettingsRequest(): void {
+  if (!derived.settingsRequest) return;
+  derived.settingsRequest = false;
+  notify();
 }
