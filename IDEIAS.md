@@ -674,6 +674,26 @@ no Dia; (4) a granularidade do arrasto (múltiplos de 5 min, como o "Começar ag
 é UI em cima de casos de uso que já existem — `addEvent`/`updateEvent`, `setDayWindows`,
 `toggleBlockCheck`, `addGroup` — então o domínio não muda; o trabalho é o gesto.
 
+## Janelas do dia: tirar "Restaurar rotina" / "Começar agora" e escolher os pomodoros num dropdown — 2026-09-07
+
+Pedido do Tomi no fim do dia do layout B7 (café de casa no laptop). O modal "Janelas do dia" hoje tem
+"▶ Começar agora", "🌴 Dia livre" e "↺ Restaurar rotina" — dois desses (Começar agora e Restaurar rotina)
+ele quer **fora**. No lugar, um **dropdown** que abre a escolha dos pomodoros: o ritmo (pomo / pausa curta /
+pausa longa) escolhido ali mesmo, no contexto do dia, em vez de só em Configurações → Estrutura do dia ou pelo
+"Encaixar estudo".
+
+E a parte interessante: essa escolha poderia **depender das janelas de estudo, ou até do grupo**. Ou seja,
+uma janela da manhã com pomos de 25, a da tarde com 50; um grupo "Análise II" com o ritmo dele. Hoje o ritmo é
+um só por config (`pomo/shortBreak/longBreak` em `UserConfig`) — pra isso virar realidade, o ritmo teria que
+morar na janela (`studyWindows[i].rhythm?`) e/ou no grupo (`StudyGroup.rhythm?`), e o `generateBlocks` ler
+o ritmo da janela em que está. Grupo é anotação por horário, então "ritmo do grupo" seria o gerador reagir a
+uma anotação — muda a regra "grupo nunca entra no generateBlocks" (CLAUDE.md). Pensar antes de implementar.
+
+Pendências menores do B7 que ficaram pra depois, pra não perder:
+- as abas do laptop continuam "Plano · Análise · Perfil"; o pacote dizia "Meu plano · Meus pets · Progresso"
+- o "chão" que o tema café desenha atrás do personagem no hero do Perfil ficou estranho com o hero largo
+- a frase do pet ("Boa companhia…") quebra em duas linhas com a coluna em 240
+
 ## Como esse arquivo deve crescer
 
 - Adicionar ideias soltas como bullets ou parágrafos curtos. Não precisa ser formal.
