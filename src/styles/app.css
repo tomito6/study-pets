@@ -1109,7 +1109,7 @@
   .avatar-btn:hover{filter:brightness(.96);}
 
   @media (min-width:1100px){
-    #app{--s:calc(100vw / 1480);display:grid;grid-template-columns:calc(300 * var(--s)) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:calc(36 * var(--s));padding:0 calc(48 * var(--s));align-items:start;}
+    #app{--s:calc(100vw / 1480);--topbar-h:68px;display:grid;grid-template-columns:calc(300 * var(--s)) minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:calc(36 * var(--s));padding:0 calc(48 * var(--s));align-items:start;}
 
     /* a barra do topo (layout B7): a marca à esquerda, as abas como texto no meio, XP e avatar à direita —
        medidas do pacote (padding 19×28, marca 20px, abas 12px, XP 11px, avatar 30px) */
@@ -1135,7 +1135,7 @@
     .view-mode{display:inline-flex;background:var(--bg2);border-radius:var(--radius-md);padding:2px;flex-shrink:0;}
     .vm-btn{background:none;border:0;border-radius:var(--radius-sm);padding:calc(5 * var(--s)) calc(12 * var(--s));font-size:calc(12 * var(--s));font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:color .15s,background .15s;}
     .vm-btn.on{background:var(--surface-hover-solid);color:var(--text);}
-    .day-tabs{gap:6px;margin-bottom:0;}
+    .day-tabs{gap:6px;margin-bottom:0;position:sticky;top:var(--topbar-h);z-index:5;background:var(--bg);}
     .day-tab{flex:1;padding:calc(6 * var(--s)) 0 calc(8 * var(--s));border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;font-size:calc(13 * var(--s));line-height:1.15;}
     .day-tab .day-num{display:block;font-family:var(--font-mono);font-weight:400;font-size:calc(11 * var(--s));color:var(--text-dim);margin-top:1px;}
     .day-tab:hover{border-color:transparent;color:var(--text-soft);}
@@ -1143,7 +1143,7 @@
     .day-tab.active .day-num{color:var(--accent2);}
     .day-tab .dot{top:4px;right:calc(50% - 18px);}
     .day-events-bar{gap:calc(18 * var(--s));padding:calc(12 * var(--s)) 0 2px;margin-bottom:0;}
-    .day-events-bar{gap:8px;}
+    .day-events-bar{gap:8px;position:sticky;top:calc(var(--topbar-h) + 44 * var(--s));z-index:5;background:var(--bg);}
     .add-event-btn{border:1px solid var(--border-strong);background:var(--bg2);border-radius:8px;padding:6px 12px;min-height:34px;color:var(--text);font-size:12px;font-weight:500;}
     .add-event-btn:hover{background:var(--surface-hover);color:var(--text);}
     #add-event-btn{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
@@ -1192,7 +1192,7 @@
     .finish-day-btn,.finish-day-banner{font-size:calc(14 * var(--s));padding:calc(14 * var(--s));}
 
     /* a coluna da direita: o timer é a única caixa; o resto é rótulo e valor */
-    .timer-bar{grid-column:1;grid-row:3;position:static;margin:calc(18 * var(--s)) 0 0;background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
+    .timer-bar{grid-column:1;grid-row:3;position:sticky;top:calc(var(--topbar-h) + 20 * var(--s));margin:calc(18 * var(--s)) 0 0;background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
     .timer-bar.idle{display:flex;}
     .timer-bar.active > div:first-child{order:1;}
     .timer-bar > div:first-child > div:first-child{font-size:calc(10 * var(--s)) !important;}

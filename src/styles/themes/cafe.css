@@ -770,7 +770,6 @@
   /* o card do timer é a única caixa da coluna — ganha papel, hairline sálvia,
      a sombra chapada e a barrinha vertical de 4px do pacote */
   :root[data-theme="cafe"] .timer-bar{
-    position:relative;
     background:var(--bg2);
     border:1px solid var(--sage-line);
     box-shadow:0 3px 0 var(--flat);
