@@ -1,0 +1,566 @@
+/* Café noturno — o mesmo café de casa, à noite: escuridão de café torrado no lugar do quase-preto frio.
+
+   A ideia: o app já era escuro, e continua escuro — o que muda é a temperatura. Todo neutro sai da faixa
+   azulada (#0e0e0f, #18181b, #232328, #2e2e35) e passa a viver entre 28° e 40° de matiz, com 12–20% de
+   saturação: grão de café, não carvão. O verde-limão #a3e635 (que é cor de terminal, não de xícara) dá
+   lugar a um SÁLVIA CLARO — a mesma família do #486244 do tema claro, só clareada até passar folgado em
+   contraste sobre o fundo. O terracota entra onde o app pedia laranja (evento, XP pendente) e o dourado
+   fica nas moedas. Títulos em Lora; o resto do texto — hora, rótulo, botão, nome de bloco — continua em
+   DM Sans, porque no café "Lora nomeia e sente, DM Sans opera".
+
+   Regras que este arquivo respeita: NADA de geometria. Só cor, família/peso de fonte, letter-spacing,
+   raio, borda, sombra, fundo e opacidade — nenhuma caixa muda de tamanho ou de lugar. Toda regra é
+   prefixada por :root[data-theme="noturno"], então nada vaza pros outros temas. */
+
+:root[data-theme="noturno"] {
+
+    /* ============================== SUPERFÍCIE ==============================
+       A rampa continua na mesma direção do escuro de hoje (mais claro = mais perto),
+       mas cada degrau é café: bg = expresso, bg2 = o papel do card, bg3 = o elevado.
+       --track é o poço (trilho de barra, dot, switch) e por isso vai pro OUTRO lado:
+       mais escuro que o papel, como um sulco. */
+    --bg:#1e1915;                --bg-rgb:30,25,21;
+    --bg2:#2a241d;               --bg2-rgb:42,36,29;
+    --shadow-rgb:12,8,5;                    /* sombra quente: preto com café dentro, nunca 0,0,0 */
+    --tint-rgb:244,236,222;                 /* o "véu branco" do app vira véu de creme */
+    --bg3:#362f26;                          /* superfície ELEVADA (card dentro de card) */
+    --track:#241f19;                        /* trilho/poço REBAIXADO */
+    --surface-hover-solid:#332c24;          /* preenchimento OPACO de hover */
+    --bg-blur:rgba(var(--bg-rgb),.9);
+    --bg-blur-strong:rgba(var(--bg-rgb),.94);
+    --surface-hover:rgba(var(--tint-rgb),.045);
+    --surface-soft:rgba(var(--tint-rgb),.06);
+    --surface-strong:rgba(var(--tint-rgb),.16);
+    --track-soft:rgba(var(--tint-rgb),.10);
+    --hairline:rgba(var(--tint-rgb),.08);
+    --surface-week:rgba(var(--bg2-rgb),.6);
+    --surface-week-hover:rgba(var(--bg2-rgb),1);
+    --ring-track:#2c251e;                   /* trilho do anel do foco: sulco no papel, não buraco preto */
+    --overlay:rgba(var(--shadow-rgb),.74);  /* scrim quente */
+    --hero-a:#31291f; --hero-b:#241d17;                      /* palco do personagem: parede de quarto à noite */
+    --accent-surface-a:#2e3828; --accent-surface-b:#242c20;  /* card do pet ativo: sálvia rebaixado */
+    --gold-surface-a:#3d3120; --gold-surface-b:#2b2316;      /* card de moedas */
+    --scene-floor:#2c251d;                  /* o "chão" iluminado da cena do foco */
+    --timeline-pause:#191410;               /* pausa na régua do dia: o vazio, um degrau abaixo do fundo */
+    --hatch-a:#4a3f33; --hatch-b:#352c23;   /* hachura de intervalo, em madeira */
+    --login-bg:#171310;                     /* o login é o ponto mais escuro do sistema */
+    --input-bg:rgba(var(--tint-rgb),.05);
+    --input-border:rgba(var(--tint-rgb),.14);
+    /* dois ganchos próprios do tema (só este arquivo os consome) */
+    --flat-shadow:#130f0b;                  /* a sombra chapada: o fundo um degrau ABAIXO (1,19:1) */
+    --flat-shadow-accent:#5f7a50;           /* idem, embaixo de um botão sálvia */
+    --input-well:#221d18;                   /* campo escavado: input mais escuro que o papel */
+    --stage-glow:rgba(217,171,94,.10);      /* o abajur atrás dos sprites */
+    --sprite-shadow:rgba(var(--shadow-rgb),.45);
+
+    /* ================================ LINHA ================================
+       Hairline é estrutura invisível (~1,4:1, o mesmo peso relativo do café claro);
+       borda que COMUNICA (hover, checkbox, tracejado) sobe bem acima disso. */
+    --border:#443b30;            --border-rgb:68,59,48;
+    --border-strong:#7a6a55;     /* borda que COMUNICA: o quadrado do check e todo hover (3,1:1) */
+    --border-mid:#584c3e;
+    --hairline-row:rgba(var(--border-rgb),.75);
+    --rest-fill:rgba(var(--border-rgb),.45);
+    --rest-fill-soft:rgba(var(--border-rgb),.4);
+
+    /* ================================ TEXTO ================================
+       Creme, nunca branco de LED. O muted é bege acinzentado no mesmo matiz do fundo —
+       6,3:1 sobre o papel, folgado pros rótulos de 10–11px que o app tem aos montes. */
+    --text:#f2e9db;
+    --text-soft:#d8ccbb;
+    --muted:#b0a493;
+    --text-dim:#9c8e7d;
+    --text-dim-alt:#9c8e7d;
+    --text-faint:#938574;
+    --text-ghost:#7a6c5c;
+    --on-accent:#1a1610;                    /* espresso EM CIMA do sálvia (9,6:1) */
+    --on-accent-alt:#1a1610;
+    --on-accent-login:#1a1610;
+    --on-orange:#20160f;
+    --on-gold:#201a10;
+    --on-session:#1b1610;
+    --on-danger:#1f1512;                    /* sobre o tijolo, tinta escura lê melhor que branco */
+
+    /* ================================= AÇÃO ================================
+       O sálvia claro é a inversão-chave: o #486244 do café diurno daria 1,4:1 aqui.
+       Subiu de luminosidade mantendo a família (saturação baixa, longe do lime elétrico). */
+    --accent:#a6c795;            --accent-rgb:166,199,149;
+    --accent2:#87a774;                      /* sálvia médio: borda, rótulo pequeno, 2ª camada */
+    --accent-bg:#2c3627;                    /* tint sálvia: chip, selo de XP, switch ligado */
+    --accent-wash:rgba(var(--accent-rgb),.09);
+    --accent-wash-soft:rgba(var(--accent-rgb),.08);
+    --accent-wash-soft2:rgba(var(--accent-rgb),.07);
+    --accent-wash-2:rgba(var(--accent-rgb),.10);
+    --accent-bg-soft:rgba(var(--accent-rgb),.16);
+    --accent-line:rgba(var(--accent-rgb),.18);
+    --accent-border:rgba(var(--accent-rgb),.4);
+    --accent-border-soft:rgba(var(--accent-rgb),.3);
+    --accent-glow:rgba(var(--accent-rgb),.24);
+    --accent-glow-ring:rgba(var(--accent-rgb),.18);
+    --accent-glow-soft:rgba(var(--accent-rgb),.16);
+    --accent-glow-faint:rgba(var(--accent-rgb),.14);
+    /* o "+X XP" do check: o halo largo vira DOURADO (luz de abajur) e a camada colada continua
+       sálvia. Fica quente e legível — nada de neon verde-limão. */
+    --accent-glow-strong:rgba(217,171,94,.45);
+    --accent-glow-tight:rgba(var(--accent-rgb),.9);
+    --accent-ripple:rgba(var(--accent-rgb),.5);
+    --accent-halo:rgba(var(--accent-rgb),.10);
+    --accent-grid:rgba(var(--accent-rgb),.05);
+    --accent-glow-mid:rgba(var(--accent-rgb),.45);
+    --accent-glow-text:rgba(var(--accent-rgb),.5);
+    --accent-glow-title:rgba(var(--accent-rgb),.28);
+    --accent-deep:#2a3a22; --accent-deep2:#3c5230;   /* banner de "subiu de nível" */
+    --knob:#f2e9db;
+    --knob-on:var(--on-accent);
+    --google-btn-bg:#f4ece0;                /* creme, não branco de escritório */
+    --google-btn-fg:#3a3128;
+    --google-btn-ring:rgba(var(--tint-rgb),.12);
+    --google-btn-ring-hover:rgba(var(--tint-rgb),.2);
+
+    /* ============================== SEMÂNTICA ==============================
+       O azul da pausa é o único frio do sistema, e é um frio empoeirado (o vidro da janela
+       à noite na spec do café). Terracota = evento e pendente. Dourado = moeda.
+       Perigo é tijolo queimado — o café não tem vermelho puro em lugar nenhum. */
+    --blue:#8fb0c2;              --blue-rgb:143,176,194;   --blue-bg:#22303a;
+    --blue-soft:#b4cdda;         --blue-bg-soft:rgba(var(--blue-rgb),.2);
+    --orange:#c98a63;            --orange-rgb:201,138,99;  --orange-bg:#3a2a1f;
+    --orange-wash:rgba(var(--orange-rgb),.22);
+    --orange-glow:rgba(var(--orange-rgb),.3);
+    --orange-glow-inset:rgba(var(--orange-rgb),.14);
+    --orange-glow-flash:rgba(var(--orange-rgb),.7);
+    --orange-glow-strong:rgba(var(--orange-rgb),.6);
+    --orange-glow-tight:rgba(var(--orange-rgb),.95);
+    --danger:#d4715a;            --danger-rgb:212,113,90;
+    --danger-strong:#b95a44;
+    --danger-soft:#e19c88;
+    --danger-bg:rgba(var(--danger-rgb),.12);
+    --danger-bg-2:rgba(var(--danger-rgb),.15);
+    --danger-border:rgba(var(--danger-rgb),.4);
+    --danger-border-strong:rgba(var(--danger-rgb),.55);
+    --danger-outline:rgba(var(--danger-rgb),.5);
+    --danger-check:rgba(var(--danger-rgb),.6);
+    --danger-ring:rgba(var(--danger-rgb),.2);
+    --gold:#d9ab5e;              --gold-rgb:217,171,94;
+    --gold-bright:#e8c176;
+    --gold-bg:rgba(var(--gold-rgb),.14);
+    --gold-border:rgba(var(--gold-rgb),.38);
+    --gold-border-soft:rgba(var(--gold-rgb),.28);
+    --gold-muted:#bda37a;
+
+    /* =============================== SESSÃO ================================
+       Seis cores, todas rebaixadas pro mesmo ambiente: sálvia, azul empoeirado, rosa de argila,
+       terracota, jade e lilás acinzentado. Cada uma com o fundo tingido do próprio matiz
+       (nunca cinza) e a linha um degrau mais forte. Todas ≥4,7:1 sobre o próprio fundo. */
+    --s0:#a6c795; --s0-bg:#2b3527; --s0-line:#7f9e6e; --s0-on:var(--on-session);
+    --s1:#8fb0c2; --s1-bg:#22303a; --s1-line:#6b91a6; --s1-on:var(--on-session);
+    --s2:#d19aa8; --s2-bg:#3a262d; --s2-line:#b0788a; --s2-on:var(--on-session);
+    --s3:#c98a63; --s3-bg:#3a2a1f; --s3-line:#a86e4c; --s3-on:var(--on-session);
+    --s4:#8bc0a5; --s4-bg:#22332c; --s4-line:#64977e; --s4-on:var(--on-session);
+    --s5:#b0a3ce; --s5-bg:#2e2a3a; --s5-line:#8b7fae; --s5-on:var(--on-session);
+
+    /* =============================== GRUPO =================================
+       Grupo é OUTRA camada, então continua de propósito fora da paleta das sessões:
+       mais frio e mais luminoso que elas, só que sem o neon. Os alfas sobem um pouco
+       porque o papel aqui é mais claro que o quase-preto de antes. */
+    --gc0-rgb:126,196,201;  --gc0:rgb(var(--gc0-rgb));   /* ciano de louça */
+    --gc1-rgb:150,158,214;  --gc1:rgb(var(--gc1-rgb));   /* índigo */
+    --gc2-rgb:122,198,178;  --gc2:rgb(var(--gc2-rgb));   /* turquesa */
+    --gc3-rgb:206,148,190;  --gc3:rgb(var(--gc3-rgb));   /* magenta empoeirado */
+    --gc4-rgb:140,182,214;  --gc4:rgb(var(--gc4-rgb));   /* céu */
+    --gc5-rgb:178,157,214;  --gc5:rgb(var(--gc5-rgb));   /* lilás */
+    --gc-a-border:.5; --gc-a-bg:.09; --gc-a-track:.18;
+
+    /* ============================== HEATMAP ================================
+       Rampa de sálvia sobre o sulco: do café ao verde da colina. Lida por
+       domain/analytics.ts, então precisa estar aqui em token. */
+    --heat0:var(--track);
+    --heat1:#33402c;
+    --heat2:#4d6341;
+    --heat3:#6f8f5c;
+    --heat4:#a6c795;
+
+    /* ================================ FORMA ================================
+       A hierarquia do café: quanto maior a superfície, maior o raio.
+       card 16 → 14 → botão 10 → input 9. Um botão nunca tem o raio do card que o contém. */
+    --radius:14px;               /* card e botão grande */
+    --radius-sm:9px;             /* input, botão pequeno, tile */
+    --radius-lg:16px;
+    --radius-md:11px;
+    --radius-xl:14px;
+    --radius-2xl:18px;
+    /* A SOMBRA: um offset chapado, sem blur, numa cor sólida um degrau abaixo do fundo.
+       Não é profundidade — é peso de papel. Nunca rgba(0,0,0,…) com desfoque. */
+    --shadow-card:0 3px 0 var(--flat-shadow),0 14px 34px rgba(var(--shadow-rgb),.45);
+    --shadow-raised:0 3px 0 var(--flat-shadow);
+    --shadow-raised-hover:0 5px 0 var(--flat-shadow);
+    --shadow-knob:0 1px 0 rgba(var(--shadow-rgb),.5);
+    --title-shadow:rgba(var(--shadow-rgb),.85);
+
+    /* ================================ ESTADO ===============================
+       Continua sendo um tema escuro, então fade escurece e brightness clareia — só que as
+       superfícies aqui são mais claras que o quase-preto, e brilho demais lava a cor.
+       Os lifts caem um degrau; o "agora" ganha um segundo sinal (a barra sálvia, mais abaixo). */
+    --fade-done:.5;
+    --fade-done-session:.48;
+    --fade-closed:.58;
+    --fade-future:.5;
+    --fade-forfeited:.62;
+    --fade-rest:.4;
+    --fade-weekend:.55;
+    --fade-soft:.7;
+    --fade-hint:.75;
+    --fade-card:.6;
+    --fade-event:.9;
+    --fade-event-session:.95;
+    --lift-hover:brightness(1.07);
+    --lift-hover-soft:brightness(1.09);
+    --lift-hover-strong:brightness(1.12);
+    --lift-select:brightness(1.14);
+    --lift-now:brightness(1.18);
+    --scheme:dark;
+    /* o ícone do calendário fica creme quente em vez de lima */
+    --picker-filter:invert(.82) sepia(.28) saturate(1.4) hue-rotate(2deg);
+
+    /* ============================= TIPOGRAFIA ==============================
+       Lora nomeia (título de tela, nome de pet, nome de forma, título de modal, frase do app);
+       DM Sans opera (hora, rótulo, botão, nome de bloco); DM Mono continua nos números.
+       A Lora já vem no <link> do index.html — nenhum arquivo precisa mudar pra isso. */
+    --font-ui:'DM Sans',sans-serif;
+    --font-mono:'DM Mono',monospace;
+    --font-title:'Lora',Georgia,'Times New Roman',serif;
+    --font-display:'Press Start 2P',monospace;
+  }
+
+  /* O fundo do documento: o expresso é a base de tudo. */
+  :root[data-theme="noturno"] body{ background:var(--bg); color:var(--text); }
+
+
+  /* ================================================================================================
+     1. TIPOGRAFIA — o corte Lora / DM Sans
+     Os títulos herdam --font-title, mas a Lora pede peso e espaçamento próprios: 500 e um leve
+     aperto no tracking, como no café. Nenhuma regra aqui mexe em font-size.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .topbar-left h1,
+  :root[data-theme="noturno"] .panel-header h2,
+  :root[data-theme="noturno"] .st-title,
+  :root[data-theme="noturno"] .error-title,
+  :root[data-theme="noturno"] .profile-info h2,
+  :root[data-theme="noturno"] .profile-hero-name span:first-child,
+  :root[data-theme="noturno"] .focus-block-name,
+  :root[data-theme="noturno"] .tour-title,
+  :root[data-theme="noturno"] .shop-item-name,
+  :root[data-theme="noturno"] .evo-path-name,
+  :root[data-theme="noturno"] .starter-name,
+  :root[data-theme="noturno"] .active-pet-card .ap-name,
+  :root[data-theme="noturno"] .ds-pet-row .ds-pet-name,
+  :root[data-theme="noturno"] .eop-choice .eop-title,
+  :root[data-theme="noturno"] .st-danger-row .dr-title,
+  :root[data-theme="noturno"] .st-action-row .ar-title,
+  :root[data-theme="noturno"] .group-header .gh-name,
+  :root[data-theme="noturno"] .cs-title{
+    font-family:var(--font-title);
+    font-weight:500;
+    letter-spacing:-.01em;
+  }
+  /* A frase que o app diz pra pessoa também é Lora — é o lugar do "um café, um bloco de estudo". */
+  :root[data-theme="noturno"] .empty-day,
+  :root[data-theme="noturno"] .my-pets-empty,
+  :root[data-theme="noturno"] .no-active-pet,
+  :root[data-theme="noturno"] .ds-empty-msg{ font-family:var(--font-title); }
+
+  /* Os kickers (rótulos em caixa alta) ganham o tracking do café: 11px/500 bem espaçado.
+     Só letter-spacing e peso — tamanho fica onde está. */
+  :root[data-theme="noturno"] .stat-box .s-label,
+  :root[data-theme="noturno"] .profile-stat-mini .psm-label,
+  :root[data-theme="noturno"] .an-stat .as-label,
+  :root[data-theme="noturno"] .adh-card .adh-label,
+  :root[data-theme="noturno"] .sts-lbl,
+  :root[data-theme="noturno"] .ds-stat .ds-label,
+  :root[data-theme="noturno"] .side-k,
+  :root[data-theme="noturno"] .field-group label,
+  :root[data-theme="noturno"] .active-pet-card .ap-tag,
+  :root[data-theme="noturno"] .focus-next-label,
+  :root[data-theme="noturno"] .evo-path-sub{ letter-spacing:.12em; font-weight:500; }
+  /* Os títulos de seção em caps continuam DM Sans (são rótulo de sistema, não nome). */
+  :root[data-theme="noturno"] .section-title,
+  :root[data-theme="noturno"] .st-section-title,
+  :root[data-theme="noturno"] .my-pets-header-title,
+  :root[data-theme="noturno"] .pet-skills-header{ font-family:var(--font-ui); letter-spacing:.14em; }
+
+
+  /* ================================================================================================
+     2. A SOMBRA CHAPADA — a assinatura do café
+     0 3px 0 numa cor sólida um degrau abaixo do fundo. Sem blur, sem alfa. Como o card fosse
+     uma folha um pouco mais grossa. Sombra não ocupa espaço: nenhuma caixa muda de tamanho.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .xp-card,
+  :root[data-theme="noturno"] .stat-box,
+  :root[data-theme="noturno"] .profile-card,
+  :root[data-theme="noturno"] .chart-card,
+  :root[data-theme="noturno"] .goal-week-card,
+  :root[data-theme="noturno"] .adh-card,
+  :root[data-theme="noturno"] .an-stat,
+  :root[data-theme="noturno"] .st-card,
+  :root[data-theme="noturno"] .error-card,
+  :root[data-theme="noturno"] .shop-item,
+  :root[data-theme="noturno"] .ds-stat,
+  :root[data-theme="noturno"] .ds-pet-row,
+  :root[data-theme="noturno"] .eop-choice,
+  :root[data-theme="noturno"] .eop-extend-form,
+  :root[data-theme="noturno"] .finish-day-banner,
+  :root[data-theme="noturno"] .profile-stat-mini,
+  :root[data-theme="noturno"] .active-pet-card,
+  :root[data-theme="noturno"] .no-active-pet,
+  :root[data-theme="noturno"] .coming-soon-card,
+  :root[data-theme="noturno"] .shop-open-btn,
+  :root[data-theme="noturno"] .profile-hero,
+  :root[data-theme="noturno"] .focus-next,
+  :root[data-theme="noturno"] .evo-path,
+  :root[data-theme="noturno"] .starter-card,
+  :root[data-theme="noturno"] .fs-card,
+  :root[data-theme="noturno"] .ls-feat{ box-shadow:0 3px 0 var(--flat-shadow); }
+
+  /* A folha do modal precisa descolar do scrim: sombra chapada + uma sombra ambiente larga. */
+  :root[data-theme="noturno"] .panel-sheet{
+    box-shadow:0 3px 0 var(--flat-shadow),0 20px 50px rgba(var(--shadow-rgb),.55);
+  }
+
+  /* Os botões cheios ganham a mesma folha (a sombra é sálvia escurecido, a borda de baixo do
+     próprio botão) e AFUNDAM 1px no :active — o gesto que faz o botão parecer apoiado no papel. */
+  :root[data-theme="noturno"] .save-btn,
+  :root[data-theme="noturno"] .finish-day-btn,
+  :root[data-theme="noturno"] .fs-card .fs-apply,
+  :root[data-theme="noturno"] .error-reload,
+  :root[data-theme="noturno"] .tour-next,
+  :root[data-theme="noturno"] .ls-submit-btn,
+  :root[data-theme="noturno"] .add-block-btn{ box-shadow:0 3px 0 var(--flat-shadow-accent); }
+  :root[data-theme="noturno"] .save-btn:active,
+  :root[data-theme="noturno"] .finish-day-btn:active,
+  :root[data-theme="noturno"] .fs-card .fs-apply:active,
+  :root[data-theme="noturno"] .error-reload:active,
+  :root[data-theme="noturno"] .tour-next:active,
+  :root[data-theme="noturno"] .add-block-btn:active,
+  :root[data-theme="noturno"] .ls-submit-btn:active{ transform:translateY(1px); box-shadow:0 2px 0 var(--flat-shadow-accent); }
+  /* Os botões de contorno (que não têm folha) só afundam — a borda é que responde neles. */
+  :root[data-theme="noturno"] .shop-btn:active,
+  :root[data-theme="noturno"] .st-action-btn:active,
+  :root[data-theme="noturno"] .reset-btn:active,
+  :root[data-theme="noturno"] .ghost-btn:active,
+  :root[data-theme="noturno"] .danger-btn:active{ transform:translateY(1px); }
+  :root[data-theme="noturno"] .ls-submit-btn:hover:not(:disabled){ box-shadow:0 4px 0 var(--flat-shadow-accent); }
+  :root[data-theme="noturno"] .hc-start-btn{ box-shadow:0 3px 0 #8f4331; }  /* o vermelho do hardcore tem a folha dele */
+  :root[data-theme="noturno"] .save-btn:disabled{ box-shadow:none; }
+
+
+  /* ================================================================================================
+     3. A BARRINHA VERTICAL — o marcador colado por dentro do cartão
+     No café é um ::before absoluto de 4px recuado 22px em cima e embaixo. Aqui ela é desenhada
+     como BACKGROUND (linear-gradient de 4px de largura, centralizado, com altura menor que o card):
+     mesmo desenho, zero risco de empurrar layout ou mexer em position.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .focus-next{
+    background-image:linear-gradient(var(--accent),var(--accent));
+    background-repeat:no-repeat;
+    background-size:4px calc(100% - 40px);
+    background-position:left center;
+  }
+  /* (a barra fica sempre sálvia: o "Em seguida" é o que VEM, e no café o marcador do cartão
+     próximo é sempre a cor de ação — quem muda de cor com o tipo do bloco é o chip lá em cima.) */
+
+
+  /* ================================================================================================
+     4. A AGENDA — o bloco de agora e o compromisso
+     O café marca as coisas com uma barra à esquerda, não com brilho. O "agora" mantém o leve
+     brightness (para não perder a cor da sessão) e ganha um traço sálvia na margem; o evento ganha
+     a barra terracota do compromisso ("isso não é seu Pomodoro, é o mundo").
+     Tudo por box-shadow inset — a borda continua com a mesma espessura, nada se move.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .block-row.now-block{ box-shadow:inset 3px 0 0 var(--sc,var(--accent)); }
+  :root[data-theme="noturno"] .block-row.timer-active{ box-shadow:0 0 0 1px var(--accent2),inset 3px 0 0 var(--accent); }
+  :root[data-theme="noturno"] .block-row.event-row:not(.now-block):not(.timer-active){ box-shadow:inset 4px 0 0 var(--orange); }
+  /* Concluído é marca de lápis, não troféu: o risco fica no tom da tinta fraca. */
+  :root[data-theme="noturno"] .block-row.done .block-name{ text-decoration-color:var(--text-dim); }
+  /* O divisor de sessão é hairline, não linha: mais discreto no papel claro-escuro do café. */
+  :root[data-theme="noturno"] .session-divider .sd-line{ opacity:.35; }
+  /* A caixa do grupo fica com o raio grande do café. */
+  :root[data-theme="noturno"] .group-box{ border-radius:var(--radius-lg); }
+
+
+  /* ================================================================================================
+     5. CAMPOS ESCAVADOS
+     No café o input é a única superfície que vai pro outro lado da rampa: mais escuro que o papel,
+     como um sulco. Isso separa "onde eu escrevo" de "o que o app me mostra".
+     ================================================================================================ */
+  :root[data-theme="noturno"] .field-group input[type=time],
+  :root[data-theme="noturno"] .field-group input[type=number],
+  :root[data-theme="noturno"] .field-group input[type=text],
+  :root[data-theme="noturno"] .field-group input[type=date],
+  :root[data-theme="noturno"] .st-card input[type=time],
+  :root[data-theme="noturno"] .st-card input[type=number],
+  :root[data-theme="noturno"] .st-card input[type=date],
+  :root[data-theme="noturno"] .sw-row input[type=time],
+  :root[data-theme="noturno"] .eop-extend-form input[type=time],
+  :root[data-theme="noturno"] .pet-name-input,
+  :root[data-theme="noturno"] .del-acc-input,
+  :root[data-theme="noturno"] .hc-sites,
+  :root[data-theme="noturno"] .week-row select{ background:var(--input-well); }
+  /* Foco: a borda responde (o café é "hover e foco são linha, não preenchimento"). */
+  :root[data-theme="noturno"] .field-group input:focus,
+  :root[data-theme="noturno"] .st-card input:focus,
+  :root[data-theme="noturno"] .sw-row input[type=time]:focus,
+  :root[data-theme="noturno"] .pet-name-input:focus{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-wash-2); }
+  /* O switch desligado fica no sulco; ligado, sálvia — a leitura nunca inverte. */
+  :root[data-theme="noturno"] .st-switch-track{ background:var(--input-well); }
+  /* O prompt de fim de dia: no app o hover deixava a escolha mais ESCURA (bg3 → bg2).
+     Aqui ela clareia e a borda acende, como todo hover do café. */
+  :root[data-theme="noturno"] .eop-choice:hover{ background:var(--surface-hover-solid); border-color:var(--accent); }
+
+
+  /* ================================================================================================
+     6. O PALCO DOS SPRITES
+     Os PNGs de pixel art são recortados com transparência e foram desenhados pra fundo escuro —
+     este tema é escuro, então eles continuam legíveis. O que falta é o CALOR: um abajur atrás
+     deles. Um radial-gradient dourado de baixa opacidade e uma sombra dura embaixo assentam o
+     personagem e o pet no ambiente em vez de deixá-los flutuando.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .profile-hero-stage{
+    background:radial-gradient(70% 95% at 50% 100%,var(--stage-glow) 0%,transparent 72%);
+  }
+  :root[data-theme="noturno"] .focus-scene{
+    background:radial-gradient(55% 90% at 50% 100%,var(--stage-glow) 0%,transparent 70%),
+               linear-gradient(180deg,transparent 0%,var(--scene-floor) 60%);
+  }
+  :root[data-theme="noturno"] .rail-sprites{
+    background:radial-gradient(85% 100% at 50% 100%,var(--stage-glow) 0%,transparent 76%);
+  }
+  :root[data-theme="noturno"] .char-sprite,
+  :root[data-theme="noturno"] .pet-sprite,
+  :root[data-theme="noturno"] .rail-char,
+  :root[data-theme="noturno"] .rail-pet,
+  :root[data-theme="noturno"] .active-pet-card .ap-sprite,
+  :root[data-theme="noturno"] .shop-item-img,
+  :root[data-theme="noturno"] .starter-sprite,
+  :root[data-theme="noturno"] .buy-confirm-img,
+  :root[data-theme="noturno"] .ds-pet-row img{ filter:drop-shadow(0 2px 0 var(--sprite-shadow)); }
+  /* O personagem do login continua com halo — agora sálvia quente, não lima. */
+  :root[data-theme="noturno"] .ls-char{ filter:drop-shadow(0 0 18px var(--accent-glow-mid)) drop-shadow(0 3px 0 var(--sprite-shadow)); }
+
+
+  /* ================================================================================================
+     7. TELA DE LOGIN
+     Quase tudo já vem dos tokens (o arquivo login.css está inteiro tokenizado): o fundo vira
+     expresso, a grade e as estrelas viram sálvia quente, o botão do Google vira creme.
+     Aqui só ajusto o que é decisão de estilo: o título pixelado FICA (Press Start 2P é a
+     identidade da marca e conversa com os sprites), mas perde a dureza da sombra preta,
+     e o cartão dos selos ganha o raio e a folha do café.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .ls-title{
+    text-shadow:0 0 22px var(--accent-glow-title),2px 2px 0 var(--title-shadow);
+  }
+  :root[data-theme="noturno"] .ls-sub{ font-family:var(--font-title); color:var(--muted); }
+  :root[data-theme="noturno"] .ls-feat{ border-radius:var(--radius-md); }
+  :root[data-theme="noturno"] .ls-google-btn{
+    box-shadow:0 3px 0 #b9ad9a,0 10px 28px rgba(var(--shadow-rgb),.5);
+  }
+  :root[data-theme="noturno"] .ls-google-btn:hover{
+    box-shadow:0 4px 0 #b9ad9a,0 14px 34px rgba(var(--shadow-rgb),.55);
+  }
+  :root[data-theme="noturno"] .ls-input{ background:var(--input-well); }
+  :root[data-theme="noturno"] .ls-input:focus{ box-shadow:0 0 0 2px var(--accent-wash-2); }
+  :root[data-theme="noturno"] .ls-fine-print{ color:var(--text-ghost); }
+
+
+  /* ================================================================================================
+     8. MODAIS, TOUR E EFÊMEROS
+     A casca já é token (bg2 + border + overlay quente). O que ajusto: o balão do tour ganha a
+     sombra chapada + a ambiente, e o anel do elemento apontado fica sálvia em vez de lima.
+     O #toast é criado por style inline em shared/toast.ts e só responde a --bg2/--border/--text/
+     --radius-sm — todos já redefinidos aqui, então ele acompanha sem regra própria.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .tour-balloon{ border-color:var(--accent2); }
+  :root[data-theme="noturno"] .tour-arrow{ border-color:var(--accent2); }
+  :root[data-theme="noturno"] .panel-close:hover{ color:var(--text); }
+  /* O indicador de "Salvando…" é papel também. */
+  :root[data-theme="noturno"] #save-indicator{ box-shadow:0 3px 0 var(--flat-shadow); }
+
+
+  /* ================================================================================================
+     9. ANÁLISE, PERFIL E PETS
+     Quase tudo cai nos tokens. As poucas regras aqui são de forma: os cartões de "realizado"
+     e os tiles de resumo ganham o raio maior; o heatmap fica com célula levemente mais macia;
+     o card do pet ativo ganha a linha sálvia mais presente (é o card que a pessoa toca).
+     ================================================================================================ */
+  :root[data-theme="noturno"] .heatmap-cell{ border-radius:3px; }
+  :root[data-theme="noturno"] .heatmap-legend .lc{ border-radius:3px; }
+  :root[data-theme="noturno"] .sts-tile{ border-radius:var(--radius-sm); }
+  :root[data-theme="noturno"] .active-pet-card{ border-color:var(--accent-border); }
+  :root[data-theme="noturno"] .active-pet-card[role="button"]:hover,
+  :root[data-theme="noturno"] .active-pet-card[role="button"]:focus-visible{ border-color:var(--accent); }
+  /* A barra de XP do pet e a do hero ficam num sulco visível (o véu de creme sozinho some). */
+  :root[data-theme="noturno"] .profile-hero-bar,
+  :root[data-theme="noturno"] .active-pet-card .ap-bar-track{ background:var(--track); }
+  /* "Pode evoluir" e o preço em moedas: dourado sobre papel, com a borda fazendo o trabalho. */
+  :root[data-theme="noturno"] .active-pet-card .ap-evo-badge{ border-color:var(--gold-border); }
+  /* O drop-off e o gráfico de horas ganham a barra com o mesmo raio dos tiles. */
+  :root[data-theme="noturno"] .bar-fill-an{ border-radius:4px 4px 0 0; opacity:1; }
+
+
+  /* ================================================================================================
+     10. MODO FOCO E MODO HARDCORE
+     O foco é a tela em que a pessoa fica 25 minutos parada olhando — e é onde o café noturno mais
+     rende: expresso em volta, anel sálvia, número creme. O trilho do anel deixou de ser um buraco
+     preto e virou um sulco no papel (--ring-track). O hardcore continua tijolo queimado.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .focus-timer-track{ stroke:var(--ring-track); }
+  /* Em espera, o anel apagado a 30% sumia; sobe um pouco pra continuar existindo como sinal. */
+  :root[data-theme="noturno"] .focus-timer-fill.waiting{ opacity:.4; }
+  :root[data-theme="noturno"] .focus-done{ box-shadow:0 0 22px var(--accent-glow),0 3px 0 var(--flat-shadow); }
+  :root[data-theme="noturno"] .focus-hc-chip{ letter-spacing:.1em; }
+  /* Bloco abandonado: além do fade, o ✕ e o nome riscado ficam no tom do tijolo. */
+  :root[data-theme="noturno"] .block-row.forfeited .block-name{ text-decoration-color:var(--danger-check); }
+
+
+  /* ================================================================================================
+     11. CONFIGURAÇÕES
+     Página inteira, não modal. A topbar e a barra de ações usam --bg-blur (já quente).
+     Aqui: a régua "Como fica o dia" ganha os tons de madeira, e a zona de perigo ganha a borda
+     de tijolo mais presente, porque no escuro quente uma borda a 35% desaparece.
+     ================================================================================================ */
+  :root[data-theme="noturno"] .dtl-track{ background:var(--input-well); border-radius:var(--radius-sm); }
+  :root[data-theme="noturno"] .dtl-legend i.pause{ border-color:var(--border-strong); }
+  :root[data-theme="noturno"] .st-card.st-danger{ border-color:var(--danger-border-strong); }
+  :root[data-theme="noturno"] .st-divider{ background:var(--border); }
+  /* A aba ativa das Configurações e as abas do topo: o traço é sálvia, e o texto vira creme
+     (sálvia em texto pequeno já passa, mas o traço basta como sinal — o café evita colorir texto). */
+  :root[data-theme="noturno"] .st-tabs .settings-tab.active{ color:var(--text); border-bottom-color:var(--accent); }
+
+
+  /* ================================================================================================
+     12. TELA GRANDE (≥1100px)
+     A geometria é intocável: mesmo grid, mesmo --s, mesmas larguras. O que muda é a matéria —
+     o card do timer ganha a barrinha vertical do café e a folha chapada, e o trilho ganha uma
+     hairline quente separando a cena do pé.
+     ================================================================================================ */
+  @media (min-width:1100px){
+    /* o card do timer é o "cartão próximo" deste app: barra sálvia por dentro, à esquerda */
+    :root[data-theme="noturno"] .timer-bar{
+      background-image:linear-gradient(var(--accent),var(--accent));
+      background-repeat:no-repeat;
+      background-size:4px calc(100% - 44px);
+      background-position:left center;
+      box-shadow:0 3px 0 var(--flat-shadow);
+      border-radius:var(--radius-lg);
+    }
+    /* na Semana, a coluna de hoje precisa de um traço mais firme: no escuro quente,
+       uma hairline a 25% some. Só cor de sombra — a caixa não muda. */
+    :root[data-theme="noturno"] .wv-col.today{ box-shadow:inset 0 0 0 1px var(--accent-border); }
+    :root[data-theme="noturno"] .wv-blk{ border-radius:4px; }
+    :root[data-theme="noturno"] .rail-sprites{ border-bottom-color:var(--border); }
+    /* a lista sem caixa: a linha do "agora" mantém o traço sálvia (aqui ele já existia) e o
+       evento continua com a barra terracota — repetido porque no laptop a borda é zerada */
+    :root[data-theme="noturno"] .block-row.event-row:not(.now-block):not(.timer-active){ box-shadow:inset 4px 0 0 var(--orange); }
+    :root[data-theme="noturno"] .block-row.now-block{ box-shadow:inset 3px 0 0 var(--accent); }
+    /* o toggle Dia · Semana é uma das duas únicas caixas do laptop: raio do café */
+    :root[data-theme="noturno"] .view-mode{ background:var(--input-well); border-radius:var(--radius-md); }
+    :root[data-theme="noturno"] .vm-btn.on{ background:var(--bg3); }
+  }

@@ -465,6 +465,11 @@ export const strings = {
       done: 'Arquivo gerado ✓',
       failed: 'Não deu pra gerar o arquivo neste navegador.',
     },
+    tema: {
+      title: 'Aparência',
+      desc: 'A cara do app. Só cor e tipografia mudam — o plano, os horários e os dados continuam iguais.',
+      hint: 'Vale só neste dispositivo. Pra comparar rápido, dá pra abrir o app com ?tema=cafe no fim do endereço.',
+    },
     tour: {
       title: 'Tutorial',
       desc: 'Os balões que apresentam cada aba na primeira vez que você entra nela.',

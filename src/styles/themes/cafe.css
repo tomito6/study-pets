@@ -1,0 +1,845 @@
+/* Café de casa — o Study Pets como uma mesa de estudo à luz do dia: papel creme, tinta marrom,
+   verde sálvia como ação e terracota como "o mundo" (evento, pendência).
+
+   Como ler este arquivo:
+   1) os tokens (a paleta do pacote aprovado, traduzida pros papéis que o app já tem);
+   2) os ajustes de ESTILO — cor, família, raio, borda, sombra chapada, palco dos sprites.
+   Nada aqui muda geometria: sem grid, sem largura, sem --s, sem posição, sem tamanho de fonte
+   do laptop. Onde uma borda engorda de 1px pra 2px, o padding afina 1px do mesmo lado — é o
+   truque do café pra linha selecionada não pular.
+
+   Toda regra começa com :root[data-theme="cafe"]: nada vaza pros outros temas. */
+
+:root[data-theme="cafe"]{
+
+  /* ── superfície ───────────────────────────────────────────────────────────
+     A rampa inverte em relação ao escuro: aqui o que está mais perto fica mais
+     BRANCO (papel), e o que é poço/trilho fica mais BEGE. --bg3 continua sendo
+     a "superfície elevada"; os campos de formulário, que no escuro dividiam esse
+     token, ganham papel branco próprio mais abaixo (--field). */
+  --bg:#f6efe3;            --bg-rgb:246,239,227;      /* creme da página */
+  --bg2:#fffdf7;           --bg2-rgb:255,253,247;     /* papel do card */
+  --shadow-rgb:64,56,46;                              /* toda sombra tem café dentro */
+  --tint-rgb:64,56,46;                                /* a base de hover/hairline agora é TINTA, não branco */
+  --bg3:#f2ead9;                                      /* recuo quente (tile dentro de card) */
+  --track:#e5dcc8;                                    /* trilho/poço (barra, dot, switch) */
+  --surface-hover-solid:#eee7d7;                      /* hover opaco */
+  --bg-blur:rgba(var(--bg-rgb),.92);
+  --bg-blur-strong:rgba(var(--bg-rgb),.95);
+  --surface-hover:rgba(var(--tint-rgb),.035);         /* o sopro de hover da linha (laptop) */
+  --surface-soft:rgba(var(--tint-rgb),.05);
+  --surface-strong:rgba(var(--tint-rgb),.14);
+  --track-soft:rgba(var(--tint-rgb),.10);
+  --hairline:rgba(var(--tint-rgb),.08);
+  --surface-week:#efe8d9;                             /* a coluna da Semana é uma pista rebaixada */
+  --surface-week-hover:#e9e1ce;
+  --ring-track:#e6ddc9;                               /* trilho do anel do foco */
+  --overlay:rgba(var(--shadow-rgb),.38);              /* scrim: véu de café, não preto */
+  --hero-a:#ecd9ba;  --hero-b:#dfc49f;                /* o palco do personagem = parede e chão do quarto */
+  --accent-surface-a:#eef2e6; --accent-surface-b:#e4ebd8;  /* card do pet ativo, em sálvia clara */
+  --gold-surface-a:#f9edd3;  --gold-surface-b:#f2e0bd;     /* card de moedas */
+  --scene-floor:#ead9bd;                              /* chão iluminado da cena do foco */
+  --timeline-pause:#cfc4b0;                           /* pausa na régua do dia (era preto chapado) */
+  --hatch-a:#ded3c0; --hatch-b:#f0e9db;               /* hachura de intervalo */
+  --login-bg:#f4ece0;
+  --input-bg:#fffefa;
+  --input-border:#ada18d;
+
+  /* tokens próprios do café (usados só pelas regras deste arquivo) */
+  --field:#fffefa;                                    /* papel do campo — mais branco que o card */
+  --field-line:#ada18d;                               /* o mais escuro dos neutros: input precisa parecer tocável */
+  --flat:#e4decf;                                     /* a sombra chapada: o fundo da página um degrau abaixo */
+  --flat-deep:#dcd3bf;
+  --sage-line:#c7cfb8;                                /* hairline COM clorofila (cartão "próximo") */
+  --sage-line-2:#b6c4a7;                              /* idem, mais forte (formulário) */
+  --clay-bar:#b98762;                                 /* a barra de 4px do compromisso (clay puro pesa demais) */
+  --paper-event:#faf3e8;                              /* papel do compromisso, mais quente que o card */
+  --sprite-stage:radial-gradient(ellipse 62% 52% at 50% 72%,rgba(179,118,85,.20) 0%,rgba(179,118,85,.09) 48%,rgba(179,118,85,0) 74%);
+
+  /* ── linha ────────────────────────────────────────────────────────────────
+     Estrutura vive entre 1,2 e 1,6:1. Quem precisa ser tocado (input, check) usa
+     --border-strong, bem mais escuro. */
+  --border:#d8cdbb;        --border-rgb:216,205,187;
+  --border-strong:#a99c86;
+  --border-mid:#c0b49f;
+  --hairline-row:rgba(var(--border-rgb),.85);
+  --rest-fill:#ece4d4;
+  --rest-fill-soft:#eae3d5;
+
+  /* ── texto ────────────────────────────────────────────────────────────────
+     Tinta e sálvia carregam a informação. Nada de cinza puro: todo neutro é marrom. */
+  --text:#40382e;
+  --text-soft:#5d5346;
+  --muted:#6e6455;                    /* o #756a5a do pacote, um fio mais escuro: o app tem muito texto de 10–11px */
+  --text-dim:#736858;                 /* metadados de 10–11px: no claro o cinza claro reprova em contraste */
+  --text-dim-alt:#736858;
+  --text-faint:#756a5a;
+  --text-ghost:#756a5a;
+  --on-accent:#fffdf6;                /* tinta sobre o verde */
+  --on-accent-alt:#fffdf6;
+  --on-accent-login:#fffdf6;
+  --on-orange:#fffdf6;
+  --on-gold:#fffdf6;
+  --on-session:#fffdf6;
+  --on-danger:#fffdf6;
+
+  /* ── ação: o verde sálvia ────────────────────────────────────────────────
+     No claro o primário é verde ESCURO com tinta creme (o inverso do escuro).
+     6,6:1 sobre papel — dá pra ser texto, botão e ícone com o mesmo token. */
+  --accent:#486244;  --accent-rgb:72,98,68;  --accent2:#4e6b48;
+  --accent-bg:#e8eddf;                              /* o verde suave do pacote */
+  --accent-wash:rgba(var(--accent-rgb),.10);
+  --accent-wash-soft:rgba(var(--accent-rgb),.10);
+  --accent-wash-soft2:rgba(var(--accent-rgb),.07);
+  --accent-wash-2:rgba(var(--accent-rgb),.12);
+  --accent-bg-soft:rgba(var(--accent-rgb),.14);
+  --accent-line:rgba(var(--accent-rgb),.22);
+  --accent-border:rgba(var(--accent-rgb),.45);
+  --accent-border-soft:rgba(var(--accent-rgb),.30);
+  --accent-glow:rgba(var(--accent-rgb),.16);
+  --accent-glow-ring:rgba(var(--accent-rgb),.18);
+  --accent-glow-soft:rgba(var(--accent-rgb),.16);
+  --accent-glow-faint:rgba(var(--accent-rgb),.22);
+  --accent-glow-strong:rgba(var(--bg2-rgb),.95);    /* no claro o "brilho" é halo de papel, não de luz */
+  --accent-glow-tight:rgba(var(--accent-rgb),.55);
+  --accent-ripple:rgba(var(--accent-rgb),.38);
+  --accent-halo:rgba(var(--accent-rgb),.07);
+  --accent-grid:rgba(var(--accent-rgb),.06);
+  --accent-glow-mid:rgba(var(--accent-rgb),.45);
+  --accent-glow-text:rgba(var(--accent-rgb),0);
+  --accent-glow-title:rgba(var(--accent-rgb),0);
+  --accent-deep:#e8eddf; --accent-deep2:#dae5ca;    /* banner de level-up: sálvia clara, não verde-escuro */
+  --knob:#a99c86;                                   /* switch desligado: o knob é neutro escuro sobre papel */
+  --knob-on:#fffdf6;                                /* ligado: papel sobre a sálvia */
+  --google-btn-bg:#fffdf7;
+  --google-btn-fg:#40382e;
+  --google-btn-ring:rgba(var(--tint-rgb),.16);
+  --google-btn-ring-hover:rgba(var(--tint-rgb),.26);
+
+  /* ── semântica ───────────────────────────────────────────────────────────
+     Pausa = azul-acinzentado quente (derivado, nunca o azul frio de tela).
+     Evento e pendente = terracota escurecido o bastante pra ser texto (o clay
+     puro dá 3,6:1 e no café só decora).
+     Perigo = terracota queimado: o sistema inteiro vive entre 13° e 113° de matiz. */
+  --blue:#4c6472;    --blue-rgb:76,100,114;   --blue-bg:#e4eaee;
+  --blue-soft:#3d5462; --blue-bg-soft:rgba(var(--blue-rgb),.16);
+  --orange:#9a5f38;  --orange-rgb:154,95,56;  --orange-bg:var(--paper-event);
+  --orange-wash:rgba(var(--orange-rgb),.16);
+  --orange-glow:rgba(var(--orange-rgb),.18);
+  --orange-glow-inset:rgba(var(--orange-rgb),.08);
+  --orange-glow-flash:rgba(var(--orange-rgb),.30);
+  --orange-glow-strong:rgba(var(--bg2-rgb),.95);
+  --orange-glow-tight:rgba(var(--orange-rgb),.45);
+  --danger:#a04a2e;  --danger-rgb:160,74,46;
+  --danger-strong:#85391f;
+  --danger-soft:#934f3a;                            /* a tinta de "remover" do pacote */
+  --danger-bg:rgba(var(--danger-rgb),.09);
+  --danger-bg-2:rgba(var(--danger-rgb),.12);
+  --danger-border:rgba(var(--danger-rgb),.40);
+  --danger-border-strong:rgba(var(--danger-rgb),.55);
+  --danger-outline:rgba(var(--danger-rgb),.50);
+  --danger-check:rgba(var(--danger-rgb),.60);
+  --danger-ring:rgba(var(--danger-rgb),.18);
+  --gold:#8f6318;   --gold-rgb:143,99,24;
+  --gold-bright:#a2721f;
+  --gold-bg:rgba(var(--gold-rgb),.12);
+  --gold-border:rgba(var(--gold-rgb),.38);
+  --gold-border-soft:rgba(var(--gold-rgb),.28);
+  --gold-muted:#7e6a45;
+
+  /* ── sessão ──────────────────────────────────────────────────────────────
+     Seis matizes, todos rebaixados pra viver sobre papel: a cor é a do horário
+     e do nome; o fundo é papel colorido, quase creme. A "line" é a versão escura,
+     usada em borda, divisor e no bloco preenchido da Semana (com tinta creme em cima). */
+  --s0:#486244; --s0-bg:#edf1e6; --s0-line:#3f5a3c; --s0-on:var(--on-session);
+  --s1:#47677d; --s1-bg:#e9eff2; --s1-line:#3d5b6e; --s1-on:var(--on-session);
+  --s2:#8a4356; --s2-bg:#f6eaee; --s2-line:#77384a; --s2-on:var(--on-session);
+  --s3:#8f5630; --s3-bg:#fbeee0; --s3-line:#7d4a29; --s3-on:var(--on-session);
+  --s4:#3d6b5b; --s4-bg:#e9f0ec; --s4-line:#345c4e; --s4-on:var(--on-session);
+  --s5:#64517b; --s5-bg:#efeaf4; --s5-line:#56456a; --s5-on:var(--on-session);
+
+  /* ── grupo ───────────────────────────────────────────────────────────────
+     Continuam sendo a outra camada (frias, fora da paleta das sessões), só que
+     escurecidas pra ler sobre creme. Os alfas sobem um pouco: 7% de cor sobre
+     papel some, o que no escuro não acontecia. */
+  --gc0-rgb:21,110,124;   --gc0:rgb(var(--gc0-rgb));
+  --gc1-rgb:78,90,160;    --gc1:rgb(var(--gc1-rgb));
+  --gc2-rgb:25,116,102;   --gc2:rgb(var(--gc2-rgb));
+  --gc3-rgb:150,62,128;   --gc3:rgb(var(--gc3-rgb));
+  --gc4-rgb:43,102,158;   --gc4:rgb(var(--gc4-rgb));
+  --gc5-rgb:116,76,158;   --gc5:rgb(var(--gc5-rgb));
+  --gc-a-border:.60; --gc-a-bg:.08; --gc-a-track:.20;
+
+  /* ── heatmap: do poço bege ao sálvia cheio ─────────────────────────────── */
+  --heat0:var(--track);
+  --heat1:#d9e1cb;
+  --heat2:#b0c19d;
+  --heat3:#7b976e;
+  --heat4:#486244;
+
+  /* ── forma ───────────────────────────────────────────────────────────────
+     Quanto maior a superfície, maior o raio: card 16 → linha 12 → botão 10 → input 8.
+     A sombra é uma só em todo o sistema: um offset chapado, sem blur, na cor do
+     próprio bege um degrau abaixo. Peso de papel, não elevação. */
+  --radius:14px; --radius-sm:8px; --radius-lg:16px;
+  --radius-md:10px; --radius-xl:16px; --radius-2xl:18px;
+  --shadow-card:0 3px 0 var(--flat-deep);
+  --shadow-raised:0 3px 0 var(--flat-deep);
+  --shadow-raised-hover:0 5px 0 var(--flat-deep);
+  --shadow-knob:0 1px 0 rgba(var(--shadow-rgb),.18);
+  --title-shadow:var(--flat);
+
+  /* ── estado ──────────────────────────────────────────────────────────────
+     No escuro opacidade AFUNDA; no claro ela BRANQUEIA e o elemento some. Todo
+     fade sobe, e os estados que precisavam de opacidade pra existir (folga, dia
+     futuro) ganham desenho próprio nas regras lá embaixo.
+     Brightness inverte junto: destaque no claro é escurecer, não clarear. */
+  --fade-done:.74;
+  --fade-done-session:.72;
+  --fade-closed:.72;
+  --fade-future:.62;
+  --fade-forfeited:.74;
+  --fade-rest:.9;
+  --fade-weekend:.9;
+  --fade-soft:.85;
+  --fade-hint:.85;
+  --fade-card:.75;
+  --fade-event:1;
+  --fade-event-session:1;
+  --lift-hover:brightness(.965);
+  --lift-hover-soft:brightness(.975);
+  --lift-hover-strong:brightness(.96);
+  --lift-select:brightness(.965);
+  --lift-now:none;                 /* o bloco de agora ganha papel sálvia + traço, não brilho */
+  --scheme:light;
+  --picker-filter:none;
+
+  /* ── tipografia ──────────────────────────────────────────────────────────
+     Lora nomeia e sente; DM Sans opera. Número é dado do sistema → DM Sans
+     tabular (inclusive o relógio grande do foco: instrumento, não poesia). */
+  --font-ui:'DM Sans',sans-serif;
+  --font-mono:'DM Sans',sans-serif;
+  --font-title:'Lora',Georgia,serif;
+  --font-display:'Lora',Georgia,serif;
+}
+
+/* Todo número que muda sozinho é tabular — o relógio não pode dançar. */
+:root[data-theme="cafe"] body{
+  background:var(--bg);
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============================================================================
+   1. PAPEL — cards, hairline e a sombra chapada
+   ============================================================================ */
+
+/* Os cards grandes ganham o raio 16 do café. Os pequenos (tiles, chips) ficam
+   com o raio menor: um botão nunca tem o mesmo raio do card que o contém. */
+:root[data-theme="cafe"] .xp-card,
+:root[data-theme="cafe"] .chart-card,
+:root[data-theme="cafe"] .goal-week-card,
+:root[data-theme="cafe"] .profile-card,
+:root[data-theme="cafe"] .profile-hero,
+:root[data-theme="cafe"] .adh-card.adh-big,
+:root[data-theme="cafe"] .active-pet-card,
+:root[data-theme="cafe"] .no-active-pet,
+:root[data-theme="cafe"] .shop-open-btn,
+:root[data-theme="cafe"] .st-card,
+:root[data-theme="cafe"] .error-card,
+:root[data-theme="cafe"] .panel-overlay.center .panel-sheet{
+  border-radius:var(--radius-lg);
+}
+
+/* A assinatura: papel um pouco mais grosso. Sem blur, sem alpha — um degrau
+   abaixo do fundo da página. Aplicada com parcimônia, como no pacote. */
+:root[data-theme="cafe"] .panel-overlay.center .panel-sheet,
+:root[data-theme="cafe"] .error-card{
+  box-shadow:0 3px 0 var(--flat-deep);
+}
+:root[data-theme="cafe"] .panel-sheet{border-color:var(--border);}
+
+/* O CTA principal também é papel grosso: sombra chapada de 3px que vira 2px ao
+   afundar — a consequência lógica do gesto. */
+:root[data-theme="cafe"] .save-btn,
+:root[data-theme="cafe"] .finish-day-btn,
+:root[data-theme="cafe"] .error-reload,
+:root[data-theme="cafe"] .fs-card .fs-apply,
+:root[data-theme="cafe"] .tour-next,
+:root[data-theme="cafe"] .hc-start-btn{
+  box-shadow:0 3px 0 var(--flat-deep);
+}
+:root[data-theme="cafe"] .save-btn:active,
+:root[data-theme="cafe"] .finish-day-btn:active,
+:root[data-theme="cafe"] .error-reload:active,
+:root[data-theme="cafe"] .fs-card .fs-apply:active,
+:root[data-theme="cafe"] .tour-next:active,
+:root[data-theme="cafe"] .hc-start-btn:active,
+:root[data-theme="cafe"] .ls-submit-btn:active,
+:root[data-theme="cafe"] .ls-google-btn:active{
+  box-shadow:0 2px 0 var(--flat-deep);
+}
+:root[data-theme="cafe"] .save-btn:disabled{box-shadow:none;}
+
+/* a tela de erro: a mensagem crua fica em terracota queimado (o laranja puro
+   não alcança 4,5:1 sobre o recuo bege) */
+:root[data-theme="cafe"] .error-detail{color:var(--danger-soft);border-color:var(--border);}
+
+/* O :active afunda 1px: o botão se apoia no papel. */
+:root[data-theme="cafe"] .save-btn:active,
+:root[data-theme="cafe"] .reset-btn:active,
+:root[data-theme="cafe"] .ghost-btn:active,
+:root[data-theme="cafe"] .danger-btn:active,
+:root[data-theme="cafe"] .finish-day-btn:active,
+:root[data-theme="cafe"] .add-block-btn:active,
+:root[data-theme="cafe"] .add-event-btn:active,
+:root[data-theme="cafe"] .shop-btn:active,
+:root[data-theme="cafe"] .fs-card .fs-apply:active,
+:root[data-theme="cafe"] .st-action-btn:active,
+:root[data-theme="cafe"] .fit-study-btn:active,
+:root[data-theme="cafe"] .tour-next:active,
+:root[data-theme="cafe"] .error-reload:active,
+:root[data-theme="cafe"] .ls-submit-btn:active,
+:root[data-theme="cafe"] .ls-google-btn:active{
+  transform:translateY(1px);
+}
+
+/* Hover é LINHA, não preenchimento: o fundo mal muda e a borda escurece. */
+:root[data-theme="cafe"] .reset-btn:hover,
+:root[data-theme="cafe"] .icon-btn:hover,
+:root[data-theme="cafe"] .st-back:hover,
+:root[data-theme="cafe"] .timer-stop:hover,
+:root[data-theme="cafe"] .focus-exit:hover,
+:root[data-theme="cafe"] .subnav-chip:hover,
+:root[data-theme="cafe"] .pet-detail-all:hover{
+  background:var(--surface-hover-solid);
+  border-color:var(--border-strong);
+  color:var(--text);
+}
+
+/* ============================================================================
+   2. CONTROLES — campos de papel, botões, switches
+   ============================================================================ */
+
+/* O campo é o único lugar em que o papel fica MAIS branco que o card, com a
+   borda mais escura de todos os neutros: precisa parecer tocável. */
+:root[data-theme="cafe"] .field-group input[type=time],
+:root[data-theme="cafe"] .field-group input[type=number],
+:root[data-theme="cafe"] .field-group input[type=text],
+:root[data-theme="cafe"] .field-group input[type=date],
+:root[data-theme="cafe"] .st-card input[type=time],
+:root[data-theme="cafe"] .st-card input[type=number],
+:root[data-theme="cafe"] .st-card input[type=date],
+:root[data-theme="cafe"] .sw-row input[type=time],
+:root[data-theme="cafe"] .eop-extend-form input[type=time],
+:root[data-theme="cafe"] .del-acc-input,
+:root[data-theme="cafe"] .pet-name-input,
+:root[data-theme="cafe"] .hc-sites,
+:root[data-theme="cafe"] .week-row select,
+:root[data-theme="cafe"] .dice-btn{
+  background:var(--field);
+  border:1px solid var(--field-line);
+  color:var(--text);
+}
+:root[data-theme="cafe"] .del-acc-input{border-color:var(--danger);}
+:root[data-theme="cafe"] input::placeholder,
+:root[data-theme="cafe"] textarea::placeholder{color:var(--text-dim);}
+:root[data-theme="cafe"] .field-group input:focus,
+:root[data-theme="cafe"] .st-card input:focus,
+:root[data-theme="cafe"] .sw-row input[type=time]:focus,
+:root[data-theme="cafe"] .pet-name-input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px var(--accent-wash-2);
+}
+
+/* O secundário: fundo quase igual, borda que salta. */
+:root[data-theme="cafe"] .reset-btn,
+:root[data-theme="cafe"] .ghost-btn{background:var(--bg2);border-color:var(--field-line);color:var(--text);}
+
+/* Switch: desligado é poço bege com knob neutro; ligado é sálvia clara com knob
+   verde. No claro o "ligado" NÃO pode ficar mais escuro que o desligado. */
+:root[data-theme="cafe"] .st-switch-track{background:var(--track);border-color:var(--field-line);}
+:root[data-theme="cafe"] .st-switch input:checked + .st-switch-track{background:var(--accent-bg);border-color:var(--accent);}
+/* o :not(.on) é obrigatório: o prefixo do tema soma especificidade e, sem ele,
+   esta regra atropelaria o estado ligado do app.css (vale pra várias abaixo) */
+:root[data-theme="cafe"] .pet-skill-row .ps-toggle:not(.on){background:var(--track);border-color:var(--field-line);}
+
+/* Checkbox / check dos blocos: borda tocável, ✓ em papel sobre sálvia. */
+:root[data-theme="cafe"] .check{border-color:var(--border-strong) !important;background:var(--field);}
+:root[data-theme="cafe"] .check.checked{background:var(--accent) !important;border-color:var(--accent) !important;color:var(--on-accent);}
+
+/* ============================================================================
+   3. O PLANO — no celular a linha é a "cp-activity" de papel; no laptop
+   continua sem caixa (hairline + a sessão na cor do horário), como aprovado.
+   ============================================================================ */
+
+@media (max-width:1099px){
+  /* linha de papel, raio 12, hairline */
+  :root[data-theme="cafe"] .block-row{
+    border-radius:12px;
+    border-color:var(--border);
+    transition:background .12s,border-color .12s;
+  }
+  :root[data-theme="cafe"] .block-row:hover{background:var(--surface-hover-solid);}
+
+  /* concluído: perde o papel, a borda vira tracejada, o nome desengorda.
+     Feito é marca de lápis, não troféu — mas o ✓ continua verde. */
+  :root[data-theme="cafe"] .block-row.done{
+    background:transparent !important;
+    border-style:dashed;
+    border-color:var(--border) !important;
+  }
+  :root[data-theme="cafe"] .block-row.done .block-name{font-weight:400;color:var(--muted);text-decoration-color:var(--border-strong);}
+
+  /* o compromisso é a única coisa terracota da agenda: papel mais quente e uma
+     barra de 4px à esquerda. O padding-left afina 3px pra nada se mexer. */
+  :root[data-theme="cafe"] .block-row.event-row,
+  :root[data-theme="cafe"] .block-row.event-row.session-block{
+    background:var(--paper-event) !important;
+    border:1px solid var(--border) !important;
+    border-left:4px solid var(--clay-bar) !important;
+    border-style:solid !important;
+    padding-left:9px;
+  }
+  :root[data-theme="cafe"] .block-row.event-row .block-name{color:var(--text);}
+
+  /* pausa: sem papel, só uma linha discreta */
+  :root[data-theme="cafe"] .block-row.pausa-row{border-color:transparent;}
+  :root[data-theme="cafe"] .block-row.pausa-row .block-name{color:var(--muted);}
+
+  /* refeição/intervalo: papel recuado e tracejado */
+  :root[data-theme="cafe"] .block-row.almoco-row{background:var(--bg3) !important;border-color:var(--border) !important;}
+
+  /* agora: papel sálvia e um traço verde na margem (o brightness lavava tudo) */
+  :root[data-theme="cafe"] .block-row.now-block{
+    filter:none;
+    background:var(--accent-bg) !important;
+    border-color:var(--sage-line) !important;
+    box-shadow:inset 3px 0 0 var(--accent);
+  }
+  :root[data-theme="cafe"] .block-row.now-block .block-name{color:var(--accent);font-weight:600;}
+  :root[data-theme="cafe"] .block-row.now-block::before{color:var(--accent);}
+
+  /* dia futuro: tracejado em vez de fantasma — "ainda não chegou" tem que ser
+     legível, senão vira "vazio" */
+  :root[data-theme="cafe"] .block-row.day-future{
+    background:transparent !important;
+    border-style:dashed;
+    border-color:var(--border-mid) !important;
+  }
+
+  /* seleção de grupo: borda 2px sálvia + fundo suave, com o padding compensado
+     em 1px de cada lado pra linha não pular */
+  :root[data-theme="cafe"] .block-row.selecting{
+    filter:none;
+    border:2px solid var(--accent) !important;
+    background:var(--accent-bg) !important;
+    padding:10px 11px;
+  }
+  :root[data-theme="cafe"] .block-row.pausa-row.selecting{padding:6px 11px;}
+
+  /* abas dos dias, barra do dia e seletor de semana: no laptop essas mesmas
+     peças são texto puro (decisão aprovada), então o papel só entra aqui */
+  :root[data-theme="cafe"] .day-tab{background:var(--bg2);border-color:var(--border);}
+  :root[data-theme="cafe"] .day-tab:hover{border-color:var(--border-strong);color:var(--text);}
+  /* o dia ativo: a regra genérica acima (papel) vence o .day-tab.active do app.css por especificidade — repõe o verde com tinta creme */
+  :root[data-theme="cafe"] .day-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+  :root[data-theme="cafe"] .add-event-btn{border-color:var(--sage-line-2);background:var(--bg2);}
+  :root[data-theme="cafe"] .add-event-btn:hover{background:var(--accent-bg);border-color:var(--accent);}
+  :root[data-theme="cafe"] .add-event-btn.edited{border-color:var(--clay-bar);}
+  :root[data-theme="cafe"] .week-row select{
+    background:var(--field);
+    border:1px solid var(--field-line);
+    border-radius:var(--radius-sm);
+    color:var(--text);
+  }
+  :root[data-theme="cafe"] .group-box{border-radius:var(--radius-lg);}
+}
+
+/* timer ativo na lista: traço verde, sem halo */
+:root[data-theme="cafe"] .block-row.timer-active{
+  border-color:var(--accent) !important;
+  box-shadow:inset 3px 0 0 var(--accent);
+}
+
+/* bloco abandonado (hardcore): tracejado terracota, sem papel */
+:root[data-theme="cafe"] .block-row.forfeited{
+  background:transparent !important;
+  border-style:dashed;
+  border-color:var(--danger-check) !important;
+}
+/* o ✕ no lugar do check: caixa vazia com a borda terracota (o !important é pra
+   passar pelo `border:2px solid` !important do bloco "BIGGER CHECKBOX") */
+:root[data-theme="cafe"] .block-row.forfeited .check{
+  background:transparent;
+  border-color:var(--danger-check) !important;
+}
+
+/* dia vazio / dica: tracejado neutro e a frase em Lora */
+:root[data-theme="cafe"] .empty-day{
+  background:transparent;
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-lg);
+  font-family:var(--font-title);
+  line-height:1.8;
+}
+
+:root[data-theme="cafe"] .add-block-btn{border-color:var(--sage-line-2);}
+
+/* ============================================================================
+   4. GRUPOS DE ESTUDO
+   ============================================================================ */
+:root[data-theme="cafe"] .group-box.empty{border-style:dashed;}
+:root[data-theme="cafe"] .selection-rect{border-color:var(--accent);background:var(--accent-wash-soft);}
+:root[data-theme="cafe"] .group-summary{background:var(--bg3);border-color:var(--border);}
+
+/* ============================================================================
+   5. TIMER, COLUNA DA DIREITA E A FRASE GENTIL
+   ============================================================================ */
+
+/* No celular a barra do timer é sticky (já posicionada): a barrinha de 4px entra
+   direto. Ela recua ~8px em cima e embaixo e tem o raio assimétrico do pacote —
+   quadrada onde encosta na borda, arredondada onde termina. */
+:root[data-theme="cafe"] .timer-bar{border-bottom-color:var(--border);}
+:root[data-theme="cafe"] .timer-bar.active::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:8px;
+  bottom:8px;
+  width:4px;
+  border-radius:0 5px 5px 0;
+  background:var(--accent);
+}
+:root[data-theme="cafe"] .timer-time.ending{color:var(--danger-soft);}
+
+/* ============================================================================
+   6. MODO FOCO — a tela cheia é creme, o anel é sálvia, o palco tem chão
+   ============================================================================ */
+:root[data-theme="cafe"] .focus-timer-track{stroke:var(--ring-track);stroke-width:4;}
+:root[data-theme="cafe"] .focus-timer-fill{stroke-width:4;}
+/* em espera, 30% de opacidade sumia sobre creme */
+:root[data-theme="cafe"] .focus-timer-fill.waiting{opacity:.5;stroke:var(--border-strong);}
+:root[data-theme="cafe"] .focus-time-big{letter-spacing:-.03em;}
+:root[data-theme="cafe"] .focus-done{box-shadow:0 3px 0 var(--flat-deep);}
+:root[data-theme="cafe"] .focus-scene{
+  background:linear-gradient(180deg,transparent 0%,var(--scene-floor) 62%);
+  border:1px solid var(--border);
+  border-bottom-color:var(--flat-deep);
+}
+:root[data-theme="cafe"] .focus-next{box-shadow:0 3px 0 var(--flat);}
+:root[data-theme="cafe"] .focus-next-sep{background:var(--border-strong);}
+
+/* hardcore: o vermelho vira terracota queimado; o anel também */
+:root[data-theme="cafe"] .focus-overlay.hardcore .focus-timer-fill:not(.pausa){stroke:var(--danger-soft);}
+:root[data-theme="cafe"] .hc-start-btn{color:var(--on-danger);}
+:root[data-theme="cafe"] .hc-mode-chip:not(.active){background:var(--bg2);}
+:root[data-theme="cafe"] .hc-sites{font-family:var(--font-ui);}
+
+/* ============================================================================
+   7. ANÁLISE
+   ============================================================================ */
+
+/* os números grandes são o único lugar em que Lora conta: eles são o "quanto",
+   não um dado de máquina */
+:root[data-theme="cafe"] .xp-card .xp-num,
+:root[data-theme="cafe"] .an-stat .as-val,
+:root[data-theme="cafe"] .adh-card.adh-big .adh-val,
+:root[data-theme="cafe"] .ds-stat .ds-val{
+  font-family:var(--font-title);
+  font-weight:500;
+  letter-spacing:-.02em;
+}
+
+/* barras e trilhos: o trilho é poço bege, o preenchimento é sálvia */
+:root[data-theme="cafe"] .bar-fill-an{opacity:1;}
+:root[data-theme="cafe"] .bar-fill-an.empty{background:var(--track);}
+:root[data-theme="cafe"] .adh-card.zero .bar-fill{background:var(--border);}
+
+/* os 7 dots: no claro, opacidade some. Folga vira contorno tracejado; "não
+   bateu" continua sendo o poço cheio. Assim os três estados neutros se
+   distinguem sem depender de alfa. */
+:root[data-theme="cafe"] .goal-dot{color:var(--text);}
+:root[data-theme="cafe"] .goal-dot.met{color:var(--on-accent);}
+:root[data-theme="cafe"] .goal-dot.miss{background:var(--track);opacity:1;color:var(--muted);}
+:root[data-theme="cafe"] .goal-dot.future{border-color:var(--border-strong);color:var(--text-dim);}
+:root[data-theme="cafe"] .goal-dot.weekend,
+:root[data-theme="cafe"] .goal-dot.off{
+  background:transparent;
+  opacity:1;
+  border:1px dashed var(--border-strong);
+  color:var(--text-dim);
+}
+
+/* heatmap: célula neutra com hairline em vez de mancha quase invisível */
+:root[data-theme="cafe"] .heatmap-cell{border-radius:3px;}
+:root[data-theme="cafe"] .heatmap-gh .heatmap-cell.weekend-off{
+  background:transparent;
+  box-shadow:inset 0 0 0 1px var(--border);
+}
+:root[data-theme="cafe"] .heatmap-gh .heatmap-cell.future{border-color:var(--border-strong);}
+
+:root[data-theme="cafe"] .subnav-chip:not(.active){background:var(--bg2);}
+:root[data-theme="cafe"] .profile-avatar{border-color:var(--sage-line-2);}
+:root[data-theme="cafe"] .sparkline-wrap svg{color:var(--accent);}
+
+/* ============================================================================
+   8. PERFIL E PETS — o palco dos sprites
+   Os PNGs de pixel art foram desenhados pra fundo escuro: sobre creme eles
+   ficariam recortados no vazio. Cada sprite ganha um palco quente atrás (o
+   mesmo truque do quarto do pacote: parede + chão), e o hero vira um quarto.
+   ============================================================================ */
+
+/* o hero é a parede; a faixa de baixo é o chão, com o rodapé do pacote */
+:root[data-theme="cafe"] .profile-hero{border-color:var(--border);overflow:hidden;}
+:root[data-theme="cafe"] .profile-hero-stage::after{
+  content:'';
+  position:absolute;
+  left:-16px;
+  right:-16px;
+  bottom:0;
+  height:34%;
+  background:linear-gradient(180deg,#e3cba6 0%,#d9bd93 100%);
+  border-top:4px solid #c6a679;
+  z-index:0;
+}
+:root[data-theme="cafe"] .profile-hero-stage .char-sprite,
+:root[data-theme="cafe"] .profile-hero-stage .pet-sprite{position:relative;z-index:1;}
+
+/* sprites soltos (loja, meus pets, adoção, resumo do dia, evolução, pet ativo):
+   um halo quente de mesa por baixo, sem caixa dura */
+:root[data-theme="cafe"] .shop-item-img,
+:root[data-theme="cafe"] .starter-sprite,
+:root[data-theme="cafe"] .active-pet-card .ap-sprite,
+:root[data-theme="cafe"] .buy-confirm-img,
+:root[data-theme="cafe"] .ds-pet-row img,
+:root[data-theme="cafe"] .evo-path-next img,
+:root[data-theme="cafe"] .char-sprite,
+:root[data-theme="cafe"] .pet-sprite{
+  background:var(--sprite-stage);
+}
+
+:root[data-theme="cafe"] .active-pet-card{border-color:var(--sage-line-2);}
+:root[data-theme="cafe"] .active-pet-card[role="button"]:hover,
+:root[data-theme="cafe"] .active-pet-card[role="button"]:focus-visible{border-color:var(--accent);}
+:root[data-theme="cafe"] .profile-stat-mini.coins-stat{border-color:var(--gold-border-soft);}
+:root[data-theme="cafe"] .no-active-pet{border-color:var(--border-strong);}
+:root[data-theme="cafe"] .shop-item{background:var(--bg2);border-color:var(--border);border-radius:var(--radius-lg);}
+:root[data-theme="cafe"] .shop-item.active-pet{border-color:var(--accent);}
+:root[data-theme="cafe"] .shop-btn:not(:hover):not(.active){background:var(--bg2);}
+:root[data-theme="cafe"] .shop-btn.owned{border-color:var(--field-line);}
+:root[data-theme="cafe"] .shop-btn.locked{opacity:1;background:transparent;border-color:var(--border);color:var(--text-dim);border-style:dashed;}
+:root[data-theme="cafe"] .shop-item-lv{background:var(--accent-bg);}
+:root[data-theme="cafe"] .ds-levelup{border-color:var(--accent);}
+
+/* a caixa selecionada (evolução, pet inicial, skill ativa): 2px sálvia com o
+   padding compensado em 1px — a caixa não cresce, só ganha peso */
+:root[data-theme="cafe"] .evo-path{background:var(--bg2);}
+:root[data-theme="cafe"] .evo-path.selected{border-width:2px;padding:13px 9px;background:var(--accent-bg);}
+:root[data-theme="cafe"] .starter-card{background:var(--bg2);}
+:root[data-theme="cafe"] .starter-card.selected{border-width:2px;padding:9px 5px 7px;background:var(--accent-bg);}
+:root[data-theme="cafe"] .pet-skill-row{background:var(--bg2);}
+:root[data-theme="cafe"] .pet-skill-row.active{border-width:2px;padding:7px 9px;background:var(--accent-bg);}
+
+/* ============================================================================
+   9. CONFIGURAÇÕES
+   ============================================================================ */
+:root[data-theme="cafe"] .st-topbar,
+:root[data-theme="cafe"] .st-actions{border-color:var(--border);}
+:root[data-theme="cafe"] .sts-tile{background:var(--bg3);border-radius:var(--radius-md);}
+:root[data-theme="cafe"] .st-divider{background:var(--border);}
+:root[data-theme="cafe"] .st-card.st-danger{border-color:var(--danger-border);border-width:1px;}
+:root[data-theme="cafe"] .fit-study-btn{border-color:var(--sage-line-2);}
+:root[data-theme="cafe"] .fs-card{background:var(--bg2);}
+:root[data-theme="cafe"] .fs-card.fs-best{border-color:var(--accent);background:var(--accent-bg);}
+:root[data-theme="cafe"] .eop-choice{background:var(--bg2);}
+:root[data-theme="cafe"] .eop-choice:hover{border-color:var(--accent);background:var(--accent-bg);}
+:root[data-theme="cafe"] .dw-off-note{border-color:var(--border-strong);}
+
+/* a régua do dia: o segmento de pausa era preto chapado; aqui é bege recuado,
+   e o intervalo é uma hachura quente */
+:root[data-theme="cafe"] .dtl-track{background:var(--track);}
+:root[data-theme="cafe"] .dtl-legend i.pause{border-color:var(--border-strong);}
+
+/* ============================================================================
+   10. MODAIS, TOUR E EFEMEROS
+   ============================================================================ */
+:root[data-theme="cafe"] .weekday-chip:not(.selected){background:var(--bg2);}
+:root[data-theme="cafe"] .weekday-chip.selected{border-color:var(--accent);}
+:root[data-theme="cafe"] .recurrence-section{background:var(--bg3);border-color:var(--border);}
+:root[data-theme="cafe"] .event-chip{border-left:4px solid var(--clay-bar);padding-left:9px;}
+
+/* o balão do tour: papel com hairline sálvia e a sombra chapada */
+:root[data-theme="cafe"] .tour-balloon{
+  border-color:var(--sage-line-2);
+  box-shadow:0 3px 0 var(--flat-deep);
+}
+:root[data-theme="cafe"] .tour-arrow{border-color:var(--sage-line-2);background:var(--bg2);}
+:root[data-theme="cafe"] .tour-ring{box-shadow:0 0 0 2px var(--accent),0 0 0 7px var(--accent-glow-soft);}
+
+/* o feedback do check: no escuro era glow lima; no claro glow PIORA o contraste.
+   Aqui o "+X XP" ganha um halo de papel por trás e continua em sálvia cheia. */
+:root[data-theme="cafe"] .float-gain .fg-xp{
+  color:var(--accent);
+  text-shadow:0 0 6px var(--bg2),0 1px 0 var(--bg2),0 -1px 0 var(--bg2),1px 0 0 var(--bg2),-1px 0 0 var(--bg2);
+}
+:root[data-theme="cafe"] .float-gain .fg-coin{
+  color:var(--gold);
+  text-shadow:0 0 6px var(--bg2),0 1px 0 var(--bg2),0 -1px 0 var(--bg2),1px 0 0 var(--bg2),-1px 0 0 var(--bg2);
+}
+:root[data-theme="cafe"] .check-ripple{
+  background:radial-gradient(circle,var(--accent-ripple) 0%,rgba(var(--accent-rgb),.18) 45%,transparent 72%);
+}
+/* o pulso do "Hoje pendente": no claro o flash é a terracota cheia com tinta creme */
+:root[data-theme="cafe"] .xp-right .today-xp.today-pending{
+  box-shadow:0 2px 0 var(--flat);
+  border-color:var(--clay-bar);
+}
+:root[data-theme="cafe"] #save-indicator{box-shadow:0 3px 0 var(--flat);}
+:root[data-theme="cafe"] .fab-config{box-shadow:0 3px 0 var(--flat-deep),0 0 0 4px var(--accent-bg-soft);}
+:root[data-theme="cafe"] .fab-config:hover{box-shadow:0 5px 0 var(--flat-deep),0 0 0 6px var(--accent-glow-ring);}
+
+/* ============================================================================
+   11. LOGIN — a tela mais "escura por construção" do app vira papel quadriculado
+   ============================================================================ */
+:root[data-theme="cafe"] #login-screen{
+  background:
+    radial-gradient(120% 90% at 50% 0%,#fdf7ec 0%,rgba(253,247,236,0) 60%),
+    var(--login-bg);
+}
+/* a grade fica: sobre creme ela lê como papel quadriculado de caderno */
+:root[data-theme="cafe"] .ls-scanline{display:none;}
+:root[data-theme="cafe"] .ls-star{background:rgba(var(--accent-rgb),.35);}
+:root[data-theme="cafe"] .ls-char{
+  filter:none;
+  background:var(--sprite-stage);
+}
+:root[data-theme="cafe"] .ls-eyebrow{
+  font-family:var(--font-ui);
+  font-weight:500;
+  letter-spacing:.16em;
+  text-shadow:none;
+  color:var(--muted);
+}
+:root[data-theme="cafe"] .ls-title{
+  letter-spacing:-.02em;
+  font-weight:500;
+  text-shadow:2px 2px 0 var(--flat);
+}
+:root[data-theme="cafe"] .ls-title span{color:var(--accent);}
+:root[data-theme="cafe"] .ls-sub{color:var(--muted);}
+:root[data-theme="cafe"] .ls-feat{
+  background:var(--bg2);
+  border-color:var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:0 3px 0 var(--flat);
+  color:var(--muted);
+}
+:root[data-theme="cafe"] .ls-input{
+  background:var(--field);
+  border:1px solid var(--field-line);
+  border-radius:var(--radius-sm);
+}
+:root[data-theme="cafe"] .ls-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-wash-2);}
+:root[data-theme="cafe"] .ls-submit-btn{border-radius:var(--radius-md);box-shadow:0 3px 0 var(--flat-deep);}
+:root[data-theme="cafe"] .ls-google-btn{
+  border:1px solid var(--field-line);
+  border-radius:var(--radius-md);
+  box-shadow:0 3px 0 var(--flat-deep);
+}
+:root[data-theme="cafe"] .ls-google-btn:hover{box-shadow:0 5px 0 var(--flat-deep);}
+:root[data-theme="cafe"] .ls-fine-print{color:var(--text-ghost);}
+
+/* ============================================================================
+   12. TELA GRANDE (≥1100px) — a lista continua SEM CAIXA (decisão aprovada):
+   hairline, a sessão na cor do horário, o agora com papel sálvia e traço.
+   As caixas de papel entram só onde já havia caixa: o card do timer.
+   ============================================================================ */
+@media (min-width:1100px){
+  /* o select da semana no laptop é texto, como no app.css — a regra base do tema (o campo de papel) vale só no celular */
+  :root[data-theme="cafe"] .week-row select{background:transparent;border:0;border-radius:0;}
+  /* o card do timer é a única caixa da coluna — ganha papel, hairline sálvia,
+     a sombra chapada e a barrinha vertical de 4px do pacote */
+  :root[data-theme="cafe"] .timer-bar{
+    position:relative;
+    background:var(--bg2);
+    border:1px solid var(--sage-line);
+    box-shadow:0 3px 0 var(--flat);
+  }
+  :root[data-theme="cafe"] .timer-bar.active::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:22px;
+    bottom:22px;
+    width:4px;
+    border-radius:0 5px 5px 0;
+    background:var(--accent);
+  }
+
+  /* o trilho: o traço da aba ativa e o palco do personagem com o pet */
+  :root[data-theme="cafe"] .nav-tab.active{color:var(--accent);}
+  :root[data-theme="cafe"] .rail-sprites{
+    border-bottom-color:var(--border);
+    background:radial-gradient(120% 70% at 50% 100%,rgba(179,118,85,.22) 0%,rgba(179,118,85,.07) 55%,rgba(179,118,85,0) 78%);
+  }
+  :root[data-theme="cafe"] .rail-char,
+  :root[data-theme="cafe"] .rail-pet{background:var(--sprite-stage);}
+  /* no trilho o "Sair" é texto, não pastilha: desfaz o hover de linha genérico */
+  :root[data-theme="cafe"] .rail-foot .icon-btn:hover{background:none;border-color:transparent;color:var(--text);}
+
+  /* o toggle Dia · Semana: pista rebaixada + pastilha sálvia (no claro, "ligado"
+     não pode ser só um branco em cima de outro branco) */
+  :root[data-theme="cafe"] .view-mode{background:var(--track);}
+  :root[data-theme="cafe"] .vm-btn.on{background:var(--accent-bg);color:var(--accent);}
+
+  /* a lista sem caixa: só a hairline muda de cor. O agora ganha papel sálvia. */
+  :root[data-theme="cafe"] .block-row.now-block{
+    background:var(--accent-bg) !important;
+    box-shadow:inset 3px 0 0 var(--accent);
+  }
+  :root[data-theme="cafe"] .block-row.done .block-name{color:var(--muted);}
+  :root[data-theme="cafe"] .block-row.event-row .block-time{color:var(--orange);}
+  :root[data-theme="cafe"] .block-row.event-row{box-shadow:inset 3px 0 0 var(--clay-bar);}
+
+  /* a Semana: coluna como pista rebaixada, manchas de papel colorido */
+  :root[data-theme="cafe"] .wv-col:not(.today):not(.off){box-shadow:inset 0 0 0 1px var(--border);}
+  :root[data-theme="cafe"] .wv-col.off{box-shadow:inset 0 0 0 1px var(--border);background:transparent;}
+  :root[data-theme="cafe"] .wv-blk{border-radius:4px;}
+  :root[data-theme="cafe"] .wv-blk.pausa:not(.done){background:var(--surface-soft);color:var(--muted);}
+  :root[data-theme="cafe"] .wv-blk.intervalo{border-color:var(--border-strong);}
+  :root[data-theme="cafe"] .wv-blk.event{box-shadow:inset 3px 0 0 var(--clay-bar);}
+  :root[data-theme="cafe"] .wv-hl{background:var(--border);opacity:.6;}
+  :root[data-theme="cafe"] .wv-now{box-shadow:0 1px 0 var(--accent-glow-tight);}
+
+  /* os dots da meta na coluna da direita seguem a mesma regra dos 7 dots */
+  :root[data-theme="cafe"] .side-dot{color:var(--text);}
+  :root[data-theme="cafe"] .side-dot.met{color:var(--on-accent);}
+  :root[data-theme="cafe"] .side-dot.future{border-color:var(--border-strong);}
+  :root[data-theme="cafe"] .side-dot.weekend,
+  :root[data-theme="cafe"] .side-dot.off{
+    opacity:1;
+    background:transparent;
+    border:1px dashed var(--border-strong);
+    color:var(--text-dim);
+  }
+
+  /* a frase gentil no pé da coluna da direita. Fixa e decorativa: não empurra
+     nada, some junto com o Plano, e fica acima do ⚙️ pra não brigar com ele. */
+  :root[data-theme="cafe"] .plan-side::after{
+    content:'Um café. Um bloco de estudo. Um pouquinho de cada vez.';
+    position:fixed;
+    right:.9%;
+    bottom:calc(96 * var(--s));
+    width:14%;
+    text-align:center;
+    font-family:var(--font-title);
+    font-style:italic;
+    font-weight:400;
+    font-size:calc(13 * var(--s));
+    line-height:1.8;
+    color:var(--muted);
+    pointer-events:none;
+  }
+}

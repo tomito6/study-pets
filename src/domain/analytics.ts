@@ -73,7 +73,7 @@ export function goalWeek(
 
 // ---------------------------------------------------------------- heatmap 7 × N semanas
 
-export const HEAT_COLORS = ['var(--bg3)', '#1a3a20', '#2d6b35', '#65a30d', '#a3e635'] as const;
+export const HEAT_COLORS = ['var(--heat0)', 'var(--heat1)', 'var(--heat2)', 'var(--heat3)', 'var(--heat4)'] as const;
 
 export interface HeatCell {
   key: DateKey;

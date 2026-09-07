@@ -19,6 +19,7 @@ import { ConfigPreview } from './ConfigPreview';
 import { CancelSessionModal, DeleteAccountModal } from './DangerModals';
 import { FitStudyModal } from './FitStudyModal';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
+import { ThemePicker } from './ThemePicker';
 
 const t = strings.settings;
 const th = strings.hardcore.settings;
@@ -239,6 +240,8 @@ export function SettingsPage() {
                   )}
                 </div>
               </div>
+
+              <ThemePicker />
 
               <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title">{t.tour.title}</div></div>
