@@ -1215,6 +1215,7 @@
        sem barra), o cartão Agora sempre no pé. O quarto encolhe com a altura da janela (clamp em vh). */
     .plan-col{grid-column:1;grid-row:2 / 4;align-self:start;position:sticky;zoom:var(--col-k);top:calc(var(--topbar-h) / var(--col-k));height:calc((100vh - var(--topbar-h)) / var(--col-k));display:flex;flex-direction:column;align-items:stretch;}
     .plan-side{flex:1 1 auto;min-height:0;overflow:auto;scrollbar-width:none;}
+    .plan-side > *{flex-shrink:0;} /* os cards têm a altura natural — a coluna encolhe por escala (--col-k), nunca espremendo card */
     .plan-side::-webkit-scrollbar{display:none;}
     .plan-side{margin:0;padding:calc(26 * var(--s)) 0 0;display:flex;flex-direction:column;gap:calc(20 * var(--s));}
     .side-sub{font-size:calc(12 * var(--s));color:var(--muted);margin-top:calc(6 * var(--s));}
@@ -1263,8 +1264,6 @@
     .wv-blk.pausa.done,.wv-blk.longa.done{background:var(--surface-strong);color:var(--text-soft);}
     .wv-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow-tight);pointer-events:none;}
   }
-  /* laptop com pouca altura (tela pequena, escala do Windows): a coluna da esquerda encolhe INTEIRA — zoom, como
-     Análise e Perfil — mantendo as proporções (o card do pet, o Agora, Hoje/Meta), e a lista ganha a largura que sobra */
-  @media (min-width:1100px) and (max-height:900px){ #app{--col-k:.92;} }
-  @media (min-width:1100px) and (max-height:820px){ #app{--col-k:.85;} }
-  @media (min-width:1100px) and (max-height:720px){ #app{--col-k:.75;} }
+  /* a coluna da esquerda encolhe INTEIRA pra caber na altura da janela — zoom, como Análise e Perfil — mantendo
+     as proporções, e a lista ganha a largura que sobra. Quem calcula --col-k (altura disponível ÷ altura natural,
+     teto 1) é features/plan/useColumnFit.ts; sem ele, 1. */

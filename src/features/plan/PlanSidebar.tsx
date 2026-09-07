@@ -11,6 +11,7 @@ import { dk } from '../../domain/time';
 import { strings } from '../../shared/strings';
 import { setTab, useAppState } from '../../store/store';
 import { useSpriteFrame } from '../profile/useSpriteFrame';
+import { useColumnFit } from './useColumnFit';
 
 const CHAR_FRAMES = 4;
 
@@ -48,6 +49,7 @@ function RoomCard() {
 }
 
 export function PlanSidebar() {
+  useColumnFit(); // a coluna inteira cabe na altura da janela por escala (--col-k)
   const now = new Date();
   const todayKey = dk(now);
   const { min, closed } = useAppState((s) => ({
