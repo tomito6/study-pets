@@ -1192,7 +1192,7 @@
     .finish-day-btn,.finish-day-banner{font-size:calc(14 * var(--s));padding:calc(14 * var(--s));}
 
     /* a coluna da direita: o timer é a única caixa; o resto é rótulo e valor */
-    .timer-bar{grid-column:1;grid-row:3;position:sticky;top:calc(var(--topbar-h) + 20 * var(--s));margin:calc(18 * var(--s)) 0 0;background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
+    .timer-bar{position:sticky;top:calc(var(--topbar-h) + 20 * var(--s));bottom:calc(24 * var(--s));margin:calc(18 * var(--s)) 0 0;background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
     .timer-bar.idle{display:flex;}
     .timer-bar.active > div:first-child{order:1;}
     .timer-bar > div:first-child > div:first-child{font-size:calc(10 * var(--s)) !important;}
@@ -1203,7 +1203,8 @@
     .vol-slider{width:calc(60 * var(--s));}
     .timer-stop{order:3;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);}
     .timer-stop:hover{color:var(--text);}
-    .plan-side{grid-column:1;grid-row:2;margin:0;padding:calc(26 * var(--s)) 0 0;display:flex;flex-direction:column;gap:calc(20 * var(--s));}
+    .plan-col{grid-column:1;grid-row:2 / 4;align-self:stretch;display:flex;flex-direction:column;align-items:stretch;}
+    .plan-side{margin:0;padding:calc(26 * var(--s)) 0 0;display:flex;flex-direction:column;gap:calc(20 * var(--s));}
     .side-sub{font-size:calc(12 * var(--s));color:var(--muted);margin-top:calc(6 * var(--s));}
     .habitat{height:calc(170 * var(--s));}
     .habitat .ap-sprite{width:96px;height:96px;bottom:20px;}
