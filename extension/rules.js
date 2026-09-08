@@ -1,6 +1,14 @@
-// A parte pura da extensão: dado o estado do hardcore que o app mandou, quais
-// regras do declarativeNetRequest aplicar, e se uma URL aberta cai no bloqueio.
+// A parte pura da extensão: dado o estado que o app mandou, quais regras do
+// declarativeNetRequest aplicar, e se uma URL aberta cai no bloqueio.
 // Sem `chrome.*` aqui — é o que o Vitest testa (tests/extension-rules.test.ts).
+//
+// A extensão é BURRA de propósito: quem decide o que "chess.com" cobre é o app
+// (`src/domain/siteBlock.ts`, que expande os apelidos antes de mandar). Aqui só
+// entra o que já veio pronto.
+//
+// Um domínio cobre o site inteiro: `requestDomains` do declarativeNetRequest já
+// bate em todo subdomínio e qualquer caminho ou porta ("chess.com" pega
+// `www.chess.com/play/online` e `live.chess.com`).
 //
 // Só navegação de página inteira (`main_frame`) é redirecionada: o objetivo é
 // impedir de ABRIR o YouTube, não quebrar um site que embute um vídeo.
@@ -9,6 +17,9 @@
 export const ALWAYS_ALLOWED = ['plano-estudos-one.vercel.app', 'localhost', '127.0.0.1', 'accounts.google.com', 'googleapis.com', 'gstatic.com', 'firebaseapp.com'];
 
 const BLOCKED_PAGE = '/blocked.html';
+
+/** A versão do payload que esta extensão entende. Outra versão é ignorada. */
+export const PAYLOAD_VERSION = 2;
 
 /** "https://www.youtube.com/watch" → "youtube.com". `null` se não é http(s). */
 export function hostOf(url) {
@@ -26,9 +37,15 @@ export const domainMatches = (host, site) => host === site || host.endsWith('.' 
 
 /** Os domínios do app (o de produção e o de onde a página foi servida, se for outro). */
 export function allowedFor(payload) {
-  const extra = hostOf(payload.appUrl || '');
+  const extra = hostOf((payload && payload.appUrl) || '');
   return extra && !ALWAYS_ALLOWED.includes(extra) ? [...ALWAYS_ALLOWED, extra] : [...ALWAYS_ALLOWED];
 }
+
+/** O payload é de uma versão que a gente entende? */
+export const isSupported = (payload) => !!payload && payload.v === PAYLOAD_VERSION;
+
+/** O estado guardado ainda vale neste instante? */
+export const isLive = (state, now) => !!state && state.active === true && typeof state.until === 'number' && state.until > now;
 
 /** Uma URL aberta agora cai no bloqueio deste estado? (Pra fechar abas que já estavam abertas.) */
 export function isBlocked(url, payload) {
@@ -59,4 +76,16 @@ export function buildRules(payload) {
     ];
   }
   return sites.map((site, i) => ({ id: 1000 + i, priority: 1, action: redirect, condition: { requestDomains: [site], resourceTypes: main } }));
+}
+
+/** O que o app recebe de volta: o que a extensão de fato aplicou. */
+export function ackFor(state) {
+  if (!state || !state.active) return { applied: false, until: 0, sites: 0, mode: null, test: false };
+  return {
+    applied: true,
+    until: state.until,
+    sites: (state.sites || []).length,
+    mode: state.mode || 'blacklist',
+    test: state.test === true,
+  };
 }

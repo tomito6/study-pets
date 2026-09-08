@@ -1,6 +1,9 @@
 // A tela do pet: lê o estado guardado, anima o sprite (frames vindos do próprio
 // app; se não carregam, o emoji entra), conta o que falta do bloco e leva de
 // volta pro app. Tom adulto, sem bronca: o pet só está esperando.
+//
+// A frase de saída muda conforme o que está rodando: hardcore custa XP pra sair,
+// estudo normal é só parar no app, e o teste de 1 min acaba sozinho.
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, '0');
@@ -41,42 +44,57 @@ function showPet(pet) {
   }, 250);
 }
 
+/** A saída depende de como o bloqueio foi armado. */
+function exitHint(state) {
+  if (state.test) return 'Teste do Study Pets — o bloqueio acaba sozinho quando o minuto terminar.';
+  if (state.hardcore) return 'Pra sair antes, desista lá no app — custa XP.';
+  return 'Pra sair antes, pare o estudo lá no app.';
+}
+
 async function main() {
   const from = new URLSearchParams(location.search).get('from');
-  const { hardcore } = await chrome.storage.local.get('hardcore');
+  const { blocking } = await chrome.storage.local.get('blocking');
   const back = $('back');
-  const appUrl = (hardcore && hardcore.appUrl) || 'https://plano-estudos-one.vercel.app';
+  const appUrl = (blocking && blocking.appUrl) || 'https://plano-estudos-one.vercel.app';
   back.href = appUrl;
 
-  if (!hardcore || !hardcore.active) {
+  if (!blocking || !blocking.active) {
     $('title').textContent = 'Nada bloqueado agora';
-    $('line').textContent = 'Nenhum estudo hardcore rodando. Se você chegou aqui, recarregue a página que queria.';
+    $('line').textContent = 'Nenhum estudo rodando. Se você chegou aqui, recarregue a página que queria.';
     $('countdown').hidden = true;
     $('block').hidden = true;
+    $('hint').hidden = true;
     showPet(null);
     return;
   }
 
-  const pet = hardcore.pet;
+  const pet = blocking.pet;
   const petName = pet ? pet.name : null;
   showPet(pet);
-  $('title').textContent = petName ? `${petName} está te esperando` : 'Você está em foco';
-  $('line').textContent = petName
-    ? `Vocês dois combinaram este bloco. Volta lá que ${petName} não sai do lugar.`
-    : 'Você combinou este bloco com você mesmo. O site fica pra depois.';
-  $('block').textContent = hardcore.block ? `${hardcore.block.name} · até ${hardcore.block.endTime}` : '';
+  if (blocking.test) {
+    $('title').textContent = 'Funcionou 🎉';
+    $('line').textContent = 'É assim que este site vai ficar enquanto você estuda.';
+  } else {
+    $('title').textContent = petName ? `${petName} está te esperando` : 'Você está em foco';
+    $('line').textContent = petName
+      ? `Vocês dois combinaram este bloco. Volta lá que ${petName} não sai do lugar.`
+      : 'Você combinou este bloco com você mesmo. O site fica pra depois.';
+  }
+  $('block').textContent = blocking.block ? `${blocking.block.name} · até ${blocking.block.endTime}` : '';
+  $('hint').textContent = exitHint(blocking);
   if (from) {
     $('from').textContent = `${from} fica pra depois.`;
     $('from').hidden = false;
   }
 
   const tick = () => {
-    const left = Math.max(0, Math.ceil((hardcore.until - Date.now()) / 1000));
+    const left = Math.max(0, Math.ceil((blocking.until - Date.now()) / 1000));
     const el = $('countdown');
     if (left <= 0) {
       el.textContent = 'Acabou — pode voltar 🎉';
       el.classList.add('done');
-      $('line').textContent = 'O bloco terminou. O site já abre de novo; é só recarregar.';
+      $('line').textContent = 'Acabou. O site já abre de novo; é só recarregar.';
+      $('hint').hidden = true;
       return;
     }
     el.textContent = fmt(left);

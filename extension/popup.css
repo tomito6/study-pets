@@ -1,0 +1,14 @@
+/* O popup do ícone: uma olhada rápida no que está bloqueado agora. Mesma paleta
+   da tela do pet (tema escuro, verde lima), fontes do sistema. */
+:root { --bg:#0e0e0f; --bg2:#151517; --border:#232326; --text:#e6e6e6; --muted:#8a8a90; --accent:#a3e635; }
+* { box-sizing:border-box; }
+body { margin:0; width:280px; padding:16px; background:var(--bg); color:var(--text); font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.head { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+.icon { width:22px; height:22px; image-rendering:pixelated; border-radius:5px; }
+.brand { font-size:13px; font-weight:600; letter-spacing:.01em; }
+.status { font-size:14px; line-height:1.45; font-weight:600; }
+.status.on { color:var(--accent); }
+.until { font-family:ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size:12px; color:var(--muted); margin-top:6px; }
+.sites { font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:8px; background:var(--bg2); border:1px solid var(--border); border-radius:9px; padding:8px 10px; word-break:break-all; }
+.open { display:block; text-align:center; margin-top:14px; background:var(--accent); color:#0e0e0f; text-decoration:none; font-weight:600; font-size:13px; padding:9px 0; border-radius:99px; }
+.open:hover { filter:brightness(1.08); }

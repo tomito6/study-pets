@@ -1,19 +1,21 @@
 // A parte pura da extensão do navegador (extension/rules.js): quais regras o
-// estado do hardcore vira, e quais URLs abertas caem no bloqueio.
+// estado do bloqueio vira, e quais URLs abertas caem nele.
 
 import { describe, expect, it } from 'vitest';
-import { ALWAYS_ALLOWED, allowedFor, buildRules, domainMatches, hostOf, isBlocked } from '../extension/rules.js';
-import type { HardcoreExtPayload } from '../extension/rules.js';
+import { ALWAYS_ALLOWED, ackFor, allowedFor, buildRules, domainMatches, hostOf, isBlocked, isLive, isSupported } from '../extension/rules.js';
+import type { BlockingExtPayload } from '../extension/rules.js';
 
-const base: HardcoreExtPayload = {
-  v: 1,
+const base: BlockingExtPayload = {
+  v: 2,
   active: true,
   until: 1_800_000_000_000,
   mode: 'blacklist',
-  sites: ['youtube.com', 'instagram.com'],
+  sites: ['youtube.com', 'youtu.be', 'instagram.com'],
   block: { name: 'Estudo 3', endTime: '10:25' },
   pet: null,
   appUrl: 'http://localhost:5174',
+  hardcore: false,
+  test: false,
 };
 
 describe('hosts', () => {
@@ -31,9 +33,26 @@ describe('hosts', () => {
   });
 });
 
+describe('versão e validade', () => {
+  it('só entende o payload v2 — o formato antigo é ignorado', () => {
+    expect(isSupported(base)).toBe(true);
+    expect(isSupported({ ...base, v: 1 })).toBe(false);
+    expect(isSupported(null)).toBe(false);
+  });
+
+  it('estado vale enquanto o `until` não venceu', () => {
+    expect(isLive(base, base.until! - 1)).toBe(true);
+    expect(isLive(base, base.until!)).toBe(false);
+    expect(isLive({ ...base, active: false }, 0)).toBe(false);
+    expect(isLive(null, 0)).toBe(false);
+  });
+});
+
 describe('isBlocked — abas já abertas', () => {
-  it('lista negra: só os sites da lista (e subdomínios)', () => {
+  it('lista negra: os sites da lista, com subdomínio, caminho e porta', () => {
     expect(isBlocked('https://m.youtube.com/x', base)).toBe(true);
+    expect(isBlocked('https://youtu.be/abc', base)).toBe(true); // o apelido veio expandido do app
+    expect(isBlocked('http://www.youtube.com:8080/watch?v=1', base)).toBe(true);
     expect(isBlocked('https://wikipedia.org', base)).toBe(false);
     expect(isBlocked('http://localhost:5174/', base)).toBe(false);
   });
@@ -55,7 +74,7 @@ describe('isBlocked — abas já abertas', () => {
 describe('buildRules', () => {
   it('lista negra: um redirect por site, só main_frame', () => {
     const rules = buildRules(base);
-    expect(rules).toHaveLength(2);
+    expect(rules).toHaveLength(3);
     expect(rules[0]).toEqual({
       id: 1000,
       priority: 1,
@@ -81,5 +100,17 @@ describe('buildRules', () => {
   it('inativo: nenhuma regra', () => {
     expect(buildRules({ ...base, active: false })).toEqual([]);
     expect(buildRules(null)).toEqual([]);
+  });
+});
+
+describe('ackFor — o que o app recebe de volta', () => {
+  it('conta os domínios aplicados e diz se é teste', () => {
+    expect(ackFor(base)).toEqual({ applied: true, until: base.until, sites: 3, mode: 'blacklist', test: false });
+    expect(ackFor({ ...base, test: true })).toMatchObject({ applied: true, test: true });
+  });
+
+  it('nada aplicado vira o ack vazio', () => {
+    expect(ackFor(null)).toEqual({ applied: false, until: 0, sites: 0, mode: null, test: false });
+    expect(ackFor({ ...base, active: false })).toEqual({ applied: false, until: 0, sites: 0, mode: null, test: false });
   });
 });
