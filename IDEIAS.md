@@ -384,7 +384,14 @@ de feature:
 ## Modo hardcore: sair do foco custa XP (bem pro futuro) — 2026-09-03
 
 > **→ virou implementação** na branch `feat/hardcore` (2026-09-06, plan em
-> `plans/2026-09-06_1357_modo-hardcore.md`). O que o Tomi decidiu na conversa, diferente do rabisco
+> `plans/2026-09-06_1357_modo-hardcore.md`).
+>
+> **→ e em 2026-09-08 o bloqueio de sites saiu de dentro dele** e virou feature própria
+> (`config.siteBlock`, branch `feat/bloqueio-de-sites`, plan em
+> `plans/2026-09-08_0230_bloqueio-de-sites.md`): dá pra bloquear site sem hardcore, uma entrada
+> cobre o site inteiro (subdomínio, caminho, apelidos como `youtu.be`), e a extensão finalmente
+> tem teste de ponta a ponta num navegador de verdade (`npm run test:ext`). O hardcore ficou só
+> com a penalidade de XP. O que o Tomi decidiu na conversa, diferente do rabisco
 > abaixo: a penalidade é **2× o XP do bloco** (não 1×), sai **na hora** (não no fim do dia), e **nível
 > pode cair** — do usuário e do pet; a devolução do pet foi cogitada e descartada (a forma fica).
 > Pausa e espera são saídas livres; o bloco abandonado fica trancado; fechar a aba pede confirmação
