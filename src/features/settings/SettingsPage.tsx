@@ -11,13 +11,13 @@ import { clearSettingsRequest, saveSettings } from '../../application/settings';
 import { restartTour } from '../../application/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
-import { extensionDetected } from '../../infrastructure/extensionBridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state, useAppState } from '../../store/store';
 import { ConfigPreview } from './ConfigPreview';
 import { CancelSessionModal, DeleteAccountModal } from './DangerModals';
 import { FitStudyModal } from './FitStudyModal';
+import { SiteBlockSection } from './SiteBlockSection';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
 import { ThemePicker } from './ThemePicker';
 
@@ -83,7 +83,6 @@ export function SettingsPage() {
 
   const cfgPreview = normalizeConfig(draft, state.config.periodStart);
   const periodStart = state.config.periodStart || '';
-  const extOk = open && extensionDetected();
 
   return (
     <>
@@ -203,6 +202,8 @@ export function SettingsPage() {
                 </div>
               </div>
 
+              <SiteBlockSection draft={draft} patch={patch} />
+
               <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title">{th.title}</div></div>
                 <div className="st-section-desc">{th.desc}</div>
@@ -214,38 +215,7 @@ export function SettingsPage() {
                     </div>
                     <Switch id="cfg-hardcore" checked={draft.hardcore} onChange={(hardcore) => patch({ hardcore })} />
                   </div>
-                  {draft.hardcore && (
-                    <div id="hardcore-fields">
-                      <div className="st-divider" />
-                      <div className="st-field-label">{th.sitesLabel}</div>
-                      <div className="hc-mode" id="cfg-hardcore-mode" role="radiogroup">
-                        {(['blacklist', 'whitelist'] as const).map((m) => (
-                          <button
-                            type="button"
-                            key={m}
-                            role="radio"
-                            aria-checked={draft.siteBlockMode === m}
-                            className={'hc-mode-chip' + (draft.siteBlockMode === m ? ' active' : '')}
-                            data-mode={m}
-                            onClick={() => patch({ siteBlockMode: m })}
-                          >
-                            {th.modes[m]}
-                          </button>
-                        ))}
-                      </div>
-                      <textarea
-                        id="cfg-hardcore-sites"
-                        className="hc-sites"
-                        rows={4}
-                        placeholder={th.sitesPlaceholder}
-                        value={draft.siteBlockSites}
-                        onChange={(e) => patch({ siteBlockSites: e.target.value })}
-                        spellCheck={false}
-                      />
-                      <div className="st-hint">{th.sitesHint}</div>
-                      <div className={'hc-ext-status' + (extOk ? ' ok' : ' missing')} id="hardcore-ext-status">{extOk ? th.extOk : th.extMissing}</div>
-                    </div>
-                  )}
+                  <div className="st-hint" id="hardcore-site-note">{th.siteNote}</div>
                 </div>
               </div>
 

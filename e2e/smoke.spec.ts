@@ -404,8 +404,10 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
     await page.locator('.st-switch', { has: page.locator('#cfg-hardcore') }).click(); // o input do switch é invisível: clica no trilho
     await expect(page.locator('#cfg-hardcore')).toBeChecked();
-    await expect(page.locator('#hardcore-fields')).toBeVisible();
-    await page.locator('#cfg-hardcore-sites').fill('youtube.com\nhttps://www.instagram.com/');
+    // O bloqueio de sites é outra seção desde 2026-09-08 — ligar o hardcore não liga a lista.
+    await page.locator('.st-switch', { has: page.locator('#cfg-siteblock') }).click();
+    await expect(page.locator('#siteblock-fields')).toBeVisible();
+    await page.locator('#cfg-siteblock-sites').fill('youtube.com\nhttps://www.instagram.com/');
     await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
     await expect(page.locator('#settings-panel')).toBeHidden();
   }
@@ -420,6 +422,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#hardcore-start-confirm')).toBeVisible();
     await expect(page.locator('#hardcore-start-block')).toHaveText('Estudo 3 · 25 min');
     await expect(page.locator('#hardcore-start-cost')).toContainText('−100 XP pra você e −100 XP pro');
+    // Sem extensão neste navegador, o consentimento avisa que a lista não vai bloquear nada.
+    await expect(page.locator('#hardcore-start-sites')).toContainText('Extensão não encontrada');
     await page.locator('#hardcore-start-btn').click();
     await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
     await expect(page.locator('#focus-overlay')).toBeVisible();

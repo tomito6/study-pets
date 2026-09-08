@@ -592,24 +592,68 @@ export const strings = {
       minutes: (min: number) => `${min} min`,
     },
   },
+  siteBlock: {
+    settings: {
+      title: 'Bloqueio de sites',
+      desc: 'Enquanto um estudo está rodando, os sites da sua lista mostram o seu pet em vez da página. Funciona com ou sem o modo hardcore.',
+      toggle: 'Bloquear sites durante o estudo',
+      toggleSub: 'Vale só neste navegador, e só enquanto um estudo está rodando — a pausa libera. Precisa da extensão.',
+      modes: { blacklist: 'Bloquear estes', whitelist: 'Permitir só estes' },
+      sitesLabel: 'Sites',
+      sitesPlaceholder: 'chess.com\nyoutube.com\ninstagram.com',
+      sitesHint: 'Um por linha. Pode colar a URL inteira — o que vale é o domínio, e ele cobre todo subdomínio, caminho e porta.',
+      previewEmpty: 'Escreva pelo menos um site pra bloquear.',
+      previewEmptyWhitelist: 'Sem nenhum site liberado, tudo fica bloqueado durante o estudo.',
+      alias: (list: readonly string[]) => ` (+ ${list.join(', ')})`,
+      invalid: (list: readonly string[]) => `Não entendi: ${list.join(', ')}`,
+      ext: {
+        ok: (version: string | null) => `✓ Extensão encontrada${version ? ` · v${version}` : ''} — a lista vale neste navegador.`,
+        missing: 'Extensão não encontrada. Sem ela nada é bloqueado neste navegador — instale em 3 passos:',
+        steps: [
+          'Abra chrome://extensions (ou edge://extensions).',
+          'Ligue o Modo do desenvolvedor, no canto de cima à direita.',
+          'Clique em "Carregar sem compactação" e escolha a pasta extension/ do Study Pets.',
+        ],
+        reload: 'Já instalou? Clique em ↻ na extensão e recarregue esta página.',
+        blocking: (n: number, until: string) => `✓ Bloqueando ${n} ${n === 1 ? 'site' : 'sites'} até ${until}`,
+        blockingTest: (n: number, until: string) => `✓ Teste rodando · ${n} ${n === 1 ? 'site' : 'sites'} até ${until}`,
+      },
+      test: {
+        start: '▶ Testar por 1 min',
+        stop: '■ Parar teste',
+        hint: 'Arma o bloqueio por um minuto com a lista acima — sem salvar, sem esperar um estudo.',
+        running: (sec: number) => `Abra um dos sites: ele vira a tela do pet. Acaba em ${sec}s.`,
+        noSites: 'Escreva pelo menos um site pra testar.',
+        noExt: 'Extensão não encontrada neste navegador.',
+      },
+    },
+    /** A linha discreta na barra do timer e no foco, enquanto a extensão confirma o bloqueio. */
+    live: (n: number) => `🛡️ ${n} ${n === 1 ? 'site bloqueado' : 'sites bloqueados'}`,
+    liveWhitelist: (n: number) => `🛡️ só ${n} ${n === 1 ? 'site liberado' : 'sites liberados'}`,
+    /** "chess.com, youtube.com e mais 1" — a lista curta que cabe numa linha. */
+    shortList: (sites: readonly string[]) => {
+      const shown = sites.slice(0, 2).join(', ');
+      const rest = sites.length - 2;
+      return rest > 0 ? `${shown} e mais ${rest}` : shown;
+    },
+  },
   hardcore: {
     settings: {
       title: 'Modo hardcore',
       desc: 'Dificuldade escolhida: sair de um estudo no modo foco custa XP. Nada muda enquanto estiver desligado.',
       toggle: 'Ativar modo hardcore',
       toggleSub: 'Desistir de um estudo custa 2× o XP do bloco — pra você e pro pet equipado, na hora. Pausa é saída livre.',
-      sitesLabel: 'Sites durante o estudo',
-      modes: { blacklist: 'Bloquear estes', whitelist: 'Permitir só estes' },
-      sitesPlaceholder: 'youtube.com\ninstagram.com\ntwitter.com',
-      sitesHint: 'Um por linha. Só o domínio importa ("youtube.com" cobre www e m.).',
-      extOk: '✓ Extensão do navegador encontrada — a lista vale neste computador.',
-      extMissing: 'Extensão do navegador não encontrada. Sem ela a lista não bloqueia nada: veja extension/README.md no repositório.',
+      siteNote: "Bloquear sites é separado — veja 'Bloqueio de sites' acima. Funciona com ou sem hardcore.",
     },
     start: {
       title: '🔥 Modo hardcore',
       block: (name: string, min: number) => `${name} · ${min} min`,
       cost: (xp: number, pet: string | null) =>
         pet ? `Sair antes do fim custa −${xp} XP pra você e −${xp} XP pro ${pet}.` : `Sair antes do fim custa −${xp} XP.`,
+      sites: (list: string) => `🛡️ ${list} ficam bloqueados até o fim.`,
+      sitesOne: (site: string) => `🛡️ ${site} fica bloqueado até o fim.`,
+      sitesWhitelist: (list: string) => `🛡️ Só ${list} continuam abertos até o fim.`,
+      sitesNoExt: '🛡️ Extensão não encontrada — sem bloqueio de sites neste navegador.',
       rules: 'Sem "Sair do foco" até o bloco acabar. Na pausa você pode parar de graça; fechar a aba conta como sair.',
       confirm: 'Começar',
       normal: 'Só desta vez, sem hardcore',

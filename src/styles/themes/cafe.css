@@ -335,7 +335,7 @@
 :root[data-theme="cafe"] .eop-extend-form input[type=time],
 :root[data-theme="cafe"] .del-acc-input,
 :root[data-theme="cafe"] .pet-name-input,
-:root[data-theme="cafe"] .hc-sites,
+:root[data-theme="cafe"] .sb-sites,
 :root[data-theme="cafe"] .week-row select,
 :root[data-theme="cafe"] .dice-btn{
   background:var(--field);
@@ -535,8 +535,16 @@
 /* hardcore: o vermelho vira terracota queimado; o anel também */
 :root[data-theme="cafe"] .focus-overlay.hardcore .focus-timer-fill:not(.pausa){stroke:var(--danger-soft);}
 :root[data-theme="cafe"] .hc-start-btn{color:var(--on-danger);}
-:root[data-theme="cafe"] .hc-mode-chip:not(.active){background:var(--bg2);}
-:root[data-theme="cafe"] .hc-sites{font-family:var(--font-ui);}
+/* bloqueio de sites: o escudo vira o azul-acinzentado do pacote (nem sálvia nem
+   terracota — é informação, não ação nem perigo) */
+:root[data-theme="cafe"]{
+  --sb-strong:#4a6b82;
+  --sb-line:#b6c9d4;
+  --sb-wash:rgba(74,107,130,.09);
+}
+:root[data-theme="cafe"] .sb-mode-chip:not(.active){background:var(--bg2);}
+:root[data-theme="cafe"] .sb-sites{font-family:var(--font-ui);}
+:root[data-theme="cafe"] .sb-chip{font-family:var(--font-ui);}
 
 /* ============================================================================
    7. ANÁLISE

@@ -8,13 +8,31 @@ import { activePet } from '../../application/pets';
 import { tryStartTimer } from '../../application/timer';
 import { penaltyFor } from '../../domain/hardcore';
 import type { QuitCost } from '../../domain/hardcore';
+import { expandSites, siteBlockArmable } from '../../domain/siteBlock';
 import { blockDurationMin, cleanBlockName } from '../../domain/timer';
 import type { StudyBlock } from '../../domain/types';
+import { extensionDetected } from '../../infrastructure/extensionBridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
+import { state } from '../../store/store';
 import { Modal } from '../shell/Modal';
 
 const t = strings.hardcore;
+
+/**
+ * A linha do bloqueio de sites no consentimento: o que vai fechar até o fim do
+ * bloco, ou o aviso de que sem extensão nada fecha. `null` = bloqueio desligado,
+ * e aí o modal não mostra linha nenhuma (o hardcore é só a penalidade).
+ */
+function siteBlockLine(): string | null {
+  const cfg = state.config.siteBlock;
+  if (!cfg || !siteBlockArmable(cfg)) return null;
+  if (!extensionDetected()) return t.start.sitesNoExt;
+  const sites = expandSites(cfg.sites);
+  const list = strings.siteBlock.shortList(sites);
+  if (cfg.mode === 'whitelist') return t.start.sitesWhitelist(list || '—');
+  return sites.length === 1 ? t.start.sitesOne(sites[0]!) : t.start.sites(list);
+}
 
 interface StartProps {
   /** O bloco que o usuário tocou; null = fechado. */
@@ -25,6 +43,7 @@ interface StartProps {
 /** "🔥 Modo hardcore — Estudo 3 · 25 min. Sair antes do fim custa −100 XP…" */
 export function HardcoreStartModal({ block, onClose }: StartProps) {
   const pet = activePet();
+  const sites = block ? siteBlockLine() : null;
   const start = (hardcore: boolean) => {
     if (!block) return;
     const r = hardcore ? startHardcore(block) : tryStartTimer(block);
@@ -37,6 +56,7 @@ export function HardcoreStartModal({ block, onClose }: StartProps) {
         <>
           <div className="hc-start-block" id="hardcore-start-block">{t.start.block(cleanBlockName(block.name), blockDurationMin(block))}</div>
           <p className="hc-start-cost" id="hardcore-start-cost">{t.start.cost(penaltyFor(block), pet?.name ?? null)}</p>
+          {sites && <p className="hc-start-sites" id="hardcore-start-sites">{sites}</p>}
           <p className="hc-start-rules">{t.start.rules}</p>
           <div className="btn-row">
             <button className="reset-btn" onClick={onClose}>{t.start.cancel}</button>

@@ -29,6 +29,7 @@ import {
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 import { HardcoreQuitModal } from './HardcoreModals';
+import { SiteBlockBadge } from './SiteBlockBadge';
 import { useSecondTick } from './useSecondTick';
 
 const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7, o perímetro do círculo do SVG
@@ -135,6 +136,7 @@ export function FocusOverlay() {
             {t.onComplete}
           </div>
         </div>
+        <SiteBlockBadge className="site-block-badge focus-sb" />
         <div className="focus-next" id="focus-next">
           <div className="focus-next-label">{t.next}</div>
           <div className="focus-next-sep" />

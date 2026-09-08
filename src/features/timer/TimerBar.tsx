@@ -13,6 +13,7 @@ import { strings } from '../../shared/strings';
 import { useWide } from '../../shared/useWide';
 import { useAppState } from '../../store/store';
 import { useMinuteTick } from '../plan/useMinuteTick';
+import { SiteBlockBadge } from './SiteBlockBadge';
 import { useSecondTick } from './useSecondTick';
 
 /** O estudo/pausa de hoje em andamento, ou o próximo que ainda dá pra iniciar. */
@@ -69,6 +70,7 @@ export function TimerBar() {
           {waiting ? t.startsIn : t.inProgress}
         </div>
         <div className="timer-block-name" id="timer-block-name">{block ? cleanBlockName(block.name) : '—'}</div>
+        <SiteBlockBadge className="site-block-badge bar-sb" />
       </div>
       <div className={'timer-time' + (progress?.ending ? ' ending' : '') + (waiting ? ' waiting' : '')} id="timer-display">
         {progress ? (waiting ? progress.untilStartDisplay : progress.display) : '00:00'}

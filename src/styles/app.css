@@ -158,6 +158,9 @@
     --fade-closed:.55;          /* dia encerrado */
     --fade-future:.45;          /* dia futuro */
     --fade-forfeited:.6;        /* bloco abandonado (hardcore) */
+    --sb-strong:#7dd3fc;        /* bloqueio de sites: o "escudo" — azul claro, nem accent nem perigo */
+    --sb-line:#38517a;
+    --sb-wash:rgba(125,211,252,.10);
     --fade-rest:.35;            /* dia livre / fim de semana nos dots */
     --fade-weekend:.5;          /* dot de fim de semana */
     --fade-soft:.7;             /* dot "não bateu", alça do grupo */
@@ -1036,14 +1039,36 @@
   .block-row.forfeited .check { border-color:var(--danger-check); background:transparent; cursor:default; }
   .block-row.forfeited .check .check-x { color:var(--danger-soft); font-size:12px; font-weight:700; line-height:1; }
   .block-xp.forfeited-xp { color:var(--danger-soft); }
-  .hc-mode { display:flex; gap:8px; margin:6px 0 10px; }
-  .hc-mode-chip { flex:1; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:7px 10px; font-size:12px; cursor:pointer; font-family:var(--font-ui); }
-  .hc-mode-chip.active { border-color:var(--danger); color:var(--danger-soft); background:var(--danger-bg); }
-  .hc-sites { width:100%; resize:vertical; min-height:88px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); padding:10px 12px; font-family:var(--font-mono); font-size:12.5px; line-height:1.5; }
-  .hc-sites:focus { outline:none; border-color:var(--danger); }
-  .hc-ext-status { margin-top:10px; font-size:11.5px; line-height:1.5; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); color:var(--muted); }
-  .hc-ext-status.ok { color:var(--accent); border-color:var(--accent2); background:var(--accent-bg); }
-  .hc-ext-status.missing { color:var(--orange); border-color:var(--orange); background:var(--orange-bg); }
+  .hc-start-sites { font-size:12.5px; color:var(--sb-strong); line-height:1.5; margin-bottom:10px; }
+
+  /* BLOQUEIO DE SITES — Configurações → Geral (CLAUDE.md, "Bloqueio de sites").
+     Não é mais o card do hardcore: as classes são `sb-*` e a cor é o accent, não
+     o vermelho — bloquear site é uma ferramenta, não uma punição. */
+  .sb-mode { display:flex; gap:8px; margin:6px 0 10px; }
+  .sb-mode-chip { flex:1; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:7px 10px; font-size:12px; cursor:pointer; font-family:var(--font-ui); }
+  .sb-mode-chip.active { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+  .sb-sites { width:100%; resize:vertical; min-height:88px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); padding:10px 12px; font-family:var(--font-mono); font-size:12.5px; line-height:1.5; }
+  .sb-sites:focus { outline:none; border-color:var(--accent); }
+  /* o que o app entendeu da lista: um chip por domínio, apelido entre parênteses */
+  .sb-preview { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .sb-chip { display:inline-flex; align-items:baseline; gap:4px; background:var(--accent-bg); border:1px solid var(--accent2); color:var(--accent); border-radius:99px; padding:4px 10px; font-family:var(--font-mono); font-size:11.5px; }
+  .sb-chip-alias { color:var(--muted); font-size:10.5px; }
+  .sb-empty { font-size:11.5px; color:var(--muted); line-height:1.5; }
+  .sb-invalid { margin-top:8px; font-size:11.5px; line-height:1.5; color:var(--orange); }
+  .sb-ext-status { margin-top:12px; font-size:11.5px; line-height:1.5; padding:9px 11px; border-radius:var(--radius-sm); border:1px solid var(--border); color:var(--muted); }
+  .sb-ext-line { display:block; }
+  .sb-ext-status.ok { color:var(--accent); border-color:var(--accent2); background:var(--accent-bg); }
+  .sb-ext-status.blocking { color:var(--sb-strong); border-color:var(--sb-line); background:var(--sb-wash); font-weight:600; }
+  .sb-ext-status.missing { color:var(--orange); border-color:var(--orange); background:var(--orange-bg); }
+  .sb-ext-steps { margin:8px 0 8px; padding-left:18px; color:var(--muted); }
+  .sb-ext-steps li { margin-bottom:3px; }
+  .sb-ext-reload { display:block; color:var(--muted); }
+  .sb-test-row { display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap; }
+  .sb-test-hint { flex:1; min-width:150px; font-size:11px; color:var(--muted); line-height:1.5; }
+  .st-action-btn.sb-testing { border-color:var(--sb-line); color:var(--sb-strong); background:var(--sb-wash); }
+  /* o selo "3 sites bloqueados" na barra do timer e no foco */
+  .site-block-badge { font-size:10.5px; color:var(--sb-strong); letter-spacing:.02em; margin-top:2px; }
+  .focus-sb { text-align:center; font-size:clamp(10px, 1.4vmin, 12px); margin:0 0 clamp(6px, 1vmin, 12px); }
 
   /* Configurações → Geral → linhas de ação ("Ver o tour de novo", "Meus dados"): texto à esquerda, botão à direita. */
   .st-action-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
