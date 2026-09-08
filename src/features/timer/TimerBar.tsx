@@ -70,7 +70,7 @@ export function TimerBar() {
           {waiting ? t.startsIn : t.inProgress}
         </div>
         <div className="timer-block-name" id="timer-block-name">{block ? cleanBlockName(block.name) : '—'}</div>
-        <SiteBlockBadge className="site-block-badge bar-sb" />
+        <SiteBlockBadge id="timer-site-block" className="site-block-badge bar-sb" />
       </div>
       <div className={'timer-time' + (progress?.ending ? ' ending' : '') + (waiting ? ' waiting' : '')} id="timer-display">
         {progress ? (waiting ? progress.untilStartDisplay : progress.display) : '00:00'}

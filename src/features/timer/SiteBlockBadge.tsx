@@ -8,10 +8,11 @@ import { blockingNow } from '../../application/siteBlock';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 
-export function SiteBlockBadge({ className = 'site-block-badge' }: { className?: string }) {
+/** O mesmo selo aparece em dois lugares — id próprio em cada um (id é contrato). */
+export function SiteBlockBadge({ id, className }: { id: string; className: string }) {
   const mode = useAppState((_s, d) => d.siteBlock.ack?.mode ?? null);
   const live = blockingNow();
   if (!live) return null;
   const text = mode === 'whitelist' ? strings.siteBlock.liveWhitelist(live.sites) : strings.siteBlock.live(live.sites);
-  return <div className={className} id="site-block-badge">{text}</div>;
+  return <div className={className} id={id}>{text}</div>;
 }

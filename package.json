@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "dev:teste": "vite --mode teste --port 5174",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:ext": "playwright test -c playwright.extension.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

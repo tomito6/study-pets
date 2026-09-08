@@ -28,6 +28,7 @@
     "tests/**/*.ts",
     "e2e/**/*.ts",
     "vite.config.ts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "playwright.extension.config.ts"
   ]
 }

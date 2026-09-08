@@ -136,7 +136,7 @@ export function FocusOverlay() {
             {t.onComplete}
           </div>
         </div>
-        <SiteBlockBadge className="site-block-badge focus-sb" />
+        <SiteBlockBadge id="focus-site-block" className="site-block-badge focus-sb" />
         <div className="focus-next" id="focus-next">
           <div className="focus-next-label">{t.next}</div>
           <div className="focus-next-sep" />
