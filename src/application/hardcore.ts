@@ -10,14 +10,14 @@ import { canStartBlock } from '../domain/timer';
 import type { StartCheck } from '../domain/timer';
 import type { PenaltyRecord, StudyBlock } from '../domain/types';
 import { readHardcoreSession } from '../infrastructure/hardcoreSession';
-import { onExtensionQuery } from '../infrastructure/extensionBridge';
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
-import { armHardcoreIfRunning, adoptHardcoreSession, beginHardcoreSession, endHardcoreSession, republishHardcore } from './hardcoreRuntime';
+import { armHardcoreIfRunning, adoptHardcoreSession, beginHardcoreSession, endHardcoreSession } from './hardcoreRuntime';
 import { activePet, petById } from './pets';
 import { blocksForDay, clearBlockCache, computeStatsNow, currentDayKey } from './plan';
 import { saveNow } from './save';
+import { syncBlocking } from './siteBlock';
 import { startTimer, stopTimer } from './timer';
 
 export const hardcoreEnabled = (): boolean => state.config.hardcore?.enabled === true;
@@ -34,8 +34,9 @@ export function startHardcore(block: StudyBlock, now: Date = new Date()): StartC
   const check = canStartBlock(block, currentDayKey(), now, isForfeited(state.penalties, todayKey, block.time));
   if (!check.ok) return check;
   beginHardcoreSession(block, now);
-  startTimer(block);
+  startTimer(block, now);
   armHardcoreIfRunning(now);
+  syncBlocking(now); // a sessão armou depois do startTimer: o payload precisa saber que é hardcore
   return check;
 }
 
@@ -95,8 +96,9 @@ export function resumeHardcoreOnBoot(now: Date = new Date()): BootResolution {
   if (r === 'resume') {
     const block = blocksForDay(session.dateKey).find((b) => b.time === session.time && b.endTime === session.endTime) ?? blockFromSession(session);
     adoptHardcoreSession({ ...session, name: block.name, xp: block.xp || 0 });
-    startTimer(block);
+    startTimer(block, now);
     armHardcoreIfRunning(now);
+    syncBlocking(now);
     return 'resumed';
   }
   endHardcoreSession();
@@ -114,10 +116,4 @@ export function resumeHardcoreOnBoot(now: Date = new Date()): BootResolution {
   return 'expired';
 }
 
-let queryWatch: (() => void) | null = null;
 
-/** Registra uma vez: a extensão pergunta o estado ao carregar → responde. */
-export function watchExtensionQueries(): void {
-  if (queryWatch) return;
-  queryWatch = onExtensionQuery(() => republishHardcore());
-}

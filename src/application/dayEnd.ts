@@ -16,6 +16,7 @@ import { derived, notify, state } from '../store/store';
 import { applyPendingPetXP } from './pets';
 import { blocksForDay, clearBlockCache, computeStatsNow } from './plan';
 import { scheduleSave } from './save';
+import { stopBlocking } from './siteBlock';
 
 export interface DayEndState {
   confirmOpen: boolean;
@@ -60,6 +61,7 @@ export function closeDay(now: Date = new Date()): DaySummary {
   applyPendingPetXP(now);
   scheduleSave(); // notifica → o memo de stats invalida
   clearPromptTimer();
+  stopBlocking(); // o dia acabou: nada mais bloqueia
   const summary = daySummary(before, snapshot(now), state.pets.owned);
   set({ confirmOpen: false, promptOpen: false, summary });
   return summary;

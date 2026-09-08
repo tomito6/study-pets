@@ -14,6 +14,10 @@
 // No modo hardcore (`derived.hardcore`) o foco não tem saída livre: "Sair do foco"
 // e "Parar" viram no-op — a porta é `quitHardcore`, que cobra. A emenda e o fim
 // natural avisam a sessão (application/hardcoreRuntime.ts).
+//
+// O bloqueio de sites acompanha o timer daqui: `syncBlocking` a cada acerto de
+// relógio (é ele que vê "em espera" virar "rodando") e `stopBlocking` quando o
+// app encerra. Com ou sem hardcore — ver application/siteBlock.ts.
 
 import { canToggleCheck } from '../domain/checks';
 import { dk } from '../domain/time';
@@ -32,6 +36,7 @@ import { derived, notify, state } from '../store/store';
 import { checkBlock } from './checks';
 import { armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { blocksForDay, currentDayKey } from './plan';
+import { stopBlocking, syncBlocking } from './siteBlock';
 
 let endWatcher: ReturnType<typeof setInterval> | null = null;
 
@@ -61,6 +66,7 @@ export function reconcileTimer(now: Date = new Date()): void {
   if (derived.hardcore) armHardcoreIfRunning(now); // o bloco em espera começou: a sessão passa a valer
   let guard = 0;
   while (derived.timerBlock && timerProgress(derived.timerBlock, now).done && guard++ < 100) finishTimer(now);
+  syncBlocking(now); // "em espera" virou "rodando" (ou o bloco acabou): a extensão acompanha
 }
 
 let visibilityWatch: Unsubscribe | null = null;
@@ -75,9 +81,10 @@ export function watchVisibility(): void {
 }
 
 /** Inicia o timer no bloco (sem validar — use `tryStartTimer` a partir da UI). */
-export function startTimer(block: StudyBlock): void {
+export function startTimer(block: StudyBlock, now: Date = new Date()): void {
   derived.timerCompleted = null;
   runBlock(block);
+  syncBlocking(now);
   requestNotificationPermission();
 }
 
@@ -122,6 +129,7 @@ function finishTimer(now: Date = new Date()): void {
       derived.timerCompleted = completed;
       runBlock(next);
       if (derived.hardcore) hardcoreChained(next, now);
+      syncBlocking(now); // emendou: estudo → pausa libera, pausa → estudo bloqueia de novo
       return;
     }
     showToast(strings.timer.completed(completed));
@@ -133,6 +141,7 @@ function finishTimer(now: Date = new Date()): void {
   derived.focusOpen = false;
   derived.timerCompleted = null;
   releaseWakeLock();
+  stopBlocking(); // o bloco acabou de verdade: a extensão pode liberar
   notify();
 }
 
@@ -160,6 +169,7 @@ export function stopTimer(): void {
   derived.focusOpen = false;
   derived.timerCompleted = null;
   releaseWakeLock();
+  stopBlocking();
   notify();
 }
 

@@ -7,9 +7,10 @@
 import { useSyncExternalStore } from 'react';
 import type { DaySummary } from '../domain/daySummary';
 import type { HardcoreRuntime } from '../domain/hardcore';
+import type { BlockingAck } from '../infrastructure/extensionBridge';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
-import type { BlockType, StudyBlock } from '../domain/types';
+import type { BlockType, SiteBlockMode, StudyBlock } from '../domain/types';
 import type { Week } from '../domain/weeks';
 import type { AudioSettings } from '../infrastructure/audio/sounds';
 import type { AuthUser } from '../infrastructure/ports';
@@ -79,6 +80,16 @@ export interface Derived {
   dayEnd: DayEndUi;
   /** A sequência hardcore em andamento (o foco não tem saída livre); null fora dela. */
   hardcore: HardcoreRuntime | null;
+  /** Bloqueio de sites: o que a extensão confirmou e o teste de 1 min (ver application/siteBlock.ts). */
+  siteBlock: SiteBlockRuntime;
+}
+
+/** Runtime do bloqueio de sites. Nada aqui é persistido. */
+export interface SiteBlockRuntime {
+  /** O que a extensão respondeu ter aplicado; null sem confirmação. */
+  ack: BlockingAck | null;
+  /** O "▶ Testar por 1 min" em andamento: quando acaba e com que lista. */
+  test: { until: number; mode: SiteBlockMode; sites: string[] } | null;
 }
 
 export const derived: Derived = {
@@ -94,6 +105,7 @@ export const derived: Derived = {
   onboardingOpen: false,
   dayEnd: { confirmOpen: false, promptOpen: false, promptLastEnd: '', summary: null },
   hardcore: null,
+  siteBlock: { ack: null, test: null },
 };
 
 let version = 0;

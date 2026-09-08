@@ -10,8 +10,9 @@ import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, markAuthReady, notify, state } from '../store/store';
 import { scheduleEndOfDayPrompt } from './dayEnd';
-import { resumeHardcoreOnBoot, watchExtensionQueries } from './hardcore';
+import { resumeHardcoreOnBoot } from './hardcore';
 import { endHardcoreSession } from './hardcoreRuntime';
+import { stopBlocking, watchExtension } from './siteBlock';
 import { openOnboarding } from './onboarding';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
@@ -108,6 +109,7 @@ export function initAfterLoad(now: Date = new Date()): void {
 
 function resetToLoggedOut(): void {
   if (derived.hardcore) endHardcoreSession(); // antes de perder o uid: limpa a sessão do dispositivo
+  stopBlocking(); // saiu da conta: a extensão libera na hora
   state.user = null;
   state.penalties = {};
   state.checks = {};
@@ -125,7 +127,7 @@ export function startSession(): void {
   if (started) return;
   started = true;
   watchVisibility(); // o timer se acerta com o relógio ao voltar pra aba / destravar o celular
-  watchExtensionQueries(); // a extensão do navegador pergunta o estado do hardcore ao carregar
+  watchExtension(); // a extensão pergunta o estado ao carregar, e confirma o que aplicou
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       blockSaves(false);
