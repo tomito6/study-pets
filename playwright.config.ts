@@ -22,6 +22,9 @@ const channel = process.env.PW_CHANNEL; // undefined = Chromium do Playwright
 
 export default defineConfig({
   testDir: 'e2e',
+  // `extension.spec.ts` é outra suíte: precisa do Chromium completo com a extensão
+  // carregada (`npm run test:ext`, playwright.extension.config.ts). Aqui ela não roda.
+  testIgnore: /extension\.spec\.ts/,
   fullyParallel: true,
   // Local: sem repetição — flake tem que aparecer. Em CI, uma repetição segura instabilidade de máquina.
   retries: process.env.CI ? 1 : 0,

@@ -266,6 +266,52 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row')).toHaveCount(0);
   });
 
+  test('33. bloqueio de sites sem hardcore: a lista vira chips, o que não é domínio aparece, e o estudo publica pra extensão', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await page.locator('.st-switch', { has: page.locator('#cfg-siteblock') }).click(); // o input do switch é invisível
+    await expect(page.locator('#siteblock-fields')).toBeVisible();
+    await page.locator('#cfg-siteblock-sites').fill('chess.com\nhttps://www.youtube.com/watch?v=x\nchess');
+
+    // O que o app entendeu: um chip por domínio, com o apelido junto.
+    const chips = page.locator('#siteblock-preview .sb-chip');
+    await expect(chips).toHaveCount(2);
+    await expect(chips.nth(0)).toHaveText('chess.com');
+    await expect(chips.nth(1)).toHaveText('youtube.com (+ youtu.be)');
+    // E o que ele NÃO entendeu não some em silêncio.
+    await expect(page.locator('#siteblock-invalid')).toHaveText('Não entendi: chess');
+
+    // Sem extensão neste navegador: o status explica como instalar.
+    await expect(page.locator('#siteblock-ext-status')).toHaveClass(/missing/);
+    await expect(page.locator('#siteblock-ext-status')).toContainText('Extensão não encontrada');
+    await expect(page.locator('#siteblock-ext-status .sb-ext-steps li')).toHaveCount(3);
+    await expect(page.locator('#siteblock-test')).toHaveCount(0); // sem extensão não há o que testar
+
+    await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+
+    // Escuta o que o app publica pra extensão antes de tocar no bloco.
+    await page.evaluate(() => {
+      const w = window as unknown as { __sp: unknown[] };
+      w.__sp = [];
+      window.addEventListener('study-pets:blocking', (e) => w.__sp.push(JSON.parse((e as CustomEvent).detail)));
+    });
+
+    // Bloqueio ligado NÃO é hardcore: o foco abre direto, sem consentimento.
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    const publicado = await page.evaluate(() => (window as unknown as { __sp: Record<string, unknown>[] }).__sp.at(-1));
+    expect(publicado).toMatchObject({ v: 2, active: true, mode: 'blacklist', hardcore: false, test: false });
+    // A lista vai expandida: a extensão é burra, quem conhece os apelidos é o app.
+    expect(publicado?.sites).toEqual(['chess.com', 'youtube.com', 'youtu.be']);
+    expect((publicado?.block as { name: string }).name).toBe('Estudo 3');
+  });
+
   test('31. atalhos do evento: "Refeição" preenche o formulário e repete todo dia; editar só este dia não mexe nos outros', async ({ page }) => {
     await abrirApp(page);
     await page.locator('#tour-skip').click(); // o balão do tour cobre as abas dos dias
