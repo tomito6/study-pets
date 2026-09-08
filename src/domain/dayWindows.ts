@@ -38,8 +38,6 @@ export function restDayKind({ skipWeekends, isWeekend, override }: RestDayInput)
   return skipWeekends && isWeekend ? 'weekend' : null;
 }
 
-export const isRestDay = (input: RestDayInput): boolean => restDayKind(input) !== null;
-
 /**
  * Dia bônus: fim de semana pausado em que o usuário abriu janelas mesmo assim. É um dia
  * a mais, não uma obrigação — conta se bateu a meta, e não quebra a sequência se não

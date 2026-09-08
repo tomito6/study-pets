@@ -22,8 +22,6 @@ import { startTimer, stopTimer } from './timer';
 
 export const hardcoreEnabled = (): boolean => state.config.hardcore?.enabled === true;
 
-export const hardcoreActive = (): boolean => derived.hardcore !== null;
-
 /**
  * Entrar em modo hardcore num bloco de hoje. Mesmas recusas do timer, mais o
  * bloco abandonado. O foco abre como sempre; a sessão só passa a valer quando o

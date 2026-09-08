@@ -46,13 +46,6 @@ export const strings = {
     settings: 'Configurações',
     menu: 'Conta',
     xp: (total: number) => `${total} XP`,
-    /** O trilho da tela grande (≥1100px). */
-    rail: {
-      toNext: (xp: number, level: string) => `faltam ${xp} XP pro ${level}`,
-      maxLevel: 'nível máximo',
-      pet: (name: string, lv: number) => `${name} · Lv. ${lv}`,
-      noPet: 'Sem pet equipado',
-    },
   },
   plan: {
     /** O quarto do pacote "Café de casa", na coluna do laptop. */
@@ -98,7 +91,6 @@ export const strings = {
       closed: 'Dia encerrado',
       none: 'Nada marcado ainda',
       goal: (min: number) => `Meta diária · ${min} min`,
-      goalDays: (met: number, total: number) => `min · ${met} de ${total} dias esta semana`,
       goalMin: 'min',
       goalDaysShort: (met: number, total: number) => `${met} de ${total} dias`,
     },
@@ -615,7 +607,7 @@ export const strings = {
           'Clique em "Carregar sem compactação" ("Load unpacked") — o primeiro dos três botões, não o "Pack extension" — e escolha a pasta extension/. Ela parece vazia no seletor porque só tem arquivos: confirme assim mesmo.',
         ],
         reload: 'Já instalou? Clique em ↻ na extensão e recarregue esta página.',
-        privacy: 'Ela é sua e roda só aqui: não faz nenhuma conexão de rede e não guarda seu histórico — só o bloco que está rodando agora, apagado quando ele acaba.',
+        privacy: 'Ela é sua e roda só aqui: não manda seus dados pra lugar nenhum e não guarda seu histórico — só o bloco que está rodando agora, apagado quando ele acaba. A única coisa que ela busca na rede é a imagem do seu pet, no próprio Study Pets.',
         blocking: (n: number, until: string) => `✓ Bloqueando ${n} ${n === 1 ? 'site' : 'sites'} até ${until}`,
         blockingTest: (n: number, until: string) => `✓ Teste rodando · ${n} ${n === 1 ? 'site' : 'sites'} até ${until}`,
       },

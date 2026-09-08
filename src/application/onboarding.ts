@@ -16,11 +16,6 @@ export function openOnboarding(): void {
   notify();
 }
 
-export function closeOnboarding(): void {
-  derived.onboardingOpen = false;
-  notify();
-}
-
 export interface StarterChoice {
   species: PetId;
   name: string;

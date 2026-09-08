@@ -1,7 +1,7 @@
 // O fim do dia: quando o último estudo termina, quando vale perguntar "encerrar ou
 // prolongar?", e como prolongar. Puro.
 
-import { minsToTime, timeToMins } from './time';
+import { timeToMins } from './time';
 import type { StudyBlock, StudyWindow, TimeString, UserConfig } from './types';
 
 /** Fim do último bloco de ESTUDO do dia (não pausa, não evento), ou null. */
@@ -63,6 +63,3 @@ export function extendWindowsTo(windows: StudyWindow[], newEnd: TimeString): Stu
 export function extendDayTo(config: UserConfig, newEnd: TimeString): UserConfig {
   return { ...config, end: newEnd, studyWindows: extendWindowsTo(config.studyWindows, newEnd) };
 }
-
-/** Só pra manter a simetria de import; útil em testes. */
-export const fmtMins = minsToTime;

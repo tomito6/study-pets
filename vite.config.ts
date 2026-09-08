@@ -49,7 +49,8 @@ export default defineConfig({
     // Domínio é código puro: não precisa de DOM pra testar.
     environment: 'node',
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
-    // Ainda não há testes — eles chegam na Fase 3 (extração do domínio).
+    // Os testes chegaram (tests/ e src/**/*.test.ts). `passWithNoTests` fica pra
+    // rodar um filtro (`npm test -- -t algo`) sem que zero casamentos vire erro.
     passWithNoTests: true,
   },
 });

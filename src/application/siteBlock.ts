@@ -172,9 +172,6 @@ export function stopSiteBlockTest(now: Date = new Date()): void {
   notify();
 }
 
-/** O teste está rodando? (Devolve quando acaba, em ms.) */
-export const siteBlockTestUntil = (): number | null => derived.siteBlock.test?.until ?? null;
-
 // ---------------------------------------------------------------- ack da extensão
 
 function setAck(ack: typeof derived.siteBlock.ack): void {
