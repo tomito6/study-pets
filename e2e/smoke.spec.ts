@@ -284,10 +284,12 @@ test.describe('Study Pets — smoke', () => {
     // E o que ele NÃO entendeu não some em silêncio.
     await expect(page.locator('#siteblock-invalid')).toHaveText('Não entendi: chess');
 
-    // Sem extensão neste navegador: o status explica como instalar.
+    // Sem extensão neste navegador: o status diz QUE extensão é (o Tomi perguntou
+    // "mano que extensão é essa?"), como instalar, e que ela não manda nada pra fora.
     await expect(page.locator('#siteblock-ext-status')).toHaveClass(/missing/);
-    await expect(page.locator('#siteblock-ext-status')).toContainText('Extensão não encontrada');
+    await expect(page.locator('#siteblock-ext-status')).toContainText('vem junto com o Study Pets');
     await expect(page.locator('#siteblock-ext-status .sb-ext-steps li')).toHaveCount(3);
+    await expect(page.locator('#siteblock-ext-status .sb-ext-privacy')).toContainText('não guarda seu histórico');
     await expect(page.locator('#siteblock-test')).toHaveCount(0); // sem extensão não há o que testar
 
     await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();

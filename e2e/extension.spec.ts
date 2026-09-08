@@ -203,7 +203,7 @@ test('ext-1. a extensão se anuncia, e "Testar por 1 min" bloqueia o site de ver
   // Subdomínio + caminho caem na tela do pet; um site fora da lista abre normal.
   const bloqueado = await abrir(ctx, CHESS);
   expect(bloqueado.url).toContain('/blocked.html');
-  await expect(bloqueado.page.locator('#title')).toHaveText('Funcionou 🎉');
+  await expect(bloqueado.page.locator('#title')).toHaveText('É assim que fica');
   await expect(bloqueado.page.locator('#hint')).toContainText('Teste do Study Pets');
   await bloqueado.page.close();
 

@@ -164,7 +164,7 @@ Aqui é onde se vê o bloqueio de verdade.
    - O **ícone da extensão ganha a badge "ON"**. Clica nele: o popup diz o que está bloqueado e
      até quando.
    - Abre `https://www.chess.com/play/online` numa aba nova → cai na **tela do pet**, com
-     *"Funcionou 🎉"* e a contagem. Repara que funcionou com `www.` e com caminho.
+     *"É assim que fica"* e a contagem. Repara que funcionou com `www.` e com caminho.
    - Abre qualquer outro site → normal.
    - Clica **"■ Parar teste"** → `chess.com` volta a abrir na hora, e a badge apaga.
 5. Agora o fluxo de verdade: **Salvar** com o bloqueio ligado, e tocar num **estudo** no Plano.

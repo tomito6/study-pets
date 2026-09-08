@@ -608,13 +608,14 @@ export const strings = {
       invalid: (list: readonly string[]) => `Não entendi: ${list.join(', ')}`,
       ext: {
         ok: (version: string | null) => `✓ Extensão encontrada${version ? ` · v${version}` : ''} — a lista vale neste navegador.`,
-        missing: 'Extensão não encontrada. Sem ela nada é bloqueado neste navegador — instale em 3 passos:',
+        missing: 'Uma página web não consegue bloquear site nenhum — quem faz isso é uma extensão de navegador, que vem junto com o Study Pets (a pasta extension/ do projeto). Ela ainda não está neste navegador:',
         steps: [
           'Abra chrome://extensions (ou edge://extensions).',
-          'Ligue o Modo do desenvolvedor, no canto de cima à direita.',
-          'Clique em "Carregar sem compactação" e escolha a pasta extension/ do Study Pets.',
+          'Ligue o "Modo do desenvolvedor" ("Developer mode"), no canto de cima à direita.',
+          'Clique em "Carregar sem compactação" ("Load unpacked") — o primeiro dos três botões, não o "Pack extension" — e escolha a pasta extension/. Ela parece vazia no seletor porque só tem arquivos: confirme assim mesmo.',
         ],
         reload: 'Já instalou? Clique em ↻ na extensão e recarregue esta página.',
+        privacy: 'Ela é sua e roda só aqui: não faz nenhuma conexão de rede e não guarda seu histórico — só o bloco que está rodando agora, apagado quando ele acaba.',
         blocking: (n: number, until: string) => `✓ Bloqueando ${n} ${n === 1 ? 'site' : 'sites'} até ${until}`,
         blockingTest: (n: number, until: string) => `✓ Teste rodando · ${n} ${n === 1 ? 'site' : 'sites'} até ${until}`,
       },

@@ -129,6 +129,7 @@ export function SiteBlockSection({ draft, patch }: Props) {
                     {t.ext.steps.map((s) => <li key={s}>{s}</li>)}
                   </ol>
                   <span className="sb-ext-reload">{t.ext.reload}</span>
+                  <span className="sb-ext-privacy">{t.ext.privacy}</span>
                 </>
               )}
             </div>

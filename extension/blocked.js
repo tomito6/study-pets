@@ -72,8 +72,8 @@ async function main() {
   const petName = pet ? pet.name : null;
   showPet(pet);
   if (blocking.test) {
-    $('title').textContent = 'Funcionou 🎉';
-    $('line').textContent = 'É assim que este site vai ficar enquanto você estuda.';
+    $('title').textContent = 'É assim que fica';
+    $('line').textContent = 'Este site some enquanto um estudo estiver rodando. Agora é só um teste.';
   } else {
     $('title').textContent = petName ? `${petName} está te esperando` : 'Você está em foco';
     $('line').textContent = petName
