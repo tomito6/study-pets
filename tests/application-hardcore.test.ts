@@ -44,7 +44,8 @@ beforeEach(() => {
   vi.setSystemTime(AGORA);
   useHardcoreStorage(null); // Map em memória, zerado
   Object.assign(state, emptyPersistedState(), { user: { uid: 'u', displayName: null, email: null }, uiWeek: 1, uiDay: 2 });
-  state.config.hardcore = { enabled: true, mode: 'blacklist', sites: ['youtube.com'] };
+  state.config.hardcore = { enabled: true };
+  state.config.siteBlock = { enabled: true, mode: 'blacklist', sites: ['youtube.com'] };
   state.pets.owned = [gato(petLevelStart(5))]; // no começo do Lv. 5
   state.pets.active = 'cat';
   state.pets.xpProcessedUntil = ONTEM; // nada pendente

@@ -9,7 +9,9 @@
 // da migração pro Vite; v1 tinha pets por espécie (`owned: ['cat']`, `xp: {cat: 120}`,
 // `skills.owl`); v2 tem pets como instâncias, com nome, caminho e skill próprios;
 // v3 tirou o almoço da config (`lunch`/`lunchDur`/`hasLunch` + `lunchOverrides`) —
-// virou uma série diária de evento sem XP, convertida na leitura. Todos são lidos.
+// virou uma série diária de evento sem XP, convertida na leitura; v4 tirou a lista
+// de sites de dentro do hardcore (`config.hardcore.{mode,sites}`) e a pôs em
+// `config.siteBlock`, que vale com ou sem hardcore. Todos são lidos.
 
 import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
@@ -17,6 +19,7 @@ import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
 import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
+import { migrateSiteBlock } from './siteBlock';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
 import { normalizeTutorialSeen } from './tutorial';
 import type { TutorialSeen } from './tutorial';
@@ -32,7 +35,7 @@ import type {
   UserConfig,
 } from './types';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export interface PetsState {
   owned: PetInstance[];
@@ -230,7 +233,13 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     // nasce deles. (O código original fazia ao contrário e a janela padrão 09–18
     // engolia os horários reais do usuário — corrigido na Fase 4.)
     // `hardcore` sempre normalizado: doc de antes do modo (sem o campo) fica desligado.
-    config: { ...DEFAULT_CFG, ...migrateConfig(rawCfg), hardcore: normalizeHardcoreConfig(rawCfg.hardcore) } as UserConfig,
+    // `siteBlock` vem do próprio campo (v4) ou da lista que morava no hardcore (v0–v3).
+    config: {
+      ...DEFAULT_CFG,
+      ...migrateConfig(rawCfg),
+      hardcore: normalizeHardcoreConfig(rawCfg.hardcore),
+      siteBlock: migrateSiteBlock(rawCfg.siteBlock, rawCfg.hardcore),
+    } as UserConfig,
     pets: hydratePets(d),
     closedDays: isObj(d.closedDays) ? (d.closedDays as Record<DateKey, boolean>) : {},
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,

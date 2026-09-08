@@ -224,10 +224,10 @@ export function SettingsPage() {
                             type="button"
                             key={m}
                             role="radio"
-                            aria-checked={draft.hardcoreMode === m}
-                            className={'hc-mode-chip' + (draft.hardcoreMode === m ? ' active' : '')}
+                            aria-checked={draft.siteBlockMode === m}
+                            className={'hc-mode-chip' + (draft.siteBlockMode === m ? ' active' : '')}
                             data-mode={m}
-                            onClick={() => patch({ hardcoreMode: m })}
+                            onClick={() => patch({ siteBlockMode: m })}
                           >
                             {th.modes[m]}
                           </button>
@@ -238,8 +238,8 @@ export function SettingsPage() {
                         className="hc-sites"
                         rows={4}
                         placeholder={th.sitesPlaceholder}
-                        value={draft.hardcoreSites}
-                        onChange={(e) => patch({ hardcoreSites: e.target.value })}
+                        value={draft.siteBlockSites}
+                        onChange={(e) => patch({ siteBlockSites: e.target.value })}
                         spellCheck={false}
                       />
                       <div className="st-hint">{th.sitesHint}</div>

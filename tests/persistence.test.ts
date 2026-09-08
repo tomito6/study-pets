@@ -103,13 +103,36 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
   it('doc de antes do modo hardcore: sem `penalties` → {}, e a config nasce desligada', () => {
     const s = hydrateUserDoc({ coinsSpent: 5, config: { pomo: 30 } });
     expect(s.penalties).toEqual({});
-    expect(s.config.hardcore).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
+    expect(s.config.hardcore).toEqual({ enabled: false });
+    expect(s.config.siteBlock).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
     // Lixo no campo também vira vazio; registro válido passa.
     expect(hydrateUserDoc({ penalties: 'x' }).penalties).toEqual({});
     expect(hydrateUserDoc({ penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'cat', petXp: 100, at: 1, reason: 'quit' }, 'lixo'] } }).penalties).toEqual({
       '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'cat', petXp: 100, at: 1, reason: 'quit' }],
     });
-    expect(hydrateUserDoc({ config: { hardcore: { enabled: true, mode: 'whitelist', sites: ['https://Wikipedia.org/x'] } } }).config.hardcore).toEqual({ enabled: true, mode: 'whitelist', sites: ['wikipedia.org'] });
+  });
+
+  describe('v3 → v4: a lista de sites sai do hardcore e vira `siteBlock`', () => {
+    it('doc antigo com sites no hardcore: a lista migra e o bloqueio herda o "ligado"', () => {
+      const s = hydrateUserDoc({ schemaVersion: 3, config: { hardcore: { enabled: true, mode: 'whitelist', sites: ['https://Wikipedia.org/x', 'moodle.tum.de'] } } });
+      expect(s.config.hardcore).toEqual({ enabled: true });
+      expect(s.config.siteBlock).toEqual({ enabled: true, mode: 'whitelist', sites: ['wikipedia.org', 'moodle.tum.de'] });
+    });
+
+    it('hardcore desligado mas com lista: a lista migra desligada (nada bloqueia sem querer)', () => {
+      const s = hydrateUserDoc({ schemaVersion: 3, config: { hardcore: { enabled: false, mode: 'blacklist', sites: ['youtube.com'] } } });
+      expect(s.config.siteBlock).toEqual({ enabled: false, mode: 'blacklist', sites: ['youtube.com'] });
+    });
+
+    it('hardcore sem lista nenhuma: bloqueio nasce desligado e vazio', () => {
+      expect(hydrateUserDoc({ config: { hardcore: { enabled: true } } }).config.siteBlock).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
+    });
+
+    it('doc v4: `siteBlock` vence o campo antigo, e lixo vira config válida', () => {
+      const s = hydrateUserDoc({ schemaVersion: 4, config: { hardcore: { enabled: false, sites: ['antigo.com'] }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['CHESS.com/play'] } } });
+      expect(s.config.siteBlock).toEqual({ enabled: true, mode: 'blacklist', sites: ['chess.com'] });
+      expect(hydrateUserDoc({ config: { siteBlock: 'lixo' } }).config.siteBlock).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
+    });
   });
 
   it('checks antigos salvos como `true` passam intactos', () => {
@@ -278,7 +301,7 @@ describe('ida e volta', () => {
       windowOverrides: { '2026-09-01': { studyWindows: [] }, '2026-09-03': { studyWindows: [{ start: '10:10', end: '12:00' }] } },
       tutorialSeen: { plan: true, analytics: true },
       penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
-      config: { ...DEFAULT_CFG, hardcore: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
+      config: { ...DEFAULT_CFG, hardcore: { enabled: true }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });

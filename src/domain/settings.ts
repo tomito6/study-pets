@@ -2,10 +2,11 @@
 // o dia que essa config gera, e o "Encaixar estudo" — tudo puro.
 
 import { DEFAULT_CFG } from './config';
-import { normalizeHardcoreConfig, normalizeSites } from './hardcore';
+import { normalizeHardcoreConfig } from './hardcore';
+import { normalizeSiteBlockConfig, normalizeSites } from './siteBlock';
 import { calcActualEnd, generateBlocks } from './planner';
 import { timeToMins } from './time';
-import type { DateKey, HardcoreMode, PlannerConfig, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
+import type { DateKey, PlannerConfig, SiteBlockMode, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
 
 /** O formulário como o usuário digita — números em string pra permitir campo vazio. */
 export interface ConfigDraft {
@@ -17,13 +18,16 @@ export interface ConfigDraft {
   skipWeekends: boolean;
   dailyStudyMin: string;
   hardcore: boolean;
-  hardcoreMode: HardcoreMode;
+  /** Bloqueio de sites: independente do hardcore. */
+  siteBlock: boolean;
+  siteBlockMode: SiteBlockMode;
   /** A lista de sites como o usuário digita (uma por linha); vira domínios ao salvar. */
-  hardcoreSites: string;
+  siteBlockSites: string;
 }
 
 export function draftFromConfig(cfg: UserConfig): ConfigDraft {
   const hc = normalizeHardcoreConfig(cfg.hardcore);
+  const sb = normalizeSiteBlockConfig(cfg.siteBlock);
   const windows =
     Array.isArray(cfg.studyWindows) && cfg.studyWindows.length > 0
       ? cfg.studyWindows.map((w) => ({ ...w }))
@@ -37,8 +41,9 @@ export function draftFromConfig(cfg: UserConfig): ConfigDraft {
     skipWeekends: cfg.skipWeekends === true,
     dailyStudyMin: String(cfg.dailyStudyMin || 60),
     hardcore: hc.enabled,
-    hardcoreMode: hc.mode,
-    hardcoreSites: hc.sites.join('\n'),
+    siteBlock: sb.enabled,
+    siteBlockMode: sb.mode,
+    siteBlockSites: sb.sites.join('\n'),
   };
 }
 
@@ -112,10 +117,11 @@ export function normalizeConfig(draft: ConfigDraft, periodStart: DateKey | null)
     periodEnd: draft.periodEnd || null,
     skipWeekends: draft.skipWeekends,
     dailyStudyMin: sanitizeDailyStudyMin(parseInt(draft.dailyStudyMin, 10)),
-    hardcore: {
-      enabled: draft.hardcore === true,
-      mode: draft.hardcoreMode === 'whitelist' ? 'whitelist' : 'blacklist',
-      sites: normalizeSites(draft.hardcoreSites || ''),
+    hardcore: { enabled: draft.hardcore === true },
+    siteBlock: {
+      enabled: draft.siteBlock === true,
+      mode: draft.siteBlockMode === 'whitelist' ? 'whitelist' : 'blacklist',
+      sites: normalizeSites(draft.siteBlockSites || ''),
     },
   };
 }

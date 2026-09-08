@@ -2,6 +2,9 @@
 // equipado. Dificuldade escolhida, nunca padrão: liga em Configurações, e cada
 // sequência começa com o custo escrito na cara. Puro.
 //
+// Bloquear sites NÃO mora mais aqui: virou feature própria em 2026-09-08
+// (`domain/siteBlock.ts`), e funciona com ou sem hardcore.
+//
 // A conta: desistir de um estudo custa 2× o XP do bloco, na hora (não espera o
 // dia fechar), pra quem tem XP a perder — nunca abaixo de zero. Nível pode cair,
 // do usuário e do pet; a forma do pet fica (evolução é definitiva). Pausa é
@@ -12,54 +15,17 @@ import { petLevelFromXP } from './pets';
 import { getLevelIdx } from './progression';
 import { dk } from './time';
 import { timerProgress } from './timer';
-import type { DateKey, HardcoreConfig, HardcoreMode, PenaltiesByDate, PenaltyRecord, PetInstanceId, StudyBlock, TimeString } from './types';
+import type { DateKey, HardcoreConfig, PenaltiesByDate, PenaltyRecord, PetInstanceId, StudyBlock, TimeString } from './types';
 
 /** Quantas vezes o XP do bloco se perde ao desistir. */
 export const HARDCORE_MULTIPLIER = 2;
 
-export const defaultHardcore = (): HardcoreConfig => ({ enabled: false, mode: 'blacklist', sites: [] });
+export const defaultHardcore = (): HardcoreConfig => ({ enabled: false });
 
-// ---------------------------------------------------------------- sites
-
-/**
- * "https://www.YouTube.com/watch?v=x" → "youtube.com". Só o domínio: sem esquema,
- * sem `www.`, sem caminho/porta. `null` se não parece um domínio.
- */
-export function normalizeSite(raw: string): string | null {
-  let s = raw.trim().toLowerCase();
-  if (!s) return null;
-  s = s.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
-  s = s.replace(/^www\./, '');
-  s = s.split(/[/?#:]/)[0] ?? '';
-  s = s.replace(/^\.+|\.+$/g, '');
-  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(s)) return null;
-  return s;
-}
-
-/** A lista como o usuário digita (uma por linha, vírgula ou espaço) ou já em lista → domínios únicos, na ordem. */
-export function normalizeSites(input: string | readonly string[]): string[] {
-  const parts = typeof input === 'string' ? input.split(/[\n,\s]+/) : input;
-  const out: string[] = [];
-  for (const p of parts) {
-    if (typeof p !== 'string') continue;
-    const site = normalizeSite(p);
-    if (site && !out.includes(site)) out.push(site);
-  }
-  return out;
-}
-
-const isMode = (v: unknown): v is HardcoreMode => v === 'blacklist' || v === 'whitelist';
-
-/** `config.hardcore` em qualquer formato (ausente, parcial, lixo) → config válida. */
+/** `config.hardcore` em qualquer formato (ausente, parcial, o formato antigo com sites) → config válida. */
 export function normalizeHardcoreConfig(raw: unknown): HardcoreConfig {
-  const d = defaultHardcore();
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return d;
-  const r = raw as { enabled?: unknown; mode?: unknown; sites?: unknown };
-  return {
-    enabled: r.enabled === true,
-    mode: isMode(r.mode) ? r.mode : d.mode,
-    sites: Array.isArray(r.sites) ? normalizeSites(r.sites as string[]) : [],
-  };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return defaultHardcore();
+  return { enabled: (raw as { enabled?: unknown }).enabled === true };
 }
 
 // ---------------------------------------------------------------- sessão

@@ -1,4 +1,5 @@
-// Modo hardcore, a parte pura: sites, a sessão no dispositivo, e a conta de desistir.
+// Modo hardcore, a parte pura: a sessão no dispositivo e a conta de desistir.
+// (A lista de sites saiu daqui em 2026-09-08 — ver tests/siteBlock.test.ts.)
 
 import { describe, expect, it } from 'vitest';
 import {
@@ -7,8 +8,6 @@ import {
   isForfeited,
   normalizeHardcoreConfig,
   normalizePenalties,
-  normalizeSite,
-  normalizeSites,
   parseHardcoreSession,
   penaltyFor,
   penaltyRecord,
@@ -25,26 +24,11 @@ const pausa: StudyBlock = { time: '10:25', endTime: '10:30', name: '🧘 Pausa',
 const HOJE = '2026-09-02';
 const as = (hms: string) => new Date(`${HOJE}T${hms}`);
 
-describe('sites', () => {
-  it('normaliza pra domínio: sem esquema, www, caminho, porta, maiúsculas', () => {
-    expect(normalizeSite('https://www.YouTube.com/watch?v=abc')).toBe('youtube.com');
-    expect(normalizeSite('  instagram.com/  ')).toBe('instagram.com');
-    expect(normalizeSite('http://localhost:5173/x')).toBeNull(); // sem ponto não é domínio público
-    expect(normalizeSite('m.twitter.com')).toBe('m.twitter.com');
-    expect(normalizeSite('')).toBeNull();
-    expect(normalizeSite('não é site')).toBeNull();
-    expect(normalizeSite('.reddit.com.')).toBe('reddit.com');
-  });
-
-  it('a lista digitada vira domínios únicos, na ordem, ignorando lixo', () => {
-    expect(normalizeSites('youtube.com\nhttps://www.youtube.com, twitch.tv  x\n\n')).toEqual(['youtube.com', 'twitch.tv']);
-    expect(normalizeSites(['A.com', 'a.com', 42 as unknown as string])).toEqual(['a.com']);
-  });
-
-  it('config em qualquer formato vira config válida', () => {
-    expect(normalizeHardcoreConfig(undefined)).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
-    expect(normalizeHardcoreConfig({ enabled: true, mode: 'whitelist', sites: ['WWW.Wikipedia.org'] })).toEqual({ enabled: true, mode: 'whitelist', sites: ['wikipedia.org'] });
-    expect(normalizeHardcoreConfig({ enabled: 'sim', mode: 'greylist', sites: 'youtube.com' })).toEqual({ enabled: false, mode: 'blacklist', sites: [] });
+describe('config', () => {
+  it('só a penalidade: `enabled` e mais nada — a lista de sites virou `siteBlock`', () => {
+    expect(normalizeHardcoreConfig(undefined)).toEqual({ enabled: false });
+    expect(normalizeHardcoreConfig({ enabled: true, mode: 'whitelist', sites: ['wikipedia.org'] })).toEqual({ enabled: true });
+    expect(normalizeHardcoreConfig({ enabled: 'sim' })).toEqual({ enabled: false });
   });
 });
 

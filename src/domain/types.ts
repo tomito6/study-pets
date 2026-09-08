@@ -34,15 +34,25 @@ export interface UserConfig {
   dailyStudyMin: number;
   /** Modo hardcore: sair de um estudo no foco custa XP (ver domain/hardcore.ts). */
   hardcore: HardcoreConfig;
+  /** Bloqueio de sites durante o estudo — independente do hardcore (ver domain/siteBlock.ts). */
+  siteBlock: SiteBlockConfig;
 }
 
-export type HardcoreMode = 'blacklist' | 'whitelist';
-
-/** O que o usuário escolheu em Configurações → Geral → Modo hardcore. */
+/**
+ * Modo hardcore: só a penalidade. A lista de sites saiu daqui em 2026-09-08 e
+ * virou `siteBlock` — bloquear site funciona com ou sem hardcore.
+ */
 export interface HardcoreConfig {
   enabled: boolean;
+}
+
+export type SiteBlockMode = 'blacklist' | 'whitelist';
+
+/** O que o usuário escolheu em Configurações → Geral → Bloqueio de sites. */
+export interface SiteBlockConfig {
+  enabled: boolean;
   /** `blacklist` = bloquear os sites da lista durante o estudo; `whitelist` = permitir só eles. */
-  mode: HardcoreMode;
+  mode: SiteBlockMode;
   /** Domínios normalizados ("youtube.com"). Só a extensão do navegador aplica. */
   sites: string[];
 }
