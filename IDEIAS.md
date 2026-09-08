@@ -696,7 +696,8 @@ morar na janela (`studyWindows[i].rhythm?`) e/ou no grupo (`StudyGroup.rhythm?`)
 o ritmo da janela em que está. Grupo é anotação por horário, então "ritmo do grupo" seria o gerador reagir a
 uma anotação — muda a regra "grupo nunca entra no generateBlocks" (CLAUDE.md). Pensar antes de implementar.
 
-Pendências menores do B7 que ficaram pra depois, pra não perder:
+Pendências menores do B7 que ficaram pra depois, pra não perder (as três viraram os itens 1, 2 e 3 do
+`PENDENCIAS.md` em 2026-09-08, cada uma com a pergunta que falta responder):
 - as abas do laptop continuam "Plano · Análise · Perfil"; o pacote dizia "Meu plano · Meus pets · Progresso"
 - o "chão" que o tema café desenha atrás do personagem no hero do Perfil ficou estranho com o hero largo
 - a frase do pet ("Boa companhia…") quebra em duas linhas com a coluna em 240
