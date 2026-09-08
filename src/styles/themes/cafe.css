@@ -609,8 +609,8 @@
   right:-16px;
   bottom:0;
   height:34%;
-  background:linear-gradient(180deg,#e3cba6 0%,#d9bd93 100%);
-  border-top:4px solid #c6a679;
+  background:linear-gradient(180deg,var(--hero-floor-a) 0%,var(--hero-floor-b) 100%);
+  border-top:4px solid var(--hero-floor-line);
   z-index:0;
 }
 :root[data-theme="cafe"] .profile-hero-stage .char-sprite,

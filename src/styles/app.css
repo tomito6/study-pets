@@ -189,6 +189,9 @@
     /* o habitat do pet no Perfil (features/profile/ProfileTab.tsx, .habitat[data-habitat=campo]) — arte, igual nos dois temas */
     --hb-sky:#dfe8dc; --hb-sky-2:#eef1e6; --hb-sun:#f3dca0; --hb-hill:#b2c1a3; --hb-hill-2:#c9d4bb;
     --hb-leaf:#71835c; --hb-grass:#9db387; --hb-grass-line:#7f9a6c;
+    /* o chão atrás do personagem no hero do Perfil — só o tema café desenha (os PNGs
+       foram feitos pra fundo escuro; sobre creme eles ficariam recortados no vazio) */
+    --hero-floor-a:#e3cba6; --hero-floor-b:#d9bd93; --hero-floor-line:#c6a679;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;}

@@ -6,8 +6,10 @@ export default defineConfig({
   plugins: [
     react(),
     // PWA: o service worker (workbox) só existe no build — em dev/teste nada é registrado,
-    // então HMR e e2e continuam iguais. Navegação é network-first com fallback ao cache
-    // (deploy novo aparece no próximo reload); assets do dist são precache. Nada de
+    // então HMR e e2e continuam iguais. A navegação é servida do PRECACHE (navigateFallback
+    // aponta pro index.html precacheado, e runtimeCaching está vazio): abre offline, mas não
+    // busca a rede primeiro. Quem faz o deploy novo aparecer é o registerType 'autoUpdate' —
+    // o SW novo assume assim que instala, e o reload seguinte já pega o precache novo. Nada de
     // runtime caching pra Google/Firebase: auth e Firestore falam direto com a rede
     // (o Firestore tem o cache dele em IndexedDB).
     VitePWA({
