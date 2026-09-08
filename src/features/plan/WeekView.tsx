@@ -11,6 +11,7 @@ import { cleanBlockName } from '../../domain/timer';
 import type { StudyBlock } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
+import type { EventDrag } from '../events/useEventDrag';
 
 const NUM_SESSIONS = 6;
 /** Pausa com esta duração ou mais é "longa" (a curta tem 3–5 min) — só muda a cor. */
@@ -23,13 +24,15 @@ interface Props {
   /** A semana visível (1-based, como `state.uiWeek`). */
   week: number;
   now: Date;
+  /** Arrastar evento: aqui ele muda de horário e também de dia. */
+  drag: EventDrag;
   onPickDay: (dayIdx: number) => void;
 }
 
 const kindOf = (b: StudyBlock): string =>
   b.type === 'pausa' && timeToMins(b.endTime) - timeToMins(b.time) >= LONG_BREAK_MIN ? 'longa' : b.type;
 
-export function WeekView({ week, now, onPickDay }: Props) {
+export function WeekView({ week, now, drag, onPickDay }: Props) {
   const checks = useAppState((s) => s.checks);
   const t = strings.plan;
   const todayKey = dk(now);
@@ -63,6 +66,10 @@ export function WeekView({ week, now, onPickDay }: Props) {
   const hours: number[] = [];
   for (let h = h0; h <= h1; h += 60) hours.push(h / 60);
 
+  // Onde o evento arrastado cai agora — em minutos, pra desenhar na mesma régua.
+  const p = drag.preview;
+  const ghost = p ? { dateKey: p.dateKey, from: timeToMins(p.start), to: timeToMins(p.end), label: p.start } : null;
+
   const pick = (i: number) => (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -94,8 +101,12 @@ export function WeekView({ week, now, onPickDay }: Props) {
             role="button"
             tabIndex={0}
             title={t.week.open(d.label)}
-            onClick={() => onPickDay(d.i)}
+            onClick={() => {
+              if (drag.consumeClick()) return; // soltou o evento aqui: não é "abrir o dia"
+              onPickDay(d.i);
+            }}
             onKeyDown={pick(d.i)}
+            {...(d.rest ? {} : { 'data-day-key': d.key, 'data-from': h0, 'data-to': h1 })}
           >
             {d.rest ? (
               <span className="wv-rest">{t.week.rest[d.rest]}</span>
@@ -110,17 +121,34 @@ export function WeekView({ week, now, onPickDay }: Props) {
                   const done = b.type !== 'intervalo' && isChecked(checks, d.key, b.time);
                   const sIdx = b.session !== undefined ? b.session % NUM_SESSIONS : 0;
                   const label = ((e - s) / span) * GRID_PX >= MIN_LABEL_PX ? cleanBlockName(b.name) : '';
+                  // Estudo e pausa são gerados pelo planner — o que se arrasta é evento.
+                  const movable = !d.rest && (b.type === 'event' || b.type === 'intervalo');
                   return (
                     <div
                       key={`${b.type}-${b.time}`}
-                      className={`wv-blk ${kindOf(b)} s${sIdx}` + (done ? ' done' : '')}
+                      className={
+                        `wv-blk ${kindOf(b)} s${sIdx}` +
+                        (done ? ' done' : '') +
+                        (movable ? ' movable' : '') +
+                        (drag.isDragging(d.key, b) ? ' dragging' : '')
+                      }
                       style={{ top: pct(s), height: `${((e - s) / span) * 100}%` }}
-                      title={`${b.time}–${b.endTime} ${cleanBlockName(b.name)}`}
+                      title={movable ? t.week.drag : `${b.time}–${b.endTime} ${cleanBlockName(b.name)}`}
+                      {...(movable ? drag.handleProps({ dateKey: d.key, block: b }) : {})}
                     >
                       {label}
                     </div>
                   );
                 })}
+                {ghost && ghost.dateKey === d.key && (
+                  <div
+                    className="wv-blk wv-ghost"
+                    id="wv-ghost"
+                    style={{ top: pct(ghost.from), height: `${((ghost.to - ghost.from) / span) * 100}%` }}
+                  >
+                    {ghost.label}
+                  </div>
+                )}
                 {d.isToday && nowMins >= h0 && nowMins <= h1 && <div className="wv-now" style={{ top: pct(nowMins) }} />}
               </>
             )}
