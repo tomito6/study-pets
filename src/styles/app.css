@@ -1082,8 +1082,9 @@
   /* ================================================================================================
      TELA GRANDE (janela ≥ 1100px) — a mesma largura de shared/useWide.ts; os dois andam juntos.
      Abaixo disso nada daqui se aplica: o celular continua exatamente como era.
-     O #app vira um grid de três colunas em PORCENTAGEM da tela: trilho (o .topbar em coluna) · a página ·
-     a coluna da direita do Plano (a barra do timer em cima, o .plan-side embaixo). E tudo do laptop é medido
+     Layout B7 (CLAUDE.md "Tela grande"): o #app vira um grid de DUAS colunas — a barra do topo (.topbar,
+     grid-column 1/-1) atravessa as duas, a coluna da esquerda só no Plano (.plan-col: o .plan-side em cima,
+     a .timer-bar no pé) e a página à direita (.main). E tudo do laptop é medido
      em --s, "um pixel do desenho de referência" (janela de 1480px): fonte, altura de linha, espaço, sprite.
      Assim a página é a mesma em qualquer largura, só maior ou menor — sem margem morta, sem parte miúda.
      Poucas caixas: o toggle e o timer. O resto é texto, hairline e espaço.
@@ -1152,12 +1153,12 @@
     .topbar-wide .nav-tab:hover{color:var(--text);border-color:transparent;}
     .topbar-wide .nav-tab.active{background:transparent;color:var(--accent);font-weight:600;}
     .topbar-wide .topbar-right{justify-self:end;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;}
+    /* no laptop a porta das Configurações é o #gear-btn da barra — o FAB some */
     .fab-config{display:none;}
     .topbar-wide .xp-badge{background:transparent;border:0;padding:0;font-size:11px;color:var(--accent);gap:5px;}
     .topbar-wide .xp-badge .level-tag{font-size:11px;color:var(--muted);border-left:0;padding-left:0;}
-    .fab-config{width:calc(52 * var(--s));height:calc(52 * var(--s));font-size:calc(20 * var(--s));bottom:calc(24 * var(--s));right:calc(24 * var(--s));}
 
-    /* a página, na coluna do meio. Análise e Perfil escalam inteiras (zoom); o Plano é medido em --s regra a regra */
+    /* a página, na coluna da direita. Análise e Perfil escalam inteiras (zoom); o Plano é medido em --s regra a regra */
     .main{grid-column:2;grid-row:2 / 4;max-width:none;margin:0;padding:calc(20 * var(--s)) 0 calc(100 * var(--s));}
     .analytics-page,.profile-page{grid-column:1 / -1;grid-row:2 / 4;max-width:calc(980 * var(--s));margin:0 auto;width:100%;}
     .analytics-page,.profile-page{zoom:calc(100vw / 1480px);padding:26px 0 100px;}
@@ -1225,7 +1226,7 @@
     .empty-day-hint{font-size:calc(12 * var(--s));}
     .finish-day-btn,.finish-day-banner{font-size:calc(14 * var(--s));padding:calc(14 * var(--s));}
 
-    /* a coluna da direita: o timer é a única caixa; o resto é rótulo e valor */
+    /* a coluna da esquerda (.plan-col): o timer é a única caixa; o resto é rótulo e valor */
     .timer-bar{position:relative;top:auto;flex-shrink:0;margin:calc(18 * var(--s)) 0 calc(24 * var(--s));background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}
     .timer-bar.idle{display:flex;}
     .timer-bar.active > div:first-child{order:1;}
@@ -1254,12 +1255,6 @@
     .side-v.side-closed{color:var(--accent);font-size:calc(14 * var(--s));font-family:var(--font-ui);}
     .side-v.side-none{color:var(--muted);font-size:calc(13 * var(--s));font-family:var(--font-ui);}
     .side-item .bar-track{height:3px;margin-top:calc(8 * var(--s));}
-    .side-dots{display:flex;gap:calc(6 * var(--s));margin-top:calc(10 * var(--s));}
-    .side-dot{width:calc(22 * var(--s));height:calc(22 * var(--s));border-radius:50%;background:var(--track);display:flex;align-items:center;justify-content:center;font-size:calc(9 * var(--s));font-family:var(--font-mono);color:var(--muted);}
-    .side-dot.met{background:var(--accent);color:var(--on-accent);font-weight:600;}
-    .side-dot.future{background:transparent;border:1px dashed var(--border);}
-    .side-dot.weekend,.side-dot.off{opacity:var(--fade-rest);}
-    .side-dot.today{box-shadow:0 0 0 2px var(--accent);}
 
     /* a Semana: um dia por coluna, blocos como manchas de cor na altura da duração; ocupa a altura da janela */
     .week-view{--wv-h:max(420px,calc(100vh - 210px));margin-top:calc(8 * var(--s));}

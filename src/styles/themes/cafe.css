@@ -818,16 +818,4 @@
   :root[data-theme="cafe"] .wv-hl{background:var(--border);opacity:.6;}
   :root[data-theme="cafe"] .wv-now{box-shadow:0 1px 0 var(--accent-glow-tight);}
 
-  /* os dots da meta na coluna da direita seguem a mesma regra dos 7 dots */
-  :root[data-theme="cafe"] .side-dot{color:var(--text);}
-  :root[data-theme="cafe"] .side-dot.met{color:var(--on-accent);}
-  :root[data-theme="cafe"] .side-dot.future{border-color:var(--border-strong);}
-  :root[data-theme="cafe"] .side-dot.weekend,
-  :root[data-theme="cafe"] .side-dot.off{
-    opacity:1;
-    background:transparent;
-    border:1px dashed var(--border-strong);
-    color:var(--text-dim);
-  }
-
 }
