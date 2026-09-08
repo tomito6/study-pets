@@ -32,3 +32,12 @@ Desktop.ini
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Pacote de design do Café de casa — material do Tomi, fora do git de propósito
+study-pets-cafe-de-casa/
+
+# Worktree única e reaproveitada (ver "Sempre" no CLAUDE.md)
+teste/
+
+# Config local do Claude Code (o launch.json continua versionado)
+.claude/settings.local.json
