@@ -9,11 +9,10 @@
 //    (o que a própria extensão confirmou). Mais o "▶ Testar por 1 min", que arma
 //    o bloqueio com a lista do rascunho — sem salvar, sem esperar um estudo.
 
-import { blockingNow, startSiteBlockTest, stopSiteBlockTest } from '../../application/siteBlock';
+import { blockingNow, extensionStatus, startSiteBlockTest, stopSiteBlockTest } from '../../application/siteBlock';
 import { aliasesOf, parseSites } from '../../domain/siteBlock';
 import type { SiteBlockMode } from '../../domain/types';
 import type { ConfigDraft } from '../../domain/settings';
-import { extensionDetected, extensionVersion } from '../../infrastructure/extensionBridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { useAppState } from '../../store/store';
@@ -33,8 +32,8 @@ interface Props {
 
 export function SiteBlockSection({ draft, patch }: Props) {
   const parsed = parseSites(draft.siteBlockSites || '');
-  const ext = extensionDetected();
-  const version = extensionVersion();
+  // A cada render, não uma vez só: a extensão pode ser instalada com a página aberta.
+  const { installed: ext, version } = extensionStatus();
   // O ack da extensão e o teste vivem no store (`notify()` re-renderiza isto);
   // o relógio faz a contagem do teste andar.
   const testUntil = useAppState((_s, d) => d.siteBlock.test?.until ?? null);

@@ -23,6 +23,7 @@ import { cleanBlockName, timerProgress, todayAt } from '../domain/timer';
 import type { SiteBlockMode, StudyBlock } from '../domain/types';
 import {
   extensionDetected,
+  extensionVersion,
   onBlockingAck,
   onExtensionQuery,
   publishBlocking,
@@ -135,6 +136,26 @@ export function answerExtensionQuery(now: Date = new Date()): void {
   const payload = desiredPayload(now);
   if (payload.active) send(payload);
   else publishBlocking(UNKNOWN);
+}
+
+// ---------------------------------------------------------------- a extensão está aí?
+
+export interface ExtensionStatus {
+  /** O content script rodou nesta página. */
+  installed: boolean;
+  /** A versão que ela anunciou ("0.2.0"); `null` na v1, que só escrevia "1". */
+  version: string | null;
+}
+
+/**
+ * Quem quer saber da extensão pergunta aqui (a UI não fala com a infra).
+ *
+ * É leitura **ao vivo**: o valor sai do atributo que o content script põe no
+ * <html>, e ele pode aparecer com a página já aberta (instalar a extensão agora).
+ * Por isso é função, chamada a cada render — nada de guardar o primeiro valor.
+ */
+export function extensionStatus(): ExtensionStatus {
+  return { installed: extensionDetected(), version: extensionVersion() };
 }
 
 // ---------------------------------------------------------------- teste de 1 min

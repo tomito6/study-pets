@@ -5,13 +5,13 @@
 
 import { hardcoreQuitPreview, quitHardcore, startHardcore } from '../../application/hardcore';
 import { activePet } from '../../application/pets';
+import { extensionStatus } from '../../application/siteBlock';
 import { tryStartTimer } from '../../application/timer';
 import { penaltyFor } from '../../domain/hardcore';
 import type { QuitCost } from '../../domain/hardcore';
 import { expandSites, siteBlockArmable } from '../../domain/siteBlock';
 import { blockDurationMin, cleanBlockName } from '../../domain/timer';
 import type { StudyBlock } from '../../domain/types';
-import { extensionDetected } from '../../infrastructure/extensionBridge';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state } from '../../store/store';
@@ -27,7 +27,7 @@ const t = strings.hardcore;
 function siteBlockLine(): string | null {
   const cfg = state.config.siteBlock;
   if (!cfg || !siteBlockArmable(cfg)) return null;
-  if (!extensionDetected()) return t.start.sitesNoExt;
+  if (!extensionStatus().installed) return t.start.sitesNoExt;
   const sites = expandSites(cfg.sites);
   const list = strings.siteBlock.shortList(sites);
   if (cfg.mode === 'whitelist') return t.start.sitesWhitelist(list || '—');
