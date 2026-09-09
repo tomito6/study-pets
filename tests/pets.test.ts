@@ -499,3 +499,100 @@ describe('casos de uso dos pets', () => {
     expect(toggleBlockCheck(HOJE, b1, AGORA)).toMatchObject({ xp: 50 });
   });
 });
+
+describe('anti-exploit: desmarcar e remarcar não pode repagar bônus', () => {
+  const AGORA = new Date('2026-09-02T17:30:00');
+  const HOJE = '2026-09-02';
+  const OITO_DA_MANHA = new Date('2026-09-02T08:00:00').getTime();
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(AGORA);
+    Object.assign(state, emptyPersistedState(), { user: { uid: 'u', displayName: null, email: null }, uiWeek: 1, uiDay: 2 });
+    derived.weeks = [];
+    clearBlockCache();
+    rebuildWeeks(AGORA);
+  });
+
+  const equipar = (skill: string, over: Partial<PetInstance> = {}) => {
+    state.pets.owned = [{ id: 'dog', species: 'dog', name: 'Bolt', xp: 0, path: null, stage: 0, skill, skillActivatedAt: OITO_DA_MANHA, adoptedAt: 0, ...over }];
+    state.pets.active = state.pets.owned[0]!.id;
+    state.pets.activeSince = OITO_DA_MANHA;
+  };
+  /** Quantos checks do dia carregam bônus, e a soma deles. */
+  const bonificados = () => {
+    const day = state.checks[HOJE] ?? {};
+    const vals = Object.values(day).map((c) => (c === true ? 0 : c.bonus || 0)).filter((b) => b > 0);
+    return { quantos: vals.length, soma: Math.round(vals.reduce((a, b) => a + b, 0) * 100) / 100 };
+  };
+
+  it('Maratona: remarcar os primeiros blocos não faz eles virarem o 5º estudo', () => {
+    equipar('maratona');
+    const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo').slice(0, 8);
+    for (const b of estudos) toggleBlockCheck(HOJE, b, AGORA);
+    const honesto = bonificados();
+    expect(honesto.quantos).toBe(4); // do 5º ao 8º
+
+    for (const b of estudos.slice(0, 4)) {
+      toggleBlockCheck(HOJE, b, AGORA); // desmarca
+      toggleBlockCheck(HOJE, b, AGORA); // remarca
+    }
+    expect(bonificados()).toEqual(honesto); // nada a mais
+  });
+
+  it('Constância: só um bloco por dia bate a meta, por mais que se remarque', () => {
+    equipar('constancia');
+    const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo').slice(0, 6);
+    for (const b of estudos) toggleBlockCheck(HOJE, b, AGORA);
+    expect(bonificados().quantos).toBe(1);
+
+    for (const b of estudos) {
+      toggleBlockCheck(HOJE, b, AGORA);
+      toggleBlockCheck(HOJE, b, AGORA);
+    }
+    expect(bonificados().quantos).toBe(1);
+  });
+
+  it('Empenho: remarcar membro do grupo não faz todo mundo "fechar" ele', () => {
+    const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo').slice(0, 3);
+    state.groups[HOJE] = [{ id: 'g1', start: estudos[0]!.time, end: estudos[2]!.endTime, name: 'Análise II', goal: '' }];
+    equipar('empenho', { id: 'cat', species: 'cat', path: 'sabio', stage: 2 }); // esfinge
+    for (const b of estudos) toggleBlockCheck(HOJE, b, AGORA);
+    expect(bonificados().quantos).toBe(1);
+
+    for (const b of estudos.slice(0, 2)) {
+      toggleBlockCheck(HOJE, b, AGORA);
+      toggleBlockCheck(HOJE, b, AGORA);
+    }
+    expect(bonificados().quantos).toBe(1);
+  });
+
+  it('Recomeço: uma pausa marcada sozinha ontem não conta como dia cumprido', () => {
+    const ONTEM = '2026-09-01';
+    const pausa = blocksForDay(ONTEM).find((b) => b.type === 'pausa')!;
+    toggleBlockCheck(ONTEM, pausa, AGORA); // só a pausa, nenhum estudo
+    equipar('recomeco', { id: 'dove', species: 'dove', path: 'solar', stage: 1 });
+    const [b1] = blocksForDay(HOJE).filter((b) => b.type === 'estudo');
+    toggleBlockCheck(HOJE, b1!, AGORA);
+    expect(state.checks[HOJE]![b1!.time]).toMatchObject({ bonus: 0.05 });
+
+    // Mas um ESTUDO ontem fecha o dia: hoje não é volta de nada.
+    delete state.checks[HOJE];
+    const estudoOntem = blocksForDay(ONTEM).find((b) => b.type === 'estudo')!;
+    toggleBlockCheck(ONTEM, estudoOntem, AGORA);
+    toggleBlockCheck(HOJE, b1!, AGORA);
+    expect(state.checks[HOJE]![b1!.time]).toMatchObject({ bonus: 0 });
+  });
+
+  it('Fiel continua se limitando sozinha: remarcar não devolve o bônus a mais ninguém', () => {
+    equipar('fiel');
+    const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo').slice(0, 5);
+    for (const b of estudos) toggleBlockCheck(HOJE, b, AGORA);
+    expect(bonificados().quantos).toBe(1);
+    for (const b of estudos.slice(1)) {
+      toggleBlockCheck(HOJE, b, AGORA);
+      toggleBlockCheck(HOJE, b, AGORA);
+    }
+    expect(bonificados().quantos).toBe(1);
+  });
+});

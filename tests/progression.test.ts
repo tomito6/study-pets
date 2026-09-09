@@ -193,7 +193,8 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     activeSkill: 'noturno',
     activatedAt: new Date('2026-09-02T08:00:00').getTime(),
     studiesCheckedToday: 0,
-    studyMinsToday: 0,
+    studiesCheckedBefore: 0,
+    studyMinsBefore: 0,
     dailyStudyMin: 60,
     prevBlock: null,
     longBreakMins: 15,
@@ -253,7 +254,7 @@ describe('skills: elegibilidade decidida no momento do check', () => {
   });
 
   it('Maratona vale do 5º estudo do dia em diante', () => {
-    const c = (studiesCheckedToday: number) => ctx({ activeSkill: 'maratona', studiesCheckedToday });
+    const c = (studiesCheckedBefore: number) => ctx({ activeSkill: 'maratona', studiesCheckedBefore });
     expect(skillEligible(blocoManha, HOJE, c(3))).toBe(false); // este é o 4º
     expect(skillEligible(blocoManha, HOJE, c(4))).toBe(true); // este é o 5º
     expect(skillEligible(blocoManha, HOJE, c(9))).toBe(true);
@@ -290,7 +291,7 @@ describe('skills: elegibilidade decidida no momento do check', () => {
   });
 
   it('Constância vale pro bloco que faz o dia bater a meta', () => {
-    const c = (studyMinsToday: number, dailyStudyMin = 60) => ctx({ activeSkill: 'constancia', studyMinsToday, dailyStudyMin });
+    const c = (studyMinsBefore: number, dailyStudyMin = 60) => ctx({ activeSkill: 'constancia', studyMinsBefore, dailyStudyMin });
     expect(skillEligible(blocoManha, HOJE, c(40))).toBe(true); // 40 + 25 ≥ 60
     expect(skillEligible(blocoManha, HOJE, c(35))).toBe(true); // exatamente 60
     expect(skillEligible(blocoManha, HOJE, c(10))).toBe(false); // ainda longe
@@ -309,7 +310,7 @@ describe('skills: elegibilidade decidida no momento do check', () => {
   it('Recomeço vale em TODO estudo do dia da volta — é o oposto de cobrar sequência', () => {
     const volta = ctx({ activeSkill: 'recomeco', comebackDay: true });
     expect(skillEligible(blocoManha, HOJE, volta)).toBe(true);
-    expect(skillEligible(blocoNoturno, HOJE, { ...volta, studiesCheckedToday: 5 })).toBe(true);
+    expect(skillEligible(blocoNoturno, HOJE, { ...volta, studiesCheckedBefore: 5 })).toBe(true);
     expect(skillEligible(evento('10:00', '11:00'), HOJE, volta)).toBe(true);
     expect(skillEligible(blocoManha, HOJE, ctx({ activeSkill: 'recomeco' }))).toBe(false);
   });
@@ -325,7 +326,7 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     const pausa = { type: 'pausa' as const, time: '19:00', endTime: '19:15' };
     const tudo: Partial<SkillContext> = {
       isLastStudy: true, inGroup: true, completesGroup: true, comebackDay: true,
-      afterRestDay: true, bonusDay: true, studiesCheckedToday: 9, studyMinsToday: 0,
+      afterRestDay: true, bonusDay: true, studiesCheckedToday: 9, studiesCheckedBefore: 9, studyMinsBefore: 0,
       prevBlock: { type: 'intervalo', mins: 60 },
     };
     for (const id of Object.keys(SKILLS)) {

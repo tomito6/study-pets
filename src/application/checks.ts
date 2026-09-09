@@ -39,12 +39,18 @@ function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString,
   const done = blocks.filter((b) => isStudyish(b) && day[b.time]);
   const studyish = blocks.filter(isStudyish);
   const last = studyish[studyish.length - 1];
+  // O que já foi feito ANTES deste bloco no plano — não "o que está marcado agora".
+  // É o que impede desmarcar e remarcar de repagar bônus (ver SkillContext).
+  const doneBefore = done.filter((b) => b.time < block.time);
 
-  // O grupo do bloco: dentro dele (Afinco) e se este check é o que fecha (Empenho).
+  // O grupo do bloco: dentro dele (Afinco) e se este é o que fecha (Empenho).
+  // "Fecha" é posicional — o último membro do grupo no plano — mais a exigência
+  // de que os anteriores estejam marcados. Assim só um bloco por grupo pode
+  // receber, mesmo remarcando os outros.
   const group = groupOf(state.groups[dateKey] ?? [], block);
-  const pending = group
-    ? blocks.filter((b) => countsForGroup(b) && blockInGroup(b, group) && b.time !== block.time && !day[b.time])
-    : [];
+  const members = group ? blocks.filter((b) => countsForGroup(b) && blockInGroup(b, group)) : [];
+  const lastMember = members[members.length - 1];
+  const faltando = members.filter((b) => b.time !== block.time && !day[b.time]);
 
   // Ontem foi folga? E o último dia que contava ficou em branco?
   const yesterday = previousDayKey(dateKey);
@@ -52,12 +58,14 @@ function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString,
 
   return {
     studiesCheckedToday: done.length,
-    studyMinsToday: done.reduce((sum, b) => sum + mins(b), 0),
+    studiesCheckedBefore: doneBefore.length,
+    studyMinsBefore: doneBefore.reduce((sum, b) => sum + mins(b), 0),
     prevBlock: prev ? { type: prev.type, mins: mins(prev) } : null,
     isLastStudy: !!last && last.time === block.time,
     inGroup: !!group,
-    completesGroup: !!group && countsForGroup(block) && pending.length === 0,
-    comebackDay: !!lastCounting && !state.checks[lastCounting],
+    completesGroup: !!lastMember && lastMember.time === block.time && faltando.length === 0,
+    // "Em branco" é dia sem ESTUDO — uma pausa marcada sozinha não conta como dia cumprido.
+    comebackDay: !!lastCounting && !blocksForDay(lastCounting).some((b) => isStudyish(b) && state.checks[lastCounting]?.[b.time]),
     afterRestDay: isRestDayKey(yesterday),
     bonusDay: isBonusDayKey(dateKey),
   };

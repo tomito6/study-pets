@@ -104,7 +104,7 @@ export type SkillRule =
   | { kind: 'meets-goal' }
   /** Estudo dentro de um grupo de estudo. */
   | { kind: 'in-group' }
-  /** O estudo que fecha um grupo (o último que faltava dele). */
+  /** O último estudo de um grupo, com todos os anteriores dele já marcados. */
   | { kind: 'completes-group' }
   /** Todo estudo do dia em que se volta depois de um dia que contava e ficou em branco. */
   | { kind: 'comeback' }
@@ -232,10 +232,23 @@ export interface SkillContext {
    * marcar/desmarcar não sobe o bônus no meio do dia.
    */
   petLevel: number;
-  /** Estudos/eventos já marcados hoje antes deste check. */
+  /**
+   * Estudos/eventos marcados hoje, no total. Só a Fiel usa: ela se limita sozinha
+   * (com qualquer outro bloco marcado o contador nunca volta a zero), então
+   * remarcar não devolve o bônus a mais ninguém.
+   */
   studiesCheckedToday: number;
-  /** Minutos de estudo/evento já marcados hoje antes deste check. */
-  studyMinsToday: number;
+  /**
+   * Estudos/eventos marcados que vêm ANTES deste bloco no plano do dia — não "o
+   * que está marcado agora". A diferença é o anti-exploit: um contador do dia
+   * inteiro cresce quando os outros blocos são marcados, então desmarcar e
+   * remarcar um bloco cedo faria ele passar a valer o bônus de um bloco tardio.
+   * Com o prefixo, um bloco só enxerga o que está atrás dele, que não muda de
+   * lugar. Ver `studyMinsBefore`.
+   */
+  studiesCheckedBefore: number;
+  /** Minutos dos estudos/eventos marcados que vêm antes deste no plano do dia. */
+  studyMinsBefore: number;
   /** Meta diária (`config.dailyStudyMin`). */
   dailyStudyMin: number;
   /** O bloco imediatamente anterior no plano do dia; null se este é o primeiro. */
@@ -290,7 +303,7 @@ export function skillEligible(
     case 'last-study':
       return counts && ctx.isLastStudy;
     case 'nth-study':
-      return study && ctx.studiesCheckedToday >= rule.from - 1;
+      return study && ctx.studiesCheckedBefore >= rule.from - 1;
     case 'event':
       return b.type === 'event';
     case 'after':
@@ -302,8 +315,8 @@ export function skillEligible(
       return (
         counts &&
         ctx.dailyStudyMin > 0 &&
-        ctx.studyMinsToday < ctx.dailyStudyMin &&
-        ctx.studyMinsToday + blockMins(b) >= ctx.dailyStudyMin
+        ctx.studyMinsBefore < ctx.dailyStudyMin &&
+        ctx.studyMinsBefore + blockMins(b) >= ctx.dailyStudyMin
       );
     case 'in-group':
       return counts && ctx.inGroup;
