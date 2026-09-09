@@ -50,6 +50,13 @@ function vigiarErros(page: Page): string[] {
 
 const checksDeEstudo = (page: Page) => page.locator('.block-row:not(.pausa-row) .check');
 
+/** Lê "175 / 370 min" de um card de realizado da Análise, pra comparar por valor. */
+async function realizado(page: Page, id: string): Promise<{ done: number; planned: number }> {
+  const texto = await page.locator(`#${id} .adh-val`).innerText();
+  const [done, planned] = texto.replace(' min', '').split(' / ').map(Number);
+  return { done: done as number, planned: planned as number };
+}
+
 test.describe('Study Pets — smoke', () => {
   let erros: string[];
 
@@ -377,6 +384,45 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#toast')).toContainText('Arquivo gerado');
   });
 
+  test('35. apagar a conta só destrava depois de digitar APAGAR, e leva os dados junto', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await checksDeEstudo(page).first().click();
+    // O save tem debounce: espera o documento existir, pra provar depois que ele sumiu.
+    const doc = () => page.evaluate(() => sessionStorage.getItem('study-pets:teste:usuario-teste'));
+    await expect.poll(doc).not.toBeNull();
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Apagar conta' }).click();
+    await expect(page.locator('#delete-account-panel')).toBeVisible();
+    // Conta do Google (o modo teste é uma): sem campo de senha.
+    await expect(page.locator('#del-acc-password')).toHaveCount(0);
+    await expect(page.locator('#del-acc-btn')).toBeDisabled();
+
+    // Qualquer outra palavra não serve.
+    await page.locator('#del-acc-input').fill('APAGA');
+    await expect(page.locator('#del-acc-btn')).toBeDisabled();
+    // A palavra certa serve em minúscula — é case-insensitive de propósito.
+    await page.locator('#del-acc-input').fill('apagar');
+    await expect(page.locator('#del-acc-btn')).toBeEnabled();
+
+    await page.locator('#del-acc-btn').click();
+    await expect(page.locator('#delete-account-panel')).toBeHidden();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+    await expect(page.locator('#login-screen')).toBeVisible();
+    await expect(page.locator('#app')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('Conta apagada');
+    expect(await doc()).toBeNull(); // o documento foi embora junto
+
+    // Entrar de novo é uma conta nova: o onboarding volta, sem o check de antes.
+    await page.locator('.ls-google-btn').click();
+    await expect(page.locator('#app')).toBeVisible();
+    await passarOnboarding(page);
+    await expect(checksDeEstudo(page).first()).not.toHaveClass(/checked/);
+    await expect(page.locator('#today-xp-val')).not.toContainText('XP');
+  });
+
   test('4. clicar no bloco do momento inicia o pomodoro em modo foco', async ({ page }) => {
     await abrirApp(page, '10:10');
     // Com pomo 25 / pausa 5, o bloco das 10:00–10:25 é o que está rolando às 10:10.
@@ -576,6 +622,84 @@ test.describe('Study Pets — smoke', () => {
 
     await page.getByRole('button', { name: /Perfil/ }).click();
     await expect(page.locator('#char-coins')).toHaveText('25');
+  });
+
+  test('34. a aba Análise mostra, nas quatro sub-abas, o que o dia encerrado deixou', async ({ page }) => {
+    test.slow(); // 7 checks, fechar o dia e percorrer as quatro vistas
+    await abrirApp(page);
+    await page.locator('#tour-skip').click(); // o balão do Plano cobre as abas dos dias
+
+    // O dia padrão tem 15 estudos (370 min planejados; o almoço das 13h corta o 8º).
+    // Marcar os 7 primeiros = 175 min cumpridos, e encerrar consolida tudo.
+    for (let i = 0; i < 7; i++) await checksDeEstudo(page).nth(i).click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.locator('#xp-total')).toHaveText('350');
+
+    await page.getByRole('button', { name: /Análise/ }).click();
+    await expect(page.locator('#analytics-page')).toHaveClass(/visible/);
+    await page.locator('#tour-skip').click(); // o balão da Análise fica em cima da sub-nav (teste 36 cobre ele)
+    await expect(page.locator('#tour-balloon')).toHaveCount(0);
+
+    // Cartão de perfil e sparkline: sempre visíveis, com o XP do dia fechado.
+    await expect(page.locator('#an-level-name')).toHaveText('Iniciante'); // 350 XP
+    await expect(page.locator('#an-level-sub')).toHaveText('Faltam 400 XP para Focado');
+    await expect(page.locator('#an-xp-label')).toHaveText('350 XP');
+    await expect(page.locator('#an-xp-next')).toHaveText('750 XP');
+    await expect(page.locator('#an-sparkline polyline')).toHaveAttribute('points', /\d/);
+
+    // Hoje é a vista padrão: 175 dos 370 min planejados.
+    await expect(page.locator('#an-subnav .subnav-chip.active')).toHaveText('Hoje');
+    expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, planned: 370 });
+    await expect(page.locator('#adherence-today')).toHaveClass(/adh-big/);
+    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2.9h de 6.2h');
+    await expect(page.locator('#adherence-today .adh-pct')).toHaveText('47%'); // 175/370
+    // Meta de 60 min: só hoje bateu, e hoje é o dot com anel.
+    await expect(page.locator('#goal-week-headline-h')).toContainText('1 de 7 dias');
+    await expect(page.locator('#goal-week-dots-h .goal-dot')).toHaveCount(7);
+    await expect(page.locator('#goal-week-dots-h .goal-dot.met')).toHaveCount(1);
+    await expect(page.locator('#goal-week-dots-h .goal-dot.today')).toHaveClass(/met/);
+
+    // Semana: o mesmo cumprido, sobre um planejado maior (a semana inteira).
+    await page.locator('#an-subnav .subnav-chip[data-view="semana"]').click();
+    await expect(page.locator('.subview[data-view="semana"]')).toHaveClass(/active/);
+    const semana = await realizado(page, 'adherence-week');
+    expect(semana.done).toBe(175);
+    expect(semana.planned).toBeGreaterThan(370);
+    await expect(page.locator('#goal-week-dots .goal-dot.today')).toHaveCount(0); // o anel é só na vista Hoje
+    // Conclusão por sessão: as quatro sessões do dia, com o que foi marcado em cada uma —
+    // a 1ª inteira (4 estudos), a 2ª parou no 3º, e as duas da tarde ficaram zeradas.
+    // O denominador conta os dias JÁ FECHADOS da semana (seg, ter e hoje, que foi
+    // encerrado): 3 × 4 estudos nas três primeiras sessões, 3 × 3 na última. Dia
+    // futuro NÃO entra — era o bug do `isPast`, que inflava isto pro período inteiro.
+    const sessoes = page.locator('#dropoff-chart .dropoff-row');
+    await expect(sessoes).toHaveCount(4);
+    await expect(sessoes.nth(0)).toContainText('Sessão 1');
+    await expect(sessoes.nth(0).locator('.do-count')).toHaveText('4/12');
+    await expect(sessoes.nth(1).locator('.do-count')).toHaveText('3/12');
+    await expect(sessoes.nth(2).locator('.do-count')).toHaveText('0/12');
+    await expect(sessoes.nth(3).locator('.do-count')).toHaveText('0/9');
+
+    // Geral: agrega todos os dias com dados até hoje; heatmap 7×16 e as horas da rotina (9h–19h).
+    await page.locator('#an-subnav .subnav-chip[data-view="geral"]').click();
+    const geral = await realizado(page, 'adherence-geral');
+    expect(geral.done).toBe(175);
+    expect(geral.planned).toBeGreaterThanOrEqual(370);
+    await expect(page.locator('#heatmap-grid-gh .heatmap-cell')).toHaveCount(7 * 16);
+    await expect(page.locator('#heatmap-grid-gh .heatmap-cell[title^="02/09"]')).toHaveAttribute('title', '02/09 (hoje): 175 de 60 min (292%)');
+    await expect(page.locator('#hour-bar-chart .bar-wrap')).toHaveCount(11);
+    await expect(page.locator('#hour-bar-chart .bar-wrap').first()).toHaveAttribute('title', '9h: 2 blocos concluídos');
+
+    // Recordes: 7 blocos marcados, 1 dia de sequência, 350 XP no melhor dia.
+    await page.locator('#an-subnav .subnav-chip[data-view="recordes"]').click();
+    await expect(page.locator('#an-total-checks')).toHaveText('7');
+    await expect(page.locator('#an-streak')).toHaveText('1');
+    await expect(page.locator('#an-best-week')).toHaveText('7');
+    await expect(page.locator('#an-cur-streak')).toHaveText('1 dias');
+    await expect(page.locator('#an-best-streak')).toHaveText('1 dias');
+    await expect(page.locator('#an-best-day')).toHaveText('02/09 (7)');
+    await expect(page.locator('#an-best-xp')).toHaveText('350 XP');
   });
 
   test('8. comprar e equipar um pet', async ({ page }) => {
@@ -831,6 +955,36 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#settings-panel')).toBeHidden();
     await expect(balao).toContainText('Seu dia já está montado');
     await expect(balao).toContainText('1/3');
+  });
+
+  test('36. o quinto balão do tour: a Análise, ancorada na sub-nav', async ({ page }) => {
+    await abrirApp(page);
+    const balao = page.locator('#tour-balloon');
+    await page.locator('#tour-skip').click(); // o Plano fica visto
+    await expect(balao).toHaveCount(0);
+
+    await page.getByRole('button', { name: /Análise/ }).click();
+    await expect(balao).toHaveAttribute('data-step', 'analytics-subnav');
+    await expect(balao).toContainText('Tô fazendo o que planejei?');
+    await expect(balao).not.toContainText('1/1'); // balão único não tem contador
+    await expect(page.locator('.tour-ring')).toBeVisible(); // o anel cai na própria sub-nav
+    await expect(page.locator('#tour-next')).toHaveText('Entendi');
+
+    // Não bloqueia a tela: a sub-nav que ele aponta continua clicável com o balão aberto.
+    await page.locator('#an-subnav .subnav-chip[data-view="recordes"]').click();
+    await expect(page.locator('.subview[data-view="recordes"]')).toHaveClass(/active/);
+    await expect(balao).toBeVisible();
+
+    await page.locator('#tour-next').click();
+    await expect(balao).toHaveCount(0);
+
+    // Visto fica salvo: recarregar e voltar na aba não traz o balão de volta.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await page.getByRole('button', { name: /Análise/ }).click();
+    await expect(page.locator('#analytics-page')).toHaveClass(/visible/);
+    await expect(balao).toHaveCount(0);
   });
 
   test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {

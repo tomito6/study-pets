@@ -203,7 +203,6 @@
   --fade-weekend:.9;
   --fade-soft:.85;
   --fade-hint:.85;
-  --fade-card:.75;
   --fade-event:1;
   --fade-event-session:1;
   --lift-hover:brightness(.965);
@@ -621,7 +620,6 @@
 :root[data-theme="cafe"] .shop-item-img,
 :root[data-theme="cafe"] .starter-sprite,
 :root[data-theme="cafe"] .active-pet-card .ap-sprite,
-:root[data-theme="cafe"] .buy-confirm-img,
 :root[data-theme="cafe"] .ds-pet-row img,
 :root[data-theme="cafe"] .evo-path-next img,
 :root[data-theme="cafe"] .char-sprite,
@@ -678,7 +676,6 @@
 :root[data-theme="cafe"] .weekday-chip:not(.selected){background:var(--bg2);}
 :root[data-theme="cafe"] .weekday-chip.selected{border-color:var(--accent);}
 :root[data-theme="cafe"] .recurrence-section{background:var(--bg3);border-color:var(--border);}
-:root[data-theme="cafe"] .event-chip{border-left:4px solid var(--clay-bar);padding-left:9px;}
 
 /* o balão do tour: papel com hairline sálvia e a sombra chapada */
 :root[data-theme="cafe"] .tour-balloon{

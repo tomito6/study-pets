@@ -165,7 +165,6 @@
     --fade-weekend:.5;          /* dot de fim de semana */
     --fade-soft:.7;             /* dot "não bateu", alça do grupo */
     --fade-hint:.75;            /* dica do dia vazio */
-    --fade-card:.6;             /* card "em breve" */
     --fade-event:.85;           /* linha de evento */
     --fade-event-session:.9;    /* idem, dentro de uma sessão */
     --lift-hover:brightness(1.08);
@@ -290,17 +289,6 @@
   .freq-row label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;}
   .freq-row input[type="radio"]{margin:0;}
 
-  /* EVENT CHIPS */
-  .events-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
-  .event-chip{display:flex;align-items:center;gap:8px;background:var(--orange-bg);border:1px solid var(--orange);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;}
-  .event-chip .ev-icon{font-size:14px;}
-  .event-chip .ev-info{flex:1;}
-  .event-chip .ev-name{font-weight:500;color:var(--text);}
-  .event-chip .ev-time{color:var(--muted);font-family:var(--font-mono);font-size:11px;}
-  .event-chip .ev-lunch{color:var(--blue);font-size:10px;margin-top:2px;}
-  .event-chip .ev-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;}
-  .event-chip .ev-del:hover{color:var(--text);}
-
   /* BLOCKS */
   .blocks-list{display:flex;flex-direction:column;gap:3px;}
   .block-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);cursor:pointer;transition:background .12s;user-select:none;-webkit-tap-highlight-color:transparent;}
@@ -320,8 +308,6 @@
   .block-time{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:95px;}
   .block-name{font-size:13px;color:var(--text);flex:1;}
   .block-xp{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:99px;white-space:nowrap;}
-  .block-xp.estudo-xp{color:var(--accent);background:var(--accent-bg);}
-  .block-xp.pausa-xp{color:var(--blue);background:var(--blue-bg);}
   .block-xp.almoco-xp{color:var(--muted);background:var(--bg3);}
   .block-xp.event-xp{color:var(--orange);background:var(--orange-bg);}
 
@@ -337,7 +323,6 @@
   .field-group{margin-bottom:18px;}
   .field-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
   .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .field-row.three{grid-template-columns:1fr 1fr 1fr;}
   .field-sublabel{font-size:11px;color:var(--muted);margin-bottom:4px;}
   .field-group input[type=time],
   .field-group input[type=number],
@@ -408,7 +393,6 @@
   .heatmap-gh .heatmap-cell.weekend-off { background:var(--rest-fill); }
 
   /* Realizado (cumprido vs planejado) */
-  .adh-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
   .adh-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:16px; }
   .adh-card .adh-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
   .adh-card .adh-val { font-size:13px; font-weight:600; font-family:var(--font-mono); color:var(--text); margin-bottom:2px; }
@@ -497,15 +481,6 @@
   .profile-stat-mini.coins-stat .psm-val { color:var(--gold); }
   .profile-stat-mini.coins-stat .psm-label { color:var(--gold-muted); }
 
-  /* HEADER da seção "Meus pets" inline */
-  .my-pets-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 2px; }
-  .my-pets-header-title { font-family:var(--font-title); font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:600; }
-  .my-pets-header-count { font-size:11px; color:var(--muted); }
-  .coming-soon-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; opacity:var(--fade-card); }
-  .coming-soon-card .cs-icon { font-size:32px; margin-bottom:8px; }
-  .coming-soon-card .cs-title { font-size:14px; font-weight:600; margin-bottom:4px; }
-  .coming-soon-card .cs-sub { font-size:12px; color:var(--muted); }
-  .shop-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
   .shop-open-btn { display:flex; align-items:center; gap:12px; width:100%; padding:16px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); cursor:pointer; font-family:inherit; margin-bottom:12px; transition:border-color .15s, background .15s; }
   .shop-open-btn:hover { border-color:var(--accent); background:var(--surface-hover-solid); }
   .shop-open-btn .shop-open-icon { font-size:24px; }
@@ -690,8 +665,6 @@
 
   /* BUY CONFIRM */
   .buy-confirm-body { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:18px; }
-  .buy-confirm-img { width:80px; height:80px; image-rendering:pixelated; image-rendering:crisp-edges; object-fit:contain; }
-  .buy-confirm-emoji { font-size:56px; line-height:1; }
   .buy-confirm-text { font-size:14px; text-align:center; color:var(--text); line-height:1.5; }
   .buy-confirm-text b { color:var(--accent); font-family:var(--font-mono); }
 
@@ -1197,7 +1170,7 @@
     .block-row.session-block{background:transparent !important;border-color:transparent !important;border-bottom-color:var(--hairline-row) !important;}
     .block-row.session-block:hover{background:var(--surface-hover) !important;filter:none;}
     .block-row.done .block-name{text-decoration:none;}
-    .block-xp.session-xp,.block-xp.estudo-xp,.block-xp.pausa-xp,.block-xp.event-xp,.block-xp.almoco-xp{background:transparent !important;color:var(--muted) !important;}
+    .block-xp.session-xp,.block-xp.event-xp,.block-xp.almoco-xp{background:transparent !important;color:var(--muted) !important;}
     .block-row.pausa-row{padding:calc(8 * var(--s)) calc(12 * var(--s));}
     .block-row.pausa-row .block-name{color:var(--muted);font-size:calc(13 * var(--s));}
     .block-row.session-block .block-time{color:var(--sc);}
