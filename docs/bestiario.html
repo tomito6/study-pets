@@ -1,0 +1,911 @@
+<title>Bestiário Study Pets</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f6efe3; --paper:#fffdf7; --sunk:#f2ead9;
+  --ink:#40382e; --ink-soft:#5d5346; --muted:#6e6455;
+  --line:#d8cdbb; --line-soft:rgba(64,56,46,.08);
+  --accent:#486244; --accent-wash:rgba(72,98,68,.10);
+  --alta:#6b7a3f; --alta-wash:rgba(107,122,63,.13);
+  --media:#3f6b7a; --media-wash:rgba(63,107,122,.13);
+  --baixa:#7a4162; --baixa-wash:rgba(122,65,98,.13);
+  --shadow:rgba(64,56,46,.10);
+  --stage:radial-gradient(ellipse 62% 50% at 50% 74%,rgba(179,118,85,.20) 0%,rgba(179,118,85,.07) 50%,rgba(179,118,85,0) 74%);
+  --font-d:'Lora',Georgia,serif; --font-b:'DM Sans',system-ui,sans-serif; --font-m:'DM Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0e0e0f; --paper:#18181b; --sunk:#232328;
+  --ink:#f0f0f0; --ink-soft:#c9c9cf; --muted:#8d8d95;
+  --line:#2e2e35; --line-soft:rgba(255,255,255,.06);
+  --accent:#a3e635; --accent-wash:rgba(163,230,53,.12);
+  --alta:#b4c96e; --alta-wash:rgba(180,201,110,.14);
+  --media:#78b6c9; --media-wash:rgba(120,182,201,.14);
+  --baixa:#d18aae; --baixa-wash:rgba(209,138,174,.14);
+  --shadow:rgba(0,0,0,.5);
+  --stage:radial-gradient(ellipse 62% 50% at 50% 74%,rgba(163,230,53,.10) 0%,rgba(163,230,53,0) 72%);
+}}
+:root[data-theme="dark"]{
+  --ground:#0e0e0f; --paper:#18181b; --sunk:#232328;
+  --ink:#f0f0f0; --ink-soft:#c9c9cf; --muted:#8d8d95;
+  --line:#2e2e35; --line-soft:rgba(255,255,255,.06);
+  --accent:#a3e635; --accent-wash:rgba(163,230,53,.12);
+  --alta:#b4c96e; --alta-wash:rgba(180,201,110,.14);
+  --media:#78b6c9; --media-wash:rgba(120,182,201,.14);
+  --baixa:#d18aae; --baixa-wash:rgba(209,138,174,.14);
+  --shadow:rgba(0,0,0,.5);
+  --stage:radial-gradient(ellipse 62% 50% at 50% 74%,rgba(163,230,53,.10) 0%,rgba(163,230,53,0) 72%);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+h1,h2,h3{font-family:var(--font-d);font-weight:600;text-wrap:balance;margin:0}
+a{color:var(--accent)}
+.pix{image-rendering:pixelated;width:72px;height:72px;display:block}
+.pix-sm{width:44px;height:44px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── masthead ───────────────────────────────────────────────── */
+.mast{padding:52px 0 28px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--font-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.mast h1{font-size:clamp(38px,6vw,60px);line-height:1.02;letter-spacing:-.02em}
+.lede{max-width:60ch;font-size:17px;color:var(--ink-soft);margin:16px 0 0}
+.counts{display:flex;flex-wrap:wrap;gap:28px;margin:26px 0 0;padding:0;list-style:none}
+.counts b{display:block;font-family:var(--font-m);font-size:26px;font-variant-numeric:tabular-nums;line-height:1.1}
+.counts span{font-size:12px;color:var(--muted);letter-spacing:.03em}
+
+/* ── barra de filtro ────────────────────────────────────────── */
+.rail{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:11px 24px;margin:0 -24px;background:color-mix(in srgb,var(--ground) 92%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.rail nav{display:flex;gap:2px;flex-wrap:wrap}
+.rail nav a{font-size:13px;color:var(--muted);text-decoration:none;padding:4px 9px;border-radius:5px}
+.rail nav a:hover{color:var(--ink);background:var(--line-soft)}
+.rail-state{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.rail-state[hidden]{display:none}
+#clear{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
+  padding:3px 10px;border-radius:999px;cursor:pointer}
+#clear:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── seções ─────────────────────────────────────────────────── */
+section.band{padding:56px 0 0;scroll-margin-top:60px}
+.band > h2{font-size:30px;letter-spacing:-.01em}
+.band > .sub{max-width:62ch;color:var(--muted);margin:8px 0 0}
+
+/* ── elenco ─────────────────────────────────────────────────── */
+.species{margin-top:34px;padding-top:26px;border-top:1px solid var(--line)}
+.species-head{display:flex;align-items:center;gap:14px}
+.species-head h3{font-size:22px}
+.species-meta{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+.tree{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;margin-top:18px}
+.tree-paths{display:grid;gap:14px}
+.path{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;
+  padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.path-label b{display:block;font-family:var(--font-d);font-size:15px}
+.path-label span{display:block;font-size:11.5px;line-height:1.45;color:var(--muted);margin-top:2px}
+.path-stages{display:flex;align-items:flex-start;gap:6px}
+.arrow{flex:0 0 26px;height:1px;background:var(--line);position:relative;margin-top:44px}
+.arrow::after{content:"";position:absolute;right:0;top:-3px;border:3.5px solid transparent;border-left-color:var(--line)}
+
+.node{margin:0;display:flex;flex-direction:column;align-items:center;gap:5px;width:132px;
+  padding:9px 7px 10px;border-radius:9px;border:1px solid transparent;cursor:pointer;
+  transition:border-color .15s,background .15s,opacity .15s}
+.node:hover,.node:focus-visible{border-color:var(--line);background:var(--sunk);outline:none}
+.node .pix{background:var(--stage)}
+.node figcaption{font-family:var(--font-d);font-size:13.5px;text-align:center;line-height:1.25}
+.node-stage{font-family:var(--font-m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.node-base{background:var(--paper);border-color:var(--line)}
+.chips{list-style:none;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin:2px 0 0;padding:0}
+.chip{font:inherit;font-size:10.5px;line-height:1;padding:3.5px 7px;border-radius:999px;cursor:pointer;
+  border:1px solid;background:transparent;transition:background .15s}
+.chip.t-alta{color:var(--alta);border-color:var(--alta)}
+.chip.t-media{color:var(--media);border-color:var(--media)}
+.chip.t-baixa{color:var(--baixa);border-color:var(--baixa)}
+.chip.t-alta:hover,.chip.t-alta.on{background:var(--alta-wash)}
+.chip.t-media:hover,.chip.t-media.on{background:var(--media-wash)}
+.chip.t-baixa:hover,.chip.t-baixa.on{background:var(--baixa-wash)}
+.chip.on{font-weight:600}
+
+body.filtering .node{opacity:.26}
+body.filtering .node.hit{opacity:1;border-color:var(--accent);background:var(--accent-wash)}
+body.filtering .skill{opacity:.3}
+body.filtering .skill.hit{opacity:1}
+
+/* ── skills ─────────────────────────────────────────────────── */
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:20px;margin-top:26px;align-items:start}
+.tier{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 18px 8px}
+.tier-head{padding-bottom:12px;border-bottom:1px solid var(--line)}
+.tier-head h3{font-size:17px}
+.tier.t-alta .tier-head h3{color:var(--alta)}
+.tier.t-media .tier-head h3{color:var(--media)}
+.tier.t-baixa .tier-head h3{color:var(--baixa)}
+.tier-math{display:flex;justify-content:space-between;gap:10px;margin:5px 0 0;font-size:12px;color:var(--muted)}
+.tier-math b{font-family:var(--font-m);color:var(--ink)}
+.skill-list{list-style:none;margin:0;padding:0}
+.skill{padding:13px 0;border-bottom:1px solid var(--line-soft);transition:opacity .15s}
+.skill:last-child{border-bottom:0}
+.skill-hit{display:flex;width:100%;align-items:baseline;justify-content:space-between;gap:10px;
+  font:inherit;text-align:left;background:none;border:0;padding:0;cursor:pointer;color:inherit}
+.skill-name{font-family:var(--font-d);font-size:15.5px;font-weight:600}
+.skill-hit:hover .skill-name{text-decoration:underline;text-underline-offset:3px}
+.skill-pct{font-family:var(--font-m);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.skill-pct em{font-style:normal;color:var(--muted);font-size:11.5px;margin-left:5px}
+.t-alta .skill-pct{color:var(--alta)} .t-media .skill-pct{color:var(--media)} .t-baixa .skill-pct{color:var(--baixa)}
+.skill-desc{margin:3px 0 0;font-size:13.5px;color:var(--ink-soft)}
+.skill-where{margin:5px 0 0;font-size:11.5px;color:var(--muted)}
+
+/* ── equilíbrio ─────────────────────────────────────────────── */
+.balance{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:34px;align-items:center;margin-top:26px}
+.balance figure{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto}
+.balance svg{width:100%;height:auto;display:block;min-width:420px}
+.bar{stroke-width:1.5;fill-opacity:1}
+.b-alta{fill:var(--alta-wash);stroke:var(--alta)}
+.b-media{fill:var(--media-wash);stroke:var(--media)}
+.b-baixa{fill:var(--baixa-wash);stroke:var(--baixa)}
+.bar-tag{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600}
+.tag-alta{fill:var(--alta)} .tag-media{fill:var(--media)} .tag-baixa{fill:var(--baixa)}
+.hyper{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-dasharray:3 4;opacity:.45}
+.axis{stroke:var(--ink);stroke-width:1;opacity:.5}
+.tick{stroke:var(--ink);stroke-width:1;opacity:.4}
+.axis-num{font-family:'DM Mono',monospace;font-size:10.5px;fill:var(--muted)}
+.axis-lab{font-family:'DM Sans',sans-serif;font-size:11px;fill:var(--muted)}
+.balance p{margin:0 0 14px;color:var(--ink-soft)}
+.balance p:last-child{margin-bottom:0}
+.balance .rule{font-family:var(--font-d);font-size:19px;line-height:1.45;color:var(--ink);
+  border-left:3px solid var(--accent);padding-left:15px}
+
+/* ── editor ─────────────────────────────────────────────────── */
+.editor{margin-top:24px;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ed-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.ed-top label{font-size:13px;color:var(--muted)}
+select,.btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;border:1px solid var(--line);
+  background:var(--ground);color:var(--ink);cursor:pointer}
+select:focus-visible,.btn:focus-visible,.chip:focus-visible,.skill-hit:focus-visible,#clear:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-go{background:var(--accent);color:var(--ground);border-color:var(--accent);font-weight:600}
+.btn-go:hover{filter:brightness(1.08);color:var(--ground)}
+.ed-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0}
+.ed-pick{padding:16px 18px;border-right:1px solid var(--line)}
+.ed-pick h4,.ed-out h4{margin:0 0 10px;font-family:var(--font-d);font-size:14px}
+.ed-grid{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 16px;padding:0;list-style:none}
+.ed-note{font-size:12.5px;color:var(--muted);margin:0}
+.ed-out{padding:16px 18px;min-width:0}
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px;
+  overflow-x:auto;font-family:var(--font-m);font-size:11.5px;line-height:1.55;max-height:330px}
+.warns{list-style:none;margin:0 0 12px;padding:0;font-size:12.5px}
+.warns li{padding:6px 10px;border-radius:6px;margin-bottom:5px;border-left:3px solid}
+.warns li.bad{background:var(--baixa-wash);border-color:var(--baixa)}
+.warns li.ok{background:var(--accent-wash);border-color:var(--accent);color:var(--ink-soft)}
+
+/* ── manutenção ─────────────────────────────────────────────── */
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:24px}
+.howto section{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px}
+.howto h3{font-size:16px;margin-bottom:8px}
+.howto ol,.howto ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-soft)}
+.howto li{margin-bottom:6px}
+code{font-family:var(--font-m);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+
+@media (max-width:820px){
+  .tree{grid-template-columns:1fr}
+  .path{grid-template-columns:1fr}
+  .balance,.ed-body{grid-template-columns:1fr}
+  .ed-pick{border-right:0;border-bottom:1px solid var(--line)}
+  .path-stages{flex-wrap:wrap}
+}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Study Pets · catálogo do jogo</p>
+    <h1>Bestiário</h1>
+    <p class="lede">Cinco espécies, 25 formas, 17 habilidades. Cada pet é um <em>jeito de estudar</em> — a faixa do dia em que você rende, o bloco em que é difícil voltar, o dia em que você reaparece depois de sumir. Esta página é gerada a partir do código: o que está aqui é o que o app faz.</p>
+    <ul class="counts">
+      <li><b>5</b><span>espécies na loja</span></li>
+      <li><b>25</b><span>formas na tela</span></li>
+      <li><b>17</b><span>habilidades</span></li>
+      <li><b>10</b><span>caminhos de evolução</span></li>
+      <li><b>Lv.&nbsp;5 e 15</b><span>onde o bicho muda</span></li>
+    </ul>
+  </header>
+</div>
+
+<div class="wrap">
+  <div class="rail">
+    <nav>
+      <a href="#elenco">Elenco</a>
+      <a href="#habilidades">Habilidades</a>
+      <a href="#equilibrio">Equilíbrio</a>
+      <a href="#editor">Mexer</a>
+      <a href="#manutencao">Manutenção</a>
+    </nav>
+    <div class="rail-state" id="rail-state" hidden>
+      mostrando quem tem <b id="rail-name"></b>
+      <button id="clear" type="button">limpar</button>
+    </div>
+  </div>
+
+  <section class="band" id="elenco">
+    <h2>O elenco</h2>
+    <p class="sub">Toda espécie nasce com uma habilidade e escolhe um caminho no <b>Lv.&nbsp;5</b>; o caminho avança de novo no <b>Lv.&nbsp;15</b>. O caminho de companhia <em>cresce</em> (mantém a habilidade da base); o selvagem <em>transforma</em> (pode largar). Toque numa habilidade pra ver quem mais a tem.</p>
+    
+  <article class="species" id="sp-dog">
+    <header class="species-head">
+      <img class="pix pix-sm" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAw0lEQVR42mNgGAWjYKiBa5O8/uPCA2YxzR1CiuVUdQQ5FoPwggQN6jgE2SAY1pCT/A8C+MRg+kA0xQ54MW0BhmUgjE8Mpo8qDkAPga/3tuDENAkBXA6A+RqEaeYAbAmMFAfQJDcgBznIImxRQPOyAF/807REJMYBA2I5siPQEx6yvgFxALLeoekAcgsimEMo9v2gcwC+XIBcAlKtMCLXAVTLlpSEAM0aJSPHAejlOzEOQFZH1eoY3UJkdfiy42hHZtADANsB2/p6SD89AAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <div>
+        <h3>Cachorro</h3>
+        <p class="species-meta">150 🪙 na loja · nomes sugeridos: Bolt, Thor, Mel, Pipoca…</p>
+      </div>
+    </header>
+    <div class="tree">
+      <div class="tree-base"><figure class="node node-base" data-form="dog" tabindex="0">
+      <span class="node-stage">base</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAw0lEQVR42mNgGAWjYKiBa5O8/uPCA2YxzR1CiuVUdQQ5FoPwggQN6jgE2SAY1pCT/A8C+MRg+kA0xQ54MW0BhmUgjE8Mpo8qDkAPga/3tuDENAkBXA6A+RqEaeYAbAmMFAfQJDcgBznIImxRQPOyAF/807REJMYBA2I5siPQEx6yvgFxALLeoekAcgsimEMo9v2gcwC+XIBcAlKtMCLXAVTLlpSEAM0aJSPHAejlOzEOQFZH1eoY3UJkdfiy42hHZtADANsB2/p6SD89AAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Cachorro</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="fiel">Fiel</button></li></ul>
+    </figure></div>
+      <div class="tree-paths">
+        
+          <div class="path">
+            <div class="path-label"><b>Companheiro</b><span>Continua cachorro e cresce: pastor alemão, depois cão lendário. Rende nos retornos — o estudo depois da aula, o que bate a meta.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="dog-shepherd" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAUkgCNtdv8pkafYcmIcQBNHgAx9OG0aUQ4AqeuJUvtPMweoqWjhxDR1AD6LsTmEqg4gxXIYppkDcIUGujhNcgAIS4pJ/AcBfGI0SQPIloEwPjGaOuDRgR6cmK4OgPkahEemA0AYZBG2KKBZcYwvHdDUcnRH4HMAzSyHFTD4cgG2QgjZ0QPiAKpV0wPmAPTynlBBhF4fUOz7QecAfLkAVC5gU0/VqphYB1AtWyIXMMQ4AEZTrTge2Q5AL9+JcQCyOoodgc/XyOro1jAZBbQAAMhcP2v0B/taAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Pastor alemão</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="fiel">Fiel</button></li><li><button class="chip t-baixa" data-skill="retomada">Retomada</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="dog-legend" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABDElEQVR42u2WMQrCQBBFc4qgvWwhHsDK2jN4ILFInTNYWHgEC0vxDnoI25UfGBiG3WXD7k+TDHwM45L/lmz+pGmWGlHP88GX/F9sngNAgcBNP32fBYB13cl5GoDbbKOiAqSMQyBVAcaYi2gA99s1aGj7lDcAWrcrj0r1KGdAm0GpHhXg++iimhRAdg3NCwCnXQxhJNfo63W0WSAQVlRzqddu72O6tG4QzRzhkgNgQ0ifnSppiBuFzNGPpWCVR6MBLIT0KAB2yung0ebyGtp5ULz7FEAoCekAGuL3Pg4Sc+RCaH21URwCkANoAaplgg6Y1EASAPmtFsfzBrD5ngOg1xVDpHat1032YbIUo/4hnSaTqTWtJgAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Cão lendário</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="fiel">Fiel</button></li><li><button class="chip t-baixa" data-skill="retomada">Retomada</button></li><li><button class="chip t-baixa" data-skill="constancia">Constância</button></li></ul>
+    </figure>
+            </div>
+          </div>
+          <div class="path">
+            <div class="path-label"><b>Selvagem</b><span>Atende ao chamado: vira lobo, depois lobo lunar. Larga a Fiel e vira noite e fôlego — rende da noite em diante e nos dias longos.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="wolf" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzUlEQVR42mNgGAUkgIa2Sf8pkafYcmIcQBNHgAwNCEsiygEgdSBMdZ/DHEAIwxxANUcQYykuh1A9FEjBNEmAA+J7dAd82OcGxvjEaOoAGRklDAegi9HMAecu3SGI6eYAkK9heGQ6AIRBFmGLApoVx4TSAc0sJ8YR+CxHVke25bDynZwcQJVKasg6gOL6AWYxKYkQ2bcD6gCq1I7YDMMX/IPGAVRrGwy4A7A1OIiNApq1hujmAPRgJMYB6C1pqjkA3UJcZT16dhztTw56AACH898k3N5DpgAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Lobo</figcaption>
+      <ul class="chips"><li><button class="chip t-alta" data-skill="noturno">Noturno</button></li><li><button class="chip t-alta" data-skill="maratona">Maratona</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="wolf-lunar" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5UlEQVR42mNgGAUkgCPnHvynRJ5iy4lxAE0cATK0YdIGohwAUgfCVPc5zAHIuOn1fwwxmAPQHQFSS5EDiLEc3SFUDwVSHECTBEisIyj2PXp8oVuKbjG6GFWDH90BcipmGA5AF6OZA959+UMQ080BIF/D8Mh0AAiDLMIWBTQrjgmlA4otx1dcIluCy3IYG5debHJEAWJSPzqmaiU14A4AAZgBpJYBFNcPMItJSYTIvh1QB1CldsRmGL7gHzQOoFrbYMAdgK3BQWwU0Kw1RDcHoAcjMQ5Ab0lTzQH4Sjp82XG0PznoAQC15fN6U0/CbQAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Lobo lunar</figcaption>
+      <ul class="chips"><li><button class="chip t-alta" data-skill="noturno">Noturno</button></li><li><button class="chip t-alta" data-skill="maratona">Maratona</button></li><li><button class="chip t-media" data-skill="lua-cheia">Lua cheia</button></li></ul>
+    </figure>
+            </div>
+          </div>
+      </div>
+    </div>
+  </article>
+  <article class="species" id="sp-cat">
+    <header class="species-head">
+      <img class="pix pix-sm" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAx0lEQVR42mNgGAVDBbyYYfefmurIcgAhw4lRQ5ED3vRMw2kBIXmqhgI+TBfLN6UoYaVpHgXoGN1imBhNHVBxIuC/nKQkiqUgPkh8ZDgAhH+9OIGB6RYFyA4AZbsBcwDIImR6QEIAWxQM34II2RG4QoAuluNzAL74p0raoMQBVAmhAXUAJQURVXyPXPEMiAPQsxu24KdbCJDiAKplT3JDgGoOICcEqFo6EiqC0R1ANcvRy3lsBmOzmGq1Ir78D5Kne8NkFFAbAAAOs/w8E8MSVwAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <div>
+        <h3>Gato</h3>
+        <p class="species-meta">150 🪙 na loja · nomes sugeridos: Mia, Tom, Frida, Nina…</p>
+      </div>
+    </header>
+    <div class="tree">
+      <div class="tree-base"><figure class="node node-base" data-form="cat" tabindex="0">
+      <span class="node-stage">base</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAx0lEQVR42mNgGAVDBbyYYfefmurIcgAhw4lRQ5ED3vRMw2kBIXmqhgI+TBfLN6UoYaVpHgXoGN1imBhNHVBxIuC/nKQkiqUgPkh8ZDgAhH+9OIGB6RYFyA4AZbsBcwDIImR6QEIAWxQM34II2RG4QoAuluNzAL74p0raoMQBVAmhAXUAJQURVXyPXPEMiAPQsxu24KdbCJDiAKplT3JDgGoOICcEqFo6EiqC0R1ANcvRy3lsBmOzmGq1Ir78D5Kne8NkFFAbAAAOs/w8E8MSVwAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Gato</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="preguica">Preguiça</button></li></ul>
+    </figure></div>
+      <div class="tree-paths">
+        
+          <div class="path">
+            <div class="path-label"><b>Sábio</b><span>Guardião de templos: gato egípcio, depois esfinge. Rende dentro dos grupos de estudo — o trecho do dia que tem nome e objetivo.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="cat-egyptian" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0UlEQVR42mNgGAVDBXg4hfynpjqyHEDIcGLUUOSAb+c8cFpASJ6qoYAPgxwxYJbTPAqIwToaFrR1wIcjbv+FBMRQLAXxQeI0dwDMIhANcwSMDROneQiAcFVRGwamWxQgO2BaXsXAOQBkETI9ICGALQoGvCCieaUEKumw4VVNcrS3HD0KQBYjRwG++KdK2iCUBvBZQpXoGVAHUFIQUdX3g8IB6I6AWTwoHUC1smFIOoCqpSMxLSFkB1DNcvRyHpvB2CymWq2IL/uB5OneMBkF1AYA6okWdZtgUtoAAAAASUVORK5CYII=" alt="" data-frames="4">
+      <figcaption>Gato egípcio</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="preguica">Preguiça</button></li><li><button class="chip t-alta" data-skill="afinco">Afinco</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="sphinx" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA50lEQVR42mNgGAUUgG/nPP7T3UJkbJFw5D+6GM0sB1lGLKaL7/FhmvgcxH50pOc/IYyuh2o+J8ZyGKZqSMB8Q6zlG3pC/tM0BPSmLfivoSCDYimIDxKHOYCmIUCMA2ieBn69OYOBkaOA5mkAZunDaT1YHUCXEABZhEwPSAhgiwIQpkkIkFIQUTUE0A0jpgimWcWEHgWgYEaOAlD849KLT45sB6CnAXyWwKJn6DqAlIKIpr4fFA5AdwTM4kHpAKpYPmQdgFw6Ut0B2FpCyA6gmuXo5Tw2g7FZTJWSj1D2A8mTkh1HwaAEAPZw+cptDCDXAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Esfinge</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="preguica">Preguiça</button></li><li><button class="chip t-alta" data-skill="afinco">Afinco</button></li><li><button class="chip t-baixa" data-skill="empenho">Empenho</button></li></ul>
+    </figure>
+            </div>
+          </div>
+          <div class="path">
+            <div class="path-label"><b>Selvagem</b><span>Volta pra mata: lince, depois tigre. Mantém a soneca e ganha a noite; no fim, rende também nos dias de folga.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="lynx" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA30lEQVR42mNgGApATlLyPy3VU9VQmlgOAseWlf2npjqyHEDIcGLUUOSATy8u4bSAkDxVQwEfpovlXVlO//HxB8z3MMfQ1AEv9rn9B2U1ZEtBfJD48HUAejCDUjs6Rk8PVLMc2XB0B9zp6cHpAJAYTR0AsgiZprsDcEUBshqqOoCUgojmuQFXCNC8XUAoCmjmaxhATmAD4oABDQFSCiKaOgCW79ExLHpo7gBsoYBcAA1vByA3PLA5AIYHPASQq2m6tYiwOYAqoYGtnEcvdpEto3p2xJf/YZUVXcuDUUBtAADcJz+zc6s4hgAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Lince</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="preguica">Preguiça</button></li><li><button class="chip t-alta" data-skill="noturno">Noturno</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="tiger" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA+ElEQVR42u2WwQnDMAxFM0YOJUN0iK7RhTxTzp2i5x56yAAFFxd+EEKWTSUlFwsESVHznyRb9jQNG9awd7pmeER81wc/23P/IBW4zHPmgohf70t2rwAXrT27VkDLWgMIWwc97lZ+CoAMt8ft51SQ/lbiwgF4uct7OAC8rPCah7aAA7xS2v0UAECcVgEMGwnAfRv2rINQcQ6hAUj/Q0yYOIWQ+o/t6TILNIDaDHBpzb8VMGfPD5qeQUQrYc6en3YtAIgXd+19zzakonh2632rDQCg4ubsLRVwG0rShaMFgDUQdhs6DEC68bYAaJwZQstamvXhx/KwCPsCUN3WkRG2M4QAAAAASUVORK5CYII=" alt="" data-frames="4">
+      <figcaption>Tigre</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="preguica">Preguiça</button></li><li><button class="chip t-alta" data-skill="noturno">Noturno</button></li><li><button class="chip t-alta" data-skill="hora-extra">Hora extra</button></li></ul>
+    </figure>
+            </div>
+          </div>
+      </div>
+    </div>
+  </article>
+  <article class="species" id="sp-snake">
+    <header class="species-head">
+      <img class="pix pix-sm" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAgUlEQVR42mNgGAWjYBSMgsEMYtYE/ceHB8TyT6ds/kvKSdLeEYR8PygcoFdgQvtoOPJgDgamefzjCg2a+3jUAUPCAQOWNdGzHyH+gBVMNI0qbGUCNjygvqd6WiA17qkeFeT6nqppgdi4p3paoMT3FKcFSuOeKlFBbtDTPFuOAmoCAIZIIXCVyE+0AAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <div>
+        <h3>Cobra</h3>
+        <p class="species-meta">150 🪙 na loja · nomes sugeridos: Sibila, Ísis, Ônix, Zig…</p>
+      </div>
+    </header>
+    <div class="tree">
+      <div class="tree-base"><figure class="node node-base" data-form="snake" tabindex="0">
+      <span class="node-stage">base</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAgUlEQVR42mNgGAWjYBSMgsEMYtYE/ceHB8TyT6ds/kvKSdLeEYR8PygcoFdgQvtoOPJgDgamefzjCg2a+3jUAUPCAQOWNdGzHyH+gBVMNI0qbGUCNjygvqd6WiA17qkeFeT6nqppgdi4p3paoMT3FKcFSuOeKlFBbtDTPFuOAmoCAIZIIXCVyE+0AAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Cobra</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="constancia">Constância</button></li></ul>
+    </figure></div>
+      <div class="tree-paths">
+        
+          <div class="path">
+            <div class="path-label"><b>Ancestral</b><span>Ergue o capuz: naja, depois basilisco. Rende nos marcos do dia — a meta, o estudo depois da refeição, o último bloco.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="naja" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAvUlEQVR42mNgGAWjYDACKxeZ/6RgqjsgIUfrPwzfe7AAjHHxQZjqvsfmAHSMrIaqoYDuAGIwzRwwbZEXXkxTB+Cy9MMJm/+ScpIojqCrA7CFwoA5AKaWpmkAWw5Ajn+65AJ0H9M0F2ArCZEdQJeSEB0gO2BA6oZB5QBicgdNHYHNIdj4NHUAMeUDTUIBV82IjgfU91RPC6TGPdWjglzfUzUtEBv3VE8LlPie4rRAadxTJSrIDXqaZ8tRQE0AAGi0+Jc7PL1BAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Naja</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="constancia">Constância</button></li><li><button class="chip t-baixa" data-skill="rumina">Rumina</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="basilisk" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAApUlEQVR42mNgGAWjYBQQCb6d8/g/oBaD6IATFf/p7hiQZdgwXSwPsaj4jw8PiOXXEn79F+GTA9M0dQQh39M8FIix3EDGh/bRsKrnBAamefzjCg2a+3jUAcQ4AN0RhPhUd8CAZU307EeIP2AFE00cADMQW5mADVM9LZDie6qnBVLjnupRQa7vqZoWiI17bGlhwHxPcVqgNO6pEhXkBj3Vo2IU0BIAAMKvCKrDgo2tAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Basilisco</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="constancia">Constância</button></li><li><button class="chip t-baixa" data-skill="rumina">Rumina</button></li><li><button class="chip t-baixa" data-skill="ponto-final">Ponto final</button></li></ul>
+    </figure>
+            </div>
+          </div>
+          <div class="path">
+            <div class="path-label"><b>Mítico</b><span>Cria chifres e escamas de brasa: serpe, depois dragão. Larga a Constância e vira noite alta e resistência.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="snake-wyrm" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAkklEQVR42mNgGAWjYBQMZvDm0Yn/5MjR3BF0s/ych9V/fHhALP91J+C/nIAA7R1ByPeDwgFtKhq0j4ZfByowMM3jH1do0NzHow4gxgHojiDEp7oDBixromc/QvwBK5homlawlQnY8ID6nuppgdS4p3pUkOt7qqYFYuOe6mmBEt9TnBYojXuqRAW5QU/zbDkKqAkABYAs5S1ygtEAAAAASUVORK5CYII=" alt="" data-frames="4">
+      <figcaption>Serpe</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="lua-cheia">Lua cheia</button></li><li><button class="chip t-alta" data-skill="maratona">Maratona</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="dragon" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAu0lEQVR42mNgGAWjYBQMZvDh2aX/5MjR3BF0s/yIicN/fHhALP//LOq/DJ8IWY4ok9D6TzXfk+oAkiwn1gHEGgpS96Ii4T9Z0fDrRB4GJtXnIMvJcgB6aJAajMiW090B6JbT1QFUtRzdAeiOwManquXoDiA2a1LNcmzZEt0h2PhUtZyUgomc3EI0wFYmYMN0r5RoWlmRGvdUjwpyfU/VtEBs3FM9LVDie4rTAqVxT5WoIDfoaZ4tRwE1AQBsqWIuZcK1lgAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Dragão</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="lua-cheia">Lua cheia</button></li><li><button class="chip t-alta" data-skill="maratona">Maratona</button></li><li><button class="chip t-alta" data-skill="descansado">Descansado</button></li></ul>
+    </figure>
+            </div>
+          </div>
+      </div>
+    </div>
+  </article>
+  <article class="species" id="sp-cow">
+    <header class="species-head">
+      <img class="pix pix-sm" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAWjYLCDeyem/QdhEPvbl3f/kbGGmhZWjK6PYgeQYjkIg+SR9VIM0C0n5AiYPEWWHjuy7z8ui4lxALJ+EJssB3xYswHFQjkZuf8ggM0xyHIgR8AcADKDbAdgswSEcTkAWY7iECAmDeDDFFuKzQGg4CQGD38HgOIa3VJkMapkQ2yOICUEaFY0E7KcJpYOmlwwIA7AVc4T6wiK0wO+ymZAHDDgIUBKzUgVBxDjU1zVMt0cgC8EQCXk0HYAsiNgeZtU/tB3AKy1AwtOUvmjYFADAE9GbX5jCDAxAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <div>
+        <h3>Vaca</h3>
+        <p class="species-meta">150 🪙 na loja · nomes sugeridos: Mimosa, Malhada, Berta, Estrela…</p>
+      </div>
+    </header>
+    <div class="tree">
+      <div class="tree-base"><figure class="node node-base" data-form="cow" tabindex="0">
+      <span class="node-stage">base</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAWjYLCDeyem/QdhEPvbl3f/kbGGmhZWjK6PYgeQYjkIg+SR9VIM0C0n5AiYPEWWHjuy7z8ui4lxALJ+EJssB3xYswHFQjkZuf8ggM0xyHIgR8AcADKDbAdgswSEcTkAWY7iECAmDeDDFFuKzQGg4CQGD38HgOIa3VJkMapkQ2yOICUEaFY0E7KcJpYOmlwwIA7AVc4T6wiK0wO+ymZAHDDgIUBKzUgVBxDjU1zVMt0cgC8EQCXk0HYAsiNgeZtU/tB3AKy1AwtOUvmjYFADAE9GbX5jCDAxAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Vaca</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="rumina">Rumina</button></li></ul>
+    </figure></div>
+      <div class="tree-paths">
+        
+          <div class="path">
+            <div class="path-label"><b>Campeã</b><span>Estrela da feira: vaca premiada, depois vaca dourada. Rende na volta da folga e no primeiro estudo do dia.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="cow-prize" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/klEQVR42mNgGAWjgMrgw5oN/6lq4L0T0/6DMIj97cu7/8hYQ00LBYMs//9hGphG1kexA4ixHNkRIHlkvRQDdMsJOQImT5Glx47s+4/LYmIcgKwfxCbLAbDghGE5Gbn/IIDNMchyIEfAHAAyg2wHYLMEhHE5AFmO4hAgJg3gwxRbis0BoOAkBg9/B4DiGt1SZDGqZENsjiAlBGha1uPDNLEU5KMzOhZE41VNcrRJAyj4nAcC0zIb4irnYZaDfIuvLKA4PeCrbHCVijR1AKmlId0cgC2kqOIAYnyKq1qmmwPwhQAonQxtByA7Apa3SeUPfQfAWjuw4CSVPwoGNQAAMGBd+eYT9koAAAAASUVORK5CYII=" alt="" data-frames="4">
+      <figcaption>Vaca premiada</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="rumina">Rumina</button></li><li><button class="chip t-alta" data-skill="descansado">Descansado</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="cow-golden" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/ElEQVR42u2WMQ6DMAxFOUTnzhyih+AQPU5nDsEhOmfu3LkzA11YXLlSIpMmJMZORCUsfQmIwn9xYkPTHHFExQAAYE+a3y9A4fVoOqCC6RGUP08UXHMUjtO54vDNUxB2XGR6v7UQM84BoPPxehvA0C8M2/MJz1EQho4hhAMYegFAwAQVA6Bj4gzknIE1bTYN1ap7MW5JjjRWvWuA7157potnGmUYhGBkoFg/T5mXMTUdXK6GpTJngGgen06qZfhTlpE+nwKgzUgVgELEumJRAG43rAYQypQKQM5KY5/lagBrGcBzIvov1AYQZcHWNvf+/wHs345NJ/f+iF3HBw2TU9y/45dUAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Vaca dourada</figcaption>
+      <ul class="chips"><li><button class="chip t-baixa" data-skill="rumina">Rumina</button></li><li><button class="chip t-alta" data-skill="descansado">Descansado</button></li><li><button class="chip t-baixa" data-skill="fiel">Fiel</button></li></ul>
+    </figure>
+            </div>
+          </div>
+          <div class="path">
+            <div class="path-label"><b>Selvagem</b><span>Sai do pasto: touro, depois bisão. Larga a Rumina: acorda cedo, estuda na folga e aguenta o dia longo.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="bull" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0ElEQVR42mNgGAWDFby4d+L/gJoF0kQNR1BkDrpGPxO9/8RgqoYkzABiLUd2BNWikVTLsYUEyUBPTgbFMBAfhrFZhi6PrA7EJssBFRERKJaICAj8BwFsDkCXgzkAZAbZDsBmCQjjcgCyHMUhQGkaoNhSbA4ABScxePg7ABTX6JYii1ElG2JzBCkhQLMCCNmib+c8wBjdcqoVSIRSOswBhAomuhfBVHMANRxBcXoYdcCoAyh1AKiEHNoOQHYELE+Tyh/6DoC1dmDBSSp/FAxqAAAeI6GWSIl3gwAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Touro</figcaption>
+      <ul class="chips"><li><button class="chip t-alta" data-skill="madrugador">Madrugador</button></li><li><button class="chip t-alta" data-skill="hora-extra">Hora extra</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="bison" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA4ElEQVR42mNgGAUEwKNr+/4PhF4UA0yUJP6Tgyl2xIA7AN0RaS56RGGqWY4MiLUchqmaEEm1nCqOcNKS+U+uxSCMrB/EJssBCV5uKIaKCfD9BwFsFqLLwRwAMoNsB2CzBIRxOQBZjuIQoDQNUGwpNgeAgpMYTBUHIBco5DoAvVAiy3JsDgDFNbqlyGLIBRJZjsCmkdQQwGUOWQ5AxoQsJ1Q3UBQFuIIWmzr0NDC0HEBMGQCzEF8tCSuMBqQiGnXAqANgDgCVkEPbAciOgNVwpPKHvgNgrR1YcJLKHwWDGgAAZvgJuzkyVv8AAAAASUVORK5CYII=" alt="" data-frames="4">
+      <figcaption>Bisão</figcaption>
+      <ul class="chips"><li><button class="chip t-alta" data-skill="madrugador">Madrugador</button></li><li><button class="chip t-alta" data-skill="hora-extra">Hora extra</button></li><li><button class="chip t-alta" data-skill="maratona">Maratona</button></li></ul>
+    </figure>
+            </div>
+          </div>
+      </div>
+    </div>
+  </article>
+  <article class="species" id="sp-dove">
+    <header class="species-head">
+      <img class="pix pix-sm" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAmklEQVR42mNgGAWjYBSMAiqADx++/ceFB9RyujgCl6Vychpg+siJa/8HNARADngzzQaMB9QBwzcR4nMAXVM6zRxAruVUcwQsIRHC2BIfxVmQGItxOYJsB2AzhG4OQDeIXMup5gBSHELVNIDLYGIAVRMhepoYEAcgO4IUB1C9GCbFATQv+7HVbjSv8QaNA2CNC+RGBjaxUTBkAABvNqTsu9dabgAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <div>
+        <h3>Pomba</h3>
+        <p class="species-meta">150 🪙 na loja · nomes sugeridos: Paz, Alva, Nuvem, Cora…</p>
+      </div>
+    </header>
+    <div class="tree">
+      <div class="tree-base"><figure class="node node-base" data-form="dove" tabindex="0">
+      <span class="node-stage">base</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAmklEQVR42mNgGAWjYBSMAiqADx++/ceFB9RyujgCl6Vychpg+siJa/8HNARADngzzQaMB9QBwzcR4nMAXVM6zRxAruVUcwQsIRHC2BIfxVmQGItxOYJsB2AzhG4OQDeIXMup5gBSHELVNIDLYGIAVRMhepoYEAcgO4IUB1C9GCbFATQv+7HVbjSv8QaNA2CNC+RGBjaxUTBkAABvNqTsu9dabgAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Pomba</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="aula">Aula</button></li></ul>
+    </figure></div>
+      <div class="tree-paths">
+        
+          <div class="path">
+            <div class="path-label"><b>Solar</b><span>Voa pro sol: pássaro de fogo, depois fênix. Renasce: rende no dia em que você volta depois de sumir.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="dove-fire" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAsUlEQVR42mNgGAWjYBRQGfxfofF/QC3//2Haf7o74k2BwX9ceEAtp4sjcFkqJyQApreZaPwf0BAAOeDXJTcwHlAHDN9EiM8BdE3pNHMAuZZTzRGwhEQIY0t8FGdBYizG5QiSHQAux1dgN4TmDoBVICAa2SByLacoBPAZRrc0gMvg/2cSCGKqJkL0bDggDkB2BCkOoHoxTIoDaF72Y6vdaF7jDRoHwBoXyI0MbGKjYMgAANyMoDGMSaoIAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Pássaro de fogo</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="aula">Aula</button></li><li><button class="chip t-alta" data-skill="recomeco">Recomeço</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="phoenix" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAz0lEQVR42mNgGAWjYLiB/++m/R9Qi/9XKPynmkPOeKgQbQjMYlx8mjriyxyd/7gwxQ4AGYLPEfgsp4ojYIbgcgQuS+WE+P4TcjzRcYvPEYR8D9Lz65wNGNPEEcQ6gPJsRqYjqJvXcTiC5pYTk9Jp5gByLadqOUAOBkURxVlwQBxAaZBT5ACYpgFzAEzjgDgAVn0ia0Z3zP97FQQxWQ5Ab0wgZx+6OACbI7AlTFIcQFYZgK8ZRYoDaN7+w1a7UaXGGxIOgDUukBsZ2MRGwZABAG90KPRHMESvAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Fênix</figcaption>
+      <ul class="chips"><li><button class="chip t-media" data-skill="aula">Aula</button></li><li><button class="chip t-alta" data-skill="recomeco">Recomeço</button></li><li><button class="chip t-alta" data-skill="descansado">Descansado</button></li></ul>
+    </figure>
+            </div>
+          </div>
+          <div class="path">
+            <div class="path-label"><b>Rapina</b><span>Vira ave de rapina: falcão, depois águia. Larga a Aula e vira o dia claro — de manhã cedo à tarde, e o bloco que fecha.</span></div>
+            <div class="path-stages">
+              <figure class="node" data-form="falcon" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;5</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAqUlEQVR42mNgGAWjYBSMAiqAmIyG/7jwgFpOF0fgslRERAZMm9gEDLwDPuwzAuMBDQEQf3gmQnwOoGtKp5kDyLWcao6AJSRCGN1imDhFlhNjMS5HkO0AbIbQxQHYDCLXcrJDgJBhdEsDuAx+8+wOQUzVRIieJkAWgAzFR1PdAciOgPkSl+XIDqB6MUxKFNC87MdWtdKsuh10DgDV67AGBqyOxyY2CoYMAABks0CoePTLnAAAAABJRU5ErkJggg==" alt="" data-frames="4">
+      <figcaption>Falcão</figcaption>
+      <ul class="chips"><li><button class="chip t-alta" data-skill="madrugador">Madrugador</button></li><li><button class="chip t-alta" data-skill="vespertino">Vespertino</button></li></ul>
+    </figure><span class="arrow" aria-hidden="true"></span><figure class="node" data-form="eagle" tabindex="0">
+      <span class="node-stage">Lv.&nbsp;15</span>
+      <img class="pix" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAt0lEQVR42mNgGAWjYBQMZmChIvJ/SDji168v/3Fhih0QY6fyH58jsFkKUk81R4AcgM8RuHwuIsAHpq9dO/ef4ijA5wh8wQ9zwLcTNnBMdUeQ4gBQqNAkJGiaCIlxBM0th1lKKh5Qy6nmCHItBkURVUpSujsAW2KimwNAeRaER64D0B0CwsiGEir1kB1Lk0Q4IA5AdgQpDqBaQYTsCGIdQPNWErZqleyqdsg5AFSno9fv2MRGwZABAKM61t42cpjMAAAAAElFTkSuQmCC" alt="" data-frames="4">
+      <figcaption>Águia</figcaption>
+      <ul class="chips"><li><button class="chip t-alta" data-skill="madrugador">Madrugador</button></li><li><button class="chip t-alta" data-skill="vespertino">Vespertino</button></li><li><button class="chip t-baixa" data-skill="ponto-final">Ponto final</button></li></ul>
+    </figure>
+            </div>
+          </div>
+      </div>
+    </div>
+  </article>
+  </section>
+
+  <section class="band" id="habilidades">
+    <h2>As habilidades</h2>
+    <p class="sub">Cada uma vale um bônus de XP que cresce com o nível do pet — de <b>+5%</b> no Lv.&nbsp;1 a <b>+15%</b> no Lv.&nbsp;11, vezes o peso da coluna. Só uma fica ativa por pet, e ela precisa estar ligada <em>antes</em> do bloco começar.</p>
+    <div class="tiers">
+      
+  <section class="tier t-alta">
+    <header class="tier-head">
+      <h3>Acompanha o dia</h3>
+      <p class="tier-math"><span>acontece umas 3 vezes num dia de 8 estudos</span><span>paga <b>×1</b></span></p>
+    </header>
+    <ul class="skill-list">
+  <li class="skill" data-skill-row="madrugador">
+    <button class="skill-hit" data-skill="madrugador">
+      <span class="skill-name">Madrugador</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">em estudos que começam antes das 9h</p>
+    <p class="skill-where">~3 vezes por dia · em 4 formas: Touro, Bisão, Falcão, Águia</p>
+  </li>
+  <li class="skill" data-skill-row="vespertino">
+    <button class="skill-hit" data-skill="vespertino">
+      <span class="skill-name">Vespertino</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">em estudos que começam entre 12h e 18h</p>
+    <p class="skill-where">~3 vezes por dia · em 2 formas: Falcão, Águia</p>
+  </li>
+  <li class="skill" data-skill-row="noturno">
+    <button class="skill-hit" data-skill="noturno">
+      <span class="skill-name">Noturno</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">em estudos que começam a partir das 18h</p>
+    <p class="skill-where">~3 vezes por dia · em 4 formas: Lobo, Lobo lunar, Lince, Tigre</p>
+  </li>
+  <li class="skill" data-skill-row="maratona">
+    <button class="skill-hit" data-skill="maratona">
+      <span class="skill-name">Maratona</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">do 5º estudo do dia em diante</p>
+    <p class="skill-where">~3 vezes por dia · em 5 formas: Lobo, Lobo lunar, Serpe, Dragão, Bisão</p>
+  </li>
+  <li class="skill" data-skill-row="recomeco">
+    <button class="skill-hit" data-skill="recomeco">
+      <span class="skill-name">Recomeço</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">nos estudos do dia em que você volta depois de um dia em branco</p>
+    <p class="skill-where">~3 vezes por dia · em 2 formas: Pássaro de fogo, Fênix</p>
+  </li>
+  <li class="skill" data-skill-row="descansado">
+    <button class="skill-hit" data-skill="descansado">
+      <span class="skill-name">Descansado</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">nos estudos do dia seguinte a uma folga</p>
+    <p class="skill-where">~3 vezes por dia · em 4 formas: Dragão, Vaca premiada, Vaca dourada, Fênix</p>
+  </li>
+  <li class="skill" data-skill-row="hora-extra">
+    <button class="skill-hit" data-skill="hora-extra">
+      <span class="skill-name">Hora extra</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">em estudos num dia de folga</p>
+    <p class="skill-where">~3 vezes por dia · em 3 formas: Tigre, Touro, Bisão</p>
+  </li>
+  <li class="skill" data-skill-row="afinco">
+    <button class="skill-hit" data-skill="afinco">
+      <span class="skill-name">Afinco</span>
+      <span class="skill-pct">+5%<em>→ +15%</em></span>
+    </button>
+    <p class="skill-desc">em estudos dentro de um grupo</p>
+    <p class="skill-where">~3 vezes por dia · em 2 formas: Gato egípcio, Esfinge</p>
+  </li></ul>
+  </section>
+  <section class="tier t-media">
+    <header class="tier-head">
+      <h3>Acontece às vezes</h3>
+      <p class="tier-math"><span>acontece uma ou duas vezes por dia</span><span>paga <b>×2</b></span></p>
+    </header>
+    <ul class="skill-list">
+  <li class="skill" data-skill-row="lua-cheia">
+    <button class="skill-hit" data-skill="lua-cheia">
+      <span class="skill-name">Lua cheia</span>
+      <span class="skill-pct">+10%<em>→ +30%</em></span>
+    </button>
+    <p class="skill-desc">em estudos que começam a partir das 21h</p>
+    <p class="skill-where">~1,5 vezes por dia · em 3 formas: Lobo lunar, Serpe, Dragão</p>
+  </li>
+  <li class="skill" data-skill-row="preguica">
+    <button class="skill-hit" data-skill="preguica">
+      <span class="skill-name">Preguiça</span>
+      <span class="skill-pct">+10%<em>→ +30%</em></span>
+    </button>
+    <p class="skill-desc">no estudo logo depois de uma pausa longa</p>
+    <p class="skill-where">~1,5 vezes por dia · em 5 formas: Gato, Gato egípcio, Esfinge, Lince, Tigre</p>
+  </li>
+  <li class="skill" data-skill-row="aula">
+    <button class="skill-hit" data-skill="aula">
+      <span class="skill-name">Aula</span>
+      <span class="skill-pct">+10%<em>→ +30%</em></span>
+    </button>
+    <p class="skill-desc">em eventos que contam como estudo</p>
+    <p class="skill-where">~1,5 vezes por dia · em 3 formas: Pomba, Pássaro de fogo, Fênix</p>
+  </li></ul>
+  </section>
+  <section class="tier t-baixa">
+    <header class="tier-head">
+      <h3>Uma vez por dia</h3>
+      <p class="tier-math"><span>acontece um único bloco, sempre</span><span>paga <b>×3</b></span></p>
+    </header>
+    <ul class="skill-list">
+  <li class="skill" data-skill-row="fiel">
+    <button class="skill-hit" data-skill="fiel">
+      <span class="skill-name">Fiel</span>
+      <span class="skill-pct">+15%<em>→ +45%</em></span>
+    </button>
+    <p class="skill-desc">no primeiro estudo do dia</p>
+    <p class="skill-where">1 vez por dia · em 4 formas: Cachorro, Pastor alemão, Cão lendário, Vaca dourada</p>
+  </li>
+  <li class="skill" data-skill-row="ponto-final">
+    <button class="skill-hit" data-skill="ponto-final">
+      <span class="skill-name">Ponto final</span>
+      <span class="skill-pct">+15%<em>→ +45%</em></span>
+    </button>
+    <p class="skill-desc">no último estudo do dia</p>
+    <p class="skill-where">1 vez por dia · em 2 formas: Basilisco, Águia</p>
+  </li>
+  <li class="skill" data-skill-row="constancia">
+    <button class="skill-hit" data-skill="constancia">
+      <span class="skill-name">Constância</span>
+      <span class="skill-pct">+15%<em>→ +45%</em></span>
+    </button>
+    <p class="skill-desc">no estudo que bate a meta do dia</p>
+    <p class="skill-where">1 vez por dia · em 4 formas: Cão lendário, Cobra, Naja, Basilisco</p>
+  </li>
+  <li class="skill" data-skill-row="rumina">
+    <button class="skill-hit" data-skill="rumina">
+      <span class="skill-name">Rumina</span>
+      <span class="skill-pct">+15%<em>→ +45%</em></span>
+    </button>
+    <p class="skill-desc">no estudo logo depois de uma refeição (intervalo de 30 min ou mais)</p>
+    <p class="skill-where">1 vez por dia · em 5 formas: Naja, Basilisco, Vaca, Vaca premiada, Vaca dourada</p>
+  </li>
+  <li class="skill" data-skill-row="retomada">
+    <button class="skill-hit" data-skill="retomada">
+      <span class="skill-name">Retomada</span>
+      <span class="skill-pct">+15%<em>→ +45%</em></span>
+    </button>
+    <p class="skill-desc">no estudo logo depois de um evento</p>
+    <p class="skill-where">1 vez por dia · em 2 formas: Pastor alemão, Cão lendário</p>
+  </li>
+  <li class="skill" data-skill-row="empenho">
+    <button class="skill-hit" data-skill="empenho">
+      <span class="skill-name">Empenho</span>
+      <span class="skill-pct">+15%<em>→ +45%</em></span>
+    </button>
+    <p class="skill-desc">no estudo que completa um grupo</p>
+    <p class="skill-where">1 vez por dia · em 1 forma: Esfinge</p>
+  </li></ul>
+  </section>
+    </div>
+  </section>
+
+  <section class="band" id="equilibrio">
+    <h2>Por que todas valem o mesmo</h2>
+    <p class="sub">O problema de um catálogo de habilidades é que a mais frequente vence sempre. Aqui a frequência é o preço: quanto mais raro o momento, mais aquele bloco paga.</p>
+    <div class="balance">
+      <figure><svg viewBox="0 0 620 340" role="img" aria-label="Três retângulos de mesma área: quanto mais raro, mais paga.">
+    <rect class="bar b-baixa" x="62" y="56.823529411764724" width="147.8" height="231.2" rx="2"></rect>
+      <text class="bar-tag tag-baixa" x="201.8" y="74.8" text-anchor="end">Uma vez por dia</text><rect class="bar b-media" x="62" y="133.88235294117646" width="221.7" height="154.1" rx="2"></rect>
+      <text class="bar-tag tag-media" x="275.7" y="151.9" text-anchor="end">Acontece às vezes</text><rect class="bar b-alta" x="62" y="210.94117647058823" width="443.3" height="77.1" rx="2"></rect>
+      <text class="bar-tag tag-alta" x="497.3" y="228.9" text-anchor="end">Acompanha o dia</text>
+    <path class="hyper" d="M195.3,31.8L198.6,38.0L201.9,43.9L205.2,49.5L208.5,54.9L211.8,60.0L215.1,64.9L218.4,69.6L221.7,74.1L225.0,78.5L228.3,82.6L231.6,86.6L234.9,90.5L238.2,94.2L241.6,97.7L244.9,101.2L248.2,104.5L251.5,107.7L254.8,110.8L258.1,113.7L261.4,116.6L264.7,119.4L268.0,122.1L271.3,124.7L274.6,127.3L277.9,129.7L281.2,132.1L284.5,134.4L287.8,136.7L291.1,138.9L294.4,141.0L297.7,143.0L301.0,145.0L304.3,147.0L307.6,148.9L310.9,150.7L314.2,152.5L317.5,154.3L320.8,156.0L324.1,157.6L327.4,159.3L330.7,160.8L334.0,162.4L337.3,163.9L340.6,165.4L343.9,166.8L347.2,168.2L350.5,169.6L353.8,170.9L357.1,172.2L360.4,173.5L363.7,174.8L367.0,176.0L370.3,177.2L373.6,178.4L376.9,179.5L380.2,180.6L383.5,181.7L386.8,182.8L390.1,183.9L393.4,184.9L396.7,185.9L400.0,186.9L403.3,187.9L406.6,188.9L409.9,189.8L413.2,190.7L416.5,191.6L419.8,192.5L423.1,193.4L426.4,194.2L429.7,195.1L433.0,195.9L436.3,196.7L439.6,197.5L442.9,198.3L446.2,199.1L449.5,199.8L452.8,200.6L456.1,201.3L459.4,202.0L462.7,202.7L466.0,203.4L469.3,204.1L472.6,204.8L475.9,205.5L479.2,206.1L482.5,206.8L485.8,207.4L489.1,208.0L492.4,208.6L495.7,209.2L499.0,209.8L502.3,210.4L505.6,211.0L508.9,211.6L512.2,212.1L515.5,212.7L518.8,213.2L522.1,213.7L525.4,214.3L528.7,214.8L532.0,215.3L535.3,215.8L538.6,216.3L541.9,216.8L545.2,217.3L548.5,217.8L551.8,218.2L555.1,218.7L558.4,219.2L561.7,219.6L565.0,220.1L568.3,220.5L571.6,221.0L574.9,221.4L578.2,221.8L581.5,222.2L584.8,222.7L588.1,223.1"></path>
+    <line class="axis" x1="62" y1="26" x2="62" y2="288"></line>
+    <line class="axis" x1="62" y1="288" x2="594" y2="288"></line>
+    <line class="tick" x1="209.77777777777777" y1="288" x2="209.77777777777777" y2="293"></line>
+    <text class="axis-num" x="209.77777777777777" y="307" text-anchor="middle">1</text><line class="tick" x1="283.66666666666663" y1="288" x2="283.66666666666663" y2="293"></line>
+    <text class="axis-num" x="283.66666666666663" y="307" text-anchor="middle">1,5</text><line class="tick" x1="505.3333333333333" y1="288" x2="505.3333333333333" y2="293"></line>
+    <text class="axis-num" x="505.3333333333333" y="307" text-anchor="middle">3</text><line class="tick" x1="57" y1="210.94117647058823" x2="62" y2="210.94117647058823"></line>
+    <text class="axis-num" x="52" y="214.94117647058823" text-anchor="end">×1</text><line class="tick" x1="57" y1="133.88235294117646" x2="62" y2="133.88235294117646"></line>
+    <text class="axis-num" x="52" y="137.88235294117646" text-anchor="end">×2</text><line class="tick" x1="57" y1="56.823529411764724" x2="62" y2="56.823529411764724"></line>
+    <text class="axis-num" x="52" y="60.823529411764724" text-anchor="end">×3</text>
+    <text class="axis-lab" x="328" y="332" text-anchor="middle">vezes por dia (num dia de 8 estudos)</text>
+    <text class="axis-lab" x="-157" y="15" transform="rotate(-90)" text-anchor="middle">quanto paga</text>
+  </svg></figure>
+      <div>
+        <p class="rule">Uma habilidade rara acontece um terço das vezes e paga o triplo. Os três retângulos têm a mesma área.</p>
+        <p>A largura é quantas vezes a habilidade acontece num dia de 8 estudos, pra quem ela combina; a altura é o multiplicador. A curva tracejada é <code>vezes × paga = 0,375</code> — os cantos caem todos nela.</p>
+        <p>Na prática: uma habilidade rende ~2% do XP do dia no Lv.&nbsp;1 e ~6% no teto. É reconhecimento, não obrigação — ninguém precisa ter o pet certo pra estudar.</p>
+        <p>O que <em>não</em> é igual, de propósito: se a sua rotina não combina com a habilidade, ela não acontece. Um madrugador com a Noturno ganha zero. Escolher é o jogo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="editor">
+    <h2>Mexer no elenco</h2>
+    <p class="sub">Mude quem tem o quê aqui, veja se as regras continuam de pé, e leve o TypeScript pronto pra <code>src/domain/pets.ts</code>. As mesmas regras que os testes cobram são checadas ao vivo.</p>
+    <div class="editor">
+      <div class="ed-top">
+        <label for="ed-form">Forma</label>
+        <select id="ed-form"></select>
+        <button class="btn" id="ed-reset" type="button">Voltar ao catálogo atual</button>
+        <button class="btn btn-go" id="ed-copy" type="button">Copiar o TypeScript</button>
+      </div>
+      <div class="ed-body">
+        <div class="ed-pick">
+          <h4>Habilidades desta forma</h4>
+          <ul class="ed-grid" id="ed-grid"></ul>
+          <p class="ed-note">A cor do chip é o tier: <b>verde</b> acompanha o dia, <b>azul</b> acontece às vezes, <b>vinho</b> uma vez por dia.</p>
+        </div>
+        <div class="ed-out">
+          <h4>O que ainda não fecha</h4>
+          <ul class="warns" id="ed-warns"></ul>
+          <h4>Pra colar em <code>pets.ts</code></h4>
+          <pre id="ed-out"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="manutencao">
+    <h2>Como isto se mantém vivo</h2>
+    <p class="sub">A página não guarda dados: ela é gerada do código. Mexeu no catálogo, roda de novo e ela conta a verdade nova.</p>
+    <div class="howto">
+      <section>
+        <h3>Regerar</h3>
+        <ol>
+          <li>Edite <code>src/domain/pets.ts</code> ou <code>progression.ts</code>.</li>
+          <li><code>npm test</code> — os testes cobram a escada 1→2→3, a herança do Lv.&nbsp;15 e a área igual dos tiers.</li>
+          <li><code>node --import ./scripts/ts-loader.mjs scripts/bestiary.mjs</code></li>
+        </ol>
+      </section>
+      <section>
+        <h3>Pet novo</h3>
+        <ol>
+          <li>Sprites em <code>public/idle/pets/{forma}/</code> — 4 PNGs de 32×32 (o padrão é <code>scripts/pixel-sprites.mjs</code>).</li>
+          <li>Uma entrada em <code>FORMS</code> por forma; uma em <code>PETS</code> pela espécie, com dois caminhos de dois estágios.</li>
+          <li>Escada de habilidades: 1 na base, 2 no Lv.&nbsp;5, 3 no Lv.&nbsp;15.</li>
+        </ol>
+      </section>
+      <section>
+        <h3>Habilidade nova</h3>
+        <ol>
+          <li>Responda primeiro: <b>quantas vezes ela acontece num dia de 8 estudos</b>, pra quem ela combina? A resposta é o tier.</li>
+          <li>Entrada em <code>SKILLS</code> com <code>tier</code> e <code>rule</code>; se a regra é inédita, um <code>kind</code> novo em <code>SkillRule</code>, o caso em <code>skillEligible</code> e o campo em <code>SkillContext</code>.</li>
+          <li>O contexto é montado em <code>src/application/checks.ts</code> — só do que o plano do dia já sabe. Nada de campo novo no documento salvo.</li>
+          <li>Ponha a habilidade em pelo menos uma forma, senão o teste reclama.</li>
+        </ol>
+      </section>
+      <section>
+        <h3>O que ficou de fora</h3>
+        <ul>
+          <li>Habilidade que paga em <b>moedas</b> — outra moeda, outro equilíbrio. Precisa de campo novo no check.</li>
+          <li>Habilidade por <b>sequência de dias</b>: pagaria por streak e transformaria falhar em perda. O app não faz isso.</li>
+          <li>Habilidade por <b>usar o modo foco</b>: puniria quem estuda longe do computador e marca depois.</li>
+        </ul>
+      </section>
+    </div>
+    <p class="foot">Gerado de <code>src/domain/pets.ts</code> e <code>src/domain/progression.ts</code> em 2026-09-08 por <code>scripts/bestiary.mjs</code>. Sprites embutidos — a página abre offline, sem rede.</p>
+  </section>
+</div>
+
+<script>
+const D = {"geradoEm":"2026-09-08","evolveLevels":[5,15],"diaShare":0.375,"tetoNivel":0.15,"tiers":{"alta":{"share":0.375,"weight":1,"nome":"Acompanha o dia","quando":"umas 3 vezes num dia de 8 estudos"},"media":{"share":0.1875,"weight":2,"nome":"Acontece às vezes","quando":"uma ou duas vezes por dia"},"baixa":{"share":0.125,"weight":3,"nome":"Uma vez por dia","quando":"um único bloco, sempre"}},"skills":[{"id":"madrugador","name":"Madrugador","desc":"em estudos que começam antes das 9h","tier":"alta","rule":{"kind":"hour-range","from":0,"to":9},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["bull","bison","falcon","eagle"],"vezes":3},{"id":"vespertino","name":"Vespertino","desc":"em estudos que começam entre 12h e 18h","tier":"alta","rule":{"kind":"hour-range","from":12,"to":18},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["falcon","eagle"],"vezes":3},{"id":"noturno","name":"Noturno","desc":"em estudos que começam a partir das 18h","tier":"alta","rule":{"kind":"hour-range","from":18,"to":24},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["wolf","wolf-lunar","lynx","tiger"],"vezes":3},{"id":"lua-cheia","name":"Lua cheia","desc":"em estudos que começam a partir das 21h","tier":"media","rule":{"kind":"hour-range","from":21,"to":24},"pct":{"1":0.1,"5":0.18,"11":0.3},"forms":["wolf-lunar","snake-wyrm","dragon"],"vezes":1.5},{"id":"maratona","name":"Maratona","desc":"do 5º estudo do dia em diante","tier":"alta","rule":{"kind":"nth-study","from":5},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["wolf","wolf-lunar","snake-wyrm","dragon","bison"],"vezes":3},{"id":"fiel","name":"Fiel","desc":"no primeiro estudo do dia","tier":"baixa","rule":{"kind":"first-study"},"pct":{"1":0.15,"5":0.27,"11":0.45},"forms":["dog","dog-shepherd","dog-legend","cow-golden"],"vezes":1},{"id":"ponto-final","name":"Ponto final","desc":"no último estudo do dia","tier":"baixa","rule":{"kind":"last-study"},"pct":{"1":0.15,"5":0.27,"11":0.45},"forms":["basilisk","eagle"],"vezes":1},{"id":"constancia","name":"Constância","desc":"no estudo que bate a meta do dia","tier":"baixa","rule":{"kind":"meets-goal"},"pct":{"1":0.15,"5":0.27,"11":0.45},"forms":["dog-legend","snake","naja","basilisk"],"vezes":1},{"id":"preguica","name":"Preguiça","desc":"no estudo logo depois de uma pausa longa","tier":"media","rule":{"kind":"after","what":"long-break"},"pct":{"1":0.1,"5":0.18,"11":0.3},"forms":["cat","cat-egyptian","sphinx","lynx","tiger"],"vezes":1.5},{"id":"rumina","name":"Rumina","desc":"no estudo logo depois de uma refeição (intervalo de 30 min ou mais)","tier":"baixa","rule":{"kind":"after","what":"meal"},"pct":{"1":0.15,"5":0.27,"11":0.45},"forms":["naja","basilisk","cow","cow-prize","cow-golden"],"vezes":1},{"id":"retomada","name":"Retomada","desc":"no estudo logo depois de um evento","tier":"baixa","rule":{"kind":"after","what":"event"},"pct":{"1":0.15,"5":0.27,"11":0.45},"forms":["dog-shepherd","dog-legend"],"vezes":1},{"id":"aula","name":"Aula","desc":"em eventos que contam como estudo","tier":"media","rule":{"kind":"event"},"pct":{"1":0.1,"5":0.18,"11":0.3},"forms":["dove","dove-fire","phoenix"],"vezes":1.5},{"id":"recomeco","name":"Recomeço","desc":"nos estudos do dia em que você volta depois de um dia em branco","tier":"alta","rule":{"kind":"comeback"},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["dove-fire","phoenix"],"vezes":3},{"id":"descansado","name":"Descansado","desc":"nos estudos do dia seguinte a uma folga","tier":"alta","rule":{"kind":"after-rest"},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["dragon","cow-prize","cow-golden","phoenix"],"vezes":3},{"id":"hora-extra","name":"Hora extra","desc":"em estudos num dia de folga","tier":"alta","rule":{"kind":"bonus-day"},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["tiger","bull","bison"],"vezes":3},{"id":"afinco","name":"Afinco","desc":"em estudos dentro de um grupo","tier":"alta","rule":{"kind":"in-group"},"pct":{"1":0.05,"5":0.09,"11":0.15},"forms":["cat-egyptian","sphinx"],"vezes":3},{"id":"empenho","name":"Empenho","desc":"no estudo que completa um grupo","tier":"baixa","rule":{"kind":"completes-group"},"pct":{"1":0.15,"5":0.27,"11":0.45},"forms":["sphinx"],"vezes":1}],"forms":{"dog":{"id":"dog","name":"Cachorro","emoji":"🐶","skills":["fiel"],"level":0},"dog-shepherd":{"id":"dog-shepherd","name":"Pastor alemão","emoji":"🐕","skills":["fiel","retomada"],"level":5},"dog-legend":{"id":"dog-legend","name":"Cão lendário","emoji":"🦮","skills":["fiel","retomada","constancia"],"level":15},"wolf":{"id":"wolf","name":"Lobo","emoji":"🐺","skills":["noturno","maratona"],"level":5},"wolf-lunar":{"id":"wolf-lunar","name":"Lobo lunar","emoji":"🌙","skills":["noturno","maratona","lua-cheia"],"level":15},"cat":{"id":"cat","name":"Gato","emoji":"🐱","skills":["preguica"],"level":0},"cat-egyptian":{"id":"cat-egyptian","name":"Gato egípcio","emoji":"🐈‍⬛","skills":["preguica","afinco"],"level":5},"sphinx":{"id":"sphinx","name":"Esfinge","emoji":"🦁","skills":["preguica","afinco","empenho"],"level":15},"lynx":{"id":"lynx","name":"Lince","emoji":"🐈","skills":["preguica","noturno"],"level":5},"tiger":{"id":"tiger","name":"Tigre","emoji":"🐯","skills":["preguica","noturno","hora-extra"],"level":15},"snake":{"id":"snake","name":"Cobra","emoji":"🐍","skills":["constancia"],"level":0},"naja":{"id":"naja","name":"Naja","emoji":"🐍","skills":["constancia","rumina"],"level":5},"basilisk":{"id":"basilisk","name":"Basilisco","emoji":"👑","skills":["constancia","rumina","ponto-final"],"level":15},"snake-wyrm":{"id":"snake-wyrm","name":"Serpe","emoji":"🐉","skills":["lua-cheia","maratona"],"level":5},"dragon":{"id":"dragon","name":"Dragão","emoji":"🐲","skills":["lua-cheia","maratona","descansado"],"level":15},"cow":{"id":"cow","name":"Vaca","emoji":"🐮","skills":["rumina"],"level":0},"cow-prize":{"id":"cow-prize","name":"Vaca premiada","emoji":"🐄","skills":["rumina","descansado"],"level":5},"cow-golden":{"id":"cow-golden","name":"Vaca dourada","emoji":"🏆","skills":["rumina","descansado","fiel"],"level":15},"bull":{"id":"bull","name":"Touro","emoji":"🐂","skills":["madrugador","hora-extra"],"level":5},"bison":{"id":"bison","name":"Bisão","emoji":"🦬","skills":["madrugador","hora-extra","maratona"],"level":15},"dove":{"id":"dove","name":"Pomba","emoji":"🕊️","skills":["aula"],"level":0},"dove-fire":{"id":"dove-fire","name":"Pássaro de fogo","emoji":"🔥","skills":["aula","recomeco"],"level":5},"phoenix":{"id":"phoenix","name":"Fênix","emoji":"🐦‍🔥","skills":["aula","recomeco","descansado"],"level":15},"falcon":{"id":"falcon","name":"Falcão","emoji":"🦅","skills":["madrugador","vespertino"],"level":5},"eagle":{"id":"eagle","name":"Águia","emoji":"🦅","skills":["madrugador","vespertino","ponto-final"],"level":15}},"species":[{"id":"dog","price":150,"form":"dog","names":["Bolt","Thor","Mel","Pipoca","Rex","Luna","Caramelo","Nico"],"baseName":"Cachorro","paths":[{"id":"companheiro","name":"Companheiro","desc":"Continua cachorro e cresce: pastor alemão, depois cão lendário. Rende nos retornos — o estudo depois da aula, o que bate a meta.","stages":[{"level":5,"form":"dog-shepherd"},{"level":15,"form":"dog-legend"}]},{"id":"selvagem","name":"Selvagem","desc":"Atende ao chamado: vira lobo, depois lobo lunar. Larga a Fiel e vira noite e fôlego — rende da noite em diante e nos dias longos.","stages":[{"level":5,"form":"wolf"},{"level":15,"form":"wolf-lunar"}]}]},{"id":"cat","price":150,"form":"cat","names":["Mia","Tom","Frida","Nina","Simba","Jade","Luna","Salem"],"baseName":"Gato","paths":[{"id":"sabio","name":"Sábio","desc":"Guardião de templos: gato egípcio, depois esfinge. Rende dentro dos grupos de estudo — o trecho do dia que tem nome e objetivo.","stages":[{"level":5,"form":"cat-egyptian"},{"level":15,"form":"sphinx"}]},{"id":"selvagem","name":"Selvagem","desc":"Volta pra mata: lince, depois tigre. Mantém a soneca e ganha a noite; no fim, rende também nos dias de folga.","stages":[{"level":5,"form":"lynx"},{"level":15,"form":"tiger"}]}]},{"id":"snake","price":150,"form":"snake","names":["Sibila","Ísis","Ônix","Zig","Medusa","Naja"],"baseName":"Cobra","paths":[{"id":"ancestral","name":"Ancestral","desc":"Ergue o capuz: naja, depois basilisco. Rende nos marcos do dia — a meta, o estudo depois da refeição, o último bloco.","stages":[{"level":5,"form":"naja"},{"level":15,"form":"basilisk"}]},{"id":"mitico","name":"Mítico","desc":"Cria chifres e escamas de brasa: serpe, depois dragão. Larga a Constância e vira noite alta e resistência.","stages":[{"level":5,"form":"snake-wyrm"},{"level":15,"form":"dragon"}]}]},{"id":"cow","price":150,"form":"cow","names":["Mimosa","Malhada","Berta","Estrela","Dona","Preta"],"baseName":"Vaca","paths":[{"id":"campea","name":"Campeã","desc":"Estrela da feira: vaca premiada, depois vaca dourada. Rende na volta da folga e no primeiro estudo do dia.","stages":[{"level":5,"form":"cow-prize"},{"level":15,"form":"cow-golden"}]},{"id":"selvagem","name":"Selvagem","desc":"Sai do pasto: touro, depois bisão. Larga a Rumina: acorda cedo, estuda na folga e aguenta o dia longo.","stages":[{"level":5,"form":"bull"},{"level":15,"form":"bison"}]}]},{"id":"dove","price":150,"form":"dove","names":["Paz","Alva","Nuvem","Cora","Pipo","Branca"],"baseName":"Pomba","paths":[{"id":"solar","name":"Solar","desc":"Voa pro sol: pássaro de fogo, depois fênix. Renasce: rende no dia em que você volta depois de sumir.","stages":[{"level":5,"form":"dove-fire"},{"level":15,"form":"phoenix"}]},{"id":"rapina","name":"Rapina","desc":"Vira ave de rapina: falcão, depois águia. Larga a Aula e vira o dia claro — de manhã cedo à tarde, e o bloco que fecha.","stages":[{"level":5,"form":"falcon"},{"level":15,"form":"eagle"}]}]}],"sprites":{"dog":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAw0lEQVR42mNgGAWjYKiBa5O8/uPCA2YxzR1CiuVUdQQ5FoPwggQN6jgE2SAY1pCT/A8C+MRg+kA0xQ54MW0BhmUgjE8Mpo8qDkAPga/3tuDENAkBXA6A+RqEaeYAbAmMFAfQJDcgBznIImxRQPOyAF/807REJMYBA2I5siPQEx6yvgFxALLeoekAcgsimEMo9v2gcwC+XIBcAlKtMCLXAVTLlpSEAM0aJSPHAejlOzEOQFZH1eoY3UJkdfiy42hHZtADANsB2/p6SD89AAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAx0lEQVR42mNgGAWjgERwbZLXf1x4wCymuUNIsZyqjiDHYhBekKBBHYcgGwTDGnKS/0EAnxhMH4im2AEvpi3AsAyE8YnB9FHFAegh8PXeFpyYJiGAywEwX4MwzRyALYGR4gCa5AbkIAdZhC0KaF4W4It/mpaIxDiALsXxgDiA2GyInvKR9Q2IA5D1Dk0HkFsSwhxCse8HnQPw5QLkIphqpSG5DqBatqQkBGjWKho5DkCvYIhxALI6qrYH0C1EVocvO472pAY9AACjz/hcPOLJXQAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAwUlEQVR42mNgGAWjYKiBa5O8/uPCA2YxzR1CiuVUdQQ5FoPwggQN6jgE2SAY1pCT/A8C+MRg+kA0xQ54MW0BhmUgjE8Mpo8qDkAPga/3tuDENAkBXA6A+RqEaeYAbAmMFAfQJDcgBznIImxRQPOyAF/807REJMYBA2I5siOQEx5VHUaOA5D1DV0HkFsQwRwy/ByALxcgl4BUK4zIdQDVEx85IUCzRsnIcQB6+U6MA5DVUbU6RrcQWR2+7DjakRn0AAAwaNv6phXyjgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAxElEQVR42mNgGAWjgERwbZLXf1x4wCymuUNIsZyqjiDHYhBekKBBHYcgGwTDGnKS/0EAnxhMH4im2AEvpi3AsAyE8YnB9FHFAegh8PXeFpyYJiGAywEwX4MwzRyALYGR4gCa5AbkIAdZhC0KaF4W4It/mpaIxDiALsXxgDiA2GyInPKp6jByHICsb+g6gNySEOaQ4ecAfLkAuQimWmlIrgOonvjICQGatYpGjgPQKxhiHICsjqrtAXQLkdXhy46jPalBDwD5J/hckC3+OwAAAABJRU5ErkJggg=="],"dog-shepherd":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAUkgCNtdv8pkafYcmIcQBNHgAx9OG0aUQ4AqeuJUvtPMweoqWjhxDR1AD6LsTmEqg4gxXIYppkDcIUGujhNcgAIS4pJ/AcBfGI0SQPIloEwPjGaOuDRgR6cmK4OgPkahEemA0AYZBG2KKBZcYwvHdDUcnRH4HMAzSyHFTD4cgG2QgjZ0QPiAKpV0wPmAPTynlBBhF4fUOz7QecAfLkAVC5gU0/VqphYB1AtWyIXMMQ4AEZTrTge2Q5AL9+JcQCyOoodgc/XyOro1jAZBbQAAMhcP2v0B/taAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA20lEQVR42mNgGErgSJvdf0rkKbacGAfQxBEgQx9Om0aUA0DqeqLU/tPMAWoqWjgxTR2Az2JsDqGqA0ixHIZp5gBcoYEuTpMcAMKSYhL/QQCfGE3SALJlIIxPjKYOeHSgByemqwNgvgbhkekAEAZZhC0KaFYc40sHNLUc3RH4HEDz6njAHAAr4fBlQ2ylILKjB8QBVGsnDJgD0CscQiUheoVEse8HnQPw5QJQwYRNPVXbAsQ6gGrZErmEI8YBMJpq9cHIdgB6BUOMA5DVUewIfL5GVke3ltEooAUAAKjqWWg88F2FAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA1klEQVR42mNgGAUkgCNtdv8pkafYcmIcQBNHgAx9OG0aUQ4AqeuJUvtPMweoqWjhxDR1AD6LsTmEqg4gxXIYppkDcIUGujhNcgAIS4pJ/AcBfGI0SQPIloEwPjGaOuDRgR6cmK4OgPkahEemA0AYZBG2KKBZcYwvHdDUcnRH4HMAzSyHFTD4cgF6IURVh5HjAKpW0QPmAPTynlBBhF4fDD8H4MsFoHIBm3qqVsXEOoBqiQ+5gCHGATCaasXxyHYAevlOjAOQ1VHsCHy+RlZHt4bJKKAFAAAW9z9rM1lAZgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGErgSJvdf0rkKbacGAfQxBEgQx9Om0aUA0DqeqLU/tPMAWoqWjgxTR2Az2JsDqGqA0ixHIZp5gBcoYEuTpMcAMKSYhL/QQCfGE3SALJlIIxPjKYOeHSgByemqwNgvgbhkekAEAZZhC0KaFYc40sHNLUc3RH4HEDz6njAHAAr4fBlQ/RSkKoOI8cBVG0jDJgD0CscQiUheoU0/ByALxeACiZs6qnaFiDWAVRLfMglHDEOgNFUqw9GtgPQKxhiHICsjmJH4PM1sjq6tYxGAS0AAPd2WWjPCplcAAAAAElFTkSuQmCC"],"dog-legend":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABDElEQVR42u2WMQrCQBBFc4qgvWwhHsDK2jN4ILFInTNYWHgEC0vxDnoI25UfGBiG3WXD7k+TDHwM45L/lmz+pGmWGlHP88GX/F9sngNAgcBNP32fBYB13cl5GoDbbKOiAqSMQyBVAcaYi2gA99s1aGj7lDcAWrcrj0r1KGdAm0GpHhXg++iimhRAdg3NCwCnXQxhJNfo63W0WSAQVlRzqddu72O6tG4QzRzhkgNgQ0ifnSppiBuFzNGPpWCVR6MBLIT0KAB2yung0ebyGtp5ULz7FEAoCekAGuL3Pg4Sc+RCaH21URwCkANoAaplgg6Y1EASAPmtFsfzBrD5ngOg1xVDpHat1032YbIUo/4hnSaTqTWtJgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABEklEQVR42u2WMQrCQBBFc4qgvWwhHsDK2jN4ILFInTNYWHgEC0vxDnoI25UfGBiG3XVl9wckLnwSJkP+22Qyk6b5pXXdb3zJ9WLzHAAKBG766PssAOR1O+dpAG6xjIoKkDIOgVQF+MZcRAM4n45BQxunfAHQvJ15rFSMUgPaDErFqADPSxfVqACya2haAKh2MYSRnCOu82izQCCsqOYWIlWA1HF8W619TIfWDaKZo7vlANguqJ9alXaMG4XMEY+14SqvRwNYCIlRAOyY1YWnzaUQ7UAq3n0KIPQl0AE0xOu+HSTmaEyh/Gr/AiEAKUALUK0v6A73qREBQI7V5sG0AeyAyQHQecUQqV3rvNH+jP6Lsd7q7kCQJ9hPvwAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABB0lEQVR42u2WMQrCQBBFc4qgvaQQD2Bl7Rk8kFikzhksLDyChaV4Bz2E7coPDAzD7LIh+9MkAx9lsuS/hPGPVbXUgHqeD2HM9dHmOQAUCNz003VZADjXnppAA2g226ioACljD6QowBBzEQ3gfru6hrZP+QVA63oVUKkeZQa0GZTqUQG+jzaqSQHkqaF5AWDaxRBG8h19fY62CwTCimou9drtQ0yXuulFM0e45ADoENJzUSwNcVPPHH0vBSkAFkJ6FAC75XTwaHN53XYfUAG8JKQDaIjf+9hLzJEL3vliq9gDkAG0AMWGTwdMaiEJgHwWi+N5A9h8zwHQ50ZDpJ5an5vsj8lSjPoDcCkmk9q3wRIAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABDUlEQVR42u2WMQrCQBBFc4qgvaQQD2Bl7Rk8kFikzhksLDyChaV4Bz2E7coPDAzD7LqS/QGJC5+EyZD/dpnMpKp+aV33mzDk+WDzHAAKBF766LosAOS1uybQAJrFMioqQMrYAykK8I25iAZwPh1dQxunfAHQvJ4FrFSMUgPaDErFqADPSxvVqACya2haAKh2MYSR3COu82izQCCsqOYWIlWA1HF8W61DTIe66UUzR3fLAdBdsOjJSIvFSz1zxL02TAGwEBKjANgxqwtPm8tx24FEBfC+BDqAhnjdt73EHI3Jyy/2L+ABSAFagGLFpzvcp0YEALkWmwfTBrADJgdA5w2GSO1a5432Z/RfjPUGOYlAkP2tHKEAAAAASUVORK5CYII="],"wolf":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzUlEQVR42mNgGAUkgIa2Sf8pkafYcmIcQBNHgAwNCEsiygEgdSBMdZ/DHEAIwxxANUcQYykuh1A9FEjBNEmAA+J7dAd82OcGxvjEaOoAGRklDAegi9HMAecu3SGI6eYAkK9heGQ6AIRBFmGLApoVx4TSAc0sJ8YR+CxHVke25bDynZwcQJVKasg6gOL6AWYxKYkQ2bcD6gCq1I7YDMMX/IPGAVRrGwy4A7A1OIiNApq1hujmAPRgJMYB6C1pqjkA3UJcZT16dhztTw56AACH898k3N5DpgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzklEQVR42mNgGEqgoW3Sf0rkKbacGAfQxBEgQwPCkohyAEgdCFPd5zAHEMIwB1DNEcRYisshVA8FUjBNEuCA+B7dAR/2uYExPjGaOkBGRgnDAehiNHPAuUt3CGK6OQDkaxgemQ4AYZBF2KKAZsUxoXRAM8uJcQTNLafEAcjqyLYcVsGQkwWpUksOWQdQXEHBLCYlFyD7dkAdQJXqGZth+IJ/0DiAao2TAXcAthYPsVFAs+YY3RyAHozEOAC9KU81B6BbiKusR8+ODKNgsAMAh6f651eMVfUAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAyUlEQVR42mNgGAUkgIa2Sf8pkafYcmIcQBNHgAwNCEsiygEgdSBMdZ/DHEAIwxxANUcQYykuh1A9FEjBNEmAA+J7dAd82OcGxvjEaOoAGRklDAegi9HMAecu3SGI6eYAkK9heGQ6AIRBFmGLApoVx4TSAc0sJ8YRuCxHVkOR5bDyndQcQLUKakg6gCp1A8xiUhIhup7h5QB8uQCmblA4gGptgwF3ALYGB7FRQLPWEN0cgB6MxDgAvSVNNQegW4irvEfPjqP9yUEPACUW3yQ39G/fAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAy0lEQVR42mNgGEqgoW3Sf0rkKbacGAfQxBEgQwPCkohyAEgdCFPd5zAHEMIwB1DNEcRYisshVA8FUjBNEuCA+B7dAR/2uYExPjGaOkBGRgnDAehiNHPAuUt3CGK6OQDkaxgemQ4AYZBF2KKAZsUxoXRAM8uJcQTNLSfXAchqKLIcVsGQmgWpVkMOSQdQpXKCWUxKLkDXM7wcgC8XwNQNCgdQrXEy4A7A1uIhNgpo1hyjmwPQg5EYB6A35anmAHQLcZX36NmRYRQMdgAAJMr650hKhLcAAAAASUVORK5CYII="],"wolf-lunar":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5UlEQVR42mNgGAUkgCPnHvynRJ5iy4lxAE0cATK0YdIGohwAUgfCVPc5zAHIuOn1fwwxmAPQHQFSS5EDiLEc3SFUDwVSHECTBEisIyj2PXp8oVuKbjG6GFWDH90BcipmGA5AF6OZA959+UMQ080BIF/D8Mh0AAiDLMIWBTQrjgmlA4otx1dcIluCy3IYG5debHJEAWJSPzqmaiU14A4AAZgBpJYBFNcPMItJSYTIvh1QB1CldsRmGL7gHzQOoFrbYMAdgK3BQWwU0Kw1RDcHoAcjMQ5Ab0lTzQH4Sjp82XG0PznoAQC15fN6U0/CbQAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5klEQVR42u2WzQkCQQyFpxJP1mB9YglWYhGercG74MmjsMs7BEJ2nB/ysrOigcAyO+R9mb8kpW+y6+0+ef67xVsAQiAQ9Hi+NAFgHpyeuQBoPz2mxZgA0CCsQEncgug4mE+FqAGEHMBWCOoZsAAQtcJ2zA1g90uL7faHBYAdC1uB5+td9dUAkLX4bwLAIZTbgrDnuHYOwsRhWuSTuHzTrh8LQM9zZd/j1Co5HAAmAXofIXeBEuGeW6CzHQpAKc+5YKXl3wwArTkZDpDreFq3IKwdWw3ALmMLgG3laQCll650HdPftm4zHgUdME3YTHMAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5klEQVR42u2WQQqDQAxFPUlXPYPnKz1CT9JDdO0Zui901WVB+YuAfDM1GRMtYiAgcZz/JjNm0jSHOezRPfsl7xeLWwBSIDDp5XY3AWAcPHzlAjD266ufxASgGgKTagAWcQYJz4IHIOUAWiFCV88AEGVhjpUAeHurAE7ndgLAsbQMvD/fWV8NAKsW3x9AqRZwuiGkbUFaOZ47B2nisLFISVyete84XiXu8dALanMAmEziqQEhd4MIew4hf7MvgF9/gYz7C4Cw3mBzAK3hsG5BWje0GgCn0QLAnXQYQKnSaZUyrTM6LMMGHDHzerYD/TYAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA6ElEQVR42mNgGErgyLkH/ymRp9hyYhxAE0eADG2YtIEoB4DUgTDVfQ5zADJuev0fQwzmAKo5At0CfJajO4QsC0EGE+MIQg6gSQIk1hFUTQPoDgBZim4xuhhNHSCnYobhAHQxXA7AFr0kOeDdlz8EMU1DANkikK9heGQ6AIRBFmGLAoqzIb6ygFD806xCQrYEl+Uw9qByALIaii0nBVO1hhxwB4AAzBBSCiGqVE4wi0nJBeh6hpcD8OUCmLpB4QCqNU4G3AHYWjzERgHNmmN0cwB6MBLjAPSmPNUcgKukw1ZS0qxtOApoAQCEQh0wzU3tMgAAAABJRU5ErkJggg=="],"cat":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAx0lEQVR42mNgGAVDBbyYYfefmurIcgAhw4lRQ5ED3vRMw2kBIXmqhgI+TBfLN6UoYaVpHgXoGN1imBhNHVBxIuC/nKQkiqUgPkh8ZDgAhH+9OIGB6RYFyA4AZbsBcwDIImR6QEIAWxQM34II2RG4QoAuluNzAL74p0raoMQBVAmhAXUAJQURVXyPXPEMiAPQsxu24KdbCJDiAKplT3JDgGoOICcEqFo6EiqC0R1ANcvRy3lsBmOzmGq1Ir78D5Kne8NkFFAbAAAOs/w8E8MSVwAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAyklEQVR42mNgGAVEghcz7P5TUx1ZDiBkODFqKHLAm55pOC0gJE/VUMCH6WL5phQlrDTNowAdo1sME6OpAypOBPyXk5REsRTEB4mPDAeA8K8XJzAw3aIA2QGgbDdgDgBZhEwPSAhgi4LhWxAhOwJXCNCtVhwwBxBKA/gSIFUSJyUOoEoIDagDKCkJqeJ75JpvQByAnt+xBT/dQoAUB1Ate5IbAlRzADkhQNXimVAdgO4AqlmOXtFgMxibxVSrlvHlf5A83VtGo4DaAADNzBQSMhexFgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAyUlEQVR42mNgGAVDBbyYYfefmurIcgAhw4lRQ5ED3vRMw2kBIXmqhgI+TBfLN6UoYaVpHgXoGN1imBhNHVBxIuC/nKQkiqUgPkh8ZDgAhH+9OIGB6RYFyA4AZbsBcwDIImR6QEIAWxQM34II2RG4QoAuluNzALb4p2qaIMcBVA0ZchxANUdQUhBRxQHIFc+AOAA9u2ELfrqFACkOoFoiJDcEqOYAckKAqqUjoSIY3QFUsxy9nMdmMDaLqVYC4sv/IHm6N0xGAbUBAEFH/DzuYP/CAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzElEQVR42mNgGAVEghcz7P5TUx1ZDiBkODFqKHLAm55pOC0gJE/VUMCH6WL5phQlrDTNowAdo1sME6OpAypOBPyXk5REsRTEB4mPDAeA8K8XJzAw3aIA2QGgbDdgDgBZhEwPSAhgi4LhWxAhOwJXCNCtVhwwBxBKA9gSIFUTJTkOoGrIkOMAqjmCkpKQKg5ArvkGxAHo+R1b8NMtBEhxANUSIbkhQDUHkBMCVC2eCdUB6A6gmuXoFQ02g7FZTLUSEF/+B8nTvWU0CqgNAABvFBJnTfWiAAAAAElFTkSuQmCC"],"cat-egyptian":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0UlEQVR42mNgGAVDBXg4hfynpjqyHEDIcGLUUOSAb+c8cFpASJ6qoYAPgxwxYJbTPAqIwToaFrR1wIcjbv+FBMRQLAXxQeI0dwDMIhANcwSMDROneQiAcFVRGwamWxQgO2BaXsXAOQBkETI9ICGALQoGvCCieaUEKumw4VVNcrS3HD0KQBYjRwG++KdK2iCUBvBZQpXoGVAHUFIQUdX3g8IB6I6AWTwoHUC1smFIOoCqpSMxLSFkB1DNcvRyHpvB2CymWq2IL/uB5OneMBkF1AYA6okWdZtgUtoAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA1ElEQVR42mNgGAVEAg+nkP/UVEeWAwgZTowaihzw7ZwHTgsIyVM1FPBhkCMGzHKaRwExWEfDgrYO+HDE7b+QgBiKpSA+SJzmDoBZBKJhjoCxYeI0DwEQripqw8B0iwJkB0zLqxg4B4AsQqYHJASwRcGAF0Q0r5RAJR02vKpJjvaWD7gD0NMAyGLkNIAvAVIlcRJKhPgsoUr6GFAHUFISUtX3g8IB6I6AWTwoHUC1wmlIOoCqxTMxTTFkB1DNcvSKBpvB2CymWrWML/uB5OneMhoF1AYAGDYrAEvF/60AAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0UlEQVR42mNgGAVDBXg4hfynpjqyHEDIcGLUUOSAb+c8cFpASJ6qoYAPgxwxYJbTPAqIwToaFrR1wIcjbv+FBMRQLAXxQeI0dwDMIhANcwSMDROneQiAcFVRGwamWxQgO2BaXsXAOQBkETI9ICGALQoGvCCieaUEKumw4VVNcrS3HD0KQBYjRwG2+KdqmiCUBrBZRtVoIccBVHMEJQXR8HMAuiNgFg9KB1AtEQ5JB1C1dCSmJYTsAKpZjl7OYzMYm8VUKwHxZT+QPN0bJqOA2gAADUwWdSx5xd4AAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA1ElEQVR42mNgGAVEAg+nkP/UVEeWAwgZTowaihzw7ZwHTgsIyVM1FPBhkCMGzHKaRwExWEfDgrYO+HDE7b+QgBiKpSA+SJzmDoBZBKJhjoCxYeI0DwEQripqw8B0iwJkB0zLqxg4B4AsQqYHJASwRcGAF0Q0r5RAJR02vKpJjvaWD7gD0NMAyGLkNIAtAVI1URJKhNgso2q6IMcBVHMEJSXh8HMAuiNgFg9KB1AtEQ5JB1C1eCamKYbsAKpZjl7RYDMYm8VUKwHxZT+QPN1bRqOA2gAAOuorAJgtbYIAAAAASUVORK5CYII="],"sphinx":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA50lEQVR42mNgGAUUgG/nPP7T3UJkbJFw5D+6GM0sB1lGLKaL7/FhmvgcxH50pOc/IYyuh2o+J8ZyGKZqSMB8Q6zlG3pC/tM0BPSmLfivoSCDYimIDxKHOYCmIUCMA2ieBn69OYOBkaOA5mkAZunDaT1YHUCXEABZhEwPSAhgiwIQpkkIkFIQUTUE0A0jpgimWcWEHgWgYEaOAlD849KLT45sB6CnAXyWwKJn6DqAlIKIpr4fFA5AdwTM4kHpAKpYPmQdgFw6Ut0B2FpCyA6gmuXo5Tw2g7FZTJWSj1D2A8mTkh1HwaAEAPZw+cptDCDXAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA6ElEQVR42mNgGMrg2zmP/3S3EBlbJBz5jy5GM8tBlhGL6eJ7fJgmPgexHx3p+U8Io+uhms+JsRyGqRoSMN8Qa/mGnpD/NA0BvWkL/msoyKBYCuKDxGEOoGkIEOMAmqeBX2/OYGDkKKB5GoBZ+nBaD1YH0CUEQBYh0wMSAtiiAIRpEgKkFERUDQF0w4gpgoeXA5ABehoAxTNyGgAlQFx68cmR7QD0RIjPElj6GLoOIKUkpKnvB4UD0B0Bs3hQOoAqlg9ZByAXz1R3ALamGLIDqGY5ekWDzWBsFlOl5COU/UDypGTHUTAoAQDT3RtSjbGbGAAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA6ElEQVR42mNgGAUUgG/nPP7T3UJkbJFw5D+6GM0sB1lGLKaL7/FhmvgcxH50pOc/IYyuh2o+J8ZyGKZqSMB8Q6zlG3pC/tM0BPSmLfivoSCDYimIDxKHOYCmIUCMA2ieBn69OYOBkaOA5mkAZunDaT1YHUCXEABZhEwPSAhgiwIQpkkIkFIQUTUE0A0jpgimWcWEHgWgYEaOAlD8o+vBJkY1B6CnAWyWwaJlwBxANUeQUhANfwegOwJm8aB0ANUS4ZB0AHLpSHUHYGsJITuAapajl/PYDMZmMdVKQHzZDyRPSnYcBYMSAAAxQ/nKyR8urgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA6ElEQVR42mNgGMrg2zmP/3S3EBlbJBz5jy5GM8tBlhGL6eJ7fJgmPgexHx3p+U8Io+uhms+JsRyGqRoSMN8Qa/mGnpD/NA0BvWkL/msoyKBYCuKDxGEOoGkIEOMAmqeBX2/OYGDkKKB5GoBZ+nBaD1YH0CUEQBYh0wMSAtiiAIRpEgKkFERUDQF0w4gpgoeXA5ABehoAxTNyGgAlQHQ92MSo5gD0RIjNMli6GDAHUM0RpJSEw98B6I6AWTwoHUC1RDgkHYBcPFPdAdiaYsgOoJrl6BUNNoOxWUy1EhBf9gPJk5IdR8GgBAAOsBtSAQu7DQAAAABJRU5ErkJggg=="],"lynx":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA30lEQVR42mNgGApATlLyPy3VU9VQmlgOAseWlf2npjqyHEDIcGLUUOSATy8u4bSAkDxVQwEfpovlXVlO//HxB8z3MMfQ1AEv9rn9B2U1ZEtBfJD48HUAejCDUjs6Rk8PVLMc2XB0B9zp6cHpAJAYTR0AsgiZprsDcEUBshqqOoCUgojmuQFXCNC8XUAoCmjmaxhATmAD4oABDQFSCiKaOgCW79ExLHpo7gBsoYBcAA1vByA3PLA5AIYHPASQq2m6tYiwOYAqoYGtnEcvdpEto3p2xJf/YZUVXcuDUUBtAADcJz+zc6s4hgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5ElEQVR42mNgIALISUr+ZyABkKqeqobSxHIQOLas7D811ZHlAEKGE6OGIgd8enEJpwWE5KkaCvgwXSzvynL6j48/YL6HOYamDnixz+0/KKshWwrig8SHrwPQgxmU2tExenqgmuXIhqM74E5PD04HgMRo6gCQRcg03R2AKwqQ1VDVAaQURDTPDbhCgIEeYEAdQCgN0CzYYQA5hQ+IAwY0BEgpCWnqAFjBg45h0UNzB2ALBeQScHg7ALnlg80BMDzgIYDcTqBbkwybA6gSGtgqGvRiF9kyqmdHfPkfVlvStTwYBdQGAP4SV8z2ohHcAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA30lEQVR42mNgGApATlLyPy3VU9VQmlgOAseWlf2npjqyHEDIcGLUUOSATy8u4bSAkDxVQwEfpovlXVlO//HxB8z3MMfQ1AEv9rn9B2U1ZEtBfJD48HUAejCDUjs6Rk8PVLMc2XB0B9zp6cHpAJAYTR0AsgiZprsDcEUBshqqOoCUgojmuQFXCNC8XUAoCmjmaxhATmAD4oABDQFSCiKaOgCW79ExLHpo7gBsoYBcAA1vByA3PLA5AIaRa8kBCQGaJEhiWkI0iQJs5Tx6sYtsMdV9jy//wyorupYHo4DaAABvpz+z1t2qTAAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5ElEQVR42mNgIALISUr+ZyABkKqeqobSxHIQOLas7D811ZHlAEKGE6OGIgd8enEJpwWE5KkaCvgwXSzvynL6j48/YL6HOYamDnixz+0/KKshWwrig8SHrwPQgxmU2tExenqgmuXIhqM74E5PD04HgMRo6gCQRcg03R2AKwqQ1VDVAaQURDTPDbhCgIEeYEAdQCgN0CzYYQA5hQ+IAwY0BEgpCWnqAFjBg45h0UNzB2ALBeQScHg7ALnlg80BMIxcTQ9ICNAkQRLTFKNJFGCraNCLXWSLqe57fPkfVlvStTwYBdQGAJGSV8zj81TGAAAAAElFTkSuQmCC"],"tiger":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA+ElEQVR42u2WwQnDMAxFM0YOJUN0iK7RhTxTzp2i5x56yAAFFxd+EEKWTSUlFwsESVHznyRb9jQNG9awd7pmeER81wc/23P/IBW4zHPmgohf70t2rwAXrT27VkDLWgMIWwc97lZ+CoAMt8ft51SQ/lbiwgF4uct7OAC8rPCah7aAA7xS2v0UAECcVgEMGwnAfRv2rINQcQ6hAUj/Q0yYOIWQ+o/t6TILNIDaDHBpzb8VMGfPD5qeQUQrYc6en3YtAIgXd+19zzakonh2632rDQCg4ubsLRVwG0rShaMFgDUQdhs6DEC68bYAaJwZQstamvXhx/KwCPsCUN3WkRG2M4QAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA+0lEQVR42u2WzQnDMAyFM0YOpUN0iK7RhTxTzp2i5x56yAAFFwdeEEK21UpKeohBkATh9+knsofhWP++XumSYRH+qg3f82PdkAqcxjFzQfhPt3N2zwAXrT27ZqAVdQsgrA805pZ+CoAI5/t1MSpIvxW/cACe7vIeDgArHV6z0BJwgGdKq+0CAIjdMoBhIwG4/4aaPggV5xAtgE0Opm8B4BMmTiGkBsR8cBlGLYDaEHIpz68ZMEfPTzrNJKSZMEfPj9seAMSLudZeMweoKJ7dat8rAwCouDl6SwbcBpN04+kBoAfCrmObAUhX7h4A9TNDtKKWZn34veBYEesDLrn0Igigb0MAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA8klEQVR42u2WzQ3CMAyFO0YPiCEYgjVYqDNxZgrOHDh0AKSgIL3KslInhffoJZYs9SeNP784ToehW7eKPadTgivGN034mu/LhDbAYRyTD4jx18sx0RXwQdeuqQpEWUcAsjpocZr8FgAZzrfzx21A+yyPkwN4ufO9HACeK3zNpUvgAR7TtPguAIDYTQE0mxIAfRu21IE0uIeIAPw3eC8NbiH8+mNr0npBBFDqAbRl+UYBSvb+oGlpRFCCkr0/7WoACA4AugLRLrBBZQrUAGxwavVvVYBe/VsAUAOyv6G/AZT+eGsAdtzPEFHWpX4vP5a7KewNuVXWkcuvur4AAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA9UlEQVR42u2Wyw3CMBBEU0YOiCIogjZoyDVxpgrOHDikACQjI020Wjn+wEzCIZZWysfyvJ1s1h6Gffz7eIZTRCjmNy34mu7zglbgMI7RC2L+9XKMdAe86NI11YFS1iUAWR20BM1+C4AMp9v5E1bQPkvz5ADe7nQvB0CkCl8K6SfwAI8Q5tgEABCbOYBmkwOg/4YtdSAV9xAlgFU2ph4AvJeKWwhfgOgNtGZUAsg1Idqn+cYBSvZ+p2vphHCCkr3fbmsAEAcA3YHSX2BFZQ7UAKw4tfp7HaBXfw8AakB2HFsNIHfkrgHYeT9DlLLO9Xv5uWAfivEGlzH0ImD9md0AAAAASUVORK5CYII="],"snake":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAgUlEQVR42mNgGAWjYBSMgsEMYtYE/ceHB8TyT6ds/kvKSdLeEYR8PygcoFdgQvtoOPJgDgamefzjCg2a+3jUAUPCAQOWNdGzHyH+gBVMNI0qbGUCNjygvqd6WiA17qkeFeT6nqppgdi4p3paoMT3FKcFSuOeKlFBbtDTPFuOAmoCAIZIIXCVyE+0AAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAgUlEQVR42mNgGAWjYBSMgsEOYtYE/ceHB8TyT6ds/kvKSdLeEYR8PygcoFdgQvtoOPJgDgamefzjCg2a+3jUAUPCAQOSLdGzHiH+gBVKNI0mbOUBNjygvqd6WiA17qkeFeT6nqppgdi4p3paoMT3FKcFSuOeKlFBbtDTPFuOAmoCADW6HxeYfDkaAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAkklEQVR42mNgGAWjYBSMgsEMYtYE/ceHB8TyT6ds/kvKSdLeEYR8j+yAe3Ye/wfEAXoFJv9pYjmyI448mIOB0YOepo5ADg2Qjwc0N4w6YFA4gNisSdNsie4QbPwBK5hoGlXYygRseEB9T/W0QGrcUz0qyPU9VdMCsXFP9bRAie8pTguUxj1VooLcoKd5thwF1AQAw7QomdvSgJUAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAkElEQVR42mNgGAWjYBSMgsEOYtYE/ceHB8TyT6ds/kvKSdLeEYR8j+yAe3Ye/wfEAXoFJv9pYjmyI448mIOB0YOepo5ADg2Qjwc0N4w6YFA4YEAKJ/SsR4g/YIUSTaMJW3mADQ+o76meFkiNe6pHBbm+p2paIDbuqZ4WKPE9xWmB0rinSlSQG/Q0z5ajgJoAAFaCJkDpY9wPAAAAAElFTkSuQmCC"],"naja":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAvUlEQVR42mNgGAWjYDACKxeZ/6RgqjsgIUfrPwzfe7AAjHHxQZjqvsfmAHSMrIaqoYDuAGIwzRwwbZEXXkxTB+Cy9MMJm/+ScpIojqCrA7CFwoA5AKaWpmkAWw5Ajn+65AJ0H9M0F2ArCZEdQJeSEB0gO2BA6oZB5QBicgdNHYHNIdj4NHUAMeUDTUIBV82IjgfU91RPC6TGPdWjglzfUzUtEBv3VE8LlPie4rRAadxTJSrIDXqaZ8tRQE0AAGi0+Jc7PL1BAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAvUlEQVR42mNgGAWjYLACKxeZ/6RgqjsgIUfrPwzfe7AAjHHxQZjqvsfmAHSMrIaqoYDuAGIwzRwwbZEXXkxTB+Cy9MMJm/+ScpIojqCrA7CFwoA5AKaWpmkAWw5Ajn+65AJ0H9M0F2ArCZEdQJeSEB0gO2BA6oZB5QBCOYOmDsDmCGx8mjqAmLKBJqGAq1ZExwPqe6qnBVLjnupRQa7vqZoWiI17qqcFSnxPcVqgNO6pEhXkBj3Ns+UooCYAAPBt9hYgZVc7AAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAxElEQVR42mNgGAWjYDACKxeZ/6RgqjsgIUfrPwzfe7AAjHHxQZjqvsfmAHSMrIaqoYDuAGIwzRwwbZEXXkxTB+Cy9MMJm/+ScpIojqCrA7CFwh0bt4FxAEgtyHKapgFsOQA5/mkWAsgY2cc0zwXYSkJkB9ClJEQHyA4YkLphUDmAmNxBU0dgcwg2Pk0dQEz5QJNQwFUzouMB9T3V0wKpcU/1qCDX91RNC8TGPdXTAiW+pzgtUBr3VIkKcoOe5tlyFFATAABr4fqHY9O8MgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAw0lEQVR42mNgGAWjYLACKxeZ/6RgqjsgIUfrPwzfe7AAjHHxQZjqvsfmAHSMrIaqoYDuAGIwzRwwbZEXXkxTB+Cy9MMJm/+ScpIojqCrA7CFwh0bt4FxAEgtyHKapgFsOQA5/mkWAsgY2cc0zwXYSkJkB9ClJEQHyA4YkLphUDmAUM6gqQOwOQIbn6YOIKZsoEko4KoV0fGA+p7qaYHUuKd6VJDre6qmBWLjnuppgRLfU5wWKI17qkQFuUFP82w5CqgJAOva+AYqx2ELAAAAAElFTkSuQmCC"],"basilisk":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAApUlEQVR42mNgGAWjYBQQCb6d8/g/oBaD6IATFf/p7hiQZdgwXSwPsaj4jw8PiOXXEn79F+GTA9M0dQQh39M8FIix3EDGh/bRsKrnBAamefzjCg2a+3jUAcQ4AN0RhPhUd8CAZU307EeIP2AFE00cADMQW5mADVM9LZDie6qnBVLjnupRQa7vqZoWiI17bGlhwHxPcVqgNO6pEhXkBj3Vo2IU0BIAAMKvCKrDgo2tAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAoklEQVR42mNgGAWjYBSQAL6d8/g/oBaD6IATFf/p7hiQZdgwXSwPsaj4jw8PiOXXEn79F+GTA9M0dQQh39M8FIix3EDGh/bRsKrnBAamefzjCg2a+3jUAaQ6gBCfJg4YkGyJnvUI8QesUKKJA2AGYisPsGGqpwVSfE/1tEBq3FM9Ksj1PVXTArFxjy0tDJjvKU4LlMY9VaKC3KCnelSMAloCAM1cBRBPDDihAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAtElEQVR42mNgGAWjYBQQCb6d8/g/oBaD6IATFf/p7hiQZdgwXSwPsaj4jw8PiOXXEn79F+GTA9M0dQQh3yOHwocAGjiEGMsNZHz+08RyZEes6jmBgdGDnqaOQA4NkI8HpCwYdQCyA9AdQYhPdQcQmzVpmi3RHYKNP2AFE00cADMQW5mADVM9LZDie6qnBVLjnupRQa7vqZoWiI17bGlhwHxPcVqgNO6pEhXkBj3Vo2IU0BIAAKhvEM/sC3PhAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAr0lEQVR42mNgGAWjYBSQAL6d8/g/oBaD6IATFf/p7hiQZdgwXSwPsaj4jw8PiOXXEn79F+GTA9M0dQQh3yOHwocAGjiEGMsNZHz+08RyZEes6jmBgdGDnqaOQA4NkI8HpCwYdQAuBxDi08QBA1I4oWc9QvwBK5Ro4gCYgdjKA2yY6mmBFN9TPS2QGvdUjwpyfU/VtEBs3GNLCwPme4rTAqVxT5WoIDfoqR4Vo4CWAACSiA018GcCQwAAAABJRU5ErkJggg=="],"snake-wyrm":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAkklEQVR42mNgGAWjYBQMZvDm0Yn/5MjR3BF0s/ych9V/fHhALP91J+C/nIAA7R1ByPeDwgFtKhq0j4ZfByowMM3jH1do0NzHow4gxgHojiDEp7oDBixromc/QvwBK5homlawlQnY8ID6nuppgdS4p3pUkOt7qqYFYuOe6mmBEt9TnBYojXuqRAW5QU/zbDkKqAkABYAs5S1ygtEAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAkElEQVR42mNgGAWjYBQMdvDm0Yn/5MjR3BF0s/ych9V/fHhALP91J+C/nIAA7R1ByPeDwgFtKhq0j4ZfByowMM3jH1do0NzHow4g1QGE+DRxwIBkS/SsR4g/YIUSTdMJtvIAGx5Q31M9LZAa91SPCnJ9T9W0QGzcUz0tUOJ7itMCpXFPlaggN+hpni1HATUBAGiRKMVqYyYLAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAsElEQVR42mNgGAWjYBQMZvDm0Yn/5MjR3BF0s/ych9V/fHhALP91J+C/nIAA7R1ByPfIDvjfY/N/QBzQpqLxnyaWIzvi14EKDIwe9DR1BHJogHw8IOXBqAOQHYDuCEJ8qjuA2KxJ02wJzn6rNP7jchhNQ4HY8oEmoYCtTMCGB9T3VE8L6EELomHxjy3uqR4V5PqeqmmB2LinelqgxPcUpwVCcUuXcoHcoKd5thwF1AQAJDU2uuStmXEAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAArElEQVR42mNgGAWjYBQMdvDm0Yn/5MjR3BF0s/ych9V/fHhALP91J+C/nIAA7R1ByPfIDvjfY/N/QBzQpqLxnyaWIzvi14EKDIwe9DR1BHJogHw8IOXBqANwOYAQnyYOGJDCCSPrrdL4j8tRNAkFYgslmqYTbOUBNjygvqd6WkAPWhANi39scU/1qCDX91RNC8TGPdXTAiW+pzgtEIpbupQL5AY9zbPlKKAmAABl/jKatGe8cAAAAABJRU5ErkJggg=="],"dragon":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAu0lEQVR42mNgGAWjYBQMZvDh2aX/5MjR3BF0s/yIicN/fHhALP//LOq/DJ8IWY4ok9D6TzXfk+oAkiwn1gHEGgpS96Ii4T9Z0fDrRB4GJtXnIMvJcgB6aJAajMiW090B6JbT1QFUtRzdAeiOwManquXoDiA2a1LNcmzZEt0h2PhUtZyUgomc3EI0wFYmYMN0r5RoWlmRGvdUjwpyfU/VtEBs3FM9LVDie4rTAqVxT5WoIDfoaZ4tRwE1AQBsqWIuZcK1lgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAuUlEQVR42mNgGAWjYBQMdvDh2aX/5MjR3BF0s/yIicN/fHhALP//LOq/DJ8IyY4ok9D6T1Xfk+IAki0n1gHEGAxS86Ii4T/Z0fDrRB4GJsXnIMvJdgB6aJASlMiW090B6JbT1QFUtxyfA7DxqW45ugOIyZZUtRw9S6I7AhufqpaTUiiRmlNIAtjKA2yY7hUSTSsqUuOe6lFBru+pmhaIjXuqpwVKfE9xWqA07qkSFeQGPc2z5SigJgAARsBeQO1jtc8AAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAy0lEQVR42mNgGAWjYBQMZvDh2aX/5MjR3BF0s/yIicN/fJhU88oktP5TbPn/Z1H/ZfhESHYESZYT43tkB/xfoPGfkOUvKhKo7wCQwSDL/7+Z9h+XI2CWk+wAmCN+ncjDwOhBT4zlZDkAPTRIiUd0y+nqAKpaTqoDqG45ugPQHYHMp4nl6A4gNmtSzXJs2RLdIdj4dC+Wae4AEMBWJmDDA+p7SiorqsQ91aOCXN9TNS0QG/dUTwuU+J7itEBp3FMlKsgNeppny1FATQAApRd3+wfhDroAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAyElEQVR42mNgGAWjYBQMdvDh2aX/5MjR3BF0s/yIicN/fJgUs8oktP5TxfL/z6L+y/CJkOQIki0nxvfIDvi/QOM/PstfVCTQxgEgw0GW/38z7T82R8AsJ8sBMEf8OpGHgdGDnpDlZDsAPTSIjUt0y+nqAKpbTooDaGI5Pgcg82lmOboDiMmWVLUcPUuiOwIbn+5FMs0dAALYygNseEB9T25FRbW4p3pUkOt7qqYFYuOe6mmBEt9TnBYojXuqRAW5QU/zbDkKqAkARM50DWdXraMAAAAASUVORK5CYII="],"cow":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAWjYLCDeyem/QdhEPvbl3f/kbGGmhZWjK6PYgeQYjkIg+SR9VIM0C0n5AiYPEWWHjuy7z8ui4lxALJ+EJssB3xYswHFQjkZuf8ggM0xyHIgR8AcADKDbAdgswSEcTkAWY7iECAmDeDDFFuKzQGg4CQGD38HgOIa3VJkMapkQ2yOICUEaFY0E7KcJpYOmlwwIA7AVc4T6wiK0wO+ymZAHDDgIUBKzUgVBxDjU1zVMt0cgC8EQCXk0HYAsiNgeZtU/tB3AKy1AwtOUvmjYFADAE9GbX5jCDAxAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAWjgAC4d2LafxAGsb99efcfGWuoaWHF6PoodgAploMwSB5ZL8UA3XJCjoDJU2TpsSP7/uOymBgHIOsHsclywIc1G1AslJOR+w8C2ByDLAdyBMwBIDPIdgA2S0AYlwOQ5SgOAWLSAD5MsaXYHAAKTmLw8HcAKK7RLUUWo0o2xOYIUkKAZkUzIctpYumgyQUj0wG4KhpiHUFxgsRX2w2IAwY8BEipmqniAGJ8iqtdQDcH4AsBUBE9tB2A7AhY3iaVP/QdAGtuwYKTVP4oGNQAAOd2orBUbV+wAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAWjYLCDeyem/QdhEPvbl3f/kbGGmhZWjK6PYgeQYjkIg+SR9VIM0C0n5AiYPNWigRwHHDuyD64OxCbZUmQDYFhORu4/CGBzDLIcyBEw/R/WbCDfASDN6JaAMC4HIMvRJARIwWRZSigNgEKEGDz8HQCKa3RLkcWong1hjiAlBGhWNBOynCaWDppcMCAOwFXOE+sIitMDvspmQBww4CFASs1IFQcQ41Nc1TLdHIAvBEBmgErJoesAZEfADCSVT7WCaMAcAGvtwIKSVP4oGNQAAPm8bX6xeotYAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA2ElEQVR42mNgGAWjgAC4d2LafxAGsb99efcfGWuoaWHF6PoodgAploMwSB5ZL8UA3XJCjoDJUy0ayHHAsSP74OpAbJItRTYAhuVk5P6DADbHIMuBHAHT/2HNBvIdANKMbgkI43IAshxNQoAUTJalhNIAKESIwcPfAaC4RrcUWYzq2RDmCFJCgGZFMyHLaWLpoMkFI9MBuCoaYh1BcYLEV9sNiAMGPARIqZqp4gBifIqrXUA3B+ALAZAZoGJ66DoA2REwA0nlU60gGjAHwJpbsKAklT8KBjUAAJH7orBuFhUSAAAAAElFTkSuQmCC"],"cow-prize":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/klEQVR42mNgGAWjgMrgw5oN/6lq4L0T0/6DMIj97cu7/8hYQ00LBYMs//9hGphG1kexA4ixHNkRIHlkvRQDdMsJOQImT5Glx47s+4/LYmIcgKwfxCbLAbDghGE5Gbn/IIDNMchyIEfAHAAyg2wHYLMEhHE5AFmO4hAgJg3gwxRbis0BoOAkBg9/B4DiGt1SZDGqZENsjiAlBGha1uPDNLEU5KMzOhZE41VNcrRJAyj4nAcC0zIb4irnYZaDfIuvLKA4PeCrbHCVijR1AKmlId0cgC2kqOIAYnyKq1qmmwPwhQAonQxtByA7Apa3SeUPfQfAWjuw4CSVPwoGNQAAMGBd+eYT9koAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/0lEQVR42mNgGAXDDXxYs+E/VQ28d2LafxAGsb99efcfGWuoaaFgkOX/P0wD08j6KHYAMZYjOwIkj6yXYoBuOSFHwOQpsvTYkX3/cVlMjAOQ9YPYZDkAFpwwLCcj9x8EsDkGWQ7kCJgDQGaQ7QBsloAwLgcgy1EcAsSkAXyYYkuxOQAUnMTg4e8AUFyjW4osRpVsiM0RpIQATct6fJgmloJ8dEbHgmi8qkmO+mlgwB2Agc95IDAtywFcFQ3McpBv8RVGFCdIfLUdrmKZpg4gtTimmwOwhRRVHECMT3G1C+jmAHwhAEonQ9sByI6A5W1S+UPfAbDmFiw4SeWPgkENAHsbf2V8sGSqAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/0lEQVR42mNgGAWjgMrgw5oN/6lq4L0T0/6DMIj97cu7/8hYQ00LBYMs//9hGphG1kexA4ixHNkRIHlkvRQDdMsJOQImT7VoIMcBx47sg6sDsUm2FNkAGJaTkfsPAtgcgywHcgRMPyhKyHYALD6RLQFhXA5AlqNJCJCCybKUUBoAhQgxePg7ABTX6JYii1E9G8IcQUoI0LSsx4dpYinIR2d0LIjGq5rkaJMGUPA5DwSmZTbEVc7DLAf5Fl9ZQHF6wFfZ4CoVaeoAUktDujkAW0hRxQHE+BRXtUw3B+ALAZAZoLQydB2A7AiYgaTyqVYQDZgDYK0dWFCSyh8FgxoAANrWXfnfriP0AAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABAElEQVR42mNgGAXDDXxYs+E/VQ28d2LafxAGsb99efcfGWuoaaFgkOX/P0wD08j6KHYAMZYjOwIkj6yXYoBuOSFHwOSpFg3kOODYkX1wdSA2yZYiGwDDcjJy/0EAm2OQ5UCOgOkHRQnZDoDFJ7IlIIzLAchyNAkBUjBZlhJKA6AQIQYPfweA4hrdUmQxqmdDmCNICQGalvX4ME0sBfnojI4F0XhVkxz108CAOwADn/NAYFqWA7gqGpjlIN/iK4woTpD4ajtcxTJNHUBqcUw3B2ALKao4gBif4moX0M0B+EIAZAYorQxdByA7AmYgqXyqFUQD5gBYcwsWlKTyR8GgBgAloH9lAs/LUgAAAABJRU5ErkJggg=="],"cow-golden":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/ElEQVR42u2WMQ6DMAxFOUTnzhyih+AQPU5nDsEhOmfu3LkzA11YXLlSIpMmJMZORCUsfQmIwn9xYkPTHHFExQAAYE+a3y9A4fVoOqCC6RGUP08UXHMUjtO54vDNUxB2XGR6v7UQM84BoPPxehvA0C8M2/MJz1EQho4hhAMYegFAwAQVA6Bj4gzknIE1bTYN1ap7MW5JjjRWvWuA7157potnGmUYhGBkoFg/T5mXMTUdXK6GpTJngGgen06qZfhTlpE+nwKgzUgVgELEumJRAG43rAYQypQKQM5KY5/lagBrGcBzIvov1AYQZcHWNvf+/wHs345NJ/f+iF3HBw2TU9y/45dUAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/UlEQVR42u2WMQ6DMAxFOUTnzhyih+AQPU5nDsEhOmfu3LkzQ7uwGLlSkIkcEuMkLVIsfYlgRf/hJCZNU6NGIKbPC1D4PJoOqOD9YOXOswEAsAtAYo7CPJ2rDtc8BGHzKtP7rQWfcQwAnY/P+wCGfmXYnk+4jCwMzSHEAjD0CgDGBOUDoDl1BWL2wJbUpiwALkmMNADcWS0KEFOB71o7pqt3KY4hCyGoQLbWHDLPY2o6uFyNSMn3wM8BXE3jc1HWPuD70YQAaDdMCkAhfG05K4C0HRcD4CqVBCDmS333gmIAWxXAfaK6F6YGUFXBnm3p+PgA9rplyykd1/jrmAEdH3YoTx9mTgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA+UlEQVR42mNgGAWjYDCC/////4exf3199h+EQewPJwL+I+P/Xy5hxej6KAKkWg7CIHlkvRQDdMsJOQImT7UoIccB+3o04OpAbJItRTYAhjXkREDJA6tjkOVAjoDrXzWNAgesmoZhCQjjcgCyHE1CgBRMlqUE0wAoRIjBw94B4LhGsxRFjNrZEO4IEkKAUAlLvkMIWE6TugHkI5uUEyRh2qQBJPzrwx04pmk2xFXOE3IAcmFEVQcgOwJXqUhTB5BaGpLkAGzZhFgHYAspqoQAMT7FVS3TzQH4QgBkBiitDF0HIDsCZiCpfKoVRAPmAFhrBxaUpPJHwaAGAJA+U9w6mfShAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA+klEQVR42mNgGAWjgAD49fXZfxAGsT+cCPiPjP9/uYQVo+sjGfz///8/sgNIsRyEQfLIeikG6JYTcgRMnmrRQI4D9vVowNWB2CRbimwADGvIiYBiB6tjkOVAjoDrXzWNAgesmoZhCQjjcgCyHE1CgBRMlqUE0wAoRIjBw94B4LhGsxRFjNrZEO4IEkKAZkUzIcuJLWFJ9r1NygmSMNXTwIA7AB3/+nAHjmlaDuCqaAg5ALk0pKoDkB2Bq1imqQNILY5JcgC2bEKsA7CFFFVCgBif4moX0M0B+EIAZAYorQxdByA7AmYgqXyqFUQD5gBYcwsWlKTyR8GgBgCfynYoV5jp4wAAAABJRU5ErkJggg=="],"bull":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0ElEQVR42mNgGAWDFby4d+L/gJoF0kQNR1BkDrpGPxO9/8RgqoYkzABiLUd2BNWikVTLsYUEyUBPTgbFMBAfhrFZhi6PrA7EJssBFRERKJaICAj8BwFsDkCXgzkAZAbZDsBmCQjjcgCyHMUhQGkaoNhSbA4ABScxePg7ABTX6JYii1ElG2JzBCkhQLMCCNmib+c8wBjdcqoVSIRSOswBhAomuhfBVHMANRxBcXoYdcCoAyh1AKiEHNoOQHYELE+Tyh/6DoC1dmDBSSp/FAxqAAAeI6GWSIl3gwAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0klEQVR42mNgGAU4wIt7J/4PqFkgTdRwBEXmoGv0M9H7TwymakjCDCDWcmRHUC0aSbUcW0iQDPTkZFAMA/FhGJtl6PLI6kBsshxQERGBYomIgMB/EMDmAHQ5mANAZpDtAGyWgDAuByDLURwClKYBii3F5gBQcBKDh78DQHGNbimyGFWyITZHkBICNCuAkC36ds4DjNEtp1qBRCilwxxAqGAavg4gVA5Q7ABqOILiBDnqgFEHUOoAUBE9tB2A7AhYniaVP/QdAGtuwYKTVP4oGNQAAPBmwcT8LsN4AAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzklEQVR42mNgGAWDFby4d+L/gJoF0kQNR1BkDrpGPxO9/8RgqoYkzABiLUd2BNWikVTLsYUExQ7Qk5OBY2yWocsjqwOxSbYUm0UiAgL/QQCbA9DlYPorIiLIdwBIM7olIIzLAchyNAkBUjBZlhJKhKAQIQYPfweA4hrdUmQxqmdDmCNICQGaFUDIFn075wHG6JZTrUAilNJhDiBUMNG9CKaaA6jhCIrTw6gDRh1AjQoJVEoOXQcgOwJmIKl8qhXJA+YAWGsHFpSk8kfBoAYAocyhlkmo+QkAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0ElEQVR42mNgGAU4wIt7J/4PqFkgTdRwBEXmoGv0M9H7TwymakjCDCDWcmRHUC0aSbUcW0hQ7AA9ORk4xmYZujyyOhCbZEuxWSQiIPAfBLA5AF0Opr8iIoJ8B4A0o1sCwrgcgCxHkxAgBZNlKaFECAoRYvDwdwAortEtRRajejaEOYKUEKBZAYRs0bdzHmCMbjnVCiRCKR3mAEIF0/B1AKFygGIHUMMRFCfIUQeMOoAaNSKomB66DkB2BMxAUvlUqxMGzAGw5hYsKEnlj4JBDQB0HsHE/j/XAQAAAABJRU5ErkJggg=="],"bison":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA4ElEQVR42mNgGAUEwKNr+/4PhF4UA0yUJP6Tgyl2xIA7AN0RaS56RGGqWY4MiLUchqmaEEm1nCqOcNKS+U+uxSCMrB/EJssBCV5uKIaKCfD9BwFsFqLLwRwAMoNsB2CzBIRxOQBZjuIQoDQNUGwpNgeAgpMYTBUHIBco5DoAvVAiy3JsDgDFNbqlyGLIBRJZjsCmkdQQwGUOWQ5AxoQsJ1Q3UBQFuIIWmzr0NDC0HEBMGQCzEF8tCSuMBqQiGnXAqANgDgCVkEPbAciOgNVwpPKHvgNgrR1YcJLKHwWDGgAAZvgJuzkyVv8AAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA4UlEQVR42mNgGOzg0bV9/wdCL4oBJkoS/8nBFDtiwB2A7og0Fz2iMNUsRwbEWg7DVE2IpFpOFUc4acn8J9diEEbWD2KT5YAELzcUQ8UE+P6DADYL0eVgDgCZQbYDsFkCwrgcgCxHcQhQmgYothSbA0DBSQymigOQCxRyHYBeKJFlOTYHgOIa3VJkMeQCiSxHYNNIagjgMocsByBjQpYTqhsoigJcQYtNHXoaGHUAyTmBUCEEsxBfNQ0rDQekJhx1wKgDYA4AFdFD2wHIjoBVsaTyh74DYM0tWHCSyh8FgxoAAKehLBlejbMpAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA3UlEQVR42mNgGAUEwKNr+/4PhF4UA0yUJP6Tgyl2xIA7AN0RaS56RGGqWY4MiLUchqmaEEm1nOqOIMdyJy0ZFDbJliIbAMNiAnz/QQCbhehyMP0JXm7kOwCkGd0SEMblAGQ5moQAqVFA9TQAChFiMFUcgFygkOsA9EKJLMuxOQAU1+iWIoshF0hkOQKbRlJDAJc5ZDkAGROynFDdQFEU4ApabOrQ08DQcgAxxTDMQny1JKwsGZCKaNQBow5Arg9ApeTQdQCyI2AGksqnWnU8YA6AtXZgQUkqfxQMagAAcbEJu7xMHJcAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA3klEQVR42mNgGOzg0bV9/wdCL4oBJkoS/8nBFDtiwB2A7og0Fz2iMNUsRwbEWg7DVE2IpFpOdUeQY7mTlgwKm2RLkQ2AYTEBvv8ggM1CdDmY/gQvN/IdANKMbgkI43IAshxNQoDUKKB6GgCFCDGYKg5ALlDIdQB6oUSW5dgcAIprdEuRxZALJLIcgU0jqSGAyxyyHICMCVlOqG6gKApwBS02dehpYNQBJOcEQvUAzEJ81TSsMBuQmnDUAaMOQK6QQMX00HUAsiNgBpLKp1p7YMAcAGtuwYKSVP4oGNQAALJaLBlMlwWAAAAAAElFTkSuQmCC"],"dove":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAmklEQVR42mNgGAWjYBSMAiqADx++/ceFB9RyujgCl6Vychpg+siJa/8HNARADngzzQaMB9QBwzcR4nMAXVM6zRxAruVUcwQsIRHC2BIfxVmQGItxOYJsB2AzhG4OQDeIXMup5gBSHELVNIDLYGIAVRMhepoYEAcgO4IUB1C9GCbFATQv+7HVbjSv8QaNA2CNC+RGBjaxUTBkAABvNqTsu9dabgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAmUlEQVR42mNgGAWjYBQMB/Dhw7f/uPCAWk4XR+CyVE5OA0wfOXHt/4CGAMgBb6bZgPGAOmD4JkJ8DqBrSh++DiDXcqo5ApaSCWFsqZ/iMoAYi3E5gmwHYDOEbg5AN4hcy6nmAFIcQtU0gMtgYgBVEyF6mhgQByA7ghQHUL0eIMUBNK98sFWvNK9yB40DYK0b5FYONrFRMGQAAALj2pIG7JPgAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAlElEQVR42mNgGAWjYBSMAiqADx++/ceFB9RyujgCl6Vychpg+siJa/8HNARADngzzQaMB9QBwzcR4nMAXVM6zRwAi0dCmCaOIMZiXI6AiQ09B2AzhJwoIMsBhAwbMAeQgylKA7h8RgygaiJETxMD4gBkR5DiAKoXw6Q4gOZlP7bajeY13qBxAKxxgdzIwCY2CoYMAADYI6jBr137QgAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAk0lEQVR42mNgGAWjYBQMB/Dhw7f/uPCAWk4XR+CyVE5OA0wfOXHt/4CGAMgBb6bZgPGAOmD4JkJ8DqBrSh++DoAlJEKYJo4gxmJcjoCJDT0HYDOEnCggywGEDBswB5CDKUoDuHxGDKBqIkRPEwPiAGRHkOIAqtcDpDiA5pUPtuqV5lXuoHEArHWD3MrBJjYKhgwAAGvQ3mdJE26yAAAAAElFTkSuQmCC"],"dove-fire":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAsUlEQVR42mNgGAWjYBRQGfxfofF/QC3//2Haf7o74k2BwX9ceEAtp4sjcFkqJyQApreZaPwf0BAAOeDXJTcwHlAHDN9EiM8BdE3pNHMAuZZTzRGwhEQIY0t8FGdBYizG5QiSHQAux1dgN4TmDoBVICAa2SByLacoBPAZRrc0gMvg/2cSCGKqJkL0bDggDkB2BCkOoHoxTIoDaF72Y6vdaF7jDRoHwBoXyI0MbGKjYMgAANyMoDGMSaoIAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAsElEQVR42mNgGAWjYLiB/ys0/g+o5f8/TPtPd0e8KTD4jwsPqOV0cQQuS+WEBMD0NhON/wMaAiAH/LrkBsYD6oDhmwjxOYCuKX34OoBcy6nmCFhKJoSxpX6KywBiLMblCJIdAK5IVmA3hOYOgNVgIBrZIHItpygE8BlGtzSAy+D/ZxIIYqomQvRsOCAOQHYEKQ6gej1AigNoXvlgq15pXuUOGgfAWjfIrRxsYqNgyAAA7rjDy8FSp3EAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAs0lEQVR42mNgGAWjYLiB/x+m/R9YB6zQ+D+gloNCgO6OeFNg8B8XHlDL6eIIXJbKCQmA6W0mGv8HNARADvh1yQ2MB9QBwzcR4nMAXVM6zRwAi0dCmCaOIMZiXI6AiQ0dB4DL8RXYDSEnCkhyAKwCAdH4DKOZA5BDAF+CIgVTlAZw+ez/mQSCmKqJEL0MGBAHIDuCFAdQvRgmxQE0L/ux1W40r/EGjQNgjQvkRgY2sVEwZAAAw42mQBJoWsQAAAAASUVORK5CYII=","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAs0lEQVR42mNgGAWjgMrg/4dp/wfWASs0/g+o5aAQoLsj3hQY/MeFB9RyujgCl6VyQgJgepuJxv8BDQGQA35dcgPjAXXA8E2E+BxA15Q+fB0AS0iEME0cQYzFuBwBExs6DgBXJCuwG0JOFJDkAFgNBqLxGUYzByCHAL4ERQqmKA3g8tn/MwkEMVUTIXoZMCAOQHYEKQ6gej1AigNoXvlgq15pXuUOGgfAWjfIrRxsYqNgyAAAm1vJ2ntZaBAAAAAASUVORK5CYII="],"phoenix":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAz0lEQVR42mNgGAWjYLiB/++m/R9Qi/9XKPynmkPOeKgQbQjMYlx8mjriyxyd/7gwxQ4AGYLPEfgsp4ojYIbgcgQuS+WE+P4TcjzRcYvPEYR8D9Lz65wNGNPEEcQ6gPJsRqYjqJvXcTiC5pYTk9Jp5gByLadqOUAOBkURxVlwQBxAaZBT5ACYpgFzAEzjgDgAVn0ia0Z3zP97FQQxWQ5Ab0wgZx+6OACbI7AlTFIcQFYZgK8ZRYoDaN7+w1a7UaXGGxIOgDUukBsZ2MRGwZABAG90KPRHMESvAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA0ElEQVR42mNgGAWjgMrg/7tp/wfU4v8VCv+p5pAzHipEGwKzGBefpo74MkfnPy5MsQNAhuBzBD7LqeIImCG4HIHLUjkhvv+EHE903OJzBCHfg/T8OmcDxjRxBLEOoDybkekI6uZ1HI6gueXEpPTh6wByLadqQUQOBqURisuAAXEApUFOkQNgmgbMATCNA+IAWP2NrBndMf/vVRDEZDkAvTWDnH3o4gBsjsCWMElxAFllAL52HCkOoHkDFFv1SpUqd0g4ANa6QW7lYBMbBUMGAAA0FE8uMSEHrQAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzUlEQVR42mNgGAWjYLiB/++m/R9Qi/9XKPwfEIfALMbFJwuc8VAhypAvc3T+48I0dwQ+y6niCJAB+ByBy1I5Ib7/hPQykBK8uAwi5HuQvl/nbMCY7MSFzxHEOoDiFE6uI6iazXA5guaWE5PSaeYAci2nmiPItRgUTRRnwQFxAKVBTpEDYJoGzAEwjQPiAFj1iawZ3TH/71UQxGQ5AL0xgZx96OIAbI7AljBJcQBZZQC+ZhQpDqB58wtb7UZxjTdkHABrXCA3MrCJjYIhAwBSbh6xrdC0/wAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzklEQVR42mNgGAWjgMrg/7tp/wfU4v8VCv8HxCEwi3HxyQJnPFSIMuTLHJ3/uDDNHYHPcqo4AmQAPkfgslROiO8/Ib0MpAQvLoMI+R6k79c5GzAmO3HhcwSxDqA4hZPrCKpmM1yOoLnlxKT04esAci2nmiPItRiUTiguAwbEAZQGOUUOgGkaMAfANA6IA2D1N7JmdMf8v1dBEJPlAPTWDHL2oYsDsDkCW8IkxQFklQH42nGkOIDm7T9s1SvFVe6QcQCsdYPcysEmNgqGDAAA6vFE6ys2XgsAAAAASUVORK5CYII="],"falcon":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAqUlEQVR42mNgGAWjYBSMAiqAmIyG/7jwgFpOF0fgslRERAZMm9gEDLwDPuwzAuMBDQEQf3gmQnwOoGtKp5kDyLWcao6AJSRCGN1imDhFlhNjMS5HkO0AbIbQxQHYDCLXcrJDgJBhdEsDuAx+8+wOQUzVRIieJkAWgAzFR1PdAciOgPkSl+XIDqB6MUxKFNC87MdWtdKsuh10DgDV67AGBqyOxyY2CoYMAABks0CoePTLnAAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAqElEQVR42mNgGAWjYBQMBxCT0fAfFx5Qy+niCFyWiojIgGkTm4CBd8CHfUZgPKAhAOIPz0SIzwF0TenD1wHkWk41R8BSMiGMbjFMnCLLibEYlyPIdgA2Q+jiAGwGkWs52SFAyDC6pQFcBr95docgpmoiRE8TIAtAhuKjqe4AZEfAfInLcmQHUL0eICUKaF75YKvbaVbfDzoHgBoWsBYOrJGBTWwUDBkAALQQYFKBWTYJAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAApUlEQVR42mNgGAWjYBSMAiqAmIyG/7jwgFpOF0fgslRERAZMm9gEDLwDPuwzAuMBDQEQf3gmQnwOoGtKp5kDYPFICNPEEcRYjMsRMLGh5wBshpATBSQ7gBjDaOoAZEeQm+qplgZw+ezNszsEMVUTIXqaAFkAMhQfTXUHIDsC5ktcliM7gOrFMClRQPOyH1vVSrPqdtA5AFSvwxoYsDoem9goGDIAAHH9Quth+NH2AAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAApElEQVR42mNgGAWjYBQMBxCT0fAfFx5Qy+niCFyWiojIgGkTm4CBd8CHfUZgPKAhAOIPz0SIzwF0TenD1wGwhEQI08QRxFiMyxEwsaHnAGyGkBMFJDuAGMNo6gBkR5Cb6qmWBnD57M2zOwQxVRMhepoAWQAyFB9NdQcgOwLmS1yWIzuA6vUAKVFA88oHW91Os/p+0DkA1LCAtXBgjQxsYqNgyAAAwVpilW8JqmAAAAAASUVORK5CYII="],"eagle":["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAt0lEQVR42mNgGAWjYBQMZmChIvJ/SDji168v/3Fhih0QY6fyH58jsFkKUk81R4AcgM8RuHwuIsAHpq9dO/ef4ijA5wh8wQ9zwLcTNnBMdUeQ4gBQqNAkJGiaCIlxBM0th1lKKh5Qy6nmCHItBkURVUpSujsAW2KimwNAeRaER64D0B0CwsiGEir1kB1Lk0Q4IA5AdgQpDqBaQYTsCGIdQPNWErZqleyqdsg5AFSno9fv2MRGwZABAKM61t42cpjMAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAuklEQVR42mNgGAWjYBTgARYqIv+HhCN+/fryHxem2AExdir/8TkCm6Ug9VRzBMgB+ByBy+ciAnxg+tq1c/8pjgJ8jsAX/DAHfDthA8dUdwQpDgCFCk1CgqaJkBhH0NxymKWk4uHhAHItp5ojyLUYlEaoUpTT3QHYUjPdHAAqNEB45DoA3SEgjGwooWIX2bE0SYQD4gBkR5DiAKqWhDBHEOsAmjfTsNXrZNf1Q84BoEYFegMDm9goGDIAAIZH7zRzIH5EAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAt0lEQVR42mNgGAWjYBSMAjzAQkXkPzHqfv368h8XprkjsFkK0kM1R8TYqfzH5whcPhcR4APT166do9wB+ByBL/hhDvh2wgaOyYoCfI4gxQGgUCE7HZDrCKrmCFyOoLnlMItJxQNqOdUcQa7FoGgitiAbXA7Alpjo5gBQngXhkesAdIeAMLKhhEo9ZMfSJBEOiAOQHUGKA6hWECE7glgH0LylhK1aJauqHZIOANXp6PU7NrFRMGQAAEqG0IZaXg/lAAAAAElFTkSuQmCC","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAuUlEQVR42mNgGAWjYBQMZmChIvKfGHW/fn35jwvT3BHYLAXpoZojYuxU/uNzBC6fiwjwgelr185R7gB8jsAX/DAHfDthA8dkRQE+R5DiAFCokJ0OyHUEVXMELkfQ3HKYxaTi4eEAci2nmiPItRiUTogtSQeXA7ClZro5AFRogPDIdQC6Q0AY2VBCxS6yY2mSCAfEAciOIMUBVC0JYY4g1gE0b6phq9fJquuHpANAjQr0BgY2sVEwZAAA+v/o3JGzDZYAAAAASUVORK5CYII="]}};
+
+// Sprites animados: um tick só pra página inteira, no ritmo do app (180 ms).
+const imgs = [...document.querySelectorAll('.pix')];
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  let f = 0;
+  setInterval(() => {
+    f++;
+    for (const img of imgs) {
+      const form = img.closest('[data-form]')?.dataset.form || img.dataset.form;
+      const frames = D.sprites[form];
+      if (frames) img.src = frames[f % frames.length];
+    }
+  }, 180);
+}
+for (const img of imgs) {
+  const form = img.closest('[data-form]')?.dataset.form;
+  if (form) img.dataset.form = form;
+}
+
+// ── filtro: clicar numa skill acende quem a tem, na página toda ──────────
+let filtro = null;
+const railState = document.getElementById('rail-state');
+const railName = document.getElementById('rail-name');
+
+function aplicar() {
+  document.body.classList.toggle('filtering', !!filtro);
+  railState.hidden = !filtro;
+  if (filtro) railName.textContent = D.skills.find((s) => s.id === filtro)?.name ?? filtro;
+  for (const el of document.querySelectorAll('.node')) {
+    el.classList.toggle('hit', !!filtro && (D.forms[el.dataset.form]?.skills || []).includes(filtro));
+  }
+  for (const el of document.querySelectorAll('.skill')) {
+    el.classList.toggle('hit', el.dataset.skillRow === filtro);
+  }
+  for (const el of document.querySelectorAll('.chip')) {
+    el.classList.toggle('on', el.dataset.skill === filtro);
+  }
+}
+document.addEventListener('click', (e) => {
+  const alvo = e.target.closest('[data-skill]');
+  if (alvo) { filtro = filtro === alvo.dataset.skill ? null : alvo.dataset.skill; aplicar(); return; }
+  if (e.target.closest('#clear')) { filtro = null; aplicar(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && filtro) { filtro = null; aplicar(); } });
+
+// ── editor: mexer no elenco e sair com o TypeScript pronto ───────────────
+const rascunho = Object.fromEntries(Object.entries(D.forms).map(([id, f]) => [id, [...f.skills]]));
+const sel = document.getElementById('ed-form');
+const grid = document.getElementById('ed-grid');
+const out = document.getElementById('ed-out');
+const warns = document.getElementById('ed-warns');
+const ordemForms = Object.keys(D.forms);
+
+/** Quantas skills a forma deve ter: base 1, escolha do Lv. 5 duas, avanço três. */
+const alvoDe = (id) => (D.forms[id].level === 0 ? 1 : D.forms[id].level === D.evolveLevels[0] ? 2 : 3);
+
+/** O estágio anterior no mesmo caminho — o avanço tem que herdar dele. */
+function anterior(formId) {
+  for (const s of D.species) {
+    for (const p of s.paths) {
+      const i = p.stages.findIndex((st) => st.form === formId);
+      if (i === 1) return p.stages[0].form;
+      if (i === 0) return s.form;
+    }
+  }
+  return null;
+}
+
+function checar() {
+  const problemas = [];
+  const vistos = new Map();
+  for (const id of ordemForms) {
+    const skills = rascunho[id];
+    const nome = D.forms[id].name;
+    if (skills.length !== alvoDe(id)) problemas.push(`${nome} tem ${skills.length} skill(s); a escada pede ${alvoDe(id)}.`);
+    const chave = [...skills].sort().join('+');
+    if (skills.length && vistos.has(chave)) problemas.push(`${nome} tem exatamente as skills de ${vistos.get(chave)}.`);
+    else vistos.set(chave, nome);
+    const ant = anterior(id);
+    if (ant && D.forms[id].level === D.evolveLevels[1]) {
+      const faltando = rascunho[ant].filter((s) => !skills.includes(s));
+      if (faltando.length) problemas.push(`${nome} perdeu ${faltando.join(', ')} — o avanço do Lv. 15 só acrescenta.`);
+    }
+  }
+  const usadas = new Set(Object.values(rascunho).flat());
+  for (const s of D.skills) if (!usadas.has(s.id)) problemas.push(`${s.name} não está em forma nenhuma.`);
+  warns.innerHTML = problemas.length
+    ? problemas.map((p) => `<li class="bad">${p}</li>`).join('')
+    : '<li class="ok">Bate com todas as regras que os testes cobram.</li>';
+}
+
+function ts() {
+  const linhas = [];
+  const porEspecie = new Map();
+  for (const s of D.species) {
+    porEspecie.set(s.form, s.baseName);
+    for (const p of s.paths) for (const st of p.stages) porEspecie.set(st.form, s.baseName);
+  }
+  let atual = null;
+  for (const id of ordemForms) {
+    const dono = porEspecie.get(id);
+    if (dono !== atual) { linhas.push(`  // ${dono.toLowerCase()}`); atual = dono; }
+    const f = D.forms[id];
+    const chave = /^[a-z][a-zA-Z0-9]*$/.test(id) ? id : `'${id}'`;
+    const skills = rascunho[id].map((s) => `'${s}'`).join(', ');
+    linhas.push(`  ${chave}: form('${id}', '${f.name}', '${f.emoji}', [${skills}]),`);
+  }
+  return 'export const FORMS: Record<FormId, PetForm> = {\n' + linhas.join('\n') + '\n};';
+}
+
+function pintar() {
+  const id = sel.value;
+  grid.innerHTML = D.skills.map((s) => {
+    const on = rascunho[id].includes(s.id) ? ' on' : '';
+    return `<li><button class="chip t-${s.tier}${on}" data-toggle="${s.id}">${s.name}</button></li>`;
+  }).join('');
+  out.textContent = ts();
+  checar();
+}
+
+sel.innerHTML = ordemForms.map((id) => {
+  const f = D.forms[id];
+  const nivel = f.level === 0 ? 'base' : 'Lv. ' + f.level;
+  return `<option value="${id}">${f.name} — ${nivel}</option>`;
+}).join('');
+sel.addEventListener('change', pintar);
+
+grid.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-toggle]');
+  if (!b) return;
+  e.stopPropagation();
+  const id = sel.value;
+  const s = b.dataset.toggle;
+  const i = rascunho[id].indexOf(s);
+  if (i >= 0) rascunho[id].splice(i, 1); else rascunho[id].push(s);
+  pintar();
+});
+
+document.getElementById('ed-reset').addEventListener('click', () => {
+  for (const id of ordemForms) rascunho[id] = [...D.forms[id].skills];
+  pintar();
+});
+document.getElementById('ed-copy').addEventListener('click', async (e) => {
+  const b = e.currentTarget;
+  try { await navigator.clipboard.writeText(ts()); b.textContent = 'Copiado ✓'; }
+  catch { b.textContent = 'Selecione e copie'; }
+  setTimeout(() => { b.textContent = 'Copiar o TypeScript'; }, 1800);
+});
+
+pintar();
+</script>
