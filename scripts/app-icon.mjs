@@ -11,33 +11,45 @@
 //   public/icons/icon-192.png, icon-512.png       — personagem grande, cantos do fundo
 //   public/icons/icon-512-maskable.png            — fundo até a borda, personagem na zona segura (80%)
 //   public/icons/apple-touch-icon.png (180)       — iOS
+//   extension/icon-192.png                        — o ícone da extensão do bloqueio de sites
+//
+// A extensão sai daqui pelo mesmo motivo: era uma cópia manual do ícone do app, e
+// nada avisava quando o personagem mudava. Se `extension/manifest.json` passar a
+// pedir outro tamanho, acrescente o alvo em `targets`.
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const spritePath = join(root, 'public', 'idle', 'user', '0.png');
 const outDir = join(root, 'public', 'icons');
+const extDir = join(root, 'extension');
 
 const css = readFileSync(join(root, 'src', 'styles', 'app.css'), 'utf8');
 const BG = /--bg:\s*(#[0-9a-fA-F]{3,8})/.exec(css)?.[1] ?? '#0e0e0f';
 const ACCENT = /--accent:\s*(#[0-9a-fA-F]{3,8})/.exec(css)?.[1] ?? '#a3e635';
 const sprite = `data:image/png;base64,${readFileSync(spritePath).toString('base64')}`;
 
-/** Um PNG: tamanho, fração da área que o personagem ocupa, e se o fundo vai até a borda (maskable). */
+/**
+ * Um PNG: pasta de saída, tamanho, fração da área que o personagem ocupa, e se o
+ * fundo vai até a borda (maskable).
+ */
 const targets = [
-  { file: 'icon-192.png', size: 192, fill: 0.78, maskable: false },
-  { file: 'icon-512.png', size: 512, fill: 0.78, maskable: false },
-  { file: 'icon-512-maskable.png', size: 512, fill: 0.6, maskable: true },
-  { file: 'apple-touch-icon.png', size: 180, fill: 0.7, maskable: true },
+  { dir: outDir, file: 'icon-192.png', size: 192, fill: 0.78, maskable: false },
+  { dir: outDir, file: 'icon-512.png', size: 512, fill: 0.78, maskable: false },
+  { dir: outDir, file: 'icon-512-maskable.png', size: 512, fill: 0.6, maskable: true },
+  { dir: outDir, file: 'apple-touch-icon.png', size: 180, fill: 0.7, maskable: true },
+  // O único tamanho que o manifest da extensão declara (icons e action.default_icon).
+  // Não é maskable: ninguém recorta o ícone da barra do navegador.
+  { dir: extDir, file: 'icon-192.png', size: 192, fill: 0.78, maskable: false },
 ];
 
 const page_html = `<!doctype html><html><body style="margin:0;background:transparent"><canvas id="c"></canvas></body></html>`;
 
 async function main() {
-  mkdirSync(outDir, { recursive: true });
+  for (const dir of new Set(targets.map((t) => t.dir))) mkdirSync(dir, { recursive: true });
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.setContent(page_html);
@@ -83,8 +95,9 @@ async function main() {
       },
       { size: t.size, fill: t.fill, maskable: t.maskable, bg: BG, accent: ACCENT, sprite },
     );
-    writeFileSync(join(outDir, t.file), Buffer.from(dataUrl.split(',')[1], 'base64'));
-    console.log(`ok ${t.file} (${t.size}px)`);
+    const out = join(t.dir, t.file);
+    writeFileSync(out, Buffer.from(dataUrl.split(',')[1], 'base64'));
+    console.log(`ok ${relative(root, out)} (${t.size}px)`);
   }
   await browser.close();
 }
