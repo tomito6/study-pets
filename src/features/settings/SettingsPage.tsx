@@ -220,7 +220,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <AvatarPicker />
+              <AvatarPicker active={open && stab === 'general'} />
 
               <ThemePicker />
 

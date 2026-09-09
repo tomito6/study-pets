@@ -229,7 +229,7 @@ const HAIR_DRAW: Record<string, HairFn> = {
     pair(g, 4, 10, 6, 14, 'H');
     pair(g, 4, 4, 4, 14, 'h');
     band(g, 7, 8, 9, 'h');
-    dots(g, [[5, 3], [7, 2], [6, 11], [5, 13], [9, 7], [16, 11], [18, 13], [14, 7]], 'h');
+    dots(g, [[5, 3], [7, 2], [6, 11], [5, 13], [9, 7], [17, 11], [18, 13], [14, 7]], 'h');
   },
   // Volume arredondado que passa das orelhas dos dois lados; textura por pontos.
   cacheado: (g, back) => {

@@ -119,6 +119,19 @@ describe('o desenho', () => {
     expect(longo[30]!.includes('H') || longo[30]!.includes('h')).toBe(true);
   });
 
+  it('o rosto é simétrico em todo penteado — nenhuma mecha solta cai numa bochecha só', () => {
+    // Da testa ao queixo. Acima disso o cabelo PODE ser assimétrico (é textura).
+    for (const s of HAIR_STYLES) {
+      const grid = avatarFrames(s.id)[0]!;
+      for (let y = 9; y <= 19; y++) {
+        const row = grid[y]!;
+        for (let x = 0; x < AVATAR_W / 2; x++) {
+          expect(row[x], `${s.id} linha ${y}, x=${x} vs x=${AVATAR_W - 1 - x}`).toBe(row[AVATAR_W - 1 - x]);
+        }
+      }
+    }
+  });
+
   it('os PNGs do personagem padrão existem em public/idle/user/', () => {
     for (let i = 0; i < AVATAR_FRAMES; i++) {
       expect(existsSync(`public/idle/user/${i}.png`), `frame ${i}`).toBe(true);

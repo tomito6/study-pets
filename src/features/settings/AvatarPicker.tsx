@@ -48,10 +48,12 @@ function Swatches({ label, options, value, onPick }: SwatchesProps) {
   );
 }
 
-export function AvatarPicker() {
+export function AvatarPicker({ active }: { active: boolean }) {
   const avatar = useAppState((s) => s.avatar);
   const sprites = useAppState(() => currentAvatarSprites());
-  const frame = useSpriteFrame(AVATAR_FRAMES, true);
+  // Só anima com a página aberta no Geral: um setInterval de 180 ms preso pra sempre
+  // manteria o app re-renderizando com o preview escondido.
+  const frame = useSpriteFrame(AVATAR_FRAMES, active);
 
   return (
     <div className="st-section">
