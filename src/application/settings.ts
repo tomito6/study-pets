@@ -48,6 +48,7 @@ export function cancelSession(): void {
   state.groups = {};
   state.windowOverrides = {};
   state.penalties = {};
+  // `avatar` e `tutorialSeen` ficam: o personagem é identidade e quem cancelou já conhece o app.
   rebuildWeeks();
   clearBlockCache();
   scheduleSave();

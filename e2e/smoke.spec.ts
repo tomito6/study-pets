@@ -987,6 +987,42 @@ test.describe('Study Pets — smoke', () => {
     await expect(balao).toHaveCount(0);
   });
 
+  test('37. o personagem: trocar tom de pele, cor e cabelo muda o sprite na hora e sobrevive ao reload', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    const preview = page.locator('#avatar-preview');
+    await expect(preview).toBeVisible();
+
+    // O personagem é desenhado na hora (data: URI), não é arquivo — e cada escolha redesenha.
+    const antes = await preview.getAttribute('src');
+    expect(antes).toMatch(/^data:image\/png/);
+
+    await page.locator('#avatar-picker [data-swatch="ebano"]').click();
+    await expect(page.locator('#avatar-picker [data-swatch="ebano"]')).toHaveClass(/selected/);
+    const compele = await preview.getAttribute('src');
+    expect(compele).not.toBe(antes);
+
+    await page.locator('#avatar-picker [data-style="cacheado"]').click();
+    await expect(page.locator('#avatar-picker [data-style="cacheado"]')).toHaveClass(/selected/);
+    const comCabelo = await preview.getAttribute('src');
+    expect(comCabelo).not.toBe(compele);
+
+    // Vale na hora, sem "Salvar" — o mesmo sprite já está no Perfil.
+    await page.getByRole('button', { name: /Voltar/ }).click();
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(page.locator('#char-sprite')).toHaveAttribute('src', comCabelo!);
+
+    // E é salvo: recarregar traz a mesma aparência de volta.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(page.locator('#char-sprite')).toHaveAttribute('src', comCabelo!);
+  });
+
   test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {
     // O menu de contexto do browser nunca pode aparecer — nem em cima do modal que abre ao soltar.
     await page.addInitScript(() => {

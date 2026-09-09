@@ -13,6 +13,8 @@
 // de sites de dentro do hardcore (`config.hardcore.{mode,sites}`) e a pôs em
 // `config.siteBlock`, que vale com ou sem hardcore. Todos são lidos.
 
+import { DEFAULT_AVATAR, normalizeAvatar } from './avatar';
+import type { AvatarConfig } from './avatar';
 import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
 import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
@@ -66,6 +68,12 @@ export interface PersistedState {
   tutorialSeen: TutorialSeen;
   /** Desistências no modo hardcore, por dia (ver domain/hardcore.ts). */
   penalties: PenaltiesByDate;
+  /**
+   * A aparência do personagem (tom de pele, cor e penteado do cabelo). Fica fora
+   * de `config` de propósito: é identidade, não regra do dia — "Cancelar sessão"
+   * não mexe nela. Ver `domain/avatar.ts`.
+   */
+  avatar: AvatarConfig;
 }
 
 /**
@@ -112,6 +120,7 @@ export function emptyPersistedState(): PersistedState {
     windowOverrides: {},
     tutorialSeen: {},
     penalties: {},
+    avatar: { ...DEFAULT_AVATAR },
   };
 }
 
@@ -247,6 +256,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
+    avatar: normalizeAvatar(d.avatar),
     penalties: normalizePenalties(d.penalties),
   };
 }
@@ -271,6 +281,7 @@ export function serializeState(s: PersistedState): UserDoc {
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
     tutorialSeen: s.tutorialSeen || {},
+    avatar: normalizeAvatar(s.avatar),
     penalties: s.penalties || {},
   };
 }

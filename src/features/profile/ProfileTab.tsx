@@ -4,8 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import { currentAvatarSprites } from '../../application/avatar';
 import { applyPendingPetXP, coinBalance } from '../../application/pets';
 import { computeStatsNow } from '../../application/plan';
+import { AVATAR_FRAMES } from '../../domain/avatar';
 import { PET_LIST, canEvolveNow, formatStudyHours, petForm, petProgress, petsReadyToEvolve } from '../../domain/pets';
 import { getLevel, getLevelIdx, getLevelPct, LEVELS } from '../../domain/progression';
 import type { PetInstance, PetSpecies } from '../../domain/types';
@@ -15,7 +17,6 @@ import { BuyConfirmModal, EvolvePetModal, MyPetsModal, PetDetailModal, PetShopMo
 import { useSpriteFrame } from './useSpriteFrame';
 
 const t = strings.profile;
-const CHAR_FRAMES = 4;
 
 /** De onde renomear/evoluir foi aberto — é pra lá que volta ao fechar. */
 type ModalBack = 'mine' | 'detail';
@@ -81,7 +82,8 @@ export function ProfileTab() {
 
   const activePet = pets.owned.find((p) => p.id === pets.active) ?? null;
   const activeForm = activePet ? petForm(activePet) : null;
-  const charFrame = useSpriteFrame(CHAR_FRAMES, visible);
+  const charSprites = useAppState(() => currentAvatarSprites());
+  const charFrame = useSpriteFrame(AVATAR_FRAMES, visible);
   const petFrame = useSpriteFrame(activeForm?.frames ?? 1, visible && !!activeForm);
 
   const stats = computeStatsNow();
@@ -106,7 +108,7 @@ export function ProfileTab() {
     <div className={'profile-page' + (visible ? ' visible' : '')} id="profile-page">
       <div className="profile-hero">
         <div className="profile-hero-stage">
-          <img id="char-sprite" className="char-sprite" src={`idle/user/${charFrame}.png`} alt={strings.login.charAlt} />
+          <img id="char-sprite" className="char-sprite" src={charSprites[charFrame]} alt={strings.login.charAlt} />
           {activePet && activeForm && (
             <img id="pet-sprite" className="pet-sprite" src={activeForm.sprite(petFrame)} alt={activePet.name} />
           )}

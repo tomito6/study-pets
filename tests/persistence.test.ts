@@ -7,6 +7,7 @@ import {
   serializeState,
 } from '../src/domain/persistence';
 import type { PersistedState } from '../src/domain/persistence';
+import { DEFAULT_AVATAR } from '../src/domain/avatar';
 import { DEFAULT_CFG } from '../src/domain/config';
 import { LUNCH_NAME, LUNCH_SERIES_ID } from '../src/domain/eventPresets';
 
@@ -207,6 +208,14 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc({ checks: { '2026-09-01': { '09:00': true } } }).tutorialSeen).toEqual({});
   });
 
+  it('documento de antes do personagem (sem avatar) nasce com a aparência padrão; id fora do catálogo idem', () => {
+    expect(hydrateUserDoc({}).avatar).toEqual(DEFAULT_AVATAR);
+    expect(hydrateUserDoc({ avatar: { skin: 'ebano', hair: 'preto', style: 'raspado' } }).avatar)
+      .toEqual({ skin: 'ebano', hair: 'preto', style: 'raspado' });
+    expect(hydrateUserDoc({ avatar: { skin: 'inexistente', hair: 'preto', style: 'raspado' } }).avatar)
+      .toEqual({ ...DEFAULT_AVATAR, hair: 'preto', style: 'raspado' });
+  });
+
   it('tutorialSeen: só áreas conhecidas com true passam', () => {
     expect(hydrateUserDoc({ tutorialSeen: { plan: true, profile: true } }).tutorialSeen).toEqual({ plan: true, profile: true });
     expect(hydrateUserDoc({ tutorialSeen: { plan: 'sim', loja: true, analytics: true } }).tutorialSeen).toEqual({ analytics: true });
@@ -267,6 +276,7 @@ describe('serializeState', () => {
     delete parcial.groups;
     delete parcial.windowOverrides;
     delete parcial.tutorialSeen;
+    delete parcial.avatar;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -276,6 +286,7 @@ describe('serializeState', () => {
     expect(doc.groups).toEqual({});
     expect(doc.windowOverrides).toEqual({});
     expect(doc.tutorialSeen).toEqual({});
+    expect(doc.avatar).toEqual(DEFAULT_AVATAR);
   });
 });
 
@@ -300,6 +311,7 @@ describe('ida e volta', () => {
       groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
       windowOverrides: { '2026-09-01': { studyWindows: [] }, '2026-09-03': { studyWindows: [{ start: '10:10', end: '12:00' }] } },
       tutorialSeen: { plan: true, analytics: true },
+      avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado' },
       penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
       config: { ...DEFAULT_CFG, hardcore: { enabled: true }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
     };

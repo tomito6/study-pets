@@ -19,6 +19,7 @@ import { CancelSessionModal, DeleteAccountModal } from './DangerModals';
 import { FitStudyModal } from './FitStudyModal';
 import { SiteBlockSection } from './SiteBlockSection';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
+import { AvatarPicker } from './AvatarPicker';
 import { ThemePicker } from './ThemePicker';
 
 const t = strings.settings;
@@ -218,6 +219,8 @@ export function SettingsPage() {
                   <div className="st-hint" id="hardcore-site-note">{th.siteNote}</div>
                 </div>
               </div>
+
+              <AvatarPicker />
 
               <ThemePicker />
 
