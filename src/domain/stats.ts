@@ -109,8 +109,11 @@ export function computeStats(input: StatsInput): Stats {
   let runningStreak = 0;
 
   for (const { key, date: d, weekIdx: wi, bonus } of input.days) {
-    // Dia "fechado" entra nos totais: dia passado OU encerrado manualmente hoje
-    const isPast = key !== todayKey || dayClosed(key);
+    // Dia "fechado" entra nos totais: dia passado OU encerrado manualmente hoje.
+    // O `<` importa: dia FUTURO não é fechado. Com `!==` ele entrava, e como
+    // `sessionStats.total` conta bloco planejado (não marcado), o drop-off somava
+    // o período inteiro no denominador e vivia perto de 0%.
+    const isPast = key < todayKey || dayClosed(key);
     const blocks = getBlocks(key);
     let dayXP = 0;
     let dayChecks = 0;

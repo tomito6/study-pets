@@ -229,6 +229,19 @@ describe('computeStats — recordes e agregados por semana', () => {
     const stats = computeStats(entrada({ days: [dia(HOJE)] }));
     expect(stats.sessionStats).toEqual({});
   });
+
+  it('nem de dia futuro: o período inteiro não pode inflar o denominador', () => {
+    const blocos = () => [estudo('09:00', '09:30', 0)];
+    // O período vai até depois de hoje — `allDays()` devolve o futuro junto.
+    const stats = computeStats(
+      entrada({
+        days: [dia(ONTEM), dia(HOJE), dia('2026-09-03'), dia('2026-09-10')],
+        getBlocks: blocos,
+        checks: marcandoTudo(ONTEM, ['09:00']),
+      }),
+    );
+    expect(stats.sessionStats[0]).toEqual({ done: 1, total: 1 });
+  });
 });
 
 describe('computeStats — contadores do dia visível na UI', () => {
