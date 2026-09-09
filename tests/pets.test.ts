@@ -29,8 +29,8 @@ import {
   speciesForm,
   suggestPetName,
 } from '../src/domain/pets';
-import { SKILLS } from '../src/domain/progression';
-import type { PetInstance } from '../src/domain/types';
+import { SKILLS, SKILL_TIERS } from '../src/domain/progression';
+import type { FormId, PetInstance } from '../src/domain/types';
 import { derived, state } from '../src/store/store';
 
 const inst = (over: Partial<PetInstance> = {}): PetInstance => ({
@@ -49,7 +49,7 @@ describe('catálogo', () => {
     for (const f of Object.values(FORMS)) for (const id of f.skills) expect(SKILLS[id], id).toBeDefined();
     expect(Object.keys(FORMS)).toHaveLength(25);
     expect(speciesForm(PETS.cat!).sprite(2)).toBe('idle/pets/cat/2.png');
-    expect(FORMS.dove!.skills).toEqual(['madrugador', 'aula']);
+    expect(FORMS.dove!.skills).toEqual(['aula']);
     expect(FORMS.owl).toBeUndefined(); // a coruja virou pomba
   });
 
@@ -65,13 +65,50 @@ describe('catálogo', () => {
           expect(seen.has(st.form), st.form).toBe(false);
           seen.add(st.form);
         }
-        // A escolha (Lv. 5) pode trocar de skill — o lobo larga a Fiel; o avanço (Lv. 15) nunca tira, só acrescenta.
-        expect(first!.skills.length, first!.id).toBeGreaterThan(speciesForm(s).skills.length);
+        // A escada é sempre 1 → 2 → 3: a espécie nasce com uma, a escolha do Lv. 5 tem duas,
+        // o avanço do Lv. 15 tem três. A escolha pode TROCAR a da base (o lobo larga a Fiel);
+        // o avanço nunca tira, só acrescenta.
+        expect(speciesForm(s).skills.length, s.id).toBe(1);
+        expect(first!.skills.length, first!.id).toBe(2);
+        expect(second!.skills.length, second!.id).toBe(3);
         for (const skill of first!.skills) expect(second!.skills, `${second!.id} perdeu ${skill}`).toContain(skill);
-        expect(second!.skills.length, second!.id).toBeGreaterThan(first!.skills.length);
       }
     }
     expect(seen.size).toBe(20);
+  });
+
+  it('nenhuma forma repete o conjunto de skills de outra — escolher caminho é escolher um jeito de estudar', () => {
+    const vistos = new Map<string, FormId>();
+    for (const f of Object.values(FORMS)) {
+      const chave = [...f.skills].sort().join('+');
+      expect(vistos.has(chave), `${f.id} tem as mesmas skills de ${vistos.get(chave)}`).toBe(false);
+      vistos.set(chave, f.id);
+    }
+  });
+
+  it('toda skill do catálogo mora em alguma forma — nada fica escrito e inalcançável', () => {
+    const usadas = new Set(Object.values(FORMS).flatMap((f) => f.skills));
+    for (const id of Object.keys(SKILLS)) expect(usadas.has(id), `${id} não está em forma nenhuma`).toBe(true);
+  });
+
+  it('as skills de uma forma nunca são a mesma coisa duas vezes, nem se anulam', () => {
+    for (const f of Object.values(FORMS)) {
+      expect(new Set(f.skills).size, f.id).toBe(f.skills.length);
+      // Duas faixas de horário na mesma forma só valem se uma pagar mais que a outra
+      // onde a outra não chega — senão uma delas nunca seria escolhida.
+      const faixas = f.skills.map((id) => SKILLS[id]!).filter((sk) => sk.rule.kind === 'hour-range');
+      for (const a of faixas) {
+        for (const b of faixas) {
+          if (a === b || a.rule.kind !== 'hour-range' || b.rule.kind !== 'hour-range') continue;
+          const contido = a.rule.from >= b.rule.from && a.rule.to <= b.rule.to;
+          if (contido) {
+            // A mais estreita tem que pagar mais: é o que impede a "skill morta".
+            expect(SKILL_TIERS[a.tier]!.weight, `${a.id} dentro de ${b.id} em ${f.id}`)
+              .toBeGreaterThan(SKILL_TIERS[b.tier]!.weight);
+          }
+        }
+      }
+    }
   });
 
   it('o cachorro: pastor alemão → cão lendário ou lobo → lobo lunar; o gato: egípcio → esfinge ou lince → tigre', () => {
@@ -207,8 +244,10 @@ describe('forma, nome e evolução (puro)', () => {
   it('normalizePetInstance: traduz espécie renomeada e desliga skill fora da forma; sem mudança devolve a mesma referência', () => {
     const owl = inst({ id: 'owl', species: 'owl', name: 'Sofia', skill: 'noturno' });
     expect(normalizePetInstance(owl)).toMatchObject({ id: 'owl', species: 'dove', name: 'Sofia', skill: null });
-    const dove = inst({ id: 'owl', species: 'dove', skill: 'madrugador' });
+    const dove = inst({ id: 'owl', species: 'dove', skill: 'aula' });
     expect(normalizePetInstance(dove)).toBe(dove);
+    // A pomba perdeu a Madrugador quando o catálogo foi rebalanceado: a leitura desliga sozinha.
+    expect(normalizePetInstance(inst({ id: 'owl', species: 'dove', skill: 'madrugador' })).skill).toBeNull();
     expect(normalizePetInstance(inst({ skill: 'noturno' })).skill).toBeNull(); // cachorro não tem Noturno
   });
 
@@ -277,17 +316,18 @@ describe('casos de uso dos pets', () => {
   });
 
   it('skill: uma por pet, só das que a forma tem; clicar na ativa desliga; marca a troca', () => {
-    state.pets.owned = [inst({ id: 'dove', species: 'dove' })];
-    const dove = state.pets.owned[0]!;
+    // Falcão (pomba no caminho rapina, Lv. 5): madrugador + vespertino.
+    state.pets.owned = [inst({ id: 'dove', species: 'dove', path: 'rapina', stage: 1 })];
+    const falcao = state.pets.owned[0]!;
     toggleSkill('dove', 'madrugador', AGORA);
-    expect(dove.skill).toBe('madrugador');
-    expect(dove.skillActivatedAt).toBe(AGORA.getTime());
-    toggleSkill('dove', 'fiel', AGORA); // pomba não tem Fiel
-    expect(dove.skill).toBe('madrugador');
-    toggleSkill('dove', 'aula', AGORA);
-    expect(dove.skill).toBe('aula');
-    toggleSkill('dove', 'aula', AGORA);
-    expect(dove.skill).toBeNull();
+    expect(falcao.skill).toBe('madrugador');
+    expect(falcao.skillActivatedAt).toBe(AGORA.getTime());
+    toggleSkill('dove', 'fiel', AGORA); // falcão não tem Fiel
+    expect(falcao.skill).toBe('madrugador');
+    toggleSkill('dove', 'vespertino', AGORA);
+    expect(falcao.skill).toBe('vespertino');
+    toggleSkill('dove', 'vespertino', AGORA);
+    expect(falcao.skill).toBeNull();
   });
 
   it('renomear é grátis, mas o nome precisa servir', () => {
@@ -332,8 +372,9 @@ describe('casos de uso dos pets', () => {
     state.pets.active = 'dog';
     state.pets.activeSince = OITO_DA_MANHA;
     const [b1, b2] = blocksForDay(HOJE).filter((x) => x.type === 'estudo');
-    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true, xp: 53 });
-    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.05 });
+    // Fiel é tier `baixa` (acontece 1× por dia), então paga o triplo: 15% no Lv. 1.
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true, xp: 57 });
+    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.15 });
     expect(toggleBlockCheck(HOJE, b2!, AGORA)).toMatchObject({ checked: true, xp: 50 });
     expect(state.checks[HOJE]![b2!.time]).toEqual({ pet: 'dog', bonus: 0 });
   });
@@ -345,17 +386,17 @@ describe('casos de uso dos pets', () => {
     state.pets.activeSince = OITO_DA_MANHA;
     state.pets.xpProcessedUntil = ONTEM;
     const [b1] = blocksForDay(HOJE).filter((x) => x.type === 'estudo');
-    // Lv. 4 → 5% + 3% = 8%: 50 XP viram 54
-    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true, xp: 54 });
-    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.08 });
+    // Lv. 4 → 8% do nível × 3 (tier `baixa` da Fiel) = 24%: 50 XP viram 62
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true, xp: 62 });
+    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.24 });
     // Esse check cruzaria o Lv. 5, mas o XP só entra quando o dia fecha: desmarcar e marcar de novo continua 8%
     toggleBlockCheck(HOJE, b1!, AGORA);
     expect(petLevel(state.pets.owned[0]!)).toBe(4);
-    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ xp: 54 });
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ xp: 62 });
     // Dia fechado: o pet vira Lv. 5 (o próximo check já valeria 9%), e o bônus salvo no check não muda
     closeDay(AGORA);
     expect(petLevel(state.pets.owned[0]!)).toBe(5);
-    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.08 });
+    expect(state.checks[HOJE]![b1!.time]).toEqual({ pet: 'dog', bonus: 0.24 });
   });
 
   it('Preguiça: o estudo logo depois da pausa longa ganha o bônus, o seguinte não', () => {
@@ -365,9 +406,76 @@ describe('casos de uso dos pets', () => {
     const blocks = blocksForDay(HOJE);
     const i = blocks.findIndex((b, k) => b.type === 'estudo' && k > 0 && blocks[k - 1]!.name.includes('longa'));
     expect(i).toBeGreaterThan(0);
-    expect(toggleBlockCheck(HOJE, blocks[i]!, AGORA)).toMatchObject({ xp: 53 });
+    // Preguiça é tier `media`: 10% no Lv. 1.
+    expect(toggleBlockCheck(HOJE, blocks[i]!, AGORA)).toMatchObject({ xp: 55 });
     const next = blocks.find((b, k) => k > i && b.type === 'estudo')!;
     expect(toggleBlockCheck(HOJE, next, AGORA)).toMatchObject({ xp: 50 });
+  });
+
+  /** Equipa um pet com a skill dada, ativa desde as 8h — antes de qualquer bloco começar. */
+  const comSkill = (skill: string, over: Partial<PetInstance> = {}) => {
+    state.pets.owned = [inst({ skill, skillActivatedAt: OITO_DA_MANHA, ...over })];
+    state.pets.active = state.pets.owned[0]!.id;
+    state.pets.activeSince = OITO_DA_MANHA;
+  };
+
+  it('Ponto final: vale no último estudo do plano, mesmo marcando fora de ordem', () => {
+    comSkill('ponto-final', { id: 'snake', species: 'snake', path: 'ancestral', stage: 2 }); // basilisco
+    const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo' || b.type === 'event');
+    const ultimo = estudos[estudos.length - 1]!;
+    // Marca o último primeiro: a skill olha a posição no plano, não a ordem dos checks.
+    expect(state.checks[HOJE]?.[ultimo.time]).toBeUndefined();
+    toggleBlockCheck(HOJE, ultimo, AGORA);
+    expect(state.checks[HOJE]![ultimo.time]).toMatchObject({ bonus: 0.15 });
+    toggleBlockCheck(HOJE, estudos[0]!, AGORA);
+    expect(state.checks[HOJE]![estudos[0]!.time]).toMatchObject({ bonus: 0 });
+  });
+
+  it('Afinco vale em todo estudo do grupo; Empenho só no check que fecha ele', () => {
+    const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo').slice(0, 2);
+    const [a, b] = estudos as [typeof estudos[0], typeof estudos[0]];
+    state.groups[HOJE] = [{ id: 'g1', start: a.time, end: b.endTime, name: 'Análise II', goal: '' }];
+
+    comSkill('afinco', { id: 'cat', species: 'cat', path: 'sabio', stage: 1 }); // gato egípcio
+    toggleBlockCheck(HOJE, a, AGORA);
+    toggleBlockCheck(HOJE, b, AGORA);
+    expect(state.checks[HOJE]![a.time]).toMatchObject({ bonus: 0.05 });
+    expect(state.checks[HOJE]![b.time]).toMatchObject({ bonus: 0.05 });
+
+    delete state.checks[HOJE];
+    comSkill('empenho', { id: 'cat', species: 'cat', path: 'sabio', stage: 2 }); // esfinge
+    toggleBlockCheck(HOJE, a, AGORA);
+    expect(state.checks[HOJE]![a.time]).toMatchObject({ bonus: 0 }); // ainda falta um
+    toggleBlockCheck(HOJE, b, AGORA);
+    expect(state.checks[HOJE]![b.time]).toMatchObject({ bonus: 0.15 }); // este fechou
+  });
+
+  it('Recomeço vale no dia da volta — e some assim que ontem teve estudo', () => {
+    comSkill('recomeco', { id: 'dove', species: 'dove', path: 'solar', stage: 1 }); // pássaro de fogo
+    const [b1] = blocksForDay(HOJE).filter((b) => b.type === 'estudo');
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true });
+    expect(state.checks[HOJE]![b1!.time]).toMatchObject({ bonus: 0.05 }); // ontem em branco
+
+    delete state.checks[HOJE];
+    estudarSete(ONTEM);
+    expect(toggleBlockCheck(HOJE, b1!, AGORA)).toMatchObject({ checked: true });
+    expect(state.checks[HOJE]![b1!.time]).toMatchObject({ bonus: 0 });
+  });
+
+  it('Descansado não confunde folga com sumiço: ontem de folga vale pra ela, não pra Recomeço', () => {
+    state.windowOverrides[ONTEM] = { studyWindows: [] }; // ontem foi dia livre
+    const [b1] = blocksForDay(HOJE).filter((b) => b.type === 'estudo');
+
+    comSkill('descansado', { id: 'cow', species: 'cow', path: 'campea', stage: 1 }); // vaca premiada
+    toggleBlockCheck(HOJE, b1!, AGORA);
+    expect(state.checks[HOJE]![b1!.time]).toMatchObject({ bonus: 0.05 });
+
+    // Recomeço olha o último dia que CONTAVA — anteontem, que teve estudo. Folga não é sumiço.
+    delete state.checks[HOJE];
+    estudarSete(ANTEONTEM);
+    comSkill('recomeco', { id: 'dove', species: 'dove', path: 'solar', stage: 1 });
+    toggleBlockCheck(HOJE, b1!, AGORA);
+    expect(state.checks[HOJE]![b1!.time]).toMatchObject({ bonus: 0 });
   });
 
   it('pet inicial: de graça, só pra quem não tem pet, já equipado', () => {

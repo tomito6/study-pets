@@ -4,7 +4,7 @@
 import type { ChecksByDate, DateKey, PenaltiesByDate, PetInstanceId, StudyBlock, TimeString } from './types';
 import { isForfeited } from './hardcore';
 import { checkPetOf, xpFromCheck } from './progression';
-import { dk } from './time';
+import { dateFromKey, dk } from './time';
 
 export function isChecked(checks: ChecksByDate, dateKey: DateKey, blockTime: TimeString): boolean {
   return !!(checks[dateKey] && checks[dateKey]![blockTime]);
@@ -46,6 +46,41 @@ export function canCheckBlock(
 ): boolean {
   if (!canToggleCheck(dateKey, ctx)) return false;
   return !isForfeited(ctx.penalties, dateKey, blockTime);
+}
+
+/** Quantos dias pra trás vale a pena procurar o último dia que contou. */
+export const COUNTING_DAY_LOOKBACK = 60;
+
+/**
+ * O dia anterior a `dateKey` que **contava** — folga (fim de semana pausado ou
+ * dia livre) fica de fora, igual em `allDays()`. `null` se não houver nenhum
+ * dentro de `COUNTING_DAY_LOOKBACK` dias, ou antes de `notBefore` (o começo do
+ * período; antes disso o app nem existia pro usuário).
+ *
+ * É o que a skill Recomeço usa pra saber que o dia de hoje é uma volta: o último
+ * dia que contava ficou em branco. Folga no meio não conta como sumiço — quem
+ * cuida disso é a Descansado.
+ */
+export function previousCountingDay(
+  dateKey: DateKey,
+  isRestDay: (key: DateKey) => boolean,
+  opts: { notBefore?: DateKey | null; lookback?: number } = {},
+): DateKey | null {
+  const d = dateFromKey(dateKey);
+  for (let i = 0; i < (opts.lookback ?? COUNTING_DAY_LOOKBACK); i++) {
+    d.setDate(d.getDate() - 1);
+    const key = dk(d);
+    if (opts.notBefore && key < opts.notBefore) return null;
+    if (!isRestDay(key)) return key;
+  }
+  return null;
+}
+
+/** A DateKey do dia anterior. */
+export function previousDayKey(dateKey: DateKey): DateKey {
+  const d = dateFromKey(dateKey);
+  d.setDate(d.getDate() - 1);
+  return dk(d);
 }
 
 export interface PendingPetXPInput {

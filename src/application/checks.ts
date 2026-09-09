@@ -1,13 +1,15 @@
 // Caso de uso: marcar/desmarcar um bloco.
 
-import { canCheckBlock } from '../domain/checks';
+import { canCheckBlock, previousCountingDay, previousDayKey } from '../domain/checks';
+import { blockInGroup, countsForGroup, groupOf } from '../domain/groups';
 import { petLevel } from '../domain/pets';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
 import { timeToMins } from '../domain/time';
 import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/types';
 import { state } from '../store/store';
+import { isRestDayKey } from './dayWindows';
 import { activePet } from './pets';
-import { blocksForDay } from './plan';
+import { blocksForDay, isBonusDayKey } from './plan';
 import { scheduleSave } from './save';
 
 export interface CheckResult {
@@ -20,16 +22,44 @@ export interface CheckResult {
 
 const mins = (b: Pick<StudyBlock, 'time' | 'endTime'>): number => timeToMins(b.endTime) - timeToMins(b.time);
 
-/** O que as regras de skill precisam saber do dia: o que já foi marcado e o bloco anterior. */
+const isStudyish = (b: Pick<StudyBlock, 'type'>): boolean => b.type === 'estudo' || b.type === 'event';
+
+/**
+ * O que as regras de skill precisam saber do dia. Tudo sai do plano do dia e dos
+ * checks que já estão lá — nenhum campo novo no documento salvo.
+ *
+ * Três grupos: o que já foi marcado hoje (Fiel, Maratona, Constância), a posição
+ * do bloco no plano (Ponto final, Retomada, Preguiça, Rumina) e o feitio do dia
+ * (Recomeço, Descansado, Hora extra) mais os grupos de estudo (Afinco, Empenho).
+ */
 function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, CheckRecord>) {
   const blocks = blocksForDay(dateKey);
   const idx = blocks.findIndex((b) => b.time === block.time);
   const prev = idx > 0 ? blocks[idx - 1]! : null;
-  const done = blocks.filter((b) => (b.type === 'estudo' || b.type === 'event') && day[b.time]);
+  const done = blocks.filter((b) => isStudyish(b) && day[b.time]);
+  const studyish = blocks.filter(isStudyish);
+  const last = studyish[studyish.length - 1];
+
+  // O grupo do bloco: dentro dele (Afinco) e se este check é o que fecha (Empenho).
+  const group = groupOf(state.groups[dateKey] ?? [], block);
+  const pending = group
+    ? blocks.filter((b) => countsForGroup(b) && blockInGroup(b, group) && b.time !== block.time && !day[b.time])
+    : [];
+
+  // Ontem foi folga? E o último dia que contava ficou em branco?
+  const yesterday = previousDayKey(dateKey);
+  const lastCounting = previousCountingDay(dateKey, isRestDayKey, { notBefore: state.config.periodStart });
+
   return {
     studiesCheckedToday: done.length,
     studyMinsToday: done.reduce((sum, b) => sum + mins(b), 0),
     prevBlock: prev ? { type: prev.type, mins: mins(prev) } : null,
+    isLastStudy: !!last && last.time === block.time,
+    inGroup: !!group,
+    completesGroup: !!group && countsForGroup(block) && pending.length === 0,
+    comebackDay: !!lastCounting && !state.checks[lastCounting],
+    afterRestDay: isRestDayKey(yesterday),
+    bonusDay: isBonusDayKey(dateKey),
   };
 }
 

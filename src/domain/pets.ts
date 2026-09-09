@@ -13,42 +13,49 @@ const spriteOf = (form: FormId) => (i: number) => `idle/pets/${form}/${i}.png`;
 const form = (id: FormId, name: string, emoji: string, skills: string[]): PetForm => ({ id, name, emoji, frames: 4, sprite: spriteOf(id), skills });
 
 /**
- * Toda forma que aparece na tela. Ao longo de um caminho, a forma seguinte
- * **herda** as skills da anterior e ganha uma — evoluir nunca tira skill
- * (teste garante). Os caminhos "selvagem"/"mítico" puxam pras skills de horário
- * (noturno, lua cheia, madrugador); os de "companhia" pras de rotina.
+ * Toda forma que aparece na tela, e as skills que ela pode ter.
+ *
+ * A escada é sempre a mesma: a **espécie** nasce com 1 skill, a **escolha** do
+ * Lv. 5 tem 2 e o **avanço** do Lv. 15 tem 3. O avanço nunca tira skill, só
+ * acrescenta; a escolha pode **trocar** a da base, e é isso que faz o caminho
+ * selvagem parecer uma transformação (o lobo larga a Fiel) e o de companhia
+ * parecer um crescimento (o pastor mantém). Teste garante os dois.
+ *
+ * Nenhum conjunto se repete entre formas: escolher um caminho é escolher um
+ * jeito de estudar, não um sprite. Ver `SKILLS` pra o que cada uma faz e
+ * `SKILL_TIERS` pra por que todas valem o mesmo.
  */
 export const FORMS: Record<FormId, PetForm> = {
-  // cachorro
+  // cachorro — a rotina: quem te espera todo dia e te traz de volta
   dog: form('dog', 'Cachorro', '🐶', ['fiel']),
-  'dog-shepherd': form('dog-shepherd', 'Pastor alemão', '🐕', ['fiel', 'aula']),
-  'dog-legend': form('dog-legend', 'Cão lendário', '🦮', ['fiel', 'aula', 'constancia']),
-  wolf: form('wolf', 'Lobo', '🐺', ['noturno', 'lua-cheia']),
-  'wolf-lunar': form('wolf-lunar', 'Lobo lunar', '🌙', ['noturno', 'lua-cheia', 'madrugador']),
-  // gato
+  'dog-shepherd': form('dog-shepherd', 'Pastor alemão', '🐕', ['fiel', 'retomada']),
+  'dog-legend': form('dog-legend', 'Cão lendário', '🦮', ['fiel', 'retomada', 'constancia']),
+  wolf: form('wolf', 'Lobo', '🐺', ['noturno', 'maratona']),
+  'wolf-lunar': form('wolf-lunar', 'Lobo lunar', '🌙', ['noturno', 'maratona', 'lua-cheia']),
+  // gato — o descanso: a pausa longa e o trecho de estudo com nome
   cat: form('cat', 'Gato', '🐱', ['preguica']),
-  'cat-egyptian': form('cat-egyptian', 'Gato egípcio', '🐈‍⬛', ['preguica', 'aula']),
-  sphinx: form('sphinx', 'Esfinge', '🦁', ['preguica', 'aula', 'constancia']),
+  'cat-egyptian': form('cat-egyptian', 'Gato egípcio', '🐈‍⬛', ['preguica', 'afinco']),
+  sphinx: form('sphinx', 'Esfinge', '🦁', ['preguica', 'afinco', 'empenho']),
   lynx: form('lynx', 'Lince', '🐈', ['preguica', 'noturno']),
-  tiger: form('tiger', 'Tigre', '🐯', ['preguica', 'noturno', 'lua-cheia']),
-  // cobra
+  tiger: form('tiger', 'Tigre', '🐯', ['preguica', 'noturno', 'hora-extra']),
+  // cobra — a disciplina: a meta, a digestão, o ponto final
   snake: form('snake', 'Cobra', '🐍', ['constancia']),
   naja: form('naja', 'Naja', '🐍', ['constancia', 'rumina']),
-  basilisk: form('basilisk', 'Basilisco', '👑', ['constancia', 'rumina', 'aula']),
-  'snake-wyrm': form('snake-wyrm', 'Serpe', '🐉', ['constancia', 'noturno']),
-  dragon: form('dragon', 'Dragão', '🐲', ['constancia', 'noturno', 'lua-cheia']),
-  // vaca
+  basilisk: form('basilisk', 'Basilisco', '👑', ['constancia', 'rumina', 'ponto-final']),
+  'snake-wyrm': form('snake-wyrm', 'Serpe', '🐉', ['lua-cheia', 'maratona']),
+  dragon: form('dragon', 'Dragão', '🐲', ['lua-cheia', 'maratona', 'descansado']),
+  // vaca — a calma: a refeição, a folga, a força que acorda cedo
   cow: form('cow', 'Vaca', '🐮', ['rumina']),
-  'cow-prize': form('cow-prize', 'Vaca premiada', '🐄', ['rumina', 'fiel']),
-  'cow-golden': form('cow-golden', 'Vaca dourada', '🏆', ['rumina', 'fiel', 'constancia']),
-  bull: form('bull', 'Touro', '🐂', ['rumina', 'madrugador']),
-  bison: form('bison', 'Bisão', '🦬', ['rumina', 'madrugador', 'noturno']),
-  // pomba
-  dove: form('dove', 'Pomba', '🕊️', ['madrugador', 'aula']),
-  'dove-fire': form('dove-fire', 'Pássaro de fogo', '🔥', ['madrugador', 'aula', 'lua-cheia']),
-  phoenix: form('phoenix', 'Fênix', '🐦‍🔥', ['madrugador', 'aula', 'lua-cheia', 'constancia']),
-  falcon: form('falcon', 'Falcão', '🦅', ['madrugador', 'aula', 'fiel']),
-  eagle: form('eagle', 'Águia', '🦅', ['madrugador', 'aula', 'fiel', 'constancia']),
+  'cow-prize': form('cow-prize', 'Vaca premiada', '🐄', ['rumina', 'descansado']),
+  'cow-golden': form('cow-golden', 'Vaca dourada', '🏆', ['rumina', 'descansado', 'fiel']),
+  bull: form('bull', 'Touro', '🐂', ['madrugador', 'hora-extra']),
+  bison: form('bison', 'Bisão', '🦬', ['madrugador', 'hora-extra', 'maratona']),
+  // pomba — a aula e o recomeço: o dia de faculdade e o dia em que você volta
+  dove: form('dove', 'Pomba', '🕊️', ['aula']),
+  'dove-fire': form('dove-fire', 'Pássaro de fogo', '🔥', ['aula', 'recomeco']),
+  phoenix: form('phoenix', 'Fênix', '🐦‍🔥', ['aula', 'recomeco', 'descansado']),
+  falcon: form('falcon', 'Falcão', '🦅', ['madrugador', 'vespertino']),
+  eagle: form('eagle', 'Águia', '🦅', ['madrugador', 'vespertino', 'ponto-final']),
 };
 
 /**
@@ -78,8 +85,8 @@ export const PETS: Record<PetId, PetSpecies> = {
     form: 'dog',
     names: ['Bolt', 'Thor', 'Mel', 'Pipoca', 'Rex', 'Luna', 'Caramelo', 'Nico'],
     paths: [
-      twoStages('companheiro', 'Companheiro', 'Continua cachorro e cresce: pastor alemão, depois o cão lendário — o veterano da rotina.', 'dog-shepherd', 'dog-legend'),
-      twoStages('selvagem', 'Selvagem', 'Atende ao chamado: vira lobo, depois lobo lunar — mais forte à noite.', 'wolf', 'wolf-lunar'),
+      twoStages('companheiro', 'Companheiro', 'Continua cachorro e cresce: pastor alemão, depois cão lendário. Rende nos retornos — o estudo depois da aula, o que bate a meta.', 'dog-shepherd', 'dog-legend'),
+      twoStages('selvagem', 'Selvagem', 'Atende ao chamado: vira lobo, depois lobo lunar. Larga a Fiel e vira noite e fôlego — rende da noite em diante e nos dias longos.', 'wolf', 'wolf-lunar'),
     ],
   },
   cat: {
@@ -88,8 +95,8 @@ export const PETS: Record<PetId, PetSpecies> = {
     form: 'cat',
     names: ['Mia', 'Tom', 'Frida', 'Nina', 'Simba', 'Jade', 'Luna', 'Salem'],
     paths: [
-      twoStages('sabio', 'Sábio', 'Guardião de templos: gato egípcio, depois esfinge — a que guarda os enigmas.', 'cat-egyptian', 'sphinx'),
-      twoStages('selvagem', 'Selvagem', 'Volta pra mata: lince, depois tigre.', 'lynx', 'tiger'),
+      twoStages('sabio', 'Sábio', 'Guardião de templos: gato egípcio, depois esfinge. Rende dentro dos grupos de estudo — o trecho do dia que tem nome e objetivo.', 'cat-egyptian', 'sphinx'),
+      twoStages('selvagem', 'Selvagem', 'Volta pra mata: lince, depois tigre. Mantém a soneca e ganha a noite; no fim, rende também nos dias de folga.', 'lynx', 'tiger'),
     ],
   },
   snake: {
@@ -98,8 +105,8 @@ export const PETS: Record<PetId, PetSpecies> = {
     form: 'snake',
     names: ['Sibila', 'Ísis', 'Ônix', 'Zig', 'Medusa', 'Naja'],
     paths: [
-      twoStages('ancestral', 'Ancestral', 'Ergue o capuz: naja, depois basilisco — a serpente coroada.', 'naja', 'basilisk'),
-      twoStages('mitico', 'Mítico', 'Cria chifres e escamas de brasa: serpe, depois dragão.', 'snake-wyrm', 'dragon'),
+      twoStages('ancestral', 'Ancestral', 'Ergue o capuz: naja, depois basilisco. Rende nos marcos do dia — a meta, o estudo depois da refeição, o último bloco.', 'naja', 'basilisk'),
+      twoStages('mitico', 'Mítico', 'Cria chifres e escamas de brasa: serpe, depois dragão. Larga a Constância e vira noite alta e resistência.', 'snake-wyrm', 'dragon'),
     ],
   },
   cow: {
@@ -108,8 +115,8 @@ export const PETS: Record<PetId, PetSpecies> = {
     form: 'cow',
     names: ['Mimosa', 'Malhada', 'Berta', 'Estrela', 'Dona', 'Preta'],
     paths: [
-      twoStages('campea', 'Campeã', 'Estrela da feira: vaca premiada, depois vaca dourada.', 'cow-prize', 'cow-golden'),
-      twoStages('selvagem', 'Selvagem', 'Sai do pasto: touro, depois bisão.', 'bull', 'bison'),
+      twoStages('campea', 'Campeã', 'Estrela da feira: vaca premiada, depois vaca dourada. Rende na volta da folga e no primeiro estudo do dia.', 'cow-prize', 'cow-golden'),
+      twoStages('selvagem', 'Selvagem', 'Sai do pasto: touro, depois bisão. Larga a Rumina: acorda cedo, estuda na folga e aguenta o dia longo.', 'bull', 'bison'),
     ],
   },
   dove: {
@@ -118,8 +125,8 @@ export const PETS: Record<PetId, PetSpecies> = {
     form: 'dove',
     names: ['Paz', 'Alva', 'Nuvem', 'Cora', 'Pipo', 'Branca'],
     paths: [
-      twoStages('solar', 'Solar', 'Voa pro sol: pássaro de fogo, depois fênix.', 'dove-fire', 'phoenix'),
-      twoStages('rapina', 'Rapina', 'Vira ave de rapina: falcão, depois águia.', 'falcon', 'eagle'),
+      twoStages('solar', 'Solar', 'Voa pro sol: pássaro de fogo, depois fênix. Renasce: rende no dia em que você volta depois de sumir.', 'dove-fire', 'phoenix'),
+      twoStages('rapina', 'Rapina', 'Vira ave de rapina: falcão, depois águia. Larga a Aula e vira o dia claro — de manhã cedo à tarde, e o bloco que fecha.', 'falcon', 'eagle'),
     ],
   },
 };

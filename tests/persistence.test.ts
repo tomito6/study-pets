@@ -289,7 +289,7 @@ describe('ida e volta', () => {
       closedDays: { '2026-09-01': true },
       pets: {
         owned: [
-          { id: 'owl', species: 'dove', name: 'Sofia', xp: 300, path: null, stage: 0, skill: 'madrugador', skillActivatedAt: 1234, adoptedAt: 10 },
+          { id: 'owl', species: 'dove', name: 'Sofia', xp: 300, path: null, stage: 0, skill: 'aula', skillActivatedAt: 1234, adoptedAt: 10 },
           { id: 'dog', species: 'dog', name: 'Bolt', xp: 60, path: 'selvagem', stage: 1, skill: null, skillActivatedAt: 0, adoptedAt: 20 },
         ],
         active: 'owl',

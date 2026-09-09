@@ -88,37 +88,74 @@ export function checkPetOf(check: CheckRecord | undefined | null): PetInstanceId
  * no momento do check, com o que o plano do dia já sabe.
  */
 export type SkillRule =
-  /** Estudo que começa a partir de `hour`. */
-  | { kind: 'after-hour'; hour: number }
-  /** Estudo que começa antes de `hour`. */
-  | { kind: 'before-hour'; hour: number }
+  /** Estudo que começa na faixa `[from, to)` (hora cheia, 0–24). */
+  | { kind: 'hour-range'; from: number; to: number }
   /** O primeiro estudo marcado no dia. */
   | { kind: 'first-study' }
+  /** O último estudo/evento do plano do dia (a posição, não a ordem em que se marca). */
+  | { kind: 'last-study' }
+  /** Do `from`-ésimo estudo do dia em diante (1-based). */
+  | { kind: 'nth-study'; from: number }
   /** Evento que conta como estudo (aula, prova). */
   | { kind: 'event' }
-  /** Estudo logo depois de uma pausa longa. */
-  | { kind: 'after-long-break' }
-  /** Estudo logo depois de uma refeição: um intervalo (evento sem XP) de `MEAL_MIN_MINS` ou mais. */
-  | { kind: 'after-meal' }
+  /** Estudo logo depois de um bloco de um certo feitio. */
+  | { kind: 'after'; what: 'long-break' | 'meal' | 'event' }
   /** O estudo/evento que faz o dia bater a meta diária. */
-  | { kind: 'meets-goal' };
+  | { kind: 'meets-goal' }
+  /** Estudo dentro de um grupo de estudo. */
+  | { kind: 'in-group' }
+  /** O estudo que fecha um grupo (o último que faltava dele). */
+  | { kind: 'completes-group' }
+  /** Todo estudo do dia em que se volta depois de um dia que contava e ficou em branco. */
+  | { kind: 'comeback' }
+  /** Todo estudo do dia seguinte a uma folga (fim de semana pausado ou dia livre). */
+  | { kind: 'after-rest' }
+  /** Estudo num dia de folga em que se abriu janelas (o dia bônus). */
+  | { kind: 'bonus-day' };
+
+/**
+ * A faixa de frequência da skill — o que mantém todas com a mesma força.
+ *
+ * `share` é a fatia do XP de um dia típico que a skill encosta, **pro estudante
+ * cuja rotina ela combina** (referência: 8 estudos de 25 min). `weight` multiplica
+ * o bônus por nível pra compensar. O produto `share × weight` é o mesmo nos três
+ * tiers (`SKILL_DAY_SHARE`) — é isso que faz uma skill que acontece uma vez por
+ * dia valer o mesmo que uma que acontece o dia inteiro. Teste garante.
+ *
+ * - `alta`  — acompanha o dia (~3 de 8 estudos): faixa de horário, maratona, grupo…
+ * - `media` — acontece às vezes (~1,5 de 8): depois da pausa longa, evento…
+ * - `baixa` — uma vez por dia (1 de 8): o primeiro, o último, o que bate a meta…
+ */
+export type SkillTier = 'alta' | 'media' | 'baixa';
+
+export const SKILL_TIERS: Readonly<Record<SkillTier, { share: number; weight: number }>> = {
+  alta: { share: 0.375, weight: 1 },
+  media: { share: 0.1875, weight: 2 },
+  baixa: { share: 0.125, weight: 3 },
+};
+
+/** `share × weight` de todo tier. Uma skill vale ~2% do XP do dia no Lv. 1 e ~6% no teto. */
+export const SKILL_DAY_SHARE = 0.375;
 
 export interface SkillDefinition {
   id: SkillId;
   name: string;
+  /** Só a condição ("em estudos a partir das 18h") — o "+X% XP" vem de `skillDesc`. */
   desc: string;
+  tier: SkillTier;
   rule: SkillRule;
 }
+
+/** Intervalo a partir desta duração conta como refeição pra Rumina (café de 15 min não é almoço). */
+export const MEAL_MIN_MINS = 30;
 
 /**
  * Bônus aditivo de XP de uma skill elegível, pelo nível do pet: 5% no Lv. 1,
  * +1% por nível, teto de 15% no Lv. 11 (~13h de estudo com o pet). Pequeno de
- * propósito — é reconhecimento, não "quem não tem tá perdendo". Num pomo de
- * 25 min (50 XP): +3 XP no Lv. 1, +5 no Lv. 5, +8 no teto.
+ * propósito — é reconhecimento, não "quem não tem tá perdendo". O tier multiplica
+ * isso (ver `SKILL_TIERS`): num pomo de 25 min (50 XP), uma skill `alta` dá +3 XP
+ * no Lv. 1 e +8 no teto; uma `baixa` dá +8 e +23, mas acontece um terço das vezes.
  */
-/** Intervalo a partir desta duração conta como refeição pra Rumina (café de 15 min não é almoço). */
-export const MEAL_MIN_MINS = 30;
-
 export const SKILL_BONUS_BASE = 0.05;
 export const SKILL_BONUS_PER_LEVEL = 0.01;
 export const SKILL_BONUS_MAX = 0.15;
@@ -128,21 +165,56 @@ export function skillBonusForLevel(level: number): number {
   return Math.min(SKILL_BONUS_MAX, Math.round((SKILL_BONUS_BASE + SKILL_BONUS_PER_LEVEL * (l - 1)) * 100) / 100);
 }
 
-/** O texto da skill como o pet a vê hoje: "+9% XP em estudos a partir das 18h". `desc` guarda só a condição. */
-export function skillDesc(skill: Pick<SkillDefinition, 'desc'>, level: number): string {
-  return `+${Math.round(skillBonusForLevel(level) * 100)}% XP ${skill.desc}`;
+/** O bônus que vai pro check: o do nível, vezes o peso do tier. */
+export function skillBonus(skill: Pick<SkillDefinition, 'tier'>, level: number): number {
+  const weight = SKILL_TIERS[skill.tier]?.weight ?? 1;
+  return Math.round(skillBonusForLevel(level) * weight * 10000) / 10000;
 }
 
-/** Catálogo de skills. As formas dos pets (`pets.ts`) referenciam estes ids. */
+/** O texto da skill como o pet a vê hoje: "+9% XP em estudos a partir das 18h". */
+export function skillDesc(skill: Pick<SkillDefinition, 'desc' | 'tier'>, level: number): string {
+  return `+${Math.round(skillBonus(skill, level) * 100)}% XP ${skill.desc}`;
+}
+
+/**
+ * Catálogo de skills. As formas dos pets (`pets.ts`) referenciam estes ids.
+ *
+ * Cada uma é um jeito de estudar, não um número: a faixa do dia em que você rende,
+ * o momento em que é difícil voltar, o dia em que você reaparece. O tier é o que
+ * iguala a força — ver `SKILL_TIERS`. Ao acrescentar uma, o comentário deve dizer
+ * quantas vezes ela acontece num dia de 8 estudos pra quem ela combina; é isso que
+ * escolhe o tier.
+ */
 export const SKILLS: Record<SkillId, SkillDefinition> = {
-  noturno: { id: 'noturno', name: 'Noturno', desc: 'em estudos a partir das 18h', rule: { kind: 'after-hour', hour: 18 } },
-  'lua-cheia': { id: 'lua-cheia', name: 'Lua cheia', desc: 'em estudos a partir das 21h', rule: { kind: 'after-hour', hour: 21 } },
-  madrugador: { id: 'madrugador', name: 'Madrugador', desc: 'em estudos antes das 9h', rule: { kind: 'before-hour', hour: 9 } },
-  fiel: { id: 'fiel', name: 'Fiel', desc: 'no primeiro estudo do dia', rule: { kind: 'first-study' } },
-  aula: { id: 'aula', name: 'Aula', desc: 'em eventos que contam como estudo', rule: { kind: 'event' } },
-  preguica: { id: 'preguica', name: 'Preguiça', desc: 'no estudo logo depois de uma pausa longa', rule: { kind: 'after-long-break' } },
-  rumina: { id: 'rumina', name: 'Rumina', desc: 'no estudo logo depois de uma refeição (intervalo de 30 min ou mais)', rule: { kind: 'after-meal' } },
-  constancia: { id: 'constancia', name: 'Constância', desc: 'no estudo que bate a meta do dia', rule: { kind: 'meets-goal' } },
+  // --- a faixa do dia em que você rende (~3 de 8 estudos pra quem estuda naquela faixa)
+  madrugador: { id: 'madrugador', name: 'Madrugador', desc: 'em estudos que começam antes das 9h', tier: 'alta', rule: { kind: 'hour-range', from: 0, to: 9 } },
+  vespertino: { id: 'vespertino', name: 'Vespertino', desc: 'em estudos que começam entre 12h e 18h', tier: 'alta', rule: { kind: 'hour-range', from: 12, to: 18 } },
+  noturno: { id: 'noturno', name: 'Noturno', desc: 'em estudos que começam a partir das 18h', tier: 'alta', rule: { kind: 'hour-range', from: 18, to: 24 } },
+  // Mais estreita que a Noturno — cerca de metade das vezes —, então pesa o dobro.
+  'lua-cheia': { id: 'lua-cheia', name: 'Lua cheia', desc: 'em estudos que começam a partir das 21h', tier: 'media', rule: { kind: 'hour-range', from: 21, to: 24 } },
+
+  // --- o feitio do dia
+  // Num dia de 8 estudos, do 5º em diante são 4; num dia curto, nenhum. Nunca cobra o dia longo.
+  maratona: { id: 'maratona', name: 'Maratona', desc: 'do 5º estudo do dia em diante', tier: 'alta', rule: { kind: 'nth-study', from: 5 } },
+  fiel: { id: 'fiel', name: 'Fiel', desc: 'no primeiro estudo do dia', tier: 'baixa', rule: { kind: 'first-study' } },
+  'ponto-final': { id: 'ponto-final', name: 'Ponto final', desc: 'no último estudo do dia', tier: 'baixa', rule: { kind: 'last-study' } },
+  constancia: { id: 'constancia', name: 'Constância', desc: 'no estudo que bate a meta do dia', tier: 'baixa', rule: { kind: 'meets-goal' } },
+
+  // --- os retornos difíceis (o bloco depois de parar)
+  preguica: { id: 'preguica', name: 'Preguiça', desc: 'no estudo logo depois de uma pausa longa', tier: 'media', rule: { kind: 'after', what: 'long-break' } },
+  rumina: { id: 'rumina', name: 'Rumina', desc: 'no estudo logo depois de uma refeição (intervalo de 30 min ou mais)', tier: 'baixa', rule: { kind: 'after', what: 'meal' } },
+  retomada: { id: 'retomada', name: 'Retomada', desc: 'no estudo logo depois de um evento', tier: 'baixa', rule: { kind: 'after', what: 'event' } },
+  aula: { id: 'aula', name: 'Aula', desc: 'em eventos que contam como estudo', tier: 'media', rule: { kind: 'event' } },
+
+  // --- o dia inteiro, quando o dia é especial
+  // Recomeço e Descansado valem em TODO estudo daquele dia — por isso são `alta`.
+  recomeco: { id: 'recomeco', name: 'Recomeço', desc: 'nos estudos do dia em que você volta depois de um dia em branco', tier: 'alta', rule: { kind: 'comeback' } },
+  descansado: { id: 'descansado', name: 'Descansado', desc: 'nos estudos do dia seguinte a uma folga', tier: 'alta', rule: { kind: 'after-rest' } },
+  'hora-extra': { id: 'hora-extra', name: 'Hora extra', desc: 'em estudos num dia de folga', tier: 'alta', rule: { kind: 'bonus-day' } },
+
+  // --- os grupos de estudo (o trecho do dia com nome e objetivo)
+  afinco: { id: 'afinco', name: 'Afinco', desc: 'em estudos dentro de um grupo', tier: 'alta', rule: { kind: 'in-group' } },
+  empenho: { id: 'empenho', name: 'Empenho', desc: 'no estudo que completa um grupo', tier: 'baixa', rule: { kind: 'completes-group' } },
 };
 
 /** Contexto necessário pra decidir o bônus no momento do check. */
@@ -170,6 +242,18 @@ export interface SkillContext {
   prevBlock: { type: BlockType; mins: number } | null;
   /** Duração da pausa longa na config, pra reconhecer uma. */
   longBreakMins: number;
+  /** Este é o último estudo/evento do plano do dia. */
+  isLastStudy: boolean;
+  /** O bloco cabe dentro de um grupo de estudo deste dia. */
+  inGroup: boolean;
+  /** Marcar este bloco fecha o grupo dele (era o último que faltava). */
+  completesGroup: boolean;
+  /** O dia que contava antes deste ficou em branco — hoje é uma volta. */
+  comebackDay: boolean;
+  /** Ontem foi folga (fim de semana pausado ou dia livre). */
+  afterRestDay: boolean;
+  /** Hoje é dia de folga com janelas abertas (dia bônus). */
+  bonusDay: boolean;
   /** "Agora" — injetado pra ser testável. */
   now: Date;
 }
@@ -195,27 +279,42 @@ export function skillEligible(
   if ((ctx.activatedAt || 0) > blockStart.getTime()) return false;
 
   const study = b.type === 'estudo';
+  /** Estudo ou evento — o que rende XP "de estudo". */
+  const counts = study || b.type === 'event';
   const rule = skill.rule;
   switch (rule.kind) {
-    case 'after-hour':
-      return study && (bh as number) >= rule.hour;
-    case 'before-hour':
-      return study && (bh as number) < rule.hour;
+    case 'hour-range':
+      return study && (bh as number) >= rule.from && (bh as number) < rule.to;
     case 'first-study':
       return study && ctx.studiesCheckedToday === 0;
+    case 'last-study':
+      return counts && ctx.isLastStudy;
+    case 'nth-study':
+      return study && ctx.studiesCheckedToday >= rule.from - 1;
     case 'event':
       return b.type === 'event';
-    case 'after-long-break':
-      return study && !!ctx.prevBlock && ctx.prevBlock.type === 'pausa' && ctx.prevBlock.mins >= ctx.longBreakMins;
-    case 'after-meal':
-      return study && !!ctx.prevBlock && ctx.prevBlock.type === 'intervalo' && ctx.prevBlock.mins >= MEAL_MIN_MINS;
+    case 'after':
+      if (!study || !ctx.prevBlock) return false;
+      if (rule.what === 'long-break') return ctx.prevBlock.type === 'pausa' && ctx.prevBlock.mins >= ctx.longBreakMins;
+      if (rule.what === 'meal') return ctx.prevBlock.type === 'intervalo' && ctx.prevBlock.mins >= MEAL_MIN_MINS;
+      return ctx.prevBlock.type === 'event';
     case 'meets-goal':
       return (
-        (study || b.type === 'event') &&
+        counts &&
         ctx.dailyStudyMin > 0 &&
         ctx.studyMinsToday < ctx.dailyStudyMin &&
         ctx.studyMinsToday + blockMins(b) >= ctx.dailyStudyMin
       );
+    case 'in-group':
+      return counts && ctx.inGroup;
+    case 'completes-group':
+      return counts && ctx.completesGroup;
+    case 'comeback':
+      return counts && ctx.comebackDay;
+    case 'after-rest':
+      return counts && ctx.afterRestDay;
+    case 'bonus-day':
+      return counts && ctx.bonusDay;
   }
 }
 
@@ -225,5 +324,7 @@ export function bonusForCheck(
   dateKey: DateKey,
   ctx: SkillContext,
 ): number {
-  return skillEligible(b, dateKey, ctx) ? skillBonusForLevel(ctx.petLevel) : 0;
+  const skill = ctx.activeSkill ? SKILLS[ctx.activeSkill] : undefined;
+  if (!skill || !skillEligible(b, dateKey, ctx)) return 0;
+  return skillBonus(skill, ctx.petLevel);
 }
