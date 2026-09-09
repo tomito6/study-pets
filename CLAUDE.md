@@ -88,6 +88,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
   - `account.ts` — `deleteAccount`: doc primeiro, usuário depois; devolve o estágio que falhou
   - `pets.ts` — `applyPendingPetXP` (idempotente), `coinBalance`, `buyPet` (espécie + nome, com motivo de recusa), `adoptStarter`/`needsStarter` (o pet inicial, grátis, só sem pet nenhum), `toggleEquip`, `toggleSkill`, `renamePet`, `evolvePet`, `activePet`/`petById`
   - `dayEnd.ts` — `closeDay` (trava checks, credita pets, monta o resumo), o prompt automático agendado pro fim do último estudo (sem polling), `extendDay` (num dia com janelas editadas, estica o override; senão a rotina)
+  - `avatar.ts` — a aparência do personagem: `currentAvatarSprites` (os 4 frames prontos) e `setAvatar` (troca, salva e notifica; devolve `false` se nada mudaria)
   - `onboarding.ts` — `finishOnboarding` (período + pet inicial; valida tudo com motivo antes de mudar qualquer coisa)
   - `tutorial.ts` — o tour contextual: `currentTourArea` (leitura), `finishTour` (área vista — "Entendi" no último balão e "Pular"), `restartTour` ("Ver o tour de novo": zera `tutorialSeen`). Avançar entre balões não persiste nada e fica no componente
   - `groups.ts` — `addGroup`/`updateGroup`/`deleteGroup` (com motivo de recusa), `validateGroup`, `canEditGroups`. Grupo não mexe no plano: só salva e notifica, sem `clearBlockCache`
@@ -105,7 +106,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `src/domain/hardcore.ts` — o modo hardcore, puro: `normalizeHardcoreConfig` (só `{ enabled }`), `HardcoreSession` + `sessionFor`/`parseHardcoreSession`/`resolveSession` (a sessão no dispositivo: `resume` / `abandon` / `expired-free`), `penaltyFor` (2× o XP do estudo; pausa 0), `quitCost` (a conta de desistir agora: limitada ao saldo, com nível antes/depois de usuário e pet), `isForfeited`/`penaltyRecord`/`normalizePenalties`
 - `src/domain/timer.ts` — `timerProgress` (restante = fim − agora, nunca um contador em memória — por isso aba suspensa e tela travada não atrasam o relógio; `phase` = `waiting`/`running`/`done`, com a contagem até o início). Qual bloco está rodando, porém, é runtime (`derived.timerBlock`, não persistido): **um reload perde o timer**; só a sessão do hardcore volta, pelo `localStorage` — ver "Modo hardcore", `canStartBlock`, `soundForBlock`, `blockNumberInSession`, `nextBlockAfter`, `chainedBlockAfter` (o bloco em que o foco emenda: estudo/pausa que começa quando este acaba), `formatCountdown`
 - `src/infrastructure/hardcoreSession.ts` (a sessão hardcore em `localStorage`, por uid — é deste dispositivo, não do doc), `infrastructure/unloadGuard.ts` (o `beforeunload` "certeza que quer sair?" enquanto um estudo hardcore roda; o texto é o do navegador, nenhum aceita mensagem própria) e `infrastructure/extensionBridge.ts` (a ponte com a extensão: `publishBlocking` dispara `study-pets:blocking` com o estado em JSON (payload `v: 2`), `onExtensionQuery` escuta `study-pets:blocking?`, `onBlockingAck` escuta `study-pets:blocking-ack`, e `extensionDetected`/`extensionVersion` leem o atributo que o content script põe no `<html>`)
-- `src/infrastructure/audio/sounds.ts` (Web Audio, porte fiel, falha em silêncio), `infrastructure/notifications/notifications.ts` (Web Notifications, guardadas), `infrastructure/visibility.ts` (`onVisible`: a página voltou a ficar visível — `visibilitychange` + `pageshow`), `infrastructure/wakeLock.ts` (Screen Wake Lock enquanto o foco está aberto; sem a API, no-op) e `infrastructure/download.ts` (Blob + `<a download>`)
+- `src/infrastructure/avatar/sprite.ts` (o personagem pintado no canvas → `data:` URI, memoizado por aparência; sem DOM devolve vazio), `infrastructure/audio/sounds.ts` (Web Audio, porte fiel, falha em silêncio), `infrastructure/notifications/notifications.ts` (Web Notifications, guardadas), `infrastructure/visibility.ts` (`onVisible`: a página voltou a ficar visível — `visibilitychange` + `pageshow`), `infrastructure/wakeLock.ts` (Screen Wake Lock enquanto o foco está aberto; sem a API, no-op) e `infrastructure/download.ts` (Blob + `<a download>`)
 - `.env.test` — liga o modo memória pro Vitest; os testes de aplicação que passam pela infra nunca tocam o Firebase
 - `src/shared/strings.ts` — textos da UI React. Tudo que migrar pro React escreve texto aqui, não inline
 - `src/shared/toast.ts` — o toast (DOM direto, sem React; vira no-op fora do browser)
@@ -120,14 +121,17 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `.env.example` — variáveis suportadas (todas opcionais). `.env.teste` liga o modo memória pro `npm run dev:teste`
 - `src/domain/` — regras puras em TypeScript, sem DOM/Firebase/estado global:
   - `types.ts` — tipos do domínio (`StudyBlock`, `UserConfig`, `RecurringEventSeries`, `CheckRecord`, ...)
+  - `avatar.ts` — o personagem como dados: a arte em grid de letras (24×42, 4 frames), o catálogo de tons de pele, cores e penteados, a paleta e o contorno automático. Puro — ver "O personagem"
   - `time.ts` — `dk`, `timeToMins`, `minsToTime`, `mondayOf`, `aggregateMins` (tudo em horário local)
   - `weeks.ts` — as semanas que a UI mostra: `buildWeeks` (a partir de hoje, do período configurado e dos dias com dados — sem data hardcoded), `weekDays`, `dateForWeekDay`, `findWeek` e os tipos `Week`/`WeekDay`. Quem chama é `application/plan.ts` (`rebuildWeeks`)
   - `config.ts` — `DEFAULT_CFG` e `migrateConfig`
   - `planner.ts` — `generateBlocks` (a memoização fica em `application/plan.ts`) e `calcActualEnd`
   - `events.ts` — `expandEventsForDate`, com semanal/quinzenal/mensal e exceções
-  - `progression.ts` — XP, moedas, `LEVELS` (do usuário), o catálogo `SKILLS` com a regra de cada uma, e `skillEligible`/`bonusForCheck`
-  - `checks.ts` — quem pode ser marcado (`canToggleCheck`: dia fechado é read-only, dia futuro não
-    chegou) e `computePendingPetXP`, que calcula o XP dos pets de forma idempotente
+  - `progression.ts` — XP, moedas, `LEVELS` (do usuário), o catálogo `SKILLS` (com o `tier` de cada uma, `SKILL_TIERS` e a constante `SKILL_DAY_SHARE` que iguala a força das skills — ver "Sistema de skills") e `skillEligible`/`skillBonus`/`bonusForCheck`
+  - `checks.ts` — quem pode ser marcado (`canCheckBlock`: dia fechado é read-only, dia futuro não
+    chegou), `computePendingPetXP` (o XP dos pets, idempotente) e a caminhada pra trás nos dias
+    (`previousDayKey`, `previousCountingDay` — folga não conta, igual em `allDays()`; é o que as
+    skills Recomeço e Descansado usam pra distinguir sumiço de descanso)
   - `stats.ts` — `computeStats` (uma passada só) e `calcStreaks`
   - `groups.ts` — grupos de estudo: pertencimento por horário (`blockInGroup`), `groupProgress`, `validateGroupRange`, `groupHeaderPositions`
   - `auth.ts` — `isValidEmail`/`isValidPassword` (mínimo 8 caracteres — o Firebase aceita 6, a gente pede mais), `AuthError` (motivo tipado: `email-in-use`, `invalid-credential`, `weak-password`, `invalid-email`, `too-many-requests`, `network`, `unknown` — nunca o código cru do Firebase vaza pra UI) e `authErrorReasonFromCode`, que mapeia os códigos do Firebase Auth pro motivo (junta de propósito `auth/wrong-password`/`auth/user-not-found` (SDKs antigos) e `auth/invalid-credential` (SDKs novos) no mesmo motivo — nunca revela se foi o e-mail ou a senha que errou)
@@ -138,8 +142,12 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - Sprites são frames sequenciais nomeados `0.png`, `1.png`, ...
 - `firestore.rules` — regras de acesso (só o dono lê/escreve `users/{uid}`)
 - `scripts/backup-firestore-console.js` — snippet pra baixar seu doc do Firestore pelo DevTools (pra quem não é o autor, o botão "Baixar meus dados" em Configurações → Geral faz o mesmo)
-- `scripts/app-icon.mjs` — gera os ícones do PWA em `public/icons/` a partir do personagem (`node scripts/app-icon.mjs`, Chromium headless do Playwright). Arte autoral; um ícone à mão substitui os PNGs
+- `scripts/app-icon.mjs` — gera os ícones do PWA em `public/icons/` **e o ícone da extensão** (`extension/icon-192.png`) a partir do personagem (`node scripts/app-icon.mjs`, Chromium headless do Playwright). O da extensão sai daqui porque era uma cópia manual que envelhecia calada quando o personagem mudava; tamanho novo no manifest dela = alvo novo em `targets`. Arte autoral; um ícone à mão substitui os PNGs
 - `public/manifest.webmanifest` e `public/icons/` — o manifest do PWA (estático) e os ícones 192/512/512-maskable/apple-touch
+- `scripts/character-sprites.mjs` — os PNGs do personagem padrão em `public/idle/user/` (o app desenha o dele na hora; estes servem ao `app-icon.mjs`). `--ascii` mostra os penteados no terminal
+- `scripts/png.mjs` — o encoder de PNG RGBA sem dependência (zlib do Node + CRC32), compartilhado por `pixel-sprites.mjs` e `character-sprites.mjs`
+- `scripts/bestiary.mjs` + `docs/bestiario.html` — o **bestiário**: gera a página do elenco inteiro a partir do catálogo (ver "Bestiário")
+- `scripts/ts-loader.mjs` — o hook que deixa um script do Node importar o domínio direto (`./time` → `./time.ts`); o Node 24 já tira os tipos sozinho, só a resolução faltava. Usar com `node --import ./scripts/ts-loader.mjs <script>`
 - `scripts/pixel-sprites.mjs` — desenha em código os sprites placeholder das 25 formas (`node scripts/pixel-sprites.mjs` → `public/idle/pets/{form}/`). Cada forma é uma função `(frame) → grid`; as evoluções reaproveitam o corpo da família (`dogBody`, `catBody`, `snakeCoil`+`snakeHead`, `cowBody`, `doveBody`+`doveHead`) e mudam paleta + detalhes, e a forma-base de cada família sai pixel a pixel igual à anterior. Arte autoral, 32×32 com transparência, no padrão do personagem; trocar por arte à mão quando houver. Teste garante que toda forma do catálogo tem os 4 frames no disco
 - `extension/` — a extensão do navegador do **bloqueio de sites** (Chromium, Manifest V3, sem build; carregar sem compactação — o README de lá é escrito pro usuário): `content.js` (se anuncia no `<html>` com a versão, repassa o estado que o app publica, devolve o ack, pergunta ao carregar), `background.js` (guarda em `chrome.storage.local`, aplica as regras do `declarativeNetRequest`, responde com o ack, acende a badge "ON", alarme pro fim do bloco, redireciona abas já abertas e vigia `tabs.onUpdated`), `rules.js` (puro: `buildRules`/`isBlocked`/`ackFor`/`isLive`/`isSupported` — testado em `tests/extension-rules.test.ts` e `extension-background.test.ts`, tipos em `rules.d.ts`), `blocked.html/css/js` (a tela do pet no lugar do site: sprite animado com os frames servidos pelo próprio app, contagem, "Voltar pro Study Pets"; a frase de saída muda entre hardcore / estudo normal / teste; sem botão de desbloquear) e `popup.html/css/js` (o que o ícone abre)
 - `e2e/extension.spec.ts` + `playwright.extension.config.ts` + `scripts/chromium-exe.mjs` — a extensão num navegador de verdade (`npm run test:ext`)
@@ -302,7 +310,7 @@ Adicionar um pet novo:
 | Pomba | Solar | Pássaro de fogo | Fênix |
 | Pomba | Rapina | Falcão | Águia |
 
-Regra das skills ao longo do caminho: a **escolha** pode trocar (o lobo larga a Fiel e pega Noturno/Lua cheia — o selvagem é transformação), mas o **avanço** do Lv. 15 nunca tira, só acrescenta uma (teste garante). Os caminhos selvagem/mítico puxam pras skills de horário; os de companhia pras de rotina. UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills, e a linha `.evo-path-next` "depois: Tigre · Lv. 15" com o sprite do segundo estágio — `EvolutionOption.next`); no Lv. 15 o mesmo modal mostra só o próximo estágio (`advance`); "Evolui no Lv. N" enquanto trancado.
+Regra das skills ao longo do caminho — **a escada é 1 → 2 → 3**: a espécie nasce com **uma** skill, a **escolha** do Lv. 5 tem **duas** e o **avanço** do Lv. 15 tem **três**. A escolha pode **trocar** a da base (o lobo larga a Fiel — o selvagem é transformação); o avanço **nunca tira**, só acrescenta. **Nenhuma forma repete o conjunto de skills de outra**: escolher caminho é escolher um jeito de estudar, não um sprite. Os três são teste (`tests/pets.test.ts`). Ver a tabela em "Sistema de skills" e o [bestiário](docs/bestiario.html). UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills, e a linha `.evo-path-next` "depois: Tigre · Lv. 15" com o sprite do segundo estágio — `EvolutionOption.next`); no Lv. 15 o mesmo modal mostra só o próximo estágio (`advance`); "Evolui no Lv. N" enquanto trancado.
 
 A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). Os cards são `ShopPetCard` (espécie, com preço) e `OwnedPetCard` (instância, em "Meus pets").
 
@@ -348,17 +356,70 @@ Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPrompt
 
 ## Sistema de skills
 
-Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, rule }`. `desc` guarda **só a condição** ("em estudos a partir das 18h"); o texto que o usuário vê vem de `skillDesc(skill, nível)`, que põe o "+X% XP" do nível do pet na frente — os "+5%" abaixo são o valor do Lv. 1. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma (Coruja e Lobo têm Noturno). Hoje: `noturno` (+5% em estudos a partir das 18h), `lua-cheia` (idem, 21h), `madrugador` (antes das 9h), `fiel` (+5% no 1º estudo do dia), `aula` (+5% em eventos que contam como estudo), `preguica` (estudo logo depois de uma pausa longa), `rumina` (estudo logo depois de uma refeição: intervalo de 30 min ou mais — `MEAL_MIN_MINS`), `constancia` (o estudo/evento que faz o dia bater a meta). Quem tem (a base, e o que cada estágio acrescenta): Cachorro → fiel · Pastor alemão +aula · Cão lendário +constancia · Lobo → noturno, lua-cheia · Lobo lunar +madrugador · Gato → preguica · Gato egípcio +aula · Esfinge +constancia · Lince +noturno · Tigre +lua-cheia · Cobra → constancia · Naja +rumina · Basilisco +aula · Serpe +noturno · Dragão +lua-cheia · Vaca → rumina · Vaca premiada +fiel · Vaca dourada +constancia · Touro +madrugador · Bisão +noturno · Pomba → madrugador, aula · Pássaro de fogo +lua-cheia · Fênix +constancia · Falcão +fiel · Águia +constancia. Toda espécie tem pelo menos uma (teste garante).
+Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, tier, rule }`. `desc` guarda **só a condição** ("em estudos que começam a partir das 18h"); o texto que o usuário vê vem de `skillDesc(skill, nível)`, que põe o "+X% XP" na frente. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma. **O bestiário (`docs/bestiario.html`) desenha tudo isto** — ver "Bestiário" abaixo.
 
-**Uma skill ativa por pet**, guardada na instância (`pet.skill`); `pet.skillActivatedAt` marca a troca. Clicar na ativa desliga; clicar em outra troca; `toggleSkill` recusa skill que a forma não tem. Evoluir pra uma forma que não tem a skill ativa desliga ela.
+**O equilíbrio é o ponto (rebalanceado em 2026-09-09).** A regra que rege o catálogo:
 
-**Anti-exploit (decidido no check, não retroativo)**: `skillEligible(b, dateKey, ctx)` exige `dateKey === hoje`, a skill ativa **desde antes do bloco começar** — `ctx.activatedAt = max(pet.skillActivatedAt, state.pets.activeSince)`, então equipar o pet no fim do bloco também não vale — e a regra da skill (`after-hour`, `before-hour`, `first-study` com `ctx.studiesCheckedToday`, `event`, `after-long-break` e `after-meal` com `ctx.prevBlock`, `meets-goal` com `ctx.studyMinsToday` + `ctx.dailyStudyMin`). `application/checks.ts` monta o contexto a partir do plano do dia. Se elegível, `toggleBlockCheck` grava no check o bônus **do nível do pet** (`skillBonusForLevel`: 5% no Lv. 1, +1% por nível, teto de 15% no Lv. 11 — `SKILL_BONUS_BASE`/`SKILL_BONUS_PER_LEVEL`/`SKILL_BONUS_MAX`; num pomo de 50 XP, +3 no Lv. 1, +5 no Lv. 5, +8 no teto); senão `bonus: 0`. O nível é o do XP **já creditado** (`petLevel(pet)`, que `application/checks.ts` põe em `SkillContext.petLevel`): o XP de hoje só entra ao fechar o dia, então durante o dia o nível fica "atrasado" — de propósito, é o que impede marcar/desmarcar pra subir o bônus no meio do dia (teste cobre). Bônus salvo é permanente — desligar a skill depois não revoga, e checks antigos continuam com o número deles (sem migração).
+> Uma skill vale o mesmo por dia pro estudante cuja rotina ela combina. O que muda entre elas é *quando* acontece, não *quanto* vale.
+
+Cada skill declara um **tier**, e o tier declara `share` (a fatia do XP de um dia típico que ela encosta, referência: 8 estudos de 25 min) e `weight` (o multiplicador do bônus). O produto é o mesmo nos três — `SKILL_DAY_SHARE = 0.375`, **teste garante**:
+
+| Tier | Acontece | `share` | `weight` | Lv. 1 | Teto (Lv. 11) |
+|---|---|---|---|---|---|
+| `alta` | ~3 de 8 estudos | 0,375 | ×1 | +5% | +15% |
+| `media` | ~1,5 de 8 | 0,1875 | ×2 | +10% | +30% |
+| `baixa` | 1 de 8, sempre | 0,125 | ×3 | +15% | +45% |
+
+Na prática toda skill rende ~2% do XP do dia no Lv. 1 e ~6% no teto — reconhecimento, nunca obrigação. Isso também conserta sem regra nova o bug em que **Lua cheia era estritamente pior que Noturno** (mesmo bônus, faixa mais estreita): agora a mais estreita pesa o dobro, então às 19h a Noturno paga e às 22h a Lua cheia paga mais. Um teste cobra isso pra qualquer par de faixas na mesma forma. O que o princípio **não** promete, de propósito: se a rotina não combina, a skill não acontece (madrugador com Noturno ganha zero) — escolher é o jogo.
+
+**As 17, por tier:**
+
+- **`alta` (acompanha o dia)** — `madrugador` (antes das 9h), `vespertino` (12h–18h), `noturno` (a partir das 18h), `maratona` (do 5º estudo do dia em diante), `recomeco` (**todo** estudo do dia em que se volta depois de um dia que contava e ficou em branco), `descansado` (todo estudo do dia seguinte a uma folga), `hora-extra` (estudo num dia de folga — o dia bônus), `afinco` (estudo dentro de um grupo de estudo).
+- **`media` (acontece às vezes)** — `lua-cheia` (a partir das 21h), `preguica` (estudo logo depois de uma pausa longa), `aula` (evento que conta como estudo).
+- **`baixa` (uma vez por dia)** — `fiel` (o primeiro estudo **marcado**), `ponto-final` (o último estudo **do plano**), `rumina` (logo depois de uma refeição: intervalo de `MEAL_MIN_MINS` = 30 min ou mais), `retomada` (logo depois de um evento — a volta da aula), `constancia` (o estudo que bate a meta do dia), `empenho` (o estudo que fecha um grupo).
+
+`recomeco` e `descansado` andam juntas de propósito: `previousCountingDay` (em `domain/checks.ts`) pula as folgas exatamente como `allDays()`, então **folga não é sumiço** — quem descansou de propósito cai na Descansado, quem sumiu cai no Recomeço. `recomeco` é o anti-streak do app: paga por voltar, nunca cobra por faltar.
+
+**Quem tem o quê** (a base, e o que cada estágio acrescenta): Cachorro → fiel · Pastor alemão +retomada · Cão lendário +constancia · Lobo → noturno, maratona · Lobo lunar +lua-cheia · Gato → preguica · Gato egípcio +afinco · Esfinge +empenho · Lince +noturno · Tigre +hora-extra · Cobra → constancia · Naja +rumina · Basilisco +ponto-final · Serpe → lua-cheia, maratona · Dragão +descansado · Vaca → rumina · Vaca premiada +descansado · Vaca dourada +fiel · Touro → madrugador, hora-extra · Bisão +maratona · Pomba → aula · Pássaro de fogo +recomeco · Fênix +descansado · Falcão → madrugador, vespertino · Águia +ponto-final. Toda skill do catálogo mora em pelo menos uma forma, e toda forma tem um conjunto único (testes garantem os dois).
+
+**Uma skill ativa por pet**, guardada na instância (`pet.skill`); `pet.skillActivatedAt` marca a troca. Clicar na ativa desliga; clicar em outra troca; `toggleSkill` recusa skill que a forma não tem. Evoluir pra uma forma que não tem a skill ativa desliga ela — é também o que cobre uma reatribuição de catálogo (a Pomba perdeu a `madrugador` no rebalanceamento; um pet com ela ativa tem ela desligada na leitura por `normalizePetInstance`, sem migração).
+
+**Anti-exploit (decidido no check, não retroativo)**: `skillEligible(b, dateKey, ctx)` exige `dateKey === hoje` e a skill ativa **desde antes do bloco começar** — `ctx.activatedAt = max(pet.skillActivatedAt, state.pets.activeSince)`, então equipar o pet no fim do bloco também não vale. Depois vem a regra da skill: `hour-range` (as quatro faixas de horário são uma regra só), `first-study`/`nth-study` com `ctx.studiesCheckedToday`, `last-study` com `ctx.isLastStudy`, `event`, `after` (`long-break`/`meal`/`event`) com `ctx.prevBlock`, `meets-goal` com `ctx.studyMinsToday` + `ctx.dailyStudyMin`, `in-group`/`completes-group`, `comeback`, `after-rest` e `bonus-day`. **Nenhuma skill vale pra pausa** (teste varre as 17). `application/checks.ts` monta o contexto **só do que o plano do dia já sabe** — grupos por `groupOf`/`blockInGroup`, folga por `isRestDayKey`, dia bônus por `isBonusDayKey`, o dia da volta por `previousCountingDay`. Nada disso é campo novo no documento salvo.
+
+Se elegível, `toggleBlockCheck` grava no check o bônus **do nível do pet vezes o peso do tier** (`skillBonus` = `skillBonusForLevel` × `SKILL_TIERS[tier].weight`; `skillBonusForLevel` é 5% no Lv. 1, +1% por nível, teto de 15% no Lv. 11 — `SKILL_BONUS_BASE`/`SKILL_BONUS_PER_LEVEL`/`SKILL_BONUS_MAX`); senão `bonus: 0`. O nível é o do XP **já creditado** (`petLevel(pet)`): o XP de hoje só entra ao fechar o dia, então durante o dia o nível fica "atrasado" — de propósito, é o que impede marcar/desmarcar pra subir o bônus no meio do dia (teste cobre). Bônus salvo é permanente — desligar a skill depois não revoga, e checks antigos continuam com o número deles (sem migração).
 
 **XP efetivo**: `xpFromCheck(b, check)` retorna `Math.round(b.xp * (1 + (check.bonus || 0)))`. Usado em `computeStats` (todos os pontos onde XP é agregado), em `computePendingPetXP` (o pet também recebe com bônus) e no feedback flutuante do check (mostra o número final, não o base).
 
-**UI**: dentro do card do pet no modal `#my-pets-panel`, abaixo de Equipar/Evoluir, aparece a seção "Skills" com toggles estilo switch. Estado visual: `.pet-skill-row.active` = borda verde + nome em accent + switch `.ps-toggle.on` (knob deslocado). Toggle é `<button>` (acessível por teclado).
+**UI**: dentro do card do pet no modal `#my-pets-panel`, abaixo de Equipar/Evoluir, aparece a seção "Skills" com toggles estilo switch. Estado visual: `.pet-skill-row.active` = borda verde + nome em accent + switch `.ps-toggle.on` (knob deslocado). Toggle é `<button>` (acessível por teclado). A tela lê `SKILLS` e `skillDesc`, então skill nova aparece sozinha.
 
-**Pra adicionar nova skill**: (1) entrada em `SKILLS` usando uma `rule` existente — ou um `kind` novo em `SkillRule`, o caso em `skillEligible` e o que o `SkillContext` precisar (que `application/checks.ts` monta), (2) o id na lista `skills` da forma. O resto (gravação no check, `xpFromCheck`, render no card, save/load) já cobre.
+**Pra adicionar nova skill**: (1) responda primeiro **quantas vezes ela acontece num dia de 8 estudos, pra quem ela combina** — a resposta é o `tier`; (2) entrada em `SKILLS` com `tier` e `rule` — se a regra é inédita, um `kind` novo em `SkillRule`, o caso em `skillEligible` e o campo em `SkillContext` (que `application/checks.ts` monta, só do plano do dia); (3) o id na lista `skills` de pelo menos uma forma, senão o teste reclama. O resto (gravação no check, `xpFromCheck`, render no card, save/load) já cobre.
+
+**O que ficou de fora, e por quê**: skill que paga em **moedas** (outro eixo, precisa de campo novo no check, e "mesma força" fica mole comparando moeda com XP); skill por **sequência de dias** (pagaria por streak e transformaria falhar em perda); skill por **concluir no modo foco** (puniria quem estuda longe do computador e marca depois); **"Imersão"** para pomos ≥ 45 min (quem configura pomo longo ganharia em 100% dos blocos — a pegadinha do "quem não pegou tá perdendo"). Detalhes em `plans/2026-09-09_0120_skills-e-bestiario.md`.
+
+## Bestiário
+
+`docs/bestiario.html` — uma página só com o elenco inteiro: as árvores de evolução com os sprites animados, as 17 skills por tier, o gráfico do equilíbrio, um editor e as instruções de manutenção. Gerado por:
+
+```
+node --import ./scripts/ts-loader.mjs scripts/bestiary.mjs
+```
+
+Três coisas fazem ele servir a longo prazo: **não guarda dados** (lê `FORMS`/`PETS`/`SKILLS` direto do TypeScript, então não existe versão dele que discorde do app); **os sprites vão embutidos em base64** (108 KB, um arquivo só, abre offline com dois cliques); e **dá pra editar e sair com código** — trocar as skills de qualquer forma na página, ver ao vivo as mesmas regras que os testes cobram, e copiar o bloco `FORMS` pronto pra colar em `pets.ts`. O ciclo é desenhar → colar → `npm test` → regerar.
+
+O gráfico do equilíbrio é uma prova, não uma ilustração: três retângulos (largura = quantas vezes acontece, altura = quanto paga) com a mesma área, e os cantos caindo na curva `x·y = 0,375`.
+
+## O personagem
+
+O boneco que aparece no Perfil e no quarto da coluna do laptop. Desde 2026-09-09 ele é **desenhado na hora**, não é arquivo: `src/domain/avatar.ts` guarda a arte como um **grid de letras** (24×42, 4 frames de respiração), e cada letra é um *papel* de cor — `S`/`s` pele e sombra, `K` o traço, `H`/`h` cabelo e sombra, `W`/`E` olho, `C`/`c` camiseta, `P`/`p` calça, `B` sapato. Quem pinta é `avatarPalette(cfg)`, montada do tom de pele e da cor de cabelo escolhidos. Por isso **6 tons × 9 cores × 6 penteados = 324 aparências sem um PNG a mais**.
+
+- **O contorno sai sozinho** (`outline`): todo pixel cheio que faz fronteira com o vazio vira o tom escuro *daquele material*. É o que faz o cabelo ter contorno de cabelo e a pele contorno de pele — contorno preto chapado achata tom escuro. O traço (`K`) é sempre uma versão bem escura do próprio tom de pele, nunca preto (teste garante: `line` mais escuro que `shade`, `shade` mais escuro que `base`).
+- **A escada de camadas** é cabelo de trás → corpo → cabelo da frente, então o Longo cai atrás dos ombros e o Cacheado passa das orelhas.
+- **Penteados** (`HAIR_STYLES`): Curto, Ondulado, Cacheado, Longo, Coque, Raspado. Cada um desenha só a metade esquerda e é espelhado (`band`/`pair`). Teste garante que nenhum é igual a outro e que nenhum tapa os olhos ou o rosto.
+- **Onde vive**: `state.avatar` — **fora de `config`**, de propósito. É identidade, não regra do dia: "Cancelar sessão" não mexe nela (como `tutorialSeen`). Campo novo no doc, com default em `hydrateUserDoc` via `normalizeAvatar` (id que sumir do catálogo cai no padrão em vez de virar buraco na tela); sem `schemaVersion` novo.
+- **Quem pinta**: `src/infrastructure/avatar/sprite.ts` (canvas → `data:` URI, memoizado por aparência; sem DOM devolve string vazia, então teste e SSR não quebram). A UI pede por `application/avatar.ts` (`currentAvatarSprites`, `setAvatar`) — componente não fala com o canvas.
+- **UI**: Configurações → Geral → **"Seu personagem"** (`features/settings/AvatarPicker.tsx`, `#avatar-picker`), acima de "Aparência do app". Preview animado (`#avatar-preview`), swatches de pele (`[data-swatch]`) e de cabelo, pills de penteado (`[data-style]`). Aplica **na hora**, sem rascunho nem "Salvar" — trocar de tom de pele sem ver o resultado no mesmo segundo não faz sentido; `setAvatar` já agenda o save. As cores dos botões são inline porque vêm do catálogo: são **conteúdo**, como o sprite de um pet. A regra "cor é token" continua valendo pro CSS.
+- **Os PNGs em `public/idle/user/`** não são mais o que o app mostra: existem pra quem precisa de arquivo (`scripts/app-icon.mjs`, que gera os ícones do PWA). Gerados por `node --import ./scripts/ts-loader.mjs scripts/character-sprites.mjs` (`--ascii` desenha os penteados no terminal, `--todos` escreve uma pasta por penteado). e2e **37**.
+- **Cosmético novo** = uma letra a mais na paleta e um desenho a mais aqui. Roupa, óculos e acessório são a direção natural; nada disso existe ainda.
 
 ## Schema do Firestore
 
@@ -413,7 +474,7 @@ Schema flat funciona pro volume atual. Quando ficar lento, considerar subcollect
 - Cor primária verde lima (definida em CSS variable)
 - Fontes: DM Sans (UI), DM Mono (números), Press Start 2P (landing)
 - Layout mobile-first, max-width 480px centralizado; a partir de 1100px vira o grid de três colunas (ver "Tela grande")
-- Sprites com `image-rendering: pixelated`
+- Sprites com `image-rendering: pixelated`. Pets são PNG em `public/idle/pets/`; o **personagem** é desenhado no canvas a cada aparência (ver "O personagem")
 - **Modais**: todos centralizados na tela (classe `.panel-overlay.center`). Não usar sheet de baixo pra cima. Exceção: **Configurações não é modal** — é página inteira (ver "Settings é página inteira" acima).
 
 ## Direções futuras

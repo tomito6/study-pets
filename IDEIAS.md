@@ -224,6 +224,12 @@ não cabem aí — precisam de identidade por bicho, não por espécie.
 
 ### 5. Elenco: linhas de evolução e skills (ideias, valores a calibrar)
 
+> **→ implementado e rebalanceado em 2026-09-09.** O catálogo tem 17 skills com tier (a força é igual
+> por dia — ver "Sistema de skills" no CLAUDE.md e `plans/2026-09-09_0120_skills-e-bestiario.md`), e
+> o **Recomeço** desta seção virou realidade. O que continua em aberto daqui: skill que paga em
+> **moedas** (a "Soneca", o "+10 🪙 no recomeço"), as **bases novas** (tartaruga, raposa, axolote,
+> coelho, pinguim, camaleão) e o **preço como marco**. O texto abaixo fica como registro.
+
 Cada pet é um **arquétipo de situação de estudo**. Skill é situacional e pequena (+5% XP ou algumas
 moedas), decidida no momento do check como hoje (anti-exploit continua: ativa desde antes do bloco).
 Nada aqui pode virar "quem não tem tá perdendo".
