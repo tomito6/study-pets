@@ -13,57 +13,17 @@
 // bicho, mais forte" ler na tela. A forma-base de cada família fica pixel a pixel
 // igual à versão anterior.
 //
-// Sem dependências: o PNG é montado aqui mesmo (zlib do Node + CRC32).
+// Sem dependências: o PNG sai de `scripts/png.mjs` (zlib do Node + CRC32).
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateSync } from 'node:zlib';
+
+import { encodePNG } from './png.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const W = 32;
 const H = 32;
-
-// ---------------------------------------------------------------- PNG
-
-function crc32(buf) {
-  let crc = 0xffffffff;
-  for (const b of buf) {
-    crc ^= b;
-    for (let k = 0; k < 8; k++) crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([len, body, crc]);
-}
-
-/** `rgba` = Buffer de W*H*4 bytes. */
-function encodePNG(w, h, rgba) {
-  const stride = w * 4;
-  const raw = Buffer.alloc((stride + 1) * h);
-  for (let y = 0; y < h; y++) {
-    raw[y * (stride + 1)] = 0; // filtro "none"
-    rgba.copy(raw, y * (stride + 1) + 1, y * stride, (y + 1) * stride);
-  }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(w, 0);
-  ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; // bits por canal
-  ihdr[9] = 6; // RGBA
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw, { level: 9 })),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
 
 // ---------------------------------------------------------------- pincel
 
