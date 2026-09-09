@@ -532,10 +532,21 @@ pintar();
 `;
 
 const nSkills = data.skills.length;
-const html = `<title>Bestiário Study Pets</title>
+// O `<meta charset>` é obrigatório: sem ele o navegador chuta a codificação (e
+// chuta windows-1252 quando um servidor entrega o arquivo sem charset no header),
+// o que transforma "Bestiário" em "BestiÃ¡rio". Como a página é feita pra abrir
+// com dois cliques, offline, daqui a anos, ela declara o documento inteiro.
+const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestiário Study Pets</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style>${CSS}</style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="mast">
@@ -664,6 +675,8 @@ const html = `<title>Bestiário Study Pets</title>
 </div>
 
 <script>${JS.replace('__DATA__', () => JSON.stringify(data))}</script>
+</body>
+</html>
 `;
 
 mkdirSync(dirname(OUT), { recursive: true });
