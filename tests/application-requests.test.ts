@@ -22,7 +22,7 @@ beforeEach(() => {
   derived.timerBlock = null;
   derived.focusOpen = false;
   derived.startRequest = null;
-  derived.settingsRequest = false;
+  derived.settingsRequest = null;
   rebuildWeeks(AGORA);
 });
 
@@ -70,7 +70,7 @@ describe('Abrir Configurações pedido pela barra do laptop', () => {
 
     requestSettings();
 
-    expect(derived.settingsRequest).toBe(true);
+    expect(derived.settingsRequest).toEqual({ focus: null });
     expect(cb).toHaveBeenCalled();
     off();
   });
@@ -81,11 +81,11 @@ describe('Abrir Configurações pedido pela barra do laptop', () => {
     const off = subscribe(cb);
 
     clearSettingsRequest();
-    expect(derived.settingsRequest).toBe(false);
+    expect(derived.settingsRequest).toBeNull();
     expect(cb).toHaveBeenCalledTimes(1);
 
     clearSettingsRequest();
-    expect(derived.settingsRequest).toBe(false);
+    expect(derived.settingsRequest).toBeNull();
     expect(cb).toHaveBeenCalledTimes(1);
     off();
   });
@@ -98,6 +98,6 @@ describe('Abrir Configurações pedido pela barra do laptop', () => {
 
     requestSettings();
     clearStartRequest();
-    expect(derived.settingsRequest).toBe(true);
+    expect(derived.settingsRequest).toEqual({ focus: null });
   });
 });

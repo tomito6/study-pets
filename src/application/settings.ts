@@ -7,6 +7,7 @@ import type { ConfigDraft } from '../domain/settings';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, notify, state } from '../store/store';
+import type { SettingsRequest } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
 import { openOnboarding } from './onboarding';
@@ -58,14 +59,17 @@ export function cancelSession(): void {
   showToast(strings.settings.cancel.done);
 }
 
-/** A barra do laptop pede pra abrir as Configurações; a página (dona do estado "aberta") atende e limpa. */
-export function requestSettings(): void {
-  derived.settingsRequest = true;
+/**
+ * A barra do laptop e o "Novo evento" pedem pra abrir as Configurações; a página
+ * (dona do estado "aberta") atende e limpa. `focus` diz até que seção rolar.
+ */
+export function requestSettings(focus: SettingsRequest['focus'] = null): void {
+  derived.settingsRequest = { focus };
   notify();
 }
 
 export function clearSettingsRequest(): void {
   if (!derived.settingsRequest) return;
-  derived.settingsRequest = false;
+  derived.settingsRequest = null;
   notify();
 }

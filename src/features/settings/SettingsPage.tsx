@@ -55,12 +55,26 @@ export function SettingsPage() {
   const close = () => setOpen(false);
   // A barra do laptop (engrenagem, menu do avatar) pede pra abrir pelo store: atende com o mesmo openSettings.
   const settingsRequest = useAppState((_s, d) => d.settingsRequest);
+  // Qual seção foi pedida (o "importe de um calendário" do Novo evento manda 'calendar').
+  // Vive aqui e não no store porque só esta página precisa saber onde rolar.
+  const [focus, setFocus] = useState<'calendar' | null>(null);
   useEffect(() => {
     if (!settingsRequest) return;
+    const wanted = settingsRequest.focus;
     clearSettingsRequest();
     openSettings();
+    setFocus(wanted);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsRequest]);
+
+  // Rolar até a seção pedida depois que o Geral montou, e apagar o destaque em seguida.
+  useEffect(() => {
+    if (!open || !focus) return;
+    const target = document.getElementById('ics-import-btn')?.closest('.st-section');
+    target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const t = setTimeout(() => setFocus(null), 2400);
+    return () => clearTimeout(t);
+  }, [open, focus]);
   const switchTab = (next: SettingsTab) => {
     setStab(next);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -195,6 +209,8 @@ export function SettingsPage() {
                 </div>
               </div>
 
+              <CalendarImportSection highlight={focus === 'calendar'} />
+
               <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title">{t.goal.title}</div></div>
                 <div className="st-section-desc">{t.goal.desc}</div>
@@ -239,7 +255,6 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <CalendarImportSection />
 
               <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title">{t.data.title}</div></div>

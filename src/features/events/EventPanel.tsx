@@ -15,6 +15,7 @@ import {
   validateSeries,
 } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
+import { requestSettings } from '../../application/settings';
 import { ALL_WEEKDAYS, EVENT_PRESETS, presetFields, presetLabel } from '../../domain/eventPresets';
 import type { EventPresetId } from '../../domain/eventPresets';
 import { dateFromKey } from '../../domain/time';
@@ -144,6 +145,12 @@ export function EventPanel({ open, dateKey, edit = null, onClose }: Props) {
   const editingSeries = edit?.kind === 'series';
   const showRecurrence = editing ? editingSeries && scope === 'series' : repeat;
 
+  // Importar mora nas Configurações; daqui a gente fecha e leva o usuário até lá.
+  const goImport = () => {
+    onClose();
+    requestSettings('calendar');
+  };
+
   return (
     <Modal id="event-panel" open={open} title={editing ? t.editTitle : t.title} onClose={onClose}>
       {!editing && (
@@ -261,6 +268,13 @@ export function EventPanel({ open, dateKey, edit = null, onClose }: Props) {
         <button className="reset-btn" onClick={onClose}>{t.cancel}</button>
         <button className="save-btn" id="ev-save" onClick={save}>{editing ? t.save : t.add}</button>
       </div>
+      {/* A porta pra quem tem a grade inteira num calendário e não vai digitar aula por aula.
+          Só no evento novo: editando um evento que já existe, importar não tem o que fazer. */}
+      {!editing && (
+        <button type="button" className="ev-import-link" id="ev-import" onClick={goImport}>
+          {t.importLink}
+        </button>
+      )}
     </Modal>
   );
 }

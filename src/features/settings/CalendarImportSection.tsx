@@ -42,7 +42,12 @@ function whenText(item: IcsItem): string {
 const allChosen = (plan: IcsImportPlan, countsAsStudy: boolean): Record<string, ImportChoice> =>
   Object.fromEntries(plan.items.map((i) => [i.uid, { include: true, countsAsStudy }]));
 
-export function CalendarImportSection() {
+interface Props {
+  /** Aceso por alguns segundos quando o usuário chegou aqui pelo "Novo evento". */
+  highlight?: boolean;
+}
+
+export function CalendarImportSection({ highlight = false }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [plan, setPlan] = useState<IcsImportPlan | null>(null);
   const [choices, setChoices] = useState<Record<string, ImportChoice>>({});
@@ -90,7 +95,7 @@ export function CalendarImportSection() {
   for (const s of plan?.skipped ?? []) skippedByReason.set(s.reason, (skippedByReason.get(s.reason) ?? 0) + 1);
 
   return (
-    <div className="st-section">
+    <div className={'st-section' + (highlight ? ' st-section-lit' : '')}>
       <div className="st-section-head"><div className="st-section-title">{t.title}</div></div>
       <div className="st-section-desc">{t.desc}</div>
       <div className="st-card">

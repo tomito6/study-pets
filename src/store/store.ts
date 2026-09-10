@@ -74,7 +74,7 @@ export interface Derived {
   /** Um "Iniciar" pedido fora da lista (o cartão Agora do laptop); o PlanTab atende e limpa. */
   startRequest: StudyBlock | null;
   /** "Abrir Configurações" pedido pela barra do laptop; a SettingsPage atende e limpa. */
-  settingsRequest: boolean;
+  settingsRequest: SettingsRequest | null;
   audio: AudioSettings;
   save: SaveStatus;
   authReady: boolean;
@@ -87,6 +87,15 @@ export interface Derived {
 }
 
 /** Runtime do bloqueio de sites. Nada aqui é persistido. */
+/**
+ * O pedido de abrir as Configurações (a engrenagem da barra, o menu do avatar, e
+ * o "importe de um calendário" do Novo evento). `focus` leva a página até a seção
+ * pedida — senão ela abre no topo do Geral, como sempre.
+ */
+export interface SettingsRequest {
+  focus: 'calendar' | null;
+}
+
 export interface SiteBlockRuntime {
   /** O que a extensão respondeu ter aplicado; null sem confirmação. */
   ack: BlockingAck | null;
@@ -101,7 +110,7 @@ export const derived: Derived = {
   focusOpen: false,
   timerCompleted: null,
   startRequest: null,
-  settingsRequest: false,
+  settingsRequest: null,
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,

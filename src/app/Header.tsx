@@ -102,7 +102,7 @@ export function Header() {
         <div className="topbar-right">
           <span className="sub" id="today-label" hidden>{today}</span>
           {xp}
-          <button className="gear-btn" id="gear-btn" onClick={requestSettings} aria-label={strings.header.settings} title={strings.header.settings}><GearIcon /></button>
+          <button className="gear-btn" id="gear-btn" onClick={() => requestSettings()} aria-label={strings.header.settings} title={strings.header.settings}><GearIcon /></button>
           <AvatarMenu initial={initial} />
         </div>
       </div>

@@ -162,6 +162,7 @@ export const strings = {
       freq: 'Frequência',
       freqs: { weekly: 'Toda semana', biweekly: 'A cada 2 semanas', monthly: 'Mensalmente' },
       until: 'Até',
+      importLink: 'Tem tudo num calendário? Importe de um arquivo .ics →',
       noEnd: 'Sem fim',
       cancel: 'Cancelar',
       add: 'Adicionar',
@@ -482,6 +483,7 @@ export const strings = {
       skin: 'Tom de pele',
       hair: 'Cor do cabelo',
       style: 'Cabelo',
+      body: 'Corpo',
       hint: 'Cancelar sessão não mexe nisto — o personagem é seu, não do plano.',
     },
     tema: {
