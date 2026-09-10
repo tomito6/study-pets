@@ -95,10 +95,14 @@ const contarRegras = async (sw: Worker) => (await regras(sw)).length;
 
 // ---------------------------------------------------------------- o app
 
-/** Passa pelo onboarding (gato, período padrão) e fecha o tour. */
+/** Passa pelo onboarding (personagem padrão, gato, janelas padrão) e fecha o tour. */
 async function abrirApp(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('#app')).toBeVisible();
+  // O primeiro passo é o personagem desde 2026-09-10 (`d261721`). O helper do smoke foi
+  // atualizado junto; este ficou pra trás e travava os cinco testes no card do pet — e como
+  // esta suíte só roda entre 00:05 e 13:00, passou dias quebrada sem ninguém ver.
+  await page.locator('#onb-avatar-next').click();
   await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
   await page.locator('#onb-next').click();
   await page.getByRole('button', { name: 'Começar' }).click();
