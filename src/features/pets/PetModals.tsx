@@ -24,10 +24,26 @@ interface ShopProps {
 }
 
 export function PetShopModal({ open, balance, onClose, onAdopt }: ShopProps) {
+  const owned = useAppState((s) => s.pets.owned);
+  // O preço sozinho não decide nada: o saldo vinha só no Perfil, atrás do modal.
+  const title = (
+    <>
+      {t.shopTitle}
+      <span className="shop-balance" id="shop-balance" title={t.balanceTitle(balance)}>{t.balance(balance)}</span>
+    </>
+  );
   return (
-    <Modal id="pets-shop-panel" open={open} title={t.shopTitle} onClose={onClose}>
+    <Modal id="pets-shop-panel" open={open} title={title} onClose={onClose}>
       <div className="shop-grid" id="pets-shop">
-        {PET_LIST.map((species) => <ShopPetCard key={species.id} species={species} balance={balance} onAdopt={onAdopt} />)}
+        {PET_LIST.map((species) => (
+          <ShopPetCard
+            key={species.id}
+            species={species}
+            balance={balance}
+            owned={owned.filter((p) => p.species === species.id).length}
+            onAdopt={onAdopt}
+          />
+        ))}
       </div>
     </Modal>
   );

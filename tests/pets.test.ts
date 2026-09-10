@@ -223,12 +223,23 @@ describe('forma, nome e evolução (puro)', () => {
     expect(suggestPetName(PETS.dog!, () => 0.999)).toBe('Nico');
   });
 
-  it('instância nova: id da espécie se livre, senão dog-2, dog-3', () => {
+  it('instância nova: id da espécie se livre, senão dog-2, dog-3; a skill da base já vem ligada', () => {
     const a = newPetInstance(PETS.dog!, 'Bolt', [], 1000);
-    expect(a).toEqual({ id: 'dog', species: 'dog', name: 'Bolt', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 1000 });
+    // `fiel` é a única skill do cachorro, e é por ela que ele é escolhido no onboarding.
+    expect(a).toEqual({ id: 'dog', species: 'dog', name: 'Bolt', xp: 0, path: null, stage: 0, skill: 'fiel', skillActivatedAt: 1000, adoptedAt: 1000 });
     const b = newPetInstance(PETS.dog!, 'Thor', [a], 2000);
     expect(b.id).toBe('dog-2');
     expect(newPetInstance(PETS.dog!, 'Rex', [a, b], 3000).id).toBe('dog-3');
+  });
+
+  it('toda espécie do catálogo nasce com a skill ligada — nenhuma base tem escolha a fazer', () => {
+    for (const species of Object.values(PETS)) {
+      const pet = newPetInstance(species!, 'Teste', [], 1000);
+      const skills = FORMS[species!.form]!.skills;
+      expect(skills.length, `${species!.id} devia ter uma skill só na base`).toBe(1);
+      expect(pet.skill, species!.id).toBe(skills[0]);
+      expect(pet.skillActivatedAt, species!.id).toBe(1000);
+    }
   });
 
   it('instância legada: id = espécie, nome = nome da forma; a coruja vira pomba e perde a skill que a pomba não tem', () => {

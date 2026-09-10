@@ -1,10 +1,11 @@
 // A lista de blocos do dia: divisores de sessão, caixas de grupo e linhas com check.
 // Mesmas classes do markup antigo — o CSS e o smoke test dependem delas.
 
-import type { MouseEvent, ReactNode } from 'react';
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
 import { playSound } from '../../application/timer';
 import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
+import { cleanBlockName as cleanName } from '../../domain/timer';
 import { isForfeited } from '../../domain/hardcore';
 import { blockInGroup, groupHeaderPositions, groupProgress } from '../../domain/groups';
 import type { GroupHeaderPosition } from '../../domain/groups';
@@ -144,6 +145,21 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, drag, now, isTod
 
   const clickable = isEv || isI;
   const title = clickable ? t.eventTitle : undefined;
+  // A linha e o check eram `div` sem papel nem foco: no laptop não dava pra marcar
+  // um bloco pelo teclado, nem saber pelo leitor de tela o que cada linha é. O
+  // `#active-pet-card` já fazia certo (role=button, Enter/Espaço) — é o mesmo padrão.
+  const acionavel = clickable || isE || isP;
+  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}`;
+  const onRowKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onRowClick(e as unknown as MouseEvent<HTMLDivElement>);
+  };
+  const onCheckKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onCheckClick(e as unknown as MouseEvent<HTMLDivElement>);
+  };
   // Evento e intervalo se arrastam; estudo e pausa são gerados pelo planner.
   const source = { dateKey, block: b };
   const dragProps = drag && clickable ? drag.handleProps(source) : null;
@@ -153,13 +169,25 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, drag, now, isTod
     <div
       className={className}
       onClick={onRowClick}
+      onKeyDown={acionavel ? onRowKey : undefined}
+      role={acionavel ? 'button' : undefined}
+      tabIndex={acionavel ? 0 : undefined}
+      aria-label={acionavel ? rotulo : undefined}
       style={clickable ? { cursor: 'pointer' } : undefined}
       title={title}
       data-drag-block={clickable ? '' : undefined}
       {...rowProps}
     >
       {!isI && (
-        <div className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')} onClick={onCheckClick}>
+        <div
+          className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')}
+          onClick={onCheckClick}
+          onKeyDown={onCheckKey}
+          role="checkbox"
+          aria-checked={done}
+          aria-label={t.checkLabel(cleanName(b.name))}
+          tabIndex={0}
+        >
           {forfeited ? <span className="check-x">✕</span> : <CheckIcon />}
         </div>
       )}

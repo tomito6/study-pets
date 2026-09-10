@@ -39,6 +39,9 @@ function Switch({ id, checked, onChange }: { id: string; checked: boolean; onCha
 
 export function SettingsPage() {
   const tab = useAppState((s) => s.uiTab);
+  // Durante o onboarding a engrenagem aparecia verde e viva por cima do escurecido:
+  // não era clicável (o overlay cobre), mas convidava ao clique.
+  const onboarding = useAppState((_s, d) => d.onboardingOpen);
   const [open, setOpen] = useState(false);
   const [stab, setStab] = useState<SettingsTab>('general');
   const [draft, setDraft] = useState<ConfigDraft>(() => draftFromConfig(state.config));
@@ -104,7 +107,7 @@ export function SettingsPage() {
     <>
       <button
         id="fab-config"
-        className={'fab-config' + (tab !== 'plano' ? ' hidden' : '')}
+        className={'fab-config' + (tab !== 'plano' || onboarding ? ' hidden' : '')}
         onClick={openSettings}
         aria-label={t.fab}
       >

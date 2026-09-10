@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   blockDurationMin,
-  blockNumberInSession,
   canStartBlock,
   chainedBlockAfter,
   cleanBlockName,
@@ -150,10 +149,8 @@ describe('helpers', () => {
     expect(soundForBlock(pausa('10:50', '11:10', 0, true))).toBe('pausa_longa');
   });
 
-  it('número do bloco dentro da sessão e o próximo bloco', () => {
+  it('o próximo bloco do dia', () => {
     const dia = [estudo('09:00', '09:25', 0), pausa('09:25', '09:30', 0), estudo('09:30', '09:55', 0), estudo('11:00', '11:25', 1)];
-    expect(blockNumberInSession(dia, dia[2]!)).toBe(3);
-    expect(blockNumberInSession(dia, dia[3]!)).toBe(1);
     expect(nextBlockAfter(dia, dia[0]!)).toBe(dia[1]);
     expect(nextBlockAfter(dia, dia[3]!)).toBeNull();
   });

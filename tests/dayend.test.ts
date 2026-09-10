@@ -136,10 +136,12 @@ describe('prompt automático de fim de dia', () => {
 describe('onboarding e boot', () => {
   beforeEach(() => resetAt('2026-09-02T09:00:00'));
 
-  it('onboarding define o período e fecha; recusa fim antes do início; sem pet, exige o inicial', () => {
+  it('onboarding grava as janelas e fecha; recusa janela inválida; sem pet, exige o inicial', () => {
     derived.onboardingOpen = true;
-    const base = { periodStart: '2026-09-02', periodEnd: null, skipWeekends: true };
-    expect(finishOnboarding({ ...base, periodEnd: '2026-09-01' })).toEqual({ ok: false, reason: 'end-before-start' });
+    const base = { studyWindows: [{ start: '19:00', end: '22:00' }], skipWeekends: true };
+    expect(finishOnboarding({ ...base, studyWindows: [] })).toEqual({ ok: false, reason: 'empty' });
+    expect(finishOnboarding({ ...base, studyWindows: [{ start: '19:00', end: '18:00' }] })).toEqual({ ok: false, reason: 'invalid-window' });
+    expect(finishOnboarding({ ...base, studyWindows: [{ start: '09:00', end: '12:00' }, { start: '11:00', end: '14:00' }] })).toEqual({ ok: false, reason: 'overlap' });
     expect(finishOnboarding(base)).toEqual({ ok: false, reason: 'no-starter' });
     expect(finishOnboarding({ ...base, starter: { species: 'dragao', name: 'X' } })).toEqual({ ok: false, reason: 'unknown-species' });
     expect(finishOnboarding({ ...base, starter: { species: 'snake', name: '  ' } })).toEqual({ ok: false, reason: 'invalid-name' });
@@ -147,16 +149,36 @@ describe('onboarding e boot', () => {
     expect(state.pets.owned).toEqual([]);
 
     expect(finishOnboarding({ ...base, starter: { species: 'snake', name: ' Sibila ' } })).toEqual({ ok: true });
-    expect(state.config).toMatchObject({ periodStart: '2026-09-02', periodEnd: null, skipWeekends: true });
+    // O horário que a pessoa escolheu é o que vale — e periodStart marca hoje, sem data fim.
+    expect(state.config).toMatchObject({
+      studyWindows: [{ start: '19:00', end: '22:00' }],
+      start: '19:00',
+      end: '22:00',
+      periodStart: '2026-09-02',
+      periodEnd: null,
+      skipWeekends: true,
+    });
     expect(state.pets.owned).toMatchObject([{ id: 'snake', species: 'snake', name: 'Sibila' }]);
     expect(state.pets.active).toBe('snake');
     expect(derived.onboardingOpen).toBe(false);
   });
 
+  it('duas janelas no mesmo dia — quem estuda de manhã e de noite', () => {
+    derived.onboardingOpen = true;
+    const r = finishOnboarding({
+      studyWindows: [{ start: '09:00', end: '12:00' }, { start: '19:00', end: '22:00' }],
+      skipWeekends: false,
+      starter: { species: 'dog', name: 'Bolt' },
+    });
+    expect(r).toEqual({ ok: true });
+    expect(state.config.studyWindows).toHaveLength(2);
+    expect(state.config).toMatchObject({ start: '09:00', end: '22:00' });
+  });
+
   it('quem já tem pet não passa pelo pet inicial (o starter é ignorado)', () => {
     derived.onboardingOpen = true;
     state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Mia', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
-    expect(finishOnboarding({ periodStart: '2026-09-02', periodEnd: null, skipWeekends: false, starter: { species: 'dog', name: 'Bolt' } })).toEqual({ ok: true });
+    expect(finishOnboarding({ studyWindows: [{ start: '09:00', end: '18:00' }], skipWeekends: false, starter: { species: 'dog', name: 'Bolt' } })).toEqual({ ok: true });
     expect(state.pets.owned).toHaveLength(1);
   });
 

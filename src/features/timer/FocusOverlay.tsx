@@ -23,7 +23,6 @@ import { closeFocus } from '../../application/timer';
 import { coinsForStudyBlock } from '../../domain/progression';
 import {
   blockDurationMin,
-  blockNumberInSession,
   cleanBlockName,
   formatClock,
   nextBlockAfter,
@@ -112,7 +111,7 @@ export function FocusOverlay() {
         <div className="focus-header">
           <div className={'focus-chip' + (isPausa ? ' pausa' : '')} id="focus-chip">
             <span className="fc-dot" />
-            <span id="focus-chip-text">{t.chip(sessionName, blockNumberInSession(dayBlocks, block))}</span>
+            <span id="focus-chip-text">{t.chip(sessionName)}</span>
           </div>
           <div className="focus-block-name" id="focus-block-name">{cleanBlockName(block.name)}</div>
           <div className="focus-pomo-label" id="focus-pomo-label">

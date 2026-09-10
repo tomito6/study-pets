@@ -10,9 +10,11 @@ const t = strings.settings.windows;
 interface Props {
   windows: StudyWindow[];
   onChange: (windows: StudyWindow[]) => void;
+  /** Quem monta o editor dá o id: as Configurações e o onboarding coexistem no DOM. */
+  id?: string;
 }
 
-export function StudyWindowsEditor({ windows, onChange }: Props) {
+export function StudyWindowsEditor({ windows, onChange, id = 'cfg-windows' }: Props) {
   const update = (i: number, patch: Partial<StudyWindow>) =>
     onChange(windows.map((w, j) => (j === i ? { ...w, ...patch } : w)));
   const remove = (i: number) => {
@@ -24,7 +26,7 @@ export function StudyWindowsEditor({ windows, onChange }: Props) {
   };
 
   return (
-    <div id="cfg-windows">
+    <div id={id}>
       {windows.map((w, i) => {
         const mins = windowMinutes(w);
         const bad = mins !== null && mins <= 0;

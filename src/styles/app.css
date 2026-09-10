@@ -542,6 +542,13 @@
   .shop-item-emoji { width:64px; height:64px; display:flex; align-items:center; justify-content:center; font-size:44px; line-height:1; }
   .shop-item-name { font-family:var(--font-title); font-size:13px; font-weight:600; text-align:center; }
   .shop-item-price { font-size:12px; color:var(--accent); font-family:var(--font-mono); font-weight:600; }
+  /* Foco de teclado nas linhas do plano e nos checks (role=button / role=checkbox). */
+  .block-row:focus-visible, .check:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .profile-pending { font-size:11px; color:var(--orange); font-family:var(--font-mono); text-align:center; margin:-6px 0 14px; }
+  .shop-item-trait { font-size:10px; color:var(--muted); text-align:center; line-height:1.35; }
+  .shop-item-have { font-size:10px; color:var(--accent); font-family:var(--font-mono); }
+  .shop-item-owned { border-color:var(--accent); }
+  .shop-balance { margin-left:10px; font-size:12px; font-family:var(--font-mono); color:var(--accent); font-weight:600; }
   .shop-btn { font-size:11px; padding:6px 12px; border-radius:var(--radius-sm); border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-weight:600; font-family:inherit; transition:background .15s, color .15s; }
   .shop-btn:hover { background:var(--accent); color:var(--on-accent); }
   .shop-btn.active { background:var(--accent); color:var(--on-accent); }
@@ -652,7 +659,7 @@
   /* Aberto antes da hora: anel cheio e apagado, contagem até o início em cinza. */
   .focus-timer-fill.waiting { opacity:.3; }
   .focus-time-big.waiting { color:var(--muted); }
-  /* Pausado: o anel para onde estava, o número apaga, e "pausado · há N" embaixo. */
+  /* Pausado: o anel para onde estava, o número apaga, e "pausado · N" embaixo. */
   .focus-time-big.paused { color:var(--muted); }
   .focus-overlay.paused .focus-timer-fill { opacity:.45; }
   .focus-actions { display:flex; justify-content:center; margin-top:clamp(14px, 2.5vmin, 24px); }
@@ -717,7 +724,9 @@
   .evo-path-next img { width:24px; height:24px; image-rendering:pixelated; }
 
   /* ONBOARDING: pet inicial */
+  .onb-step { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-family:var(--font-mono); margin-bottom:6px; }
   .onb-intro { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.5; }
+  .onb-windows-preview { font-size:12px; color:var(--accent); font-family:var(--font-mono); margin-top:10px; }
   .starter-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:12px; }
   .starter-card { width:calc(33.33% - 6px); min-width:104px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 6px 8px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; color:var(--text); font-family:inherit; text-align:center; transition:border-color .15s, background .15s; }
   .starter-card:hover { border-color:var(--border-strong); }

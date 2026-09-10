@@ -1,6 +1,12 @@
 // Onboarding: aparece na primeira vez (doc não existe) e ao cancelar a sessão.
-// Monta o personagem, escolhe o pet inicial (quando não há pet nenhum), o período
-// de uso e se pula fins de semana; o resto é editável depois.
+// Monta o personagem, escolhe o pet inicial (quando não há pet nenhum), e as
+// JANELAS DE ESTUDO + fins de semana; o resto é editável depois.
+//
+// O último passo era "período de uso" (duas datas) e nunca perguntava a que horas
+// a pessoa estuda — então todo mundo caía no padrão 09:00–18:00, que são 16
+// pomodoros e 6h40 num dia, sem ter pedido isso. As datas foram pras Configurações,
+// onde já existe o texto explicando pra que servem; a janela, que é o que define o
+// dia inteiro, subiu pro onboarding.
 //
 // A aparência chega aqui em vez de ser aplicada na hora de propósito: `setAvatar`
 // salva, e um documento criado antes do onboarding terminar faria um reload pular
@@ -8,10 +14,11 @@
 
 import { normalizeAvatar } from '../domain/avatar';
 import type { AvatarConfig } from '../domain/avatar';
+import { validateDayWindows } from '../domain/dayWindows';
 import { LUNCH_SERIES_ID, mealSeries } from '../domain/eventPresets';
 import { PETS, normalizePetName } from '../domain/pets';
 import { dk } from '../domain/time';
-import type { DateKey, PetId } from '../domain/types';
+import type { PetId, StudyWindow } from '../domain/types';
 import { derived, notify, state } from '../store/store';
 import { adoptStarter, needsStarter } from './pets';
 import { clearBlockCache, rebuildWeeks } from './plan';
@@ -28,8 +35,8 @@ export interface StarterChoice {
 }
 
 export interface OnboardingInput {
-  periodStart: DateKey;
-  periodEnd: DateKey | null;
+  /** As faixas do dia em que a pessoa estuda — é o que o gerador enche de blocos. */
+  studyWindows: StudyWindow[];
   skipWeekends: boolean;
   /** Obrigatório quando o usuário ainda não tem pet (ver `needsStarter`). */
   starter?: StarterChoice | null;
@@ -37,17 +44,24 @@ export interface OnboardingInput {
   avatar?: AvatarConfig | null;
 }
 
-export type OnboardingRefusal = 'end-before-start' | 'no-starter' | 'unknown-species' | 'invalid-name';
+export type OnboardingRefusal =
+  | 'empty'
+  | 'invalid-window'
+  | 'overlap'
+  | 'no-starter'
+  | 'unknown-species'
+  | 'invalid-name';
 export type OnboardingResult = { ok: true } | { ok: false; reason: OnboardingRefusal };
 
 /**
- * `periodStart` sempre marca o começo (pra preservar progresso); `periodEnd` null
- * é o modo "sempre" (até o fim do ano). Valida tudo antes de mudar qualquer coisa.
+ * `periodStart` marca hoje como começo (é o marco que preserva progresso, e a única
+ * forma de redefini-lo continua sendo cancelar a sessão); `periodEnd` nasce null —
+ * o modo "sempre", que era o que quase todo mundo escolhia no passo antigo. Valida
+ * tudo antes de mudar qualquer coisa.
  */
 export function finishOnboarding(input: OnboardingInput, now: Date = new Date()): OnboardingResult {
-  const periodStart = input.periodStart || dk(now);
-  const periodEnd = input.periodEnd || null;
-  if (periodEnd && periodEnd < periodStart) return { ok: false, reason: 'end-before-start' };
+  const janelas = validateDayWindows(input.studyWindows ?? []);
+  if (!janelas.ok) return { ok: false, reason: janelas.reason };
 
   const starter = needsStarter() ? input.starter ?? null : null;
   if (needsStarter()) {
@@ -64,7 +78,17 @@ export function finishOnboarding(input: OnboardingInput, now: Date = new Date())
     if (!state.eventSeries.some((s) => s.id === LUNCH_SERIES_ID)) state.eventSeries.push(mealSeries('13:00', 60));
   }
   if (input.avatar) state.avatar = normalizeAvatar(input.avatar);
-  state.config = { ...state.config, periodStart, periodEnd, skipWeekends: input.skipWeekends };
+  const studyWindows = input.studyWindows.map((w) => ({ start: w.start, end: w.end }));
+  state.config = {
+    ...state.config,
+    studyWindows,
+    // Derivados, mantidos só pra retrocompat (ver domain/config.ts).
+    start: studyWindows[0]!.start,
+    end: studyWindows[studyWindows.length - 1]!.end,
+    periodStart: dk(now),
+    periodEnd: null,
+    skipWeekends: input.skipWeekends,
+  };
   derived.onboardingOpen = false;
   rebuildWeeks(now);
   clearBlockCache();

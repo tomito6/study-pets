@@ -26,10 +26,16 @@ export function nextLevel(totalXP: number): { threshold: number; name: string } 
  * Dia anterior ao início do período: a conta não existia, então não é falha nem
  * descanso — é ausência. Sem isso, quem cria a conta numa quinta abre a Análise e
  * vê segunda, terça e quarta reprovadas, e um heatmap de 16 semanas zerado.
+ *
+ * Dia com minutos estudados nunca é "ausência", mesmo antes do início: esconder
+ * trabalho que a pessoa fez seria pior que o problema que isto resolve.
  */
-function beforeStart(startedAt: DateKey | null | undefined): (key: DateKey) => boolean {
+function beforeStart(
+  startedAt: DateKey | null | undefined,
+  done: Record<DateKey, number>,
+): (key: DateKey) => boolean {
   if (!startedAt) return () => false;
-  return (key) => key < startedAt;
+  return (key) => key < startedAt && !(done[key] > 0);
 }
 
 // ---------------------------------------------------------------- meta diária (7 dots)
@@ -66,7 +72,7 @@ export function goalWeek(
   const weekKeys = currentWeekKeys(opts.now);
   const todayKey = dk(opts.now);
   const rest: RestKindOf = (key) => opts.restKind?.(key) ?? null;
-  const before = beforeStart(opts.startedAt);
+  const before = beforeStart(opts.startedAt, stats.dayStudyDoneMins);
   const considered = weekKeys.filter((k) => !before(k) && rest(k) === null);
   const passed = considered.filter((k) => k <= todayKey);
   return {
@@ -118,7 +124,7 @@ export function adherence(
   opts: { now: Date; dailyGoal: number; restKind?: RestKindOf; startedAt?: DateKey | null },
 ): Adherence {
   const todayKey = dk(opts.now);
-  const before = beforeStart(opts.startedAt);
+  const before = beforeStart(opts.startedAt, stats.dayStudyDoneMins);
   const cobra = (key: DateKey) => key <= todayKey && !before(key) && (opts.restKind?.(key) ?? null) === null;
   let done = 0;
   let planned = 0;
@@ -166,7 +172,7 @@ export function heatmap(
   const todayKey = dk(today);
   const startMon = mondayOf(today);
   startMon.setDate(startMon.getDate() - 7 * (weeks - 1));
-  const before = beforeStart(opts.startedAt);
+  const before = beforeStart(opts.startedAt, dayStudyDoneMins);
   const cells: HeatCell[] = [];
   for (let col = 0; col < weeks; col++) {
     for (let row = 0; row < 7; row++) {

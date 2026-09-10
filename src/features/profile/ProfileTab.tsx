@@ -8,8 +8,10 @@ import { currentAvatarSprites } from '../../application/avatar';
 import { applyPendingPetXP, coinBalance } from '../../application/pets';
 import { computeStatsNow } from '../../application/plan';
 import { AVATAR_FRAMES } from '../../domain/avatar';
+import { isDayClosed } from '../../domain/checks';
 import { PET_LIST, canEvolveNow, formatStudyHours, petForm, petProgress, petsReadyToEvolve } from '../../domain/pets';
 import { getLevel, getLevelIdx, getLevelPct, LEVELS } from '../../domain/progression';
+import { dk } from '../../domain/time';
 import type { PetInstance, PetSpecies } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
@@ -71,7 +73,11 @@ function ActivePetCard({ pet, onOpen }: { pet: PetInstance; onOpen: () => void }
 }
 
 export function ProfileTab() {
-  const { tab, pets } = useAppState((s) => ({ tab: s.uiTab, pets: s.pets }));
+  const { tab, pets, todayClosed } = useAppState((s) => ({
+    tab: s.uiTab,
+    pets: s.pets,
+    todayClosed: isDayClosed(s.closedDays, dk(new Date())),
+  }));
   const visible = tab === 'perfil';
   const [modal, setModal] = useState<ProfileModal>({ kind: 'none' });
 
@@ -138,6 +144,11 @@ export function ProfileTab() {
         <div className="profile-stat-mini"><div className="psm-val" id="ps-hours">{formatStudyHours(stats.studyMins)}</div><div className="psm-label">{t.study}</div></div>
         <div className="profile-stat-mini coins-stat"><div className="psm-val" id="char-coins">{balance}</div><div className="psm-label">{t.coins}</div></div>
       </div>
+
+      {/* Sem isto, marcar três estudos e vir aqui mostra tudo zerado, sem dizer por quê. */}
+      {!todayClosed && (stats.todayXP > 0 || stats.todayCoins > 0) && (
+        <div className="profile-pending" id="profile-pending">{t.pending(stats.todayXP, stats.todayCoins)}</div>
+      )}
 
       {activePet ? (
         <ActivePetCard pet={activePet} onOpen={() => setModal({ kind: 'detail', petId: activePet.id })} />

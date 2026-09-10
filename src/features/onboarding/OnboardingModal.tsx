@@ -1,8 +1,13 @@
 // "Bem-vindo!" em três passos: (1) o personagem — quem vai estudar; (2) o pet
-// inicial — qualquer espécie, de graça, com nome; (3) período de uso e fins de
-// semana. Os dois primeiros só aparecem quando o usuário ainda não tem pet (conta
-// nova ou sessão recomeçada); quem já tem cai direto no período.
+// inicial — qualquer espécie, de graça, com nome; (3) as JANELAS DE ESTUDO e os
+// fins de semana. Os dois primeiros só aparecem quando o usuário ainda não tem pet
+// (conta nova ou sessão recomeçada); quem já tem cai direto nas janelas.
 // Sem botão de fechar — só "Continuar" / "Começar".
+//
+// O passo 3 pedia duas DATAS ("período de uso") e nunca perguntava o horário: todo
+// mundo herdava 09:00–18:00, 16 pomodoros, 6h40 de estudo, sem ter escolhido. As
+// datas foram pras Configurações — lá elas já vêm com a frase que explica pra que
+// servem, que aqui nunca existiu.
 //
 // A aparência fica num `useState` até o fim: aplicá-la na hora salvaria o
 // documento antes do onboarding terminar, e um reload pularia o pet inicial.
@@ -12,18 +17,27 @@ import { finishOnboarding } from '../../application/onboarding';
 import { DEFAULT_AVATAR } from '../../domain/avatar';
 import type { AvatarConfig } from '../../domain/avatar';
 import { PET_LIST, normalizePetName, speciesForm, suggestPetName } from '../../domain/pets';
-import { dk } from '../../domain/time';
-import type { PetSpecies } from '../../domain/types';
+import { generateBlocks } from '../../domain/planner';
+import { formatWindowDuration, nextWindowAfter } from '../../domain/settings';
+import { blockMins } from '../../domain/time';
+import type { PetSpecies, StudyWindow } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state, useAppState } from '../../store/store';
 import { AvatarControls } from '../avatar/AvatarControls';
 import { NameField } from '../pets/NameField';
+import { StudyWindowsEditor } from '../settings/StudyWindowsEditor';
 import { useSpriteFrame } from '../profile/useSpriteFrame';
 
 const t = strings.onboarding;
-const traits = t.traits as Record<string, string | undefined>;
-type Step = 'avatar' | 'starter' | 'period';
+const traits = strings.pets.traits as Record<string, string | undefined>;
+type Step = 'avatar' | 'starter' | 'windows';
+
+/** "Passo N de 3" — quem tem pet pula os dois primeiros, e aí é um passo só. */
+function StepMark({ i, total }: { i: number; total: number }) {
+  if (total < 2) return null;
+  return <div className="onb-step" id="onb-step">{t.stepOf(i, total)}</div>;
+}
 
 function AvatarStep({ value, onChange, onNext }: {
   value: AvatarConfig;
@@ -32,6 +46,7 @@ function AvatarStep({ value, onChange, onNext }: {
 }) {
   return (
     <>
+      <StepMark i={1} total={3} />
       <div className="panel-header"><h2>{t.avatarTitle}</h2></div>
       <p className="onb-intro">{t.avatarIntro}</p>
       <div className="av-card onb-avatar" id="onb-avatar">
@@ -56,6 +71,7 @@ function StarterStep({ species, name, onPick, onName, onNext, onBack }: {
   const ready = !!species && normalizePetName(name) !== null;
   return (
     <>
+      <StepMark i={2} total={3} />
       <div className="panel-header"><h2>{t.starterTitle}</h2></div>
       <p className="onb-intro">{t.starterIntro}</p>
       <div className="starter-grid" id="starter-grid">
@@ -87,26 +103,24 @@ export function OnboardingModal() {
     config: s.config,
     starterNeeded: s.pets.owned.length === 0,
   }));
-  const [step, setStep] = useState<Step>('period');
+  const [step, setStep] = useState<Step>('windows');
   const [avatar, setAvatar] = useState<AvatarConfig>(DEFAULT_AVATAR);
   const [species, setSpecies] = useState<PetSpecies | null>(null);
   const [name, setName] = useState('');
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
+  const [windows, setWindows] = useState<StudyWindow[]>([]);
   const [skip, setSkip] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setStep(starterNeeded ? 'avatar' : 'period');
+    setStep(starterNeeded ? 'avatar' : 'windows');
     setAvatar(state.avatar);
     setSpecies(null);
     setName('');
-    setStart(config.periodStart || dk(new Date()));
-    setEnd(config.periodEnd || '');
+    setWindows(config.studyWindows?.length ? config.studyWindows.map((w) => ({ ...w })) : [{ start: '09:00', end: '18:00' }]);
     setSkip(config.skipWeekends === true);
     // `starterNeeded` de propósito fora: abrir é o que reinicia os passos, não ganhar um pet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, config.periodStart, config.periodEnd, config.skipWeekends]);
+  }, [open, config.studyWindows, config.skipWeekends]);
 
   const patchAvatar = (patch: Partial<AvatarConfig>) => setAvatar((a) => ({ ...a, ...patch }));
 
@@ -115,24 +129,31 @@ export function OnboardingModal() {
     setName(suggestPetName(s));
   };
 
-  const useAlways = () => {
-    setStart(dk(new Date()));
-    setEnd('');
-    showToast(t.alwaysToast);
-  };
+  const addWindow = () => setWindows((ws) => [...ws, nextWindowAfter(ws)]);
+
+  // O que essas faixas viram, antes de confirmar: dá pra ver que 09:00–18:00 são
+  // 16 pomodoros e mexer nisso agora, em vez de descobrir na primeira tela.
+  const preview = (() => {
+    const valid = windows.filter((w) => w.start && w.end && w.end > w.start);
+    if (!valid.length) return null;
+    const blocks = generateBlocks({ ...state.config, studyWindows: valid, start: valid[0]!.start, end: valid[valid.length - 1]!.end }, []);
+    const study = blocks.filter((b) => b.type === 'estudo');
+    if (!study.length) return null;
+    return { pomos: study.length, mins: study.reduce((acc, b) => acc + blockMins(b), 0) };
+  })();
 
   const begin = () => {
     const r = finishOnboarding({
-      periodStart: start,
-      periodEnd: end || null,
+      studyWindows: windows,
       skipWeekends: skip,
       starter: species ? { species: species.id, name } : null,
       avatar: starterNeeded ? avatar : null,
     });
     if (r.ok) return;
-    if (r.reason === 'end-before-start') {
-      showToast(t.endBeforeStart);
-    } else {
+    if (r.reason === 'empty') showToast(t.windowsEmpty);
+    else if (r.reason === 'overlap') showToast(t.windowsOverlap);
+    else if (r.reason === 'invalid-window') showToast(t.windowsInvalid);
+    else {
       showToast(t.starterMissing);
       setStep('starter');
     }
@@ -149,20 +170,20 @@ export function OnboardingModal() {
             name={name}
             onPick={pick}
             onName={setName}
-            onNext={() => setStep('period')}
+            onNext={() => setStep('windows')}
             onBack={() => setStep('avatar')}
           />
         ) : (
           <>
-            <div className="panel-header"><h2>{t.title}</h2></div>
-            <p className="onb-intro">{t.intro}</p>
+            <StepMark i={3} total={starterNeeded ? 3 : 1} />
+            <div className="panel-header"><h2>{t.windowsTitle}</h2></div>
+            <p className="onb-intro">{t.windowsIntro}</p>
             <div className="field-group">
-              <label>{t.period}</label>
-              <div className="field-row">
-                <div><div className="field-sublabel">{t.start}</div><input type="date" id="onb-start" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-                <div><div className="field-sublabel">{t.end}</div><input type="date" id="onb-end" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+              <StudyWindowsEditor id="onb-windows" windows={windows} onChange={setWindows} />
+              <button type="button" className="ghost-btn" id="onb-windows-add" onClick={addWindow} style={{ marginTop: 8 }}>{t.windowsAdd}</button>
+              <div className="onb-windows-preview" id="onb-windows-preview">
+                {preview ? t.windowsPreview(preview.pomos, formatWindowDuration(preview.mins)) : t.windowsPreviewNone}
               </div>
-              <button type="button" className="ghost-btn" onClick={useAlways} style={{ marginTop: 8 }}>{t.useAlways}</button>
             </div>
             <div className="field-group">
               <div className="checkbox-row">

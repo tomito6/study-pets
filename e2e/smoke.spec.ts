@@ -83,10 +83,11 @@ async function balaoUtilizavel(page: Page) {
 }
 
 /** Lê "175 / 370 min" de um card de realizado da Análise, pra comparar por valor. */
-async function realizado(page: Page, id: string): Promise<{ done: number; planned: number }> {
+/** O card "Realizado": cumprido / META do período (o plano do dia é contexto, na linha de baixo). */
+async function realizado(page: Page, id: string): Promise<{ done: number; goal: number }> {
   const texto = await page.locator(`#${id} .adh-val`).innerText();
-  const [done, planned] = texto.replace(' min', '').split(' / ').map(Number);
-  return { done: done as number, planned: planned as number };
+  const [done, goal] = texto.replace(' min', '').split(' / ').map(Number);
+  return { done: done as number, goal: goal as number };
 }
 
 test.describe('Study Pets — smoke', () => {
@@ -556,7 +557,7 @@ test.describe('Study Pets — smoke', () => {
     // Chegou a hora: vira o pomodoro normal, sem clique nenhum.
     await page.clock.setFixedTime(new Date(`${DIA}T10:30:01`));
     await expect(page.locator('#focus-time-big')).toHaveText('24:59');
-    await expect(page.locator('#focus-time-sub')).toContainText('completou');
+    await expect(page.locator('#focus-time-sub')).toContainText('concluído');
     await expect(page.locator('#timer-bar')).toContainText('Em andamento');
   });
 
@@ -587,13 +588,13 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-time-sub')).toContainText('pausado');
     await expect(page.locator('#timer-bar')).toContainText('Pausado');
     await page.clock.setFixedTime(new Date(`${DIA}T10:12:30`));
-    await expect(page.locator('#focus-time-sub')).toContainText('há 02:30');
+    await expect(page.locator('#focus-time-sub')).toContainText('pausado · 02:30');
     await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // não andou
 
     // Retomar às 10:13: a pausa vira 3 min, o bloco vai até 10:28 (com o mesmo XP), a pausa seguinte começa às 10:28.
     await page.clock.setFixedTime(new Date(`${DIA}T10:13:00`));
     await page.locator('#focus-pause').click();
-    await expect(page.locator('#focus-time-sub')).toContainText('completou');
+    await expect(page.locator('#focus-time-sub')).toContainText('concluído');
     await expect(page.locator('#focus-time-big')).toHaveText('15:00');
     await expect(page.locator('#toast')).toContainText('Pausa de 3 min');
     await page.locator('.focus-exit').click();
@@ -617,7 +618,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await expect(page.locator('#focus-overlay')).toBeHidden();
     await expect(page.locator('#timer-bar')).toHaveClass(/active/);
-    await expect(page.locator('#timer-bar')).toContainText('Pausado · há 05:00');
+    await expect(page.locator('#timer-bar')).toContainText('Pausado · 05:00');
     await expect(page.locator('#timer-display')).toHaveText('13:00');
     await page.locator('#timer-pause').click(); // ▶ Retomar: mais 5 min no bloco, que agora vai até 10:33
     await expect(page.locator('#timer-bar')).toContainText('Em andamento');
@@ -802,14 +803,18 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#an-xp-next')).toHaveText('750 XP');
     await expect(page.locator('#an-sparkline polyline')).toHaveAttribute('points', /\d/);
 
-    // Hoje é a vista padrão: 175 dos 385 min planejados.
+    // Hoje é a vista padrão: 175 min contra a META de 60 — não contra o plano cheio do dia.
+    // Medir contra os 385 planejados fazia bater a meta aparecer como 45%, com o dot verde ao lado.
     await expect(page.locator('#an-subnav .subnav-chip.active')).toHaveText('Hoje');
-    expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, planned: 385 });
+    expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, goal: 60 });
     await expect(page.locator('#adherence-today')).toHaveClass(/adh-big/);
-    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2.9h de 6.4h');
-    await expect(page.locator('#adherence-today .adh-pct')).toHaveText('45%'); // 175/385
-    // Meta de 60 min: só hoje bateu, e hoje é o dot com anel.
-    await expect(page.locator('#goal-week-headline-h')).toContainText('1 de 7 dias');
+    await expect(page.locator('#adherence-today')).toHaveClass(/met/);
+    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2.9h de estudo · 6.4h no plano');
+    await expect(page.locator('#adherence-today .adh-pct')).toHaveText('292% ✓'); // 175/60
+    // Meta de 60 min: só hoje bateu. Seg e ter são ANTES da conta existir (ela nasceu hoje),
+    // então são neutros — nem falha nem descanso —, e a semana cobra 5 dias, não 7.
+    await expect(page.locator('#goal-week-headline-h')).toContainText('1 de 5 dias');
+    await expect(page.locator('#goal-week-dots-h .goal-dot.before')).toHaveCount(2);
     await expect(page.locator('#goal-week-dots-h .goal-dot')).toHaveCount(7);
     await expect(page.locator('#goal-week-dots-h .goal-dot.met')).toHaveCount(1);
     await expect(page.locator('#goal-week-dots-h .goal-dot.today')).toHaveClass(/met/);
@@ -817,9 +822,11 @@ test.describe('Study Pets — smoke', () => {
     // Semana: o mesmo cumprido, sobre um planejado maior (a semana inteira).
     await page.locator('#an-subnav .subnav-chip[data-view="semana"]').click();
     await expect(page.locator('.subview[data-view="semana"]')).toHaveClass(/active/);
+    // A semana cobra só os dias que já chegaram e contam: hoje (seg e ter são antes da conta).
     const semana = await realizado(page, 'adherence-week');
     expect(semana.done).toBe(175);
-    expect(semana.planned).toBeGreaterThan(385);
+    expect(semana.goal).toBe(60);
+    await expect(page.locator('#adherence-week .adh-sub')).toContainText('no plano');
     await expect(page.locator('#goal-week-dots .goal-dot.today')).toHaveCount(0); // o anel é só na vista Hoje
     // Conclusão por sessão: as quatro sessões do dia, com o que foi marcado em cada uma —
     // a 1ª inteira (4 estudos), a 2ª parou no 3º, e as duas da tarde ficaram zeradas.
@@ -838,7 +845,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#an-subnav .subnav-chip[data-view="geral"]').click();
     const geral = await realizado(page, 'adherence-geral');
     expect(geral.done).toBe(175);
-    expect(geral.planned).toBeGreaterThanOrEqual(385);
+    expect(geral.goal).toBe(60);
     await expect(page.locator('#heatmap-grid-gh .heatmap-cell')).toHaveCount(7 * 16);
     await expect(page.locator('#heatmap-grid-gh .heatmap-cell[title^="02/09"]')).toHaveAttribute('title', '02/09 (hoje): 175 de 60 min (292%)');
     await expect(page.locator('#hour-bar-chart .bar-wrap')).toHaveCount(11);
@@ -880,7 +887,7 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: /Meus pets/ }).click();
     await expect(page.locator('#my-pets-panel')).toBeVisible();
     await expect(page.locator('#my-pets-grid')).toContainText('Gato');
-    await expect(page.locator('#my-pets-grid .shop-btn.active')).toHaveText(/Equipada/);
+    await expect(page.locator('#my-pets-grid .shop-btn.active')).toHaveText(/Em uso/);
   });
 
   test('15. o pet ganha nome ao adotar, XP ao fechar o dia, e evolui escolhendo o caminho', async ({ page }) => {
@@ -1329,6 +1336,40 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await page.getByRole('button', { name: /Perfil/ }).click();
     await expect(page.locator('#char-sprite')).toHaveAttribute('src', comCabelo!);
+  });
+
+  test('47. o onboarding pergunta o horário: a janela escolhida é a que vira o plano', async ({ page }) => {
+    await page.clock.setFixedTime(new Date(`${DIA}T17:30:00`));
+    await page.goto('/');
+    await expect(page.locator('#onb-avatar')).toBeVisible();
+    await expect(page.locator('#onb-step')).toHaveText('Passo 1 de 3');
+    await page.locator('#onb-avatar-next').click();
+    await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
+    await page.locator('#onb-next').click();
+
+    // O passo 3 é o horário — e diz na hora o que ele vira.
+    await expect(page.locator('#onb-step')).toHaveText('Passo 3 de 3');
+    await expect(page.locator('#onb-windows .sw-row')).toHaveCount(1);
+    await expect(page.locator('#onb-windows-preview')).toContainText('16 pomodoros');
+
+    // Quem estuda de noite não deveria herdar 09:00–18:00 sem ter escolhido.
+    await page.locator('#onb-windows .sw-row .swc-start').fill('19:00');
+    await page.locator('#onb-windows .sw-row .swc-end').fill('22:00');
+    await expect(page.locator('#onb-windows-preview')).toContainText('6 pomodoros');
+
+    await page.locator('#onb-windows-add').click();
+    await expect(page.locator('#onb-windows .sw-row')).toHaveCount(2);
+    await page.locator('#onb-windows .sw-row').nth(1).locator('.swc-start').fill('09:00');
+    await page.locator('#onb-windows .sw-row').nth(1).locator('.swc-end').fill('11:00');
+
+    await page.getByRole('button', { name: 'Começar' }).click();
+    await expect(page.locator('#onboarding-panel')).toBeHidden();
+
+    // O plano do dia sai das faixas escolhidas, não do padrão.
+    const linhas = page.locator('.block-row.session-block');
+    await expect(linhas.first()).toContainText('09:00');
+    await expect(linhas.last()).toContainText('22:00');
+    await expect(page.locator('.block-row', { hasText: '12:00' })).toHaveCount(0);
   });
 
   test('40. o personagem no onboarding: a escolha do primeiro passo é a que vale depois', async ({ page }) => {

@@ -1,6 +1,6 @@
 // A barra fixa "Em andamento" com o restante, o volume e o "✕ Parar".
 // O elemento existe sempre (como no markup antigo); `.active` mostra.
-// Bloco aberto antes da hora: "Começa em" e a contagem até o início. Pausado: "Pausado · há N",
+// Bloco aberto antes da hora: "Começa em" e a contagem até o início. Pausado: "Pausado · N",
 // o restante congelado, e o botão vira "▶ Retomar" (no hardcore não há pausa — o botão some).
 // Em tela grande (layout B7), sem timer rodando ela vira o cartão "Agora · Iniciar": o bloco de hoje
 // que está acontecendo (ou o próximo) e um botão pra entrar nele — a mesma porta do clique na lista.

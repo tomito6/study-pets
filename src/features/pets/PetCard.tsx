@@ -23,10 +23,14 @@ export function PetSprite({ form }: { form: PetForm }) {
 interface ShopProps {
   species: PetSpecies;
   balance: number;
+  /** Quantos desta espécie já foram adotados — dá pra ter dois, mas não sem saber. */
+  owned: number;
   onAdopt: (species: PetSpecies) => void;
 }
 
-export function ShopPetCard({ species, balance, onAdopt }: ShopProps) {
+const traits = t.traits as Record<string, string | undefined>;
+
+export function ShopPetCard({ species, balance, owned, onAdopt }: ShopProps) {
   const form = speciesForm(species);
   const canAfford = balance >= species.price;
   const onButton = () => {
@@ -37,11 +41,14 @@ export function ShopPetCard({ species, balance, onAdopt }: ShopProps) {
     onAdopt(species);
   };
   return (
-    <div className="shop-item">
+    <div className={'shop-item' + (owned > 0 ? ' shop-item-owned' : '')}>
       <PetSprite form={form} />
       <div className="shop-item-name-row">
         <span className="shop-item-name">{form.name}</span>
       </div>
+      {/* O que ela faz por você. O onboarding sempre mostrou; a loja vendia cinco cards iguais. */}
+      <div className="shop-item-trait">{traits[species.id] ?? ''}</div>
+      {owned > 0 && <div className="shop-item-have">{t.owned(owned)}</div>}
       <div className="shop-item-price">{t.price(species.price)}</div>
       <button className={'shop-btn' + (canAfford ? '' : ' locked')} onClick={onButton}>{t.adopt}</button>
     </div>

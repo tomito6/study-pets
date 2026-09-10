@@ -156,18 +156,6 @@ const sameBlock = (a: Pick<StudyBlock, 'time' | 'endTime'>, b: Pick<StudyBlock, 
 
 const isPomodoroPart = (b: Pick<StudyBlock, 'type'>): boolean => b.type === 'estudo' || b.type === 'pausa';
 
-/** Posição do bloco entre os estudos/pausas da MESMA sessão (1-based). */
-export function blockNumberInSession(dayBlocks: StudyBlock[], block: StudyBlock): number {
-  let n = 0;
-  for (const b of dayBlocks) {
-    if (b.session === block.session && isPomodoroPart(b)) {
-      n++;
-      if (sameBlock(b, block)) break;
-    }
-  }
-  return n;
-}
-
 /** O bloco seguinte no dia, ou null se este é o último. */
 export function nextBlockAfter(dayBlocks: StudyBlock[], block: StudyBlock): StudyBlock | null {
   const idx = dayBlocks.findIndex((b) => sameBlock(b, block));

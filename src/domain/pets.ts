@@ -300,7 +300,14 @@ export function newPetInstance(species: PetSpecies, name: string, existing: read
   const taken = new Set(existing.map((p) => p.id));
   let id = species.id;
   for (let n = 2; taken.has(id); n++) id = `${species.id}-${n}`;
-  return { id, species: species.id, name, xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: now };
+  // A forma base tem UMA skill, e é por ela que o pet é escolhido — o onboarding
+  // vende o cachorro como "Fiel. Comemora o seu primeiro estudo do dia.". Ela vinha
+  // desligada, atrás de um toggle que nem o tour nem o card do pet mencionam: quem
+  // escolheu pela skill não ganhava nada. Escolher entre duas continua sendo do
+  // usuário — só a que não tem escolha já vem ligada.
+  const skills = speciesForm(species).skills;
+  const skill = skills.length === 1 ? skills[0]! : null;
+  return { id, species: species.id, name, xp: 0, path: null, stage: 0, skill, skillActivatedAt: skill ? now : 0, adoptedAt: now };
 }
 
 /**

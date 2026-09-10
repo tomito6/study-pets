@@ -76,6 +76,7 @@ export const strings = {
     xpGain: (xp: number) => `+${xp} XP`,
     free: 'livre',
     eventTitle: 'Toque pra editar ou apagar este evento',
+    checkLabel: (name: string) => `Marcar ${name} como concluído`,
     dragTitle: 'Arraste pra mudar o horário',
     dragGhost: (start: string, end: string) => `${start} – ${end}`,
     freeWeekend: '🌴 Fim de semana livre',
@@ -253,29 +254,25 @@ export const strings = {
     reload: 'Recarregar',
   },
   onboarding: {
-    title: '👋 Bem-vindo!',
-    intro: 'Vamos configurar quando você quer usar o app. Você pode mudar isso depois nas configurações.',
-    period: 'Período de uso',
-    start: 'Início',
-    end: 'Fim',
-    useAlways: 'Usar sempre (sem data fim)',
-    alwaysToast: 'Modo "sempre" — até o fim do ano',
+    /** "Passo 2 de 3" — quem entra quer saber quanto falta. */
+    stepOf: (i: number, n: number) => `Passo ${i} de ${n}`,
+    windowsTitle: '🕘 A que horas você estuda',
+    windowsIntro:
+      'É daqui que sai o seu dia: o app enche essas faixas de pomodoros e pausas. Estuda de manhã e de noite? Dá pra ter mais de uma. Muda quando quiser.',
+    windowsAdd: '+ Adicionar faixa',
+    windowsPreview: (pomos: number, dur: string) => `Dá ${pomos} pomodoros · ${dur} de estudo`,
+    windowsPreviewNone: 'Essa combinação não gera nenhum bloco ainda.',
     skipWeekends: 'Pular finais de semana (sáb e dom)',
     begin: 'Começar',
-    endBeforeStart: '⚠️ Data fim antes da data início',
-    avatarTitle: '🙋 Quem vai estudar',
+    windowsInvalid: '⚠️ Confira as faixas: o fim tem que vir depois do início.',
+    windowsOverlap: '⚠️ Duas faixas se sobrepõem.',
+    windowsEmpty: '⚠️ Deixe pelo menos uma faixa de estudo.',
+    avatarTitle: '👋 Bem-vindo! Quem vai estudar?',
     avatarIntro: 'Monte o seu personagem. Ele aparece no Perfil e no quarto, ao lado do pet — e dá pra mudar quando quiser.',
     avatarBack: '← Mudar personagem',
     starterTitle: '🐾 Escolha seu companheiro',
     starterIntro: 'Ele estuda com você desde o primeiro bloco e ganha XP junto. Escolhe um e dá um nome.',
     starterNotice: 'Sem estresse: todos os outros dá pra adotar depois, na loja, com as moedas que você ganha estudando.',
-    traits: {
-      dog: 'Fiel. Comemora o seu primeiro estudo do dia.',
-      cat: 'Independente. Rende mais depois de uma pausa longa.',
-      snake: 'Paciente. Fica forte quando você bate a meta do dia.',
-      cow: 'Tranquila. Rende mais depois de uma refeição.',
-      dove: 'Pontual. Rende mais nas aulas e nos compromissos do plano.',
-    },
     next: 'Continuar',
     back: '← Trocar de pet',
     starterMissing: 'Escolhe um pet e dá um nome pra ele.',
@@ -337,6 +334,13 @@ export const strings = {
   },
   profile: {
     name: 'Estudante',
+    /**
+     * O Perfil mostrava 0 XP, 0 blocos, 0 moedas logo depois de marcar três estudos —
+     * a regra é boa (XP só entra com o dia fechado), mas só o Plano contava essa
+     * metade. Quem vem ver o pet crescer merece a mesma frase.
+     */
+    pending: (xp: number, coins: number) => `Hoje: +${xp} XP · +${coins} 🪙 — entram quando você encerrar o dia`,
+
     nextLevel: 'próximo nível',
     max: 'MÁX',
     xpTotal: 'XP total',
@@ -355,14 +359,26 @@ export const strings = {
   },
   pets: {
     shopTitle: '🛒 Loja de pets',
+    /** Uma linha por espécie: o que ela faz por você. Mostrada no onboarding E na loja. */
+    traits: {
+      dog: 'Fiel. Comemora o seu primeiro estudo do dia.',
+      cat: 'Independente. Rende mais depois de uma pausa longa.',
+      snake: 'Paciente. Fica forte quando você bate a meta do dia.',
+      cow: 'Tranquila. Rende mais depois de uma refeição.',
+      dove: 'Pontual. Rende mais nas aulas e nos compromissos do plano.',
+    },
+    /** O saldo no cabeçalho da loja: sem ele, o preço não diz nada. */
+    balance: (coins: number) => `🪙 ${coins}`,
+    balanceTitle: (coins: number) => `Você tem ${coins} moedas`,
+    owned: (n: number) => (n === 1 ? '✓ você já tem um' : `✓ você já tem ${n}`),
     myPetsTitle: '🐾 Meus pets',
     empty: ['Nenhum pet ainda.', 'Visite a loja pra adotar um!'],
-    badgeActive: 'Ativa',
+    badgeActive: 'Em uso',
     lv: (n: number) => `Lv. ${n}`,
     price: (p: number) => `🪙 ${p}`,
     adopt: 'Adotar',
     equip: 'Equipar',
-    equipped: '✓ Equipada',
+    equipped: '✓ Em uso',
     skills: 'Skills',
     insufficient: 'Moedas insuficientes',
     buyTitle: 'Adotar pet?',
@@ -606,8 +622,8 @@ export const strings = {
     },
     inProgress: 'Em andamento',
     startsIn: 'Começa em',
-    /** "Pausado · há 03:12" — o rótulo da barra enquanto o relógio está congelado. */
-    pausedFor: (since: string) => `Pausado · há ${since}`,
+    /** "Pausado · 03:12" — o rótulo da barra enquanto o relógio está congelado (o "há" saía como "há 00:00" no primeiro segundo). */
+    pausedFor: (since: string) => `Pausado · ${since}`,
     pause: '⏸ Pausar',
     resume: '▶ Retomar',
     stop: '✕ Parar',
@@ -640,12 +656,12 @@ export const strings = {
     },
     focus: {
       exit: '← Sair do foco',
-      chip: (session: string, n: number) => `${session} · Bloco ${n}`,
+      chip: (session: string) => session,
       pomodoroOf: (min: number) => `Pomodoro de ${min} min`,
       breakOf: (min: number) => `Pausa de ${min} min`,
-      completed: (pct: number) => `completou · ${pct}%`,
+      completed: (pct: number) => `${pct}% concluído`,
       startsAt: (time: string) => `começa às ${time}`,
-      pausedFor: (since: string) => `pausado · há ${since}`,
+      pausedFor: (since: string) => `pausado · ${since}`,
       onComplete: ' ao concluir',
       next: 'Em seguida',
       endOfDay: 'Fim do dia 🌙',

@@ -83,6 +83,17 @@ describe('antes de você começar — o período da conta', () => {
     expect(cells.find((c) => c.key === '2026-09-01')!.kind).toBe('value');
   });
 
+  it('dia antes do início MAS com estudo feito não some: trabalho feito nunca vira ausência', () => {
+    const comDados = {
+      dayMetGoal: { '2026-08-31': true },
+      dayStudyDoneMins: { '2026-08-31': 90 },
+    };
+    const g = goalWeek(comDados, { now: QUA, startedAt: '2026-09-02' });
+    expect(g.dots[0]!.kind).toBe('met');   // segunda tem 90 min: conta
+    expect(g.dots[1]!.kind).toBe('before'); // terça está vazia: ausência
+    expect(g.totalDays).toBe(6);
+  });
+
   it('o futuro continua futuro, mesmo antes do início', () => {
     const cells = heatmap({}, { now: QUA, goal: 60, startedAt: '2026-09-30' });
     expect(cells.find((c) => c.key === '2026-09-03')!.kind).toBe('future');
