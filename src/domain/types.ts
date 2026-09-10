@@ -116,6 +116,12 @@ export interface StudyEvent {
   end: TimeString;
   /** `false` = só bloqueia o tempo (tipo 'intervalo'). Ausente = true (retrocompat). */
   countsAsStudy?: boolean;
+  /**
+   * De onde veio, quando não foi digitado aqui: `ics:<UID>` pra evento importado
+   * de calendário. É o que deixa reimportar o mesmo arquivo substituir em vez de
+   * duplicar. Ausente = é do usuário, e nenhuma importação encosta nele.
+   */
+  externalId?: string;
   _seriesId?: string;
 }
 
@@ -134,6 +140,8 @@ export interface RecurringEventSeries {
   until?: DateKey | null;
   exceptions?: DateKey[];
   countsAsStudy?: boolean;
+  /** Origem externa — ver `StudyEvent.externalId`. */
+  externalId?: string;
 }
 
 /**

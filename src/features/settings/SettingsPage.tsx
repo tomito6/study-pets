@@ -17,6 +17,7 @@ import { state, useAppState } from '../../store/store';
 import { ConfigPreview } from './ConfigPreview';
 import { CancelSessionModal, DeleteAccountModal } from './DangerModals';
 import { FitStudyModal } from './FitStudyModal';
+import { CalendarImportSection } from './CalendarImportSection';
 import { SiteBlockSection } from './SiteBlockSection';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
 import { AvatarPicker } from './AvatarPicker';
@@ -237,6 +238,8 @@ export function SettingsPage() {
                   </div>
                 </div>
               </div>
+
+              <CalendarImportSection />
 
               <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title">{t.data.title}</div></div>

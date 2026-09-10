@@ -384,6 +384,73 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#toast')).toContainText('Arquivo gerado');
   });
 
+  test('39. importar um .ics: revisar, escolher o que dá XP, e reimportar sem duplicar', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+
+    // Uma aula semanal (série), um compromisso avulso e um feriado de dia inteiro.
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'X-WR-CALNAME:Faculdade',
+      'BEGIN:VEVENT',
+      'UID:aula@fac',
+      'SUMMARY:Análise II',
+      'DTSTART:20260903T100000',
+      'DTEND:20260903T113000',
+      'RRULE:FREQ=WEEKLY;BYDAY=TH',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:dentista@pessoal',
+      'SUMMARY:Dentista',
+      'DTSTART:20260903T150000',
+      'DTEND:20260903T160000',
+      'END:VEVENT',
+      'BEGIN:VEVENT',
+      'UID:feriado@br',
+      'SUMMARY:Feriado',
+      'DTSTART;VALUE=DATE:20260907',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    const arquivo = { name: 'faculdade.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics, 'utf8') };
+
+    const abrirRevisao = async () => {
+      await page.getByRole('button', { name: 'Configurações' }).click();
+      await page.locator('#settings-panel').getByRole('button', { name: 'Geral' }).click();
+      await page.locator('#ics-file').setInputFiles(arquivo);
+      await expect(page.locator('#ics-review-panel')).toBeVisible();
+    };
+
+    await abrirRevisao();
+    // A aula virou série e o avulso virou uma data; o feriado de dia inteiro ficou de fora.
+    await expect(page.locator('.ics-item')).toHaveCount(2);
+    await expect(page.locator('.ics-item').first()).toContainText('Análise II');
+    await expect(page.locator('.ics-skipped')).toContainText('1 ficou de fora');
+
+    // XP é escolha: só a aula conta como estudo.
+    await page.locator('.ics-item').first().locator('.ics-xp').click();
+    await expect(page.locator('.ics-item').first().locator('.ics-xp')).toHaveClass(/on/);
+    await page.locator('#ics-import-confirm').click();
+    await expect(page.locator('#ics-review-panel')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('no plano');
+
+    // No plano de amanhã (quinta): a aula dá XP, o dentista só reserva o tempo.
+    await page.getByRole('button', { name: /Voltar/ }).click();
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    const aula = page.locator('.block-row', { hasText: 'Análise II' });
+    await expect(aula).toContainText('XP');
+    await expect(page.locator('.block-row', { hasText: 'Dentista' })).toHaveCount(1);
+
+    // Reimportar o mesmo arquivo substitui em vez de duplicar.
+    await abrirRevisao();
+    await page.locator('#ics-import-confirm').click();
+    await expect(page.locator('#ics-review-panel')).toBeHidden();
+    await page.getByRole('button', { name: /Voltar/ }).click();
+    await expect(page.locator('.block-row', { hasText: 'Análise II' })).toHaveCount(1);
+    await expect(page.locator('.block-row', { hasText: 'Dentista' })).toHaveCount(1);
+  });
+
   test('35. apagar a conta só destrava depois de digitar APAGAR, e leva os dados junto', async ({ page }) => {
     await abrirApp(page);
     await page.locator('#tour-skip').click();

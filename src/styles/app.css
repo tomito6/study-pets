@@ -1088,6 +1088,41 @@
   .st-action-btn:hover{background:var(--accent-bg);}
   @media (max-width:520px){ .st-action-btn{width:100%;} }
 
+  /* importar calendário (.ics) — a seção e a tela de revisão */
+  .ics-how{margin-top:12px;font-size:11.5px;color:var(--muted);}
+  .ics-how summary{cursor:pointer;color:var(--accent);font-size:12px;}
+  .ics-how ul{margin:8px 0 0;padding-left:18px;line-height:1.6;}
+  .ics-how li{margin-bottom:4px;}
+  .ics-review{display:flex;flex-direction:column;gap:12px;}
+  .ics-from{font-size:12px;color:var(--muted);}
+  .ics-intro{font-size:12px;color:var(--muted);line-height:1.5;}
+  .ics-bulk{display:flex;gap:8px;flex-wrap:wrap;}
+  .ics-bulk-btn{padding:5px 10px;font-size:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-ui);}
+  .ics-bulk-btn:hover{border-color:var(--border-strong);color:var(--text);}
+  .ics-bulk-btn.xp{color:var(--accent);border-color:var(--accent2);}
+  .ics-list{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow-y:auto;}
+  .ics-item{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;}
+  .ics-item.off{opacity:.45;}
+  .ics-item input[type=checkbox]{flex:none;accent-color:var(--accent);width:15px;height:15px;cursor:pointer;}
+  .ics-item-body{flex:1;min-width:0;}
+  .ics-item-name{font-size:12.5px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ics-item-when{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono);}
+  .ics-item-note{font-size:10.5px;color:var(--orange);margin-top:3px;}
+  .ics-xp{flex:none;padding:4px 9px;font-size:10.5px;letter-spacing:.04em;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-ui);}
+  .ics-xp.on{border-color:var(--accent2);color:var(--accent);background:var(--accent-bg);}
+  .ics-xp-hint{font-size:11px;color:var(--muted);line-height:1.5;}
+  .ics-skipped{font-size:11.5px;color:var(--muted);}
+  .ics-skipped summary{cursor:pointer;}
+  .ics-skipped ul{margin:6px 0 0;padding-left:18px;line-height:1.6;}
+  .ics-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .ics-cancel{padding:9px 16px;font-size:12.5px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-ui);}
+  .ics-confirm{padding:9px 18px;font-size:12.5px;font-weight:600;border-radius:var(--radius-sm);border:none;background:var(--accent);color:var(--on-accent);cursor:pointer;font-family:var(--font-ui);}
+  .ics-confirm:disabled{opacity:.45;cursor:not-allowed;}
+  @media (max-width:520px){
+    .ics-actions{flex-direction:column-reverse;}
+    .ics-actions button{width:100%;}
+  }
+
   /* ================================================================================================
      TELA GRANDE (janela ≥ 1100px) — a mesma largura de shared/useWide.ts; os dois andam juntos.
      Abaixo disso nada daqui se aplica: o celular continua exatamente como era.
