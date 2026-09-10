@@ -10,7 +10,7 @@ import type { HardcoreRuntime } from '../domain/hardcore';
 import type { BlockingAck } from '../infrastructure/extensionBridge';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
-import type { SessionSummary } from '../domain/sessions';
+import type { CycleSummary } from '../domain/cycles';
 import type { BlockType, SiteBlockMode, StudyBlock } from '../domain/types';
 import type { Week } from '../domain/weeks';
 import type { AudioSettings } from '../infrastructure/audio/sounds';
@@ -57,8 +57,8 @@ export interface CompletedBlock {
   coins: number;
   /** ms de quando terminou — o overlay esconde a faixa alguns segundos depois. */
   at: number;
-  /** A leva que fechou com este bloco, se fechou: a faixa vira a comemoração da sessão. */
-  session?: SessionSummary | null;
+  /** A leva que fechou com este bloco, se fechou: a faixa vira a comemoração do ciclo. */
+  cycle?: CycleSummary | null;
 }
 
 /**

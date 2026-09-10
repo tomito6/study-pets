@@ -19,7 +19,7 @@ const estudo = (time: string, endTime: string, xp = 50): StudyBlock => ({
   name: `📖 Estudo ${time}`,
   type: 'estudo',
   xp,
-  session: 0,
+  cycle: 0,
 });
 
 describe('isChecked', () => {

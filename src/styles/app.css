@@ -56,7 +56,7 @@
     --on-accent-login:#0a0a0b;             /* idem, na tela de login */
     --on-orange:#0e0e0f;
     --on-gold:#0e0e0f;
-    --on-session:#0e0e0f;                  /* texto sobre a cor da sessão (padrão das 6) */
+    --on-cycle:#0e0e0f;                  /* texto sobre a cor do ciclo (padrão das 6) */
     --on-danger:#fff;
 
     /* --- ação ------------------------------------------------------------- */
@@ -118,12 +118,12 @@
     --gold-muted:#b89968;
 
     /* --- sessão (consumidas via --sc / --sc-bg / --sc-border / --sc-on) ---- */
-    --s0:#a3e635; --s0-bg:#1a2e1a; --s0-line:#65a30d; --s0-on:var(--on-session);
-    --s1:#60a5fa; --s1-bg:#1e2d40; --s1-line:#2563eb; --s1-on:var(--on-session);
-    --s2:#f472b6; --s2-bg:#2d1a2a; --s2-line:#db2777; --s2-on:var(--on-session);
-    --s3:#fb923c; --s3-bg:#2d1e0f; --s3-line:#ea580c; --s3-on:var(--on-session);
-    --s4:#34d399; --s4-bg:#0f2922; --s4-line:#059669; --s4-on:var(--on-session);
-    --s5:#a78bfa; --s5-bg:#1e1a2e; --s5-line:#7c3aed; --s5-on:var(--on-session);
+    --s0:#a3e635; --s0-bg:#1a2e1a; --s0-line:#65a30d; --s0-on:var(--on-cycle);
+    --s1:#60a5fa; --s1-bg:#1e2d40; --s1-line:#2563eb; --s1-on:var(--on-cycle);
+    --s2:#f472b6; --s2-bg:#2d1a2a; --s2-line:#db2777; --s2-on:var(--on-cycle);
+    --s3:#fb923c; --s3-bg:#2d1e0f; --s3-line:#ea580c; --s3-on:var(--on-cycle);
+    --s4:#34d399; --s4-bg:#0f2922; --s4-line:#059669; --s4-on:var(--on-cycle);
+    --s5:#a78bfa; --s5-bg:#1e1a2e; --s5-line:#7c3aed; --s5-on:var(--on-cycle);
 
     /* --- grupo — o TEMA define as TRIPLAS (--gcN-rgb); o hex --gcN é derivado.
        A caixa deriva borda/fundo/trilho da tripla com os alfas abaixo. --------- */
@@ -154,7 +154,7 @@
     /* --- estado — opacidade e brilho. No escuro fade escurece e brightness
        clareia; no claro os dois invertem, e é aqui que o tema corrige. ------- */
     --fade-done:.5;             /* bloco concluído */
-    --fade-done-session:.45;    /* idem, na linha colorida de sessão */
+    --fade-done-cycle:.45;    /* idem, na linha colorida de ciclo */
     --fade-closed:.55;          /* dia encerrado */
     --fade-future:.45;          /* dia futuro */
     --fade-forfeited:.6;        /* bloco abandonado (hardcore) */
@@ -166,7 +166,7 @@
     --fade-soft:.7;             /* dot "não bateu", alça do grupo */
     --fade-hint:.75;            /* dica do dia vazio */
     --fade-event:.85;           /* linha de evento */
-    --fade-event-session:.9;    /* idem, dentro de uma sessão */
+    --fade-event-cycle:.9;    /* idem, dentro de um ciclo */
     --lift-hover:brightness(1.08);
     --lift-hover-soft:brightness(1.1);
     --lift-hover-strong:brightness(1.15);
@@ -231,9 +231,9 @@
   @keyframes check-ripple{0%{transform:translate(-50%,-50%) scale(.5);opacity:1;}100%{transform:translate(-50%,-50%) scale(4.2);opacity:0;}}
   /* A leva fechada (features/plan/feedback.ts): comemora sem interromper — rodapé,
      sem botão, acima do toast e abaixo dos modais. */
-  .session-cheer{position:fixed;bottom:clamp(64px,8vh,88px);left:50%;width:max-content;z-index:400;background:var(--accent-bg);border:1px solid var(--accent2);border-radius:var(--radius-lg);padding:10px 20px;text-align:center;pointer-events:none;box-shadow:0 6px 28px var(--accent-glow);max-width:calc(100vw - 32px);animation:sc-pop .45s cubic-bezier(.34,1.56,.64,1) both,sc-fade .5s ease 3.2s forwards;}
-  .session-cheer .sc-title{font-family:var(--font-mono);font-weight:600;font-size:14px;color:var(--accent);}
-  .session-cheer .sc-sub{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono);}
+  .cycle-cheer{position:fixed;bottom:clamp(64px,8vh,88px);left:50%;width:max-content;z-index:400;background:var(--accent-bg);border:1px solid var(--accent2);border-radius:var(--radius-lg);padding:10px 20px;text-align:center;pointer-events:none;box-shadow:0 6px 28px var(--accent-glow);max-width:calc(100vw - 32px);animation:sc-pop .45s cubic-bezier(.34,1.56,.64,1) both,sc-fade .5s ease 3.2s forwards;}
+  .cycle-cheer .sc-title{font-family:var(--font-mono);font-weight:600;font-size:14px;color:var(--accent);}
+  .cycle-cheer .sc-sub{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono);}
   @keyframes sc-pop{0%{opacity:0;transform:translate(-50%,14px) scale(.92);}100%{opacity:1;transform:translate(-50%,0) scale(1);}}
   @keyframes sc-fade{to{opacity:0;transform:translate(-50%,-6px) scale(.98);}}
   .bar-track{height:4px;background:var(--track);border-radius:99px;overflow:hidden;}
@@ -307,7 +307,7 @@
   .block-row.pausa-row:hover{background:var(--surface-hover-solid);border-color:var(--border);}
   .block-row.almoco-row{background:var(--bg3);border-color:var(--border);border-style:dashed;cursor:default;}
   .block-row.event-row{background:var(--orange-bg);border-color:var(--orange);cursor:default;opacity:var(--fade-event);}
-  .block-row.event-row.session-block{border-style:dashed !important;opacity:var(--fade-event-session);}
+  .block-row.event-row.cycle-block{border-style:dashed !important;opacity:var(--fade-event-cycle);}
   .check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
   .check.checked{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
   .check svg{width:10px;height:10px;display:none;}
@@ -678,10 +678,10 @@
   @keyframes focus-done-pop { 0% { opacity:0; transform:translate(-50%,-10px) scale(.85); } 100% { opacity:1; transform:translate(-50%,0) scale(1); } }
   @keyframes focus-done-fade { to { opacity:0; } }
   /* A leva fechada: a mesma faixa, maior, com o pet do lado e duas linhas. */
-  .focus-done.session { display:flex; width:max-content; align-items:center; gap:clamp(10px,1.6vmin,16px); border-radius:var(--radius-lg); padding:clamp(10px,1.4vmin,14px) clamp(16px,2.2vmin,22px); white-space:normal; text-align:left; max-width:min(92vw,440px); animation:focus-done-pop .5s cubic-bezier(.34,1.56,.64,1) both, focus-done-fade .6s ease 5.9s forwards; }
-  .focus-done.session .fd-pet { width:clamp(30px,4.4vmin,44px); height:clamp(30px,4.4vmin,44px); image-rendering:pixelated; flex-shrink:0; }
-  .focus-done.session .fd-title { font-weight:600; font-size:clamp(13px,1.9vmin,16px); }
-  .focus-done.session .fd-sub { color:var(--muted); font-size:clamp(10px,1.4vmin,12px); margin-top:2px; }
+  .focus-done.cycle { display:flex; width:max-content; align-items:center; gap:clamp(10px,1.6vmin,16px); border-radius:var(--radius-lg); padding:clamp(10px,1.4vmin,14px) clamp(16px,2.2vmin,22px); white-space:normal; text-align:left; max-width:min(92vw,440px); animation:focus-done-pop .5s cubic-bezier(.34,1.56,.64,1) both, focus-done-fade .6s ease 5.9s forwards; }
+  .focus-done.cycle .fd-pet { width:clamp(30px,4.4vmin,44px); height:clamp(30px,4.4vmin,44px); image-rendering:pixelated; flex-shrink:0; }
+  .focus-done.cycle .fd-title { font-weight:600; font-size:clamp(13px,1.9vmin,16px); }
+  .focus-done.cycle .fd-sub { color:var(--muted); font-size:clamp(10px,1.4vmin,12px); margin-top:2px; }
   .focus-time-sub { font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); margin-top:8px; font-family:var(--font-mono); }
   .focus-scene { background:linear-gradient(180deg, transparent 0%, var(--scene-floor) 60%); border-radius:var(--radius-2xl); padding:clamp(16px, 2.5vmin, 28px) clamp(16px, 2.5vmin, 28px) clamp(12px, 2vmin, 20px); margin:clamp(12px, 2vmin, 24px) 0 clamp(14px, 2.5vmin, 28px); position:relative; overflow:hidden; }
   .focus-scene-stage { display:flex; align-items:flex-end; justify-content:center; gap:12px; height:clamp(100px, 14vmin, 160px); margin-bottom:10px; }
@@ -807,31 +807,31 @@
     transform:translateY(-50%);
     opacity:0.8;
   }
-  .session-divider.now-session .sd-label { opacity:1 !important; }
+  .cycle-divider.now-cycle .cd-label { opacity:1 !important; }
 
   /* BIGGER CHECKBOX */
   .check { width:22px !important; height:22px !important; border-radius:5px !important; border:2px solid var(--border-strong) !important; flex-shrink:0; }
   .check.checked { background:var(--accent) !important; border-color:var(--accent) !important; }
   .check svg { width:12px !important; height:12px !important; }
 
-  /* SESSION COLORS */
+  /* CORES DO CICLO */
   .s0 { --sc:var(--s0); --sc-bg:var(--s0-bg); --sc-border:var(--s0-line); --sc-on:var(--s0-on); }
   .s1 { --sc:var(--s1); --sc-bg:var(--s1-bg); --sc-border:var(--s1-line); --sc-on:var(--s1-on); }
   .s2 { --sc:var(--s2); --sc-bg:var(--s2-bg); --sc-border:var(--s2-line); --sc-on:var(--s2-on); }
   .s3 { --sc:var(--s3); --sc-bg:var(--s3-bg); --sc-border:var(--s3-line); --sc-on:var(--s3-on); }
   .s4 { --sc:var(--s4); --sc-bg:var(--s4-bg); --sc-border:var(--s4-line); --sc-on:var(--s4-on); }
   .s5 { --sc:var(--s5); --sc-bg:var(--s5-bg); --sc-border:var(--s5-line); --sc-on:var(--s5-on); }
-  .block-row.session-block { border-color: var(--sc-border) !important; background: var(--sc-bg) !important; }
-  .block-row.session-block:hover { filter: var(--lift-hover-soft); }
-  .block-row.session-block.done { opacity: var(--fade-done-session); }
-  .block-row.session-block .block-name { color: var(--sc); }
-  .block-row.session-block .block-time { color: var(--sc-border); }
-  .block-xp.session-xp { color: var(--sc) !important; background: var(--sc-bg) !important; }
-  .session-divider { display:flex; align-items:center; gap:8px; margin: 10px 0 4px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
-  .session-divider .sd-line { flex:1; height:1px; background: var(--sc-border); opacity:.4; }
-  .session-divider .sd-label { color: var(--sc); }
-  .session-divider.done .sd-line { background: var(--accent); opacity:.3; }
-  .session-divider.done .sd-label { color: var(--accent); }
+  .block-row.cycle-block { border-color: var(--sc-border) !important; background: var(--sc-bg) !important; }
+  .block-row.cycle-block:hover { filter: var(--lift-hover-soft); }
+  .block-row.cycle-block.done { opacity: var(--fade-done-cycle); }
+  .block-row.cycle-block .block-name { color: var(--sc); }
+  .block-row.cycle-block .block-time { color: var(--sc-border); }
+  .block-xp.cycle-xp { color: var(--sc) !important; background: var(--sc-bg) !important; }
+  .cycle-divider { display:flex; align-items:center; gap:8px; margin: 10px 0 4px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
+  .cycle-divider .cd-line { flex:1; height:1px; background: var(--sc-border); opacity:.4; }
+  .cycle-divider .cd-label { color: var(--sc); }
+  .cycle-divider.done .cd-line { background: var(--accent); opacity:.3; }
+  .cycle-divider.done .cd-label { color: var(--accent); }
 
   /* SAVE INDICATOR */
   #save-indicator{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
@@ -985,7 +985,7 @@
   .gb-grip:hover::before,.gb-grip:active::before{opacity:1;background:var(--gc);}
   .gb-grip-top{margin-top:-8px;margin-bottom:-2px;}
   .gb-grip-bottom{margin-top:-2px;margin-bottom:-6px;}
-  .group-rows .session-divider{margin:6px 0 2px;}
+  .group-rows .cycle-divider{margin:6px 0 2px;}
   .block-row.selecting{filter:var(--lift-select);}
   .blocks-list{position:relative;}
   .selection-rect{position:absolute;left:-6px;right:-6px;border:2px dashed var(--accent);border-radius:var(--radius-lg);background:var(--accent-wash-soft);pointer-events:none;z-index:3;transition:top .08s ease-out,height .08s ease-out;}
@@ -1282,16 +1282,16 @@
     .blocks-list{gap:0;}
     .block-row{background:transparent !important;border:0 !important;border-bottom:1px solid var(--hairline-row) !important;border-radius:6px;padding:calc(10 * var(--s)) calc(12 * var(--s));gap:calc(14 * var(--s));}
     .block-row:hover{background:var(--surface-hover) !important;filter:none;}
-    /* as regras de sessão são mais específicas (.block-row.session-block) — repetidas aqui só pra apagar o fundo e a borda */
-    .block-row.session-block{background:transparent !important;border-color:transparent !important;border-bottom-color:var(--hairline-row) !important;}
-    .block-row.session-block:hover{background:var(--surface-hover) !important;filter:none;}
+    /* as regras de sessão são mais específicas (.block-row.cycle-block) — repetidas aqui só pra apagar o fundo e a borda */
+    .block-row.cycle-block{background:transparent !important;border-color:transparent !important;border-bottom-color:var(--hairline-row) !important;}
+    .block-row.cycle-block:hover{background:var(--surface-hover) !important;filter:none;}
     .block-row.done .block-name{text-decoration:none;}
-    .block-xp.session-xp,.block-xp.event-xp,.block-xp.almoco-xp{background:transparent !important;color:var(--muted) !important;}
+    .block-xp.cycle-xp,.block-xp.event-xp,.block-xp.almoco-xp{background:transparent !important;color:var(--muted) !important;}
     .block-row.pausa-row{padding:calc(8 * var(--s)) calc(12 * var(--s));}
     .block-row.pausa-row .block-name{color:var(--muted);font-size:calc(13 * var(--s));}
-    .block-row.session-block .block-time{color:var(--sc);}
-    .block-row.session-block .block-name{color:var(--text);}
-    .block-row.session-block.pausa-row .block-name{color:var(--muted);}
+    .block-row.cycle-block .block-time{color:var(--sc);}
+    .block-row.cycle-block .block-name{color:var(--text);}
+    .block-row.cycle-block.pausa-row .block-name{color:var(--muted);}
     .block-row.event-row{opacity:1;}
     .block-row.event-row .block-time{color:var(--orange);}
     .block-row.almoco-row{border-bottom-style:dashed !important;}
@@ -1307,8 +1307,8 @@
     .block-row.done{opacity:var(--fade-done);}
     .check{width:calc(18 * var(--s)) !important;height:calc(18 * var(--s)) !important;border-width:1.5px !important;border-radius:4px !important;}
     .check svg{width:calc(10 * var(--s)) !important;height:calc(10 * var(--s)) !important;}
-    .session-divider{margin:calc(14 * var(--s)) 0 4px;font-family:var(--font-mono);font-weight:400;font-size:calc(10 * var(--s));}
-    .session-divider .sd-line:first-child{display:none;}
+    .cycle-divider{margin:calc(14 * var(--s)) 0 4px;font-family:var(--font-mono);font-weight:400;font-size:calc(10 * var(--s));}
+    .cycle-divider .cd-line:first-child{display:none;}
     .group-box{background:transparent;border:0;border-radius:0;box-shadow:inset 2px 0 0 var(--gc-border);padding:0 0 0 calc(10 * var(--s));margin:calc(12 * var(--s)) 0 4px;}
     .group-header .gh-name{font-size:calc(14 * var(--s));}
     .group-header .gh-goal{font-size:calc(11 * var(--s));}

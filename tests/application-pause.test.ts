@@ -27,7 +27,7 @@ import { derived, state } from '../src/store/store';
 const HOJE = '2026-09-02';
 const AGORA = new Date(`${HOJE}T10:10:00`);
 // Plano padrão (09:00, pomo 25 / pausa 5): Estudo 3 é 10:00–10:25, a pausa 10:25–10:30, Estudo 4 10:30–10:55.
-const estudo3: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, session: 0 };
+const estudo3: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, cycle: 0 };
 
 const em = (hms: string) => new Date(`${HOJE}T${hms}`);
 

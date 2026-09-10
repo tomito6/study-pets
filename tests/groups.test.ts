@@ -11,8 +11,8 @@ import {
 } from '../src/domain/groups';
 import type { BlockType, StudyBlock, StudyGroup } from '../src/domain/types';
 
-const b = (time: string, endTime: string, type: BlockType, session = 0): StudyBlock =>
-  ({ time, endTime, name: type, type, xp: 0, session });
+const b = (time: string, endTime: string, type: BlockType, cycle = 0): StudyBlock =>
+  ({ time, endTime, name: type, type, xp: 0, cycle });
 const g = (id: string, start: string, end: string): StudyGroup => ({ id, start, end, name: id, goal: '' });
 
 // Manhã com pomo 25/pausa 5, almoço, aula à tarde e mais um estudo.
@@ -106,13 +106,13 @@ describe('validação', () => {
 describe('posição dos cabeçalhos', () => {
   it('antes do primeiro bloco membro, com a sessão dele', () => {
     const pos = groupHeaderPositions([g('t', '13:00', '15:00'), g('m', '09:30', '10:25')], blocks);
-    expect(pos.map((p) => [p.group.id, p.index, p.session])).toEqual([['m', 2, 0], ['t', 6, 1]]);
+    expect(pos.map((p) => [p.group.id, p.index, p.cycle])).toEqual([['m', 2, 0], ['t', 6, 1]]);
     expect(pos.every((p) => !p.empty)).toBe(true);
   });
 
   it('sem membro, antes do primeiro bloco que começa no horário do grupo ou depois', () => {
     const pos = groupHeaderPositions([g('v', '11:00', '11:45')], blocks);
-    expect(pos[0]).toMatchObject({ index: 5, session: undefined, empty: true });
+    expect(pos[0]).toMatchObject({ index: 5, cycle: undefined, empty: true });
   });
 
   it('depois de todos os blocos, quando o trecho fica no fim do dia', () => {

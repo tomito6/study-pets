@@ -38,13 +38,13 @@ import { SiteBlockBadge } from './SiteBlockBadge';
 import { useSecondTick } from './useSecondTick';
 
 const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7, o perímetro do círculo do SVG
-const NUM_SESSIONS = 6;
+const NUM_CYCLES = 6;
 /** Quanto tempo a faixa "concluído" fica na tela depois de emendar no próximo bloco. */
 const COMPLETED_BANNER_MS = 4000;
 /** A leva fechada é o marco maior do dia: fica mais tempo, e é a única faixa com o pet. */
-const SESSION_BANNER_MS = 6500;
+const CYCLE_BANNER_MS = 6500;
 
-const sessionNameOf = (n: number): string => strings.plan.sessions[n % NUM_SESSIONS] ?? strings.plan.sessionFallback;
+const cycleNameOf = (n: number): string => strings.plan.cycles[n % NUM_CYCLES] ?? strings.plan.cycleFallback;
 
 export function FocusOverlay() {
   const { block, open, completed, hardcore, pausedAt } = useAppState((_, d) => ({
@@ -82,9 +82,9 @@ export function FocusOverlay() {
 
   const isPausa = block.type === 'pausa';
   const dayBlocks = blocksForDay(currentDayKey());
-  const sessionName = sessionNameOf(block.session ?? 0);
+  const cycleName = cycleNameOf(block.cycle ?? 0);
   // O pet só aparece na faixa da leva fechada — companhia no marco, não decoração fixa.
-  const cheerPet = completed?.session ? activePet() : null;
+  const cheerPet = completed?.cycle ? activePet() : null;
   const petSprite = cheerPet ? petForm(cheerPet).sprite(0) : null;
   const durMin = blockDurationMin(block);
   const coins = block.type === 'estudo' ? coinsForStudyBlock(durMin) : 0;
@@ -114,14 +114,14 @@ export function FocusOverlay() {
             <button className="focus-exit" onClick={closeFocus}>{t.exit}</button>
           )}
         </div>
-        {completed && now.getTime() - completed.at < (completed.session ? SESSION_BANNER_MS : COMPLETED_BANNER_MS) && (
-          completed.session ? (
-            <div className="focus-done session" id="focus-done">
+        {completed && now.getTime() - completed.at < (completed.cycle ? CYCLE_BANNER_MS : COMPLETED_BANNER_MS) && (
+          completed.cycle ? (
+            <div className="focus-done cycle" id="focus-done">
               {petSprite && <img className="fd-pet" src={petSprite} alt="" />}
               <div className="fd-text">
-                <div className="fd-title">{strings.plan.sessionCheer.title(sessionNameOf(completed.session.session))}</div>
+                <div className="fd-title">{strings.plan.cycleCheer.title(cycleNameOf(completed.cycle.cycle))}</div>
                 <div className="fd-sub">
-                  {strings.plan.sessionCheer.sub(completed.session.done, formatCompact(completed.session.minsDone), completed.session.xp, true)}
+                  {strings.plan.cycleCheer.sub(completed.cycle.done, formatCompact(completed.cycle.minsDone), completed.cycle.xp, true)}
                 </div>
               </div>
             </div>
@@ -132,7 +132,7 @@ export function FocusOverlay() {
         <div className="focus-header">
           <div className={'focus-chip' + (isPausa ? ' pausa' : '')} id="focus-chip">
             <span className="fc-dot" />
-            <span id="focus-chip-text">{t.chip(sessionName)}</span>
+            <span id="focus-chip-text">{t.chip(cycleName)}</span>
           </div>
           <div className="focus-block-name" id="focus-block-name">{cleanBlockName(block.name)}</div>
           <div className="focus-pomo-label" id="focus-pomo-label">

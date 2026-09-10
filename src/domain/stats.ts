@@ -57,7 +57,7 @@ export interface Stats {
   dayStudyPlanned: Record<DateKey, number>;
   dayStudyDoneMins: Record<DateKey, number>;
   dayMetGoal: Record<DateKey, boolean>;
-  sessionStats: Record<number, { done: number; total: number }>;
+  cycleStats: Record<number, { done: number; total: number }>;
   /** XP perdido em desistências (hardcore), já descontado de `totalXP`. */
   penaltyXP: number;
   /** Quantas desistências. */
@@ -100,7 +100,7 @@ export function computeStats(input: StatsInput): Stats {
     dayStudyPlanned: {},
     dayStudyDoneMins: {},
     dayMetGoal: {},
-    sessionStats: {},
+    cycleStats: {},
     penaltyXP: 0,
     quits: 0,
   };
@@ -111,7 +111,7 @@ export function computeStats(input: StatsInput): Stats {
   for (const { key, date: d, weekIdx: wi, bonus } of input.days) {
     // Dia "fechado" entra nos totais: dia passado OU encerrado manualmente hoje.
     // O `<` importa: dia FUTURO não é fechado. Com `!==` ele entrava, e como
-    // `sessionStats.total` conta bloco planejado (não marcado), o drop-off somava
+    // `cycleStats.total` conta bloco planejado (não marcado), o drop-off somava
     // o período inteiro no denominador e vivia perto de 0%.
     const isPast = key < todayKey || dayClosed(key);
     const blocks = getBlocks(key);
@@ -131,10 +131,10 @@ export function computeStats(input: StatsInput): Stats {
         dayPlanned += dur;
         if (isChecked(checks, key, b.time)) dayDone += dur;
         if (isPast) {
-          const s = b.session ?? 0;
-          if (!stats.sessionStats[s]) stats.sessionStats[s] = { done: 0, total: 0 };
-          stats.sessionStats[s]!.total++;
-          if (isChecked(checks, key, b.time)) stats.sessionStats[s]!.done++;
+          const s = b.cycle ?? 0;
+          if (!stats.cycleStats[s]) stats.cycleStats[s] = { done: 0, total: 0 };
+          stats.cycleStats[s]!.total++;
+          if (isChecked(checks, key, b.time)) stats.cycleStats[s]!.done++;
         }
       }
       if (!isStudyLike && b.type !== 'pausa') return;

@@ -56,7 +56,7 @@ describe('domínio: o que é dia de descanso', () => {
 
 describe('domínio: dia bônus na sequência do bônus diário de moedas', () => {
   const dia = (key: string, bonus = false) => ({ key, date: new Date(`${key}T12:00:00`), weekIdx: 0, bonus });
-  const estudo: StudyBlock = { time: '09:00', endTime: '10:00', name: '📖 Estudo', type: 'estudo', xp: 120, session: 0 };
+  const estudo: StudyBlock = { time: '09:00', endTime: '10:00', name: '📖 Estudo', type: 'estudo', xp: 120, cycle: 0 };
   const feito = { '09:00': { pet: null, bonus: 0 } };
   const entrada = (days: StatsInput['days'], checks: StatsInput['checks']): StatsInput => ({
     days,

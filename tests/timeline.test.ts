@@ -6,7 +6,7 @@ import { TIMELINE_MIN_SPAN_MIN, timelineOf, timelinePosition } from '../src/doma
 import type { StudyBlock } from '../src/domain/types';
 
 const b = (time: string, endTime: string, type: StudyBlock['type'] = 'estudo'): StudyBlock => ({
-  time, endTime, name: type, type, xp: 0, session: 0,
+  time, endTime, name: type, type, xp: 0, cycle: 0,
 });
 
 describe('timelineOf', () => {

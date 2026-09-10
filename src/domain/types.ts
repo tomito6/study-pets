@@ -81,7 +81,7 @@ export interface StudyBlock {
   type: BlockType;
   xp: number;
   /** Índice da sessão colorida. Ausente em intervalo. */
-  session?: number | undefined;
+  cycle?: number | undefined;
   /** Estudo menor que um pomo, encaixado num gap. */
   mini?: boolean;
   /**

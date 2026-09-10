@@ -296,7 +296,7 @@ describe('generateBlocks — a sobra no fim da janela vira estudo (2026-09-10)',
     expect(blocks[blocks.length - 1]).toMatchObject({ time: '17:40', endTime: '18:00', type: 'estudo', mini: true, xp: 40 });
     expect(blocks.filter((b) => b.type === 'estudo')).toHaveLength(17);
     // e o mini fica na sessão do estudo que ele emenda — sem pausa longa não há sessão nova
-    expect(blocks[blocks.length - 1]!.session).toBe(blocks[blocks.length - 2]!.session);
+    expect(blocks[blocks.length - 1]!.cycle).toBe(blocks[blocks.length - 2]!.cycle);
   });
 
   it('nenhum ritmo deixa tempo morto no fim de uma janela', () => {

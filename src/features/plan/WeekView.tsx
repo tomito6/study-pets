@@ -13,7 +13,7 @@ import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 import type { EventDrag } from '../events/useEventDrag';
 
-const NUM_SESSIONS = 6;
+const NUM_CYCLES = 6;
 /** Pausa com esta duração ou mais é "longa" (a curta tem 3–5 min) — só muda a cor. */
 const LONG_BREAK_MIN = 10;
 /** Altura da grade em px (a mesma de --wv-h no CSS): decide a partir de que duração o nome cabe. */
@@ -119,7 +119,7 @@ export function WeekView({ week, now, drag, onPickDay }: Props) {
                   const s = timeToMins(b.time);
                   const e = timeToMins(b.endTime);
                   const done = b.type !== 'intervalo' && isChecked(checks, d.key, b.time);
-                  const sIdx = b.session !== undefined ? b.session % NUM_SESSIONS : 0;
+                  const sIdx = b.cycle !== undefined ? b.cycle % NUM_CYCLES : 0;
                   const label = ((e - s) / span) * GRID_PX >= MIN_LABEL_PX ? cleanBlockName(b.name) : '';
                   // Estudo e pausa são gerados pelo planner — o que se arrasta é evento.
                   const movable = !d.rest && (b.type === 'event' || b.type === 'intervalo');

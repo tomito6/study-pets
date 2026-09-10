@@ -261,9 +261,9 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#day-windows-panel')).toBeHidden();
     // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 até 16:00.
     await expect(page.locator('.block-row').first()).toContainText('Almoço');
-    await expect(page.locator('.block-row.session-block').first()).toContainText('14:00–14:25');
+    await expect(page.locator('.block-row.cycle-block').first()).toContainText('14:00–14:25');
     // A janela fecha no minuto que ela promete: os 5 min que sobravam esticam o último estudo.
-    await expect(page.locator('.block-row.session-block').last()).toContainText('15:30–16:00');
+    await expect(page.locator('.block-row.cycle-block').last()).toContainText('15:30–16:00');
   });
 
   test('30. fim de semana pausado: dá pra abrir janelas só naquele sábado, e "Restaurar rotina" devolve a folga', async ({ page }) => {
@@ -292,7 +292,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-windows-panel .swc-end').fill('12:00');
     await page.locator('#day-windows-save').click();
     await expect(page.locator('#day-windows-panel')).toBeHidden();
-    await expect(page.locator('.block-row.session-block').first()).toContainText('10:00–10:25');
+    await expect(page.locator('.block-row.cycle-block').first()).toContainText('10:00–10:25');
     await expect(page.locator('#day-windows-btn')).toContainText('editado');
 
     // O domingo continua livre.
@@ -828,18 +828,18 @@ test.describe('Study Pets — smoke', () => {
     expect(semana.goal).toBe(60);
     await expect(page.locator('#adherence-week .adh-sub')).toContainText('no plano');
     await expect(page.locator('#goal-week-dots .goal-dot.today')).toHaveCount(0); // o anel é só na vista Hoje
-    // Conclusão por sessão: as quatro sessões do dia, com o que foi marcado em cada uma —
+    // Conclusão por ciclo: os quatro ciclos do dia, com o que foi marcado em cada uma —
     // a 1ª inteira (4 estudos), a 2ª parou no 3º, e as duas da tarde ficaram zeradas.
     // O denominador conta os dias JÁ FECHADOS da semana (seg, ter e hoje, que foi
-    // encerrado): 3 × 4 estudos em cada sessão (a última ganhou o mini das 17:45). Dia
+    // encerrado): 3 × 4 estudos em cada ciclo (a última ganhou o mini das 17:45). Dia
     // futuro NÃO entra — era o bug do `isPast`, que inflava isto pro período inteiro.
-    const sessoes = page.locator('#dropoff-chart .dropoff-row');
-    await expect(sessoes).toHaveCount(4);
-    await expect(sessoes.nth(0)).toContainText('Sessão 1');
-    await expect(sessoes.nth(0).locator('.do-count')).toHaveText('4/12');
-    await expect(sessoes.nth(1).locator('.do-count')).toHaveText('3/12');
-    await expect(sessoes.nth(2).locator('.do-count')).toHaveText('0/12');
-    await expect(sessoes.nth(3).locator('.do-count')).toHaveText('0/12');
+    const ciclos = page.locator('#dropoff-chart .dropoff-row');
+    await expect(ciclos).toHaveCount(4);
+    await expect(ciclos.nth(0)).toContainText('Ciclo 1');
+    await expect(ciclos.nth(0).locator('.do-count')).toHaveText('4/12');
+    await expect(ciclos.nth(1).locator('.do-count')).toHaveText('3/12');
+    await expect(ciclos.nth(2).locator('.do-count')).toHaveText('0/12');
+    await expect(ciclos.nth(3).locator('.do-count')).toHaveText('0/12');
 
     // Geral: agrega todos os dias com dados até hoje; heatmap 7×16 e as horas da rotina (9h–19h).
     await page.locator('#an-subnav .subnav-chip[data-view="geral"]').click();
@@ -1367,32 +1367,32 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#onboarding-panel')).toBeHidden();
 
     // O plano do dia sai das faixas escolhidas, não do padrão.
-    const linhas = page.locator('.block-row.session-block');
+    const linhas = page.locator('.block-row.cycle-block');
     await expect(linhas.first()).toContainText('09:00');
     await expect(linhas.last()).toContainText('22:00');
     await expect(page.locator('.block-row', { hasText: '12:00' })).toHaveCount(0);
   });
 
-  test('48. a leva fecha na lista: marcar o último estudo da sessão comemora e carimba o divisor', async ({ page }) => {
+  test('48. a leva fecha na lista: marcar o último estudo do ciclo comemora e carimba o divisor', async ({ page }) => {
     await abrirApp(page, '10:10');
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
-    const divisor = page.locator('.session-divider').first();
-    await expect(divisor).toContainText('Sessão 1');
+    const divisor = page.locator('.cycle-divider').first();
+    await expect(divisor).toContainText('Ciclo 1');
 
     // Três dos quatro estudos da leva: ainda não fechou nada.
     for (const i of [0, 1, 2]) await checks.nth(i).click();
-    await expect(page.locator('#session-cheer')).toHaveCount(0);
+    await expect(page.locator('#cycle-cheer')).toHaveCount(0);
     await expect(divisor).not.toHaveClass(/done/);
 
-    // O quarto fecha a leva: faixa com a conta da sessão, e o divisor vira o carimbo.
+    // O quarto fecha a leva: faixa com a conta do ciclo, e o divisor vira o carimbo.
     await checks.nth(3).click();
-    const faixa = page.locator('#session-cheer');
+    const faixa = page.locator('#cycle-cheer');
     await expect(faixa).toBeVisible();
-    await expect(faixa).toContainText('Sessão 1 completa');
+    await expect(faixa).toContainText('Ciclo 1 completo');
     await expect(faixa).toContainText('4 estudos · 1h40 · +200 XP no fim do dia');
     await expect(divisor).toHaveClass(/done/);
-    await expect(divisor).toContainText('Sessão 1 ✓ · 1h40');
+    await expect(divisor).toContainText('Ciclo 1 ✓ · 1h40');
 
     // Nada foi travado nem creditado: desmarcar continua valendo, e o dia segue aberto.
     await checks.nth(3).click();
@@ -1405,16 +1405,16 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
     for (const i of [0, 1, 2]) await checks.nth(i).click();
-    await expect(page.locator('#session-cheer')).toHaveCount(0);
+    await expect(page.locator('#cycle-cheer')).toHaveCount(0);
 
-    // O último da leva termina no foco: a faixa de bloco dá lugar à da sessão.
+    // O último da leva termina no foco: a faixa de bloco dá lugar à do ciclo.
     await page.locator('.block-row', { hasText: '10:30–10:55' }).locator('.block-name').click();
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await page.clock.setFixedTime(new Date(`${DIA}T10:55:01`));
 
     const faixa = page.locator('#focus-done');
-    await expect(faixa).toHaveClass(/session/);
-    await expect(faixa).toContainText('Sessão 1 completa');
+    await expect(faixa).toHaveClass(/cycle/);
+    await expect(faixa).toContainText('Ciclo 1 completo');
     await expect(faixa).toContainText('4 estudos · 1h40 · +200 XP no fim do dia');
     await expect(faixa.locator('.fd-pet')).toHaveAttribute('src', /idle\/pets\/cat\//);
     // E o foco seguiu no plano: emendou na pausa longa.

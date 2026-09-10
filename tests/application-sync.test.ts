@@ -89,7 +89,7 @@ describe('applyRemoteDoc', () => {
   });
 
   it('nunca mexe no timer nem no foco desta aba', () => {
-    const bloco: StudyBlock = { time: '17:15', endTime: '17:40', name: '📖 Estudo', type: 'estudo', xp: 50, session: 3 };
+    const bloco: StudyBlock = { time: '17:15', endTime: '17:40', name: '📖 Estudo', type: 'estudo', xp: 50, cycle: 3 };
     derived.timerBlock = bloco;
     derived.focusOpen = true;
     applyRemoteDoc(docRemoto({ checks: checksRemotos }), AGORA);

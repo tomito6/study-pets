@@ -148,7 +148,10 @@ function rodarLegado(c: Cenario) {
     uiWeek: c.uiWeek,
     uiDay: c.uiDay,
   };
-  const blocksForDay = (key: DateKey) => generateBlocks(c.cfg, c.eventosPorDia[key] || []);
+  // O gerador emite `cycle` desde 2026-09-11 (a leva virou "ciclo"); o corpo legado
+  // continua lendo `session`, e traduzir aqui é o que mantém aquele arquivo intacto.
+  const blocksForDay = (key: DateKey) =>
+    generateBlocks(c.cfg, c.eventosPorDia[key] || []).map((b) => ({ ...b, session: b.cycle }));
   const legacy = makeLegacy({
     state,
     forEachDay: (cb: (k: DateKey, d: Date, wi: number, di: number) => void) =>
@@ -194,7 +197,8 @@ describe('equivalência do computeStats com a versão antiga', () => {
     const divergentes: string[] = [];
     for (const c of cenarios) {
       const antigo = JSON.stringify(rodarLegado(c).computeStats());
-      const novo = JSON.stringify(rodarNovo(c));
+      // Mesma posição, nome novo: só a chave foi renomeada com a leva (sessionStats → cycleStats).
+      const novo = JSON.stringify(rodarNovo(c)).replace('"cycleStats"', '"sessionStats"');
       if (antigo !== novo) divergentes.push(c.nome);
     }
     expect(divergentes).toEqual([]);

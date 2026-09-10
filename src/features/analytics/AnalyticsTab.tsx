@@ -123,7 +123,7 @@ export function AnalyticsTab() {
   const streaks = calcStreaksNow(stats.dayStudyMins, now);
   const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, restKind, startedAt });
   const bars = hourBars(stats.hourCounts, config.start, config.end);
-  const rows = dropoff(stats.sessionStats);
+  const rows = dropoff(stats.cycleStats);
 
   return (
     <div className={'analytics-page' + (visible ? ' visible' : '')} id="analytics-page">
@@ -152,8 +152,8 @@ export function AnalyticsTab() {
               <div className="dropoff-empty">{t.dropoffEmpty}</div>
             ) : (
               rows.map((r) => (
-                <div className="dropoff-row" key={r.session}>
-                  <div className="do-label">{t.session(r.session + 1)}</div>
+                <div className="dropoff-row" key={r.cycle}>
+                  <div className="do-label">{t.cycle(r.cycle + 1)}</div>
                   <div className="do-bar"><div className={'do-fill' + (r.pct < 50 ? ' low' : '')} style={{ width: `${r.pct}%` }} /></div>
                   <div className="do-pct">{r.pct}%</div>
                   <div className="do-count">{r.done}/{r.total}</div>

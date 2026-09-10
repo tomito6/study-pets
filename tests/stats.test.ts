@@ -13,11 +13,11 @@ const dia = (key: string, weekIdx = 0) => ({
   weekIdx,
 });
 
-const estudo = (time: string, endTime: string, session = 0): StudyBlock => {
+const estudo = (time: string, endTime: string, cycle = 0): StudyBlock => {
   const [h1, m1] = time.split(':').map(Number);
   const [h2, m2] = endTime.split(':').map(Number);
   const dur = (h2! * 60 + m2!) - (h1! * 60 + m1!);
-  return { time, endTime, name: `📖 Estudo ${time}`, type: 'estudo', xp: dur * 2, session };
+  return { time, endTime, name: `📖 Estudo ${time}`, type: 'estudo', xp: dur * 2, cycle };
 };
 
 const pausa = (time: string, endTime: string): StudyBlock => ({
@@ -26,14 +26,14 @@ const pausa = (time: string, endTime: string): StudyBlock => ({
   name: '🧘 Pausa',
   type: 'pausa',
   xp: 5,
-  session: 0,
+  cycle: 0,
 });
 
 const evento = (time: string, endTime: string): StudyBlock => {
   const [h1, m1] = time.split(':').map(Number);
   const [h2, m2] = endTime.split(':').map(Number);
   const dur = (h2! * 60 + m2!) - (h1! * 60 + m1!);
-  return { time, endTime, name: '📅 Aula', type: 'event', xp: dur * 2, session: 0 };
+  return { time, endTime, name: '📅 Aula', type: 'event', xp: dur * 2, cycle: 0 };
 };
 
 /** Um dia de 2h: dois pomos de 30 com uma pausa no meio. */
@@ -238,13 +238,13 @@ describe('computeStats — recordes e agregados por semana', () => {
     const stats = computeStats(
       entrada({ getBlocks: blocos, checks: marcandoTudo(ONTEM, ['09:00']) }),
     );
-    expect(stats.sessionStats[0]).toEqual({ done: 1, total: 1 });
-    expect(stats.sessionStats[1]).toEqual({ done: 0, total: 1 });
+    expect(stats.cycleStats[0]).toEqual({ done: 1, total: 1 });
+    expect(stats.cycleStats[1]).toEqual({ done: 0, total: 1 });
   });
 
   it('não conta sessão de dia ainda aberto', () => {
     const stats = computeStats(entrada({ days: [dia(HOJE)] }));
-    expect(stats.sessionStats).toEqual({});
+    expect(stats.cycleStats).toEqual({});
   });
 
   it('nem de dia futuro: o período inteiro não pode inflar o denominador', () => {
@@ -257,7 +257,7 @@ describe('computeStats — recordes e agregados por semana', () => {
         checks: marcandoTudo(ONTEM, ['09:00']),
       }),
     );
-    expect(stats.sessionStats[0]).toEqual({ done: 1, total: 1 });
+    expect(stats.cycleStats[0]).toEqual({ done: 1, total: 1 });
   });
 });
 

@@ -237,20 +237,20 @@ export function hourBars(hourCounts: Record<number, number>, start: TimeString, 
 // ---------------------------------------------------------------- conclusão por sessão
 
 export interface DropoffRow {
-  session: number;
+  cycle: number;
   done: number;
   total: number;
   pct: number;
 }
 
-export function dropoff(sessionStats: Stats['sessionStats']): DropoffRow[] {
-  return Object.keys(sessionStats)
+export function dropoff(cycleStats: Stats['cycleStats']): DropoffRow[] {
+  return Object.keys(cycleStats)
     .map(Number)
     .sort((a, b) => a - b)
-    .filter((s) => sessionStats[s]!.total > 0)
-    .map((session) => {
-      const { done, total } = sessionStats[session]!;
-      return { session, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
+    .filter((s) => cycleStats[s]!.total > 0)
+    .map((cycle) => {
+      const { done, total } = cycleStats[cycle]!;
+      return { cycle, done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
     });
 }
 

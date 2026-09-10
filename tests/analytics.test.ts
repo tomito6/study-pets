@@ -195,7 +195,7 @@ describe('horas, drop-off e sparkline', () => {
 
   it('drop-off ignora sessões sem blocos e ordena', () => {
     const rows = dropoff({ 2: { done: 1, total: 4 }, 0: { done: 3, total: 3 }, 1: { done: 0, total: 0 } });
-    expect(rows.map((r) => r.session)).toEqual([0, 2]);
+    expect(rows.map((r) => r.cycle)).toEqual([0, 2]);
     expect(rows[1]!.pct).toBe(25);
   });
 

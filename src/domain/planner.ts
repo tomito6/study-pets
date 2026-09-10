@@ -92,7 +92,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     .sort((a, b) => a.at - b.at);
 
   const blocks: StudyBlock[] = [];
-  let sessionN = 0;
+  let cycleN = 0;
   const half = cfg.pomo / 2;
 
   /**
@@ -128,7 +128,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       name: nextStudyName(),
       type: 'estudo',
       xp: calcXP(r.effective),
-      session: sessionN,
+      cycle: cycleN,
     };
     if (mini) out.mini = true;
     if (r.paused > 0) out.paused = r.paused;
@@ -145,7 +145,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       name,
       type: 'pausa',
       xp: Math.max(1, r.effective),
-      session: sessionN,
+      cycle: cycleN,
     };
     if (r.paused > 0) out.paused = r.paused;
     blocks.push(out);
@@ -187,7 +187,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       name: prefix ? `📅 ${b.name}` : b.name,
       type: b.type,
       xp: b.type === 'event' ? calcXP(b.end - b.start) : 0,
-      session: b.type === 'event' ? sessionN : undefined,
+      cycle: b.type === 'event' ? cycleN : undefined,
     };
     if (b._seriesId) out._seriesId = b._seriesId;
     blocks.push(out);
@@ -201,7 +201,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     const interGap = blocked.filter((b) => b.start >= gapStart && b.end <= win.start);
     for (const b of interGap) {
       emitBlocked(b);
-      sessionN++;
+      cycleN++;
     }
 
     let cur = win.start;
@@ -217,7 +217,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
         emitBlocked(inBlock);
         cur = inBlock.end;
         pomoCount = 0;
-        sessionN++;
+        cycleN++;
         continue;
       }
 
@@ -256,7 +256,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
         // pra caber um estudo inteiro (decisão de 2026-09-03) — inclusive deixando dois
         // estudos colados, que é comportamento registrado e não acidente.
         const ate = nextBlockAfterBreak.start;
-        if (isLong) sessionN++;
+        if (isLong) cycleN++;
         if (afterBreak > ate) {
           cur = ate;
           continue;
@@ -274,13 +274,13 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       // daí que vinham os 20 minutos mortos do dia padrão: 09:00–18:00 fecha 4 ciclos redondos,
       // a pausa longa das 17:40 preenchia até as 18:00 e era descartada. A condição de "encosta
       // exatamente no limite" nasceu pro caso do EVENTO e vazava pra cá, onde não há nada em
-      // que encostar. Sem pausa, não há sessão nova: senão o último estudo do dia nasceria
+      // que encostar. Sem pausa, não há ciclo novo: senão o último estudo do dia nasceria
       // sozinho num divisor só dele.
       // A conta é com `place` porque uma pausa registrada do timer que caia dentro da pausa do
       // pomodoro também a estica.
       const fimDaPausa = place(cur, breakDur, winEnd).end;
       if (winEnd - fimDaPausa >= half) {
-        if (isLong) sessionN++;
+        if (isLong) cycleN++;
         cur = pushBreak(cur, breakDur, winEnd, breakName).end;
         continue;
       }
@@ -301,8 +301,8 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       cur = winEnd;
     }
 
-    // Próxima janela = nova sessão (separação visual)
-    sessionN++;
+    // Próxima janela = novo ciclo (separação visual)
+    cycleN++;
   }
 
   // Bloqueios depois da última janela — emite pra não esconder do plano

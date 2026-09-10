@@ -15,7 +15,7 @@ import type { StudyBlock } from '../src/domain/types';
 import { derived, state, subscribe } from '../src/store/store';
 
 const AGORA = new Date('2026-09-02T10:10:00');
-const bloco: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, session: 0 };
+const bloco: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, cycle: 0 };
 
 beforeEach(() => {
   Object.assign(state, emptyPersistedState(), { uiWeek: 1, uiDay: 2 });

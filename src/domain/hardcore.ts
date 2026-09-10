@@ -42,7 +42,8 @@ export interface HardcoreSession {
   type: 'estudo' | 'pausa';
   name: string;
   xp: number;
-  session: number | undefined;
+  /** O ciclo do bloco, só pra reconstruí-lo igual (cor e chip). */
+  cycle: number | undefined;
   /** Pet equipado quando a sessão passou a valer — é ele que perde XP no abandono. */
   pet: PetInstanceId | null;
   startedAt: number;
@@ -62,7 +63,7 @@ export function sessionFor(block: StudyBlock, dateKey: DateKey, pet: PetInstance
     type: block.type === 'pausa' ? 'pausa' : 'estudo',
     name: block.name,
     xp: block.xp || 0,
-    session: block.session,
+    cycle: block.cycle,
     pet,
     startedAt: now.getTime(),
   };
@@ -70,7 +71,7 @@ export function sessionFor(block: StudyBlock, dateKey: DateKey, pet: PetInstance
 
 /** O bloco de volta a partir da sessão (quando o plano do dia não tem mais o original). */
 export function blockFromSession(s: HardcoreSession): StudyBlock {
-  return { time: s.time, endTime: s.endTime, name: s.name, type: s.type, xp: s.xp, session: s.session };
+  return { time: s.time, endTime: s.endTime, name: s.name, type: s.type, xp: s.xp, cycle: s.cycle };
 }
 
 const isTime = (v: unknown): v is TimeString => typeof v === 'string' && /^\d{2}:\d{2}$/.test(v);
@@ -89,7 +90,9 @@ export function parseHardcoreSession(raw: unknown): HardcoreSession | null {
     type: r.type,
     name: typeof r.name === 'string' ? r.name : '',
     xp: typeof r.xp === 'number' && Number.isFinite(r.xp) ? r.xp : 0,
-    session: typeof r.session === 'number' ? r.session : undefined,
+    // `session` é o nome antigo do campo (a leva virou "ciclo" em 2026-09-11): uma
+    // sessão gravada no dispositivo antes do deploy ainda chega com ele.
+    cycle: typeof r.cycle === 'number' ? r.cycle : typeof r.session === 'number' ? r.session : undefined,
     pet: typeof r.pet === 'string' && r.pet ? r.pet : null,
     startedAt: typeof r.startedAt === 'number' ? r.startedAt : 0,
   };

@@ -80,7 +80,7 @@
   --on-accent-login:#fffdf6;
   --on-orange:#fffdf6;
   --on-gold:#fffdf6;
-  --on-session:#fffdf6;
+  --on-cycle:#fffdf6;
   --on-danger:#fffdf6;
 
   /* ── ação: o verde sálvia ────────────────────────────────────────────────
@@ -151,12 +151,12 @@
      Seis matizes, todos rebaixados pra viver sobre papel: a cor é a do horário
      e do nome; o fundo é papel colorido, quase creme. A "line" é a versão escura,
      usada em borda, divisor e no bloco preenchido da Semana (com tinta creme em cima). */
-  --s0:#486244; --s0-bg:#edf1e6; --s0-line:#3f5a3c; --s0-on:var(--on-session);
-  --s1:#47677d; --s1-bg:#e9eff2; --s1-line:#3d5b6e; --s1-on:var(--on-session);
-  --s2:#8a4356; --s2-bg:#f6eaee; --s2-line:#77384a; --s2-on:var(--on-session);
-  --s3:#8f5630; --s3-bg:#fbeee0; --s3-line:#7d4a29; --s3-on:var(--on-session);
-  --s4:#3d6b5b; --s4-bg:#e9f0ec; --s4-line:#345c4e; --s4-on:var(--on-session);
-  --s5:#64517b; --s5-bg:#efeaf4; --s5-line:#56456a; --s5-on:var(--on-session);
+  --s0:#486244; --s0-bg:#edf1e6; --s0-line:#3f5a3c; --s0-on:var(--on-cycle);
+  --s1:#47677d; --s1-bg:#e9eff2; --s1-line:#3d5b6e; --s1-on:var(--on-cycle);
+  --s2:#8a4356; --s2-bg:#f6eaee; --s2-line:#77384a; --s2-on:var(--on-cycle);
+  --s3:#8f5630; --s3-bg:#fbeee0; --s3-line:#7d4a29; --s3-on:var(--on-cycle);
+  --s4:#3d6b5b; --s4-bg:#e9f0ec; --s4-line:#345c4e; --s4-on:var(--on-cycle);
+  --s5:#64517b; --s5-bg:#efeaf4; --s5-line:#56456a; --s5-on:var(--on-cycle);
 
   /* ── grupo ───────────────────────────────────────────────────────────────
      Continuam sendo a outra camada (frias, fora da paleta das sessões), só que
@@ -195,7 +195,7 @@
      futuro) ganham desenho próprio nas regras lá embaixo.
      Brightness inverte junto: destaque no claro é escurecer, não clarear. */
   --fade-done:.74;
-  --fade-done-session:.72;
+  --fade-done-cycle:.72;
   --fade-closed:.72;
   --fade-future:.62;
   --fade-forfeited:.74;
@@ -204,7 +204,7 @@
   --fade-soft:.85;
   --fade-hint:.85;
   --fade-event:1;
-  --fade-event-session:1;
+  --fade-event-cycle:1;
   --lift-hover:brightness(.965);
   --lift-hover-soft:brightness(.975);
   --lift-hover-strong:brightness(.96);
@@ -394,7 +394,7 @@
   /* o compromisso é a única coisa terracota da agenda: papel mais quente e uma
      barra de 4px à esquerda. O padding-left afina 3px pra nada se mexer. */
   :root[data-theme="cafe"] .block-row.event-row,
-  :root[data-theme="cafe"] .block-row.event-row.session-block{
+  :root[data-theme="cafe"] .block-row.event-row.cycle-block{
     background:var(--paper-event) !important;
     border:1px solid var(--border) !important;
     border-left:4px solid var(--clay-bar) !important;

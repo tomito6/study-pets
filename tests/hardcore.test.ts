@@ -19,8 +19,8 @@ import type { HardcoreSession } from '../src/domain/hardcore';
 import { petLevelStart } from '../src/domain/pets';
 import type { StudyBlock } from '../src/domain/types';
 
-const estudo: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, session: 0 };
-const pausa: StudyBlock = { time: '10:25', endTime: '10:30', name: '🧘 Pausa', type: 'pausa', xp: 5, session: 0 };
+const estudo: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, cycle: 0 };
+const pausa: StudyBlock = { time: '10:25', endTime: '10:30', name: '🧘 Pausa', type: 'pausa', xp: 5, cycle: 0 };
 const HOJE = '2026-09-02';
 const as = (hms: string) => new Date(`${HOJE}T${hms}`);
 

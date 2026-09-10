@@ -70,7 +70,7 @@ export interface PauseSession {
 }
 
 export function pauseSessionFor(block: StudyBlock, dateKey: DateKey, pausedAt: number): PauseSession {
-  const b: StudyBlock = { time: block.time, endTime: block.endTime, name: block.name, type: block.type, xp: block.xp || 0, session: block.session };
+  const b: StudyBlock = { time: block.time, endTime: block.endTime, name: block.name, type: block.type, xp: block.xp || 0, cycle: block.cycle };
   if (block.paused) b.paused = block.paused;
   return { dateKey, block: b, pausedAt };
 }
@@ -92,7 +92,7 @@ export function parsePauseSession(raw: unknown): PauseSession | null {
     name: typeof blk.name === 'string' ? blk.name : '',
     type: blk.type,
     xp: typeof blk.xp === 'number' && Number.isFinite(blk.xp) ? blk.xp : 0,
-    session: typeof blk.session === 'number' ? blk.session : undefined,
+    cycle: typeof blk.cycle === 'number' ? blk.cycle : undefined,
   };
   if (typeof blk.paused === 'number' && blk.paused > 0) block.paused = blk.paused;
   return { dateKey: r.dateKey, block, pausedAt: r.pausedAt };

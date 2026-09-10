@@ -13,14 +13,14 @@ import {
 import type { StudyBlock } from '../src/domain/types';
 import { strings } from '../src/shared/strings';
 
-const estudo = (time: string, endTime: string, session = 0): StudyBlock => ({
-  time, endTime, name: `📖 Estudo ${time}`, type: 'estudo', xp: 50, session,
+const estudo = (time: string, endTime: string, cycle = 0): StudyBlock => ({
+  time, endTime, name: `📖 Estudo ${time}`, type: 'estudo', xp: 50, cycle,
 });
-const pausa = (time: string, endTime: string, session = 0, longa = false): StudyBlock => ({
-  time, endTime, name: longa ? '☕ Pausa longa' : '🧘 Pausa', type: 'pausa', xp: 5, session,
+const pausa = (time: string, endTime: string, cycle = 0, longa = false): StudyBlock => ({
+  time, endTime, name: longa ? '☕ Pausa longa' : '🧘 Pausa', type: 'pausa', xp: 5, cycle,
 });
 const almoco = (time: string, endTime: string): StudyBlock => ({
-  time, endTime, name: '🍽️ Almoço', type: 'intervalo', xp: 0, session: 0,
+  time, endTime, name: '🍽️ Almoço', type: 'intervalo', xp: 0, cycle: 0,
 });
 
 describe('timerProgress — o restante vem do relógio, não de um contador', () => {

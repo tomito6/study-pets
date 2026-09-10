@@ -23,8 +23,8 @@ const HOJE = '2026-09-02';
 const ONTEM = '2026-09-01';
 const AGORA = new Date('2026-09-02T10:10:00');
 // Plano padrão (09:00, pomo 25 / pausa 5): Estudo 3 é 10:00–10:25, a pausa 10:25–10:30, Estudo 4 10:30–10:55.
-const estudo3: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, session: 0 };
-const estudo4: StudyBlock = { time: '10:30', endTime: '10:55', name: '📖 Estudo 4', type: 'estudo', xp: 50, session: 0 };
+const estudo3: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, cycle: 0 };
+const estudo4: StudyBlock = { time: '10:30', endTime: '10:55', name: '📖 Estudo 4', type: 'estudo', xp: 50, cycle: 0 };
 
 const gato = (xp: number): PetInstance => ({ id: 'cat', species: 'cat', name: 'Mia', xp, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 });
 

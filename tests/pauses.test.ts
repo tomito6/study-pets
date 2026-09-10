@@ -55,7 +55,7 @@ describe('normalizePauses / addPause / pausesTotal', () => {
 });
 
 describe('a pausa aberta no dispositivo', () => {
-  const block: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, session: 0 };
+  const block: StudyBlock = { time: '10:00', endTime: '10:25', name: '📖 Estudo 3', type: 'estudo', xp: 50, cycle: 0 };
 
   it('ida e volta, com o que o timer precisa pra voltar', () => {
     const s = pauseSessionFor(block, '2026-09-02', 123456);

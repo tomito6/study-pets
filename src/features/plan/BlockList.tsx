@@ -8,7 +8,7 @@ import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { cleanBlockName as cleanName } from '../../domain/timer';
 import { isForfeited } from '../../domain/hardcore';
 import { blockInGroup, groupHeaderPositions, groupProgress } from '../../domain/groups';
-import { closedSessionOf, sessionSummary } from '../../domain/sessions';
+import { closedCycleOf, cycleSummary } from '../../domain/cycles';
 import { formatCompact } from '../../domain/settings';
 import type { GroupHeaderPosition } from '../../domain/groups';
 import { dk, timeToMins } from '../../domain/time';
@@ -19,9 +19,9 @@ import { state } from '../../store/store';
 import { GroupBox } from '../groups/GroupBox';
 import type { GroupSelection, RowSelectionProps } from '../groups/useGroupSelection';
 import type { EventDrag, HandleProps } from '../events/useEventDrag';
-import { spawnCheckRipple, spawnFloatGain, spawnSessionCheer } from './feedback';
+import { spawnCheckRipple, spawnFloatGain, spawnCycleCheer } from './feedback';
 
-const NUM_SESSIONS = 6;
+const NUM_CYCLES = 6;
 const GROUP_COLORS = 6;
 
 const isPomodoroPart = (b: StudyBlock) => b.type === 'estudo' || b.type === 'pausa';
@@ -76,7 +76,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   const isEv = b.type === 'event';
   const isI = b.type === 'intervalo'; // refeição, consulta, reunião: só ocupa o tempo
   const done = isChecked(state.checks, dateKey, b.time);
-  const sIdx = b.session !== undefined ? b.session % NUM_SESSIONS : 0;
+  const sIdx = b.cycle !== undefined ? b.cycle % NUM_CYCLES : 0;
   const isNow = isToday && (isE || isP || isI) && isHappeningNow(b, now);
   const timerActive = !!timerBlock && timerBlock.time === b.time && timerBlock.endTime === b.endTime;
   const closed = isDayClosed(state.closedDays, dateKey);
@@ -90,7 +90,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
     (isI ? ' almoco-row' : '') +
     (isEv ? ' event-row' : '') +
     (done && (isE || isP || isEv) ? ' done' : '') +
-    (isE || isP || isEv ? ` session-block s${sIdx}` : '') +
+    (isE || isP || isEv ? ` cycle-block s${sIdx}` : '') +
     (isNow ? ' now-block' : '') +
     (timerActive ? ' timer-active' : '') +
     (closed ? ' day-closed' : '') +
@@ -137,21 +137,21 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
     if (result?.checked) {
       // Fechou a leva? O som muda (o mesmo 'deu certo' do fim de bloco no foco) e a
       // faixa comemora. Não credita nada — o XP continua entrando só no fim do dia.
-      const leva = closedSessionOf(blocks, b, state.checks[dateKey]);
+      const leva = closedCycleOf(blocks, b, state.checks[dateKey]);
       playSound(leva ? 'sucesso' : 'check');
       spawnCheckRipple(rect);
       spawnFloatGain(rect, result.xp, result.coins);
       if (leva) {
-        const nome = strings.plan.sessions[leva.session % NUM_SESSIONS] ?? strings.plan.sessionFallback;
-        const c = strings.plan.sessionCheer;
-        spawnSessionCheer(c.title(nome), c.sub(leva.done, formatCompact(leva.minsDone), leva.xp, isToday && !closed));
+        const nome = strings.plan.cycles[leva.cycle % NUM_CYCLES] ?? strings.plan.cycleFallback;
+        const c = strings.plan.cycleCheer;
+        spawnCycleCheer(c.title(nome), c.sub(leva.done, formatCompact(leva.minsDone), leva.xp, isToday && !closed));
       }
     }
   };
 
   let xpLabel: ReactNode;
   if (forfeited) xpLabel = <span className="block-xp forfeited-xp">{strings.hardcore.plan.forfeited}</span>;
-  else if (isE || isP) xpLabel = <span className="block-xp session-xp">{t.xpGain(b.xp)}</span>;
+  else if (isE || isP) xpLabel = <span className="block-xp cycle-xp">{t.xpGain(b.xp)}</span>;
   else if (isI) xpLabel = <span className="block-xp almoco-xp">{t.free}</span>;
   else xpLabel = <span className="block-xp event-xp">{t.xpGain(b.xp)}</span>;
 
@@ -272,7 +272,7 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
   const isToday = dateKey === dk(now);
   const dayChecks = state.checks[dateKey];
   const items: ReactNode[] = [];
-  let lastSession = -1;
+  let lastCycle = -1;
 
   // Grupos com membro abrem uma caixa no primeiro bloco membro; os membros são contíguos
   // (blocos são sequenciais e grupos não se sobrepõem), então a caixa fecha no primeiro bloco
@@ -319,32 +319,32 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
     pushEmpty(i);
 
     let divider: ReactNode = null;
-    if (isPomodoroPart(b) && b.session !== undefined && b.session !== lastSession) {
-      lastSession = b.session;
-      const sIdx = b.session % NUM_SESSIONS;
+    if (isPomodoroPart(b) && b.cycle !== undefined && b.cycle !== lastCycle) {
+      lastCycle = b.cycle;
+      const sIdx = b.cycle % NUM_CYCLES;
       // Leva inteira marcada: o divisor vira o carimbo dela. É estado, não evento —
-      // por isso vale até pra sessão de um bloco só, que não ganha faixa (ver sessions.ts).
-      const resumo = sessionSummary(blocks, b.session, dayChecks);
-      const nome = strings.plan.sessions[sIdx] ?? strings.plan.sessionFallback;
-      const sessionHasNow =
-        isToday && blocks.some((bl) => bl.session === b.session && isPomodoroPart(bl) && isHappeningNow(bl, now));
+      // por isso vale até pro ciclo de um bloco só, que não ganha faixa (ver cycles.ts).
+      const resumo = cycleSummary(blocks, b.cycle, dayChecks);
+      const nome = strings.plan.cycles[sIdx] ?? strings.plan.cycleFallback;
+      const cycleHasNow =
+        isToday && blocks.some((bl) => bl.cycle === b.cycle && isPomodoroPart(bl) && isHappeningNow(bl, now));
       divider = (
         <div
-          key={`s-${b.session}-${i}`}
-          className={`session-divider s${sIdx}` + (sessionHasNow ? ' now-session' : '') + (resumo.complete ? ' done' : '')}
+          key={`c-${b.cycle}-${i}`}
+          className={`cycle-divider s${sIdx}` + (cycleHasNow ? ' now-cycle' : '') + (resumo.complete ? ' done' : '')}
         >
-          <div className="sd-line" />
-          <span className="sd-label">
-            {resumo.complete ? strings.plan.sessionDone(nome, formatCompact(resumo.minsDone)) : nome}
+          <div className="cd-line" />
+          <span className="cd-label">
+            {resumo.complete ? strings.plan.cycleDone(nome, formatCompact(resumo.minsDone)) : nome}
           </span>
-          <div className="sd-line" />
+          <div className="cd-line" />
         </div>
       );
     }
 
     const start = startsAt.get(i);
     if (start) {
-      // Sessão nova começando junto com o grupo: o divisor fica fora da caixa (sessão > grupo).
+      // Ciclo novo começando junto com o grupo: o divisor fica fora da caixa (ciclo > grupo).
       if (divider) items.push(divider);
       box = { group: start.group, first: i, last: i, children: [] };
     } else if (divider) {

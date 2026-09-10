@@ -67,12 +67,12 @@ export const strings = {
     weekOption: (n: number, start: string, end: string) => `Semana ${n}  ·  ${start} – ${end}`,
     weekLabel: 'Semana visível',
     days: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-    sessions: ['Sessão 1', 'Sessão 2', 'Sessão 3', 'Sessão 4', 'Sessão 5', 'Sessão 6'],
-    sessionFallback: 'Sessão',
-    /** A leva fechada: o divisor vira verde e uma faixa comemora (ver domain/sessions.ts). */
-    sessionDone: (name: string, dur: string) => `${name} ✓ · ${dur}`,
-    sessionCheer: {
-      title: (name: string) => `✓ ${name} completa`,
+    cycles: ['Ciclo 1', 'Ciclo 2', 'Ciclo 3', 'Ciclo 4', 'Ciclo 5', 'Ciclo 6'],
+    cycleFallback: 'Ciclo',
+    /** A leva fechada: o divisor vira verde e uma faixa comemora (ver domain/cycles.ts). */
+    cycleDone: (name: string, dur: string) => `${name} ✓ · ${dur}`,
+    cycleCheer: {
+      title: (name: string) => `✓ ${name} completo`,
       sub: (studies: number, dur: string, xp: number, pending: boolean) =>
         `${studies} ${studies === 1 ? 'estudo' : 'estudos'} · ${dur} · +${xp} XP` + (pending ? ' no fim do dia' : ''),
     },
@@ -434,10 +434,10 @@ export const strings = {
     dotFuture: (d: string) => `${d} — futuro`,
     dotMet: (d: string, done: number) => `${d}: ${done} min ✓`,
     dotMiss: (d: string, done: number, min: number) => `${d}: ${done} min (meta ${min})`,
-    dropoffTitle: 'Conclusão por sessão',
+    dropoffTitle: 'Conclusão por ciclo',
     historic: '(histórico)',
     dropoffEmpty: 'Ainda não há dados suficientes.',
-    session: (n: number) => `Sessão ${n}`,
+    cycle: (n: number) => `Ciclo ${n}`,
     heatmapTitle: 'Plano cumprido — 16 semanas',
     cellFuture: (d: string) => `${d} — futuro`,
     cellBefore: (d: string) => `${d} — antes de você começar`,
@@ -660,7 +660,7 @@ export const strings = {
     },
     focus: {
       exit: '← Sair do foco',
-      chip: (session: string) => session,
+      chip: (cycle: string) => cycle,
       pomodoroOf: (min: number) => `Pomodoro de ${min} min`,
       breakOf: (min: number) => `Pausa de ${min} min`,
       completed: (pct: number) => `${pct}% concluído`,
