@@ -259,11 +259,11 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-windows-panel .swc-end').fill('16:00');
     await page.locator('#day-windows-save').click();
     await expect(page.locator('#day-windows-panel')).toBeHidden();
-    // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 até 15:55
-    // (os 5 min finais são menos que meio pomo, e o gerador descarta).
+    // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 até 16:00.
     await expect(page.locator('.block-row').first()).toContainText('Almoço');
     await expect(page.locator('.block-row.session-block').first()).toContainText('14:00–14:25');
-    await expect(page.locator('.block-row.session-block').last()).toContainText('15:30–15:55');
+    // A janela fecha no minuto que ela promete: os 5 min que sobravam esticam o último estudo.
+    await expect(page.locator('.block-row.session-block').last()).toContainText('15:30–16:00');
   });
 
   test('30. fim de semana pausado: dá pra abrir janelas só naquele sábado, e "Restaurar rotina" devolve a folga', async ({ page }) => {
@@ -1350,7 +1350,8 @@ test.describe('Study Pets — smoke', () => {
     // O passo 3 é o horário — e diz na hora o que ele vira.
     await expect(page.locator('#onb-step')).toHaveText('Passo 3 de 3');
     await expect(page.locator('#onb-windows .sw-row')).toHaveCount(1);
-    await expect(page.locator('#onb-windows-preview')).toContainText('16 pomodoros');
+    // 17, não 16: desde 2026-09-10 a sobra do fim da janela vira estudo em vez de morrer.
+    await expect(page.locator('#onb-windows-preview')).toContainText('17 pomodoros');
 
     // Quem estuda de noite não deveria herdar 09:00–18:00 sem ter escolhido.
     await page.locator('#onb-windows .sw-row .swc-start').fill('19:00');

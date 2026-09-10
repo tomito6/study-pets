@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_CFG } from '../src/domain/config';
 import { calcActualEnd, generateBlocks } from '../src/domain/planner';
 import { blockMins } from '../src/domain/time';
-import type { PauseRecord, PlannerConfig, StudyEvent } from '../src/domain/types';
+import type { PauseRecord, PlannerConfig, StudyBlock, StudyEvent } from '../src/domain/types';
 
 const base: PlannerConfig = {
   studyWindows: [{ start: '09:00', end: '18:00' }],
@@ -286,10 +286,41 @@ describe('generateBlocks — a sobra no fim da janela vira estudo (2026-09-10)',
     ]);
   });
 
-  it('janela que fecha em ciclo não muda: o dia padrão continua terminando em estudo cheio', () => {
+  it('janela que fecha em ciclo TAMBÉM é preenchida (2026-09-10): a pausa longa final não come 20 min', () => {
+    // Até aqui este caso era exceção declarada: 09:00–18:00 fecha 4 ciclos redondos, a pausa
+    // longa das 17:40 preenchia exatamente até as 18:00 e era descartada pelo laço final
+    // ("o último bloco é sempre estudo") — levando os 20 min junto. A condição que a emitia
+    // ("encosta exatamente no limite") existe pro caso do EVENTO e vazava pro fim da janela,
+    // onde não há nada em que encostar.
     const blocks = generateBlocks(DEFAULT_CFG);
-    expect(blocks[blocks.length - 1]).toMatchObject({ time: '17:15', endTime: '17:40', type: 'estudo', xp: 50 });
-    expect(blocks.some((b) => b.mini)).toBe(false);
+    expect(blocks[blocks.length - 1]).toMatchObject({ time: '17:40', endTime: '18:00', type: 'estudo', mini: true, xp: 40 });
+    expect(blocks.filter((b) => b.type === 'estudo')).toHaveLength(17);
+    // e o mini fica na sessão do estudo que ele emenda — sem pausa longa não há sessão nova
+    expect(blocks[blocks.length - 1]!.session).toBe(blocks[blocks.length - 2]!.session);
+  });
+
+  it('nenhum ritmo deixa tempo morto no fim de uma janela', () => {
+    const ritmos: Array<[number, number, number]> = [[25, 5, 20], [25, 5, 15], [50, 10, 30], [45, 5, 20], [15, 5, 10], [90, 15, 60]];
+    for (const [pomo, shortBreak, longBreak] of ritmos) {
+      for (let d = 30; d <= 600; d += 5) {
+        const end = `${String(9 + Math.floor(d / 60)).padStart(2, '0')}:${String(d % 60).padStart(2, '0')}`;
+        const blocks = generateBlocks(cfg({ pomo, shortBreak, longBreak, studyWindows: [{ start: '09:00', end }] }));
+        if (!blocks.length) continue;
+        const rotulo = `${pomo}/${shortBreak}/${longBreak} 09:00-${end}`;
+        expect(blocks[blocks.length - 1]!.endTime, rotulo).toBe(end);
+        expect(blocks[blocks.length - 1]!.type, rotulo).toBe('estudo');
+      }
+    }
+  });
+
+  it('duas janelas coladas: nenhum estudo atravessa a fronteira entre elas', () => {
+    // `studyEndingAt` olhava o array inteiro, então o último estudo da primeira janela
+    // terminava exatamente na fronteira e virava candidato a esticar pela segunda.
+    const blocks = generateBlocks(cfg({ studyWindows: [{ start: '09:00', end: '10:00' }, { start: '10:00', end: '10:10' }] }));
+    for (const b of blocks) {
+      const cruza = b.time < '10:00' && b.endTime > '10:00';
+      expect(cruza, `${b.time}-${b.endTime} atravessa a fronteira`).toBe(false);
+    }
   });
 
   it('o último estudo só é esticado se termina exatamente onde a sobra começa', () => {
@@ -360,7 +391,13 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
   it('pausa cedo empurra o dia inteiro contra o fim da janela; o ciclo de 4 pomos não muda', () => {
     const sem = janela('17:30', []);
     const com = janela('17:30', [{ at: '10:00', mins: 20 }]);
-    expect(com.filter((b) => b.type === 'estudo').length).toBe(sem.filter((b) => b.type === 'estudo').length - 1);
+    // A conta é em MINUTOS, não em blocos: a sobra que a pausa empurra contra o fim da janela
+    // agora vira estudo em vez de morrer, então a contagem de blocos empata. O dia perde no
+    // máximo os 20 min que ficaram pausados — e perde menos que isso quando parte deles cai
+    // em tempo que antes já era desperdiçado no rabo da janela.
+    const mins = (bs: StudyBlock[]) => bs.filter((b) => b.type === 'estudo').reduce((a, b) => a + blockMins(b), 0);
+    expect(mins(com)).toBeLessThan(mins(sem));
+    expect(mins(sem) - mins(com)).toBeLessThanOrEqual(20);
     expect(com[com.length - 1]).toMatchObject({ endTime: '17:30', type: 'estudo' });
     expect(com.filter((b) => b.name.includes('longa')).map((b) => b.time)).toEqual(['11:15', '13:25', '15:35']);
     for (const b of com) if (b.type === 'estudo' && !b.paused) expect(blockMins(b)).toBeGreaterThanOrEqual(12);
@@ -420,9 +457,13 @@ describe('generateBlocks — config antiga sem studyWindows', () => {
 });
 
 describe('calcActualEnd', () => {
-  it('devolve o fim do último estudo, não o fim da janela', () => {
-    expect(calcActualEnd(cfg({ studyWindows: [{ start: '09:00', end: '10:00' }] }))).toBe(
-      '09:55',
-    );
+  it('numa janela só o dia fecha no fim dela — não sobra tempo sem bloco', () => {
+    expect(calcActualEnd(cfg({ studyWindows: [{ start: '09:00', end: '10:00' }] }))).toBe('10:00');
+  });
+
+  it('devolve o fim do último ESTUDO: uma segunda janela curta demais pro pomo não gera nada', () => {
+    const c = cfg({ studyWindows: [{ start: '09:00', end: '12:00' }, { start: '15:00', end: '15:10' }] });
+    c.end = '15:10';
+    expect(calcActualEnd(c)).toBe('12:00');
   });
 });

@@ -95,38 +95,45 @@ describe('janelas', () => {
   });
 });
 
-describe('resumo do dia — a sobra que é só a pausa final', () => {
+describe('resumo do dia — a janela fecha no minuto que ela promete', () => {
   const base = { pomo: 25, shortBreak: 5, longBreak: 20, dailyStudyMin: 60 };
-  const dia = (start: string, end: string) =>
-    summarizeConfig({ ...base, start, end, studyWindows: [{ start, end }] } as PlannerConfig);
+  const dia = (start: string, end: string, over: Partial<PlannerConfig> = {}) =>
+    summarizeConfig({ ...base, ...over, start, end, studyWindows: [{ start, end }] } as PlannerConfig);
 
-  it('o dia padrão não é aviso: a sobra é a pausa longa que o dia não emite', () => {
+  it('o dia padrão fecha às 18:00 — não sobram mais os 20 min da pausa longa descartada', () => {
     const s = dia('09:00', '18:00');
     if (s.kind !== 'ok') throw new Error('devia gerar blocos');
-    expect(s.diffMins).toBe(-20); // fecha 17:40
-    expect(s.restGap).toBe(true);
+    expect(s.actualEnd).toBe('18:00');
+    expect(s.diffMins).toBe(0);
   });
 
-  it('sobra do tamanho da pausa curta também é normal', () => {
-    const s = dia('18:00', '23:00');
-    if (s.kind !== 'ok') throw new Error('devia gerar blocos');
-    expect(s.restGap).toBe(true);
+  it('a sobra do tamanho da pausa curta também acabou', () => {
+    for (const [ini, fim] of [['18:00', '23:00'], ['10:00', '16:00'], ['13:00', '19:00']] as const) {
+      const s = dia(ini, fim);
+      if (s.kind !== 'ok') throw new Error('devia gerar blocos');
+      expect(s.diffMins, `${ini}-${fim}`).toBe(0);
+    }
   });
 
-  it('sobra maior que qualquer pausa continua sendo aviso', () => {
+  it('em ritmo nenhum sobra tempo sem bloco numa janela só', () => {
+    const ritmos: Array<[number, number, number]> = [[25, 5, 20], [25, 5, 15], [50, 10, 30], [45, 5, 20], [90, 15, 60]];
+    for (const [pomo, shortBreak, longBreak] of ritmos) {
+      for (let d = 30; d <= 600; d += 5) {
+        const fim = `${String(9 + Math.floor(d / 60)).padStart(2, '0')}:${String(d % 60).padStart(2, '0')}`;
+        const s = dia('09:00', fim, { pomo, shortBreak, longBreak });
+        if (s.kind !== 'ok') continue;
+        expect(s.diffMins, `${pomo}/${shortBreak}/${longBreak} 09:00-${fim}`).toBe(0);
+      }
+    }
+  });
+
+  it('o aviso continua vivo pra sobra de verdade: uma segunda janela curta demais pro pomo', () => {
     const s = summarizeConfig({
-      ...base, longBreak: 5, start: '09:00', end: '12:00',
-      studyWindows: [{ start: '09:00', end: '12:00' }],
+      ...base, pomo: 50, shortBreak: 10, longBreak: 30, start: '09:00', end: '11:15',
+      studyWindows: [{ start: '09:00', end: '10:00' }, { start: '11:00', end: '11:15' }],
     } as PlannerConfig);
     if (s.kind !== 'ok') throw new Error('devia gerar blocos');
-    if (s.diffMins < 0) expect(s.restGap).toBe(Math.abs(s.diffMins) <= 5);
-  });
-
-  it('dia que fecha exato não tem sobra nenhuma', () => {
-    const s = dia('09:00', '17:00');
-    if (s.kind !== 'ok') throw new Error('devia gerar blocos');
-    expect(s.diffMins).toBe(0);
-    expect(s.restGap).toBe(false);
+    expect(s.diffMins).toBeLessThan(0); // 15 min não cabem num pomo de 50
   });
 });
 
@@ -138,15 +145,17 @@ describe('resumo do dia', () => {
   });
 
   it('conta pomos, minutos, XP e diz onde o dia termina', () => {
+    // 09:00–10:00 com pomo 25 + pausa 5: 25 + 5 + 25 e sobram 5 min, que esticam o
+    // segundo estudo até as 10:00 em vez de morrer ali (mudança de 2026-09-10).
     const s = summarizeConfig({ ...DEFAULT_CFG,  studyWindows: [{ start: '09:00', end: '10:00' }], start: '09:00', end: '10:00' });
     expect(s.kind).toBe('ok');
     if (s.kind !== 'ok') return;
     expect(s.pomos).toBe(2);
-    expect(s.studyMins).toBe(50);
+    expect(s.studyMins).toBe(55);
     expect(s.pauseMins).toBe(5);
-    expect(s.totalXP).toBe(105);
-    expect(s.actualEnd).toBe('09:55');
-    expect(s.diffMins).toBe(-5); // para 5min antes do fim da janela
+    expect(s.totalXP).toBe(115);
+    expect(s.actualEnd).toBe('10:00');
+    expect(s.diffMins).toBe(0); // a janela fecha no minuto que ela promete
   });
 
   it('formato compacto dos tiles', () => {

@@ -472,9 +472,6 @@ export const strings = {
       noteOver: (diff: number, end: string) => `Passa ${diff} min das ${end} — o último bloco vaza da janela.`,
       noteUnder: (actual: string, diff: number, end: string) =>
         `Para às ${actual}, ${diff} min antes das ${end} — sobra um tempo sem bloco.`,
-      /** A sobra é só a pausa final, que o dia não emite. Nada se perde — não é aviso. */
-      noteRest: (actual: string, diff: number, end: string) =>
-        `Fecha às ${actual}: os ${diff} min até as ${end} seriam a última pausa, e o dia nunca termina em pausa.`,
     },
     windows: {
       title: 'Janelas de estudo',

@@ -41,8 +41,10 @@ const isTime = (v: unknown): v is TimeString => typeof v === 'string' && /^\d{2}
  * - evento com `countsAsStudy !== false` vira bloco 'event' (dá XP); senão vira
  *   'intervalo' (só ocupa o espaço);
  * - sobra menor que um pomo vira mini-estudo (se >= metade do pomo) ou estica o
- *   último estudo — antes de um evento E no fim da janela (até 2026-09-10 a sobra
- *   no fim da janela era jogada fora: 20 min sobrando com pomo de 25 não viravam nada);
+ *   último estudo — antes de um evento E no fim da janela;
+ * - no fim da janela a pausa do pomodoro só é emitida se ainda couber meio pomo de
+ *   estudo depois dela: senão ela seria o último bloco do dia, descartada no fim e
+ *   levando o tempo junto (era daí que vinham os 20 min mortos do dia padrão);
  * - o último estudo só é esticado se termina exatamente onde a sobra começa — senão
  *   ele passaria por cima da pausa ou do evento que está entre os dois;
  * - o último bloco do dia nunca é pausa.
@@ -160,10 +162,18 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     else delete study.paused;
   }
 
-  /** O último estudo emitido, se ele termina exatamente em `at` — o único que pode ser esticado. */
-  const studyEndingAt = (at: number): StudyBlock | null => {
+  /**
+   * O último estudo emitido, se ele termina exatamente em `at` E começou dentro da janela
+   * atual — o único que pode ser esticado. O recorte por janela importa: com duas janelas
+   * coladas (09:00–12:00 e 12:00–12:20, que `validateDayWindows` aceita), o último estudo da
+   * primeira termina exatamente na fronteira e virava candidato a esticar pela segunda,
+   * atravessando as duas. Bug antigo, e ficou mais fácil de encostar nele agora que a janela
+   * fecha exata quase sempre.
+   */
+  const studyEndingAt = (at: number, winStart: number): StudyBlock | null => {
     const last = [...blocks].reverse().find((b) => b.type === 'estudo');
-    return last && timeToMins(last.endTime) === at ? last : null;
+    if (!last || timeToMins(last.endTime) !== at) return null;
+    return timeToMins(last.time) >= winStart ? last : null;
   };
 
   // Emite um bloqueio como block (evento/intervalo) preservando metadados úteis.
@@ -219,7 +229,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       // Gap menor que pomo: mini ou stretch. Sobra pequena que não encosta em estudo
       // nenhum (logo depois de um bloqueio, ou no começo de uma janela) fica livre.
       if (gap < cfg.pomo && gap > 0) {
-        const lastStudy = studyEndingAt(cur);
+        const lastStudy = studyEndingAt(cur, win.start);
         if (gap >= half) pushStudy(cur, gap, nextBlockStart, true);
         else if (lastStudy) stretch(lastStudy, gap, nextBlockStart);
         cur = nextBlockStart;
@@ -233,34 +243,62 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       pomoCount++;
 
       const isLong = pomoCount % 4 === 0;
-      if (isLong) sessionN++;
       const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
       const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
       const afterBreak = cur + breakDur;
       // `>=`: um bloqueio que começa exatamente onde o pomo terminou também conta.
       // Senão a pausa era emitida por cima do evento (bug anterior à migração).
       const nextBlockAfterBreak = blocked.find((b) => b.start >= cur && b.start < winEnd);
-      const nextStartAfterBreak = nextBlockAfterBreak ? nextBlockAfterBreak.start : winEnd;
 
-      if (afterBreak > nextStartAfterBreak) {
-        cur = nextStartAfterBreak;
+      if (nextBlockAfterBreak) {
+        // ---- Antes de um bloqueio (evento, refeição): nada muda. ----
+        // A pausa que encosta exatamente nele é descanso de verdade, e a que não cabe some
+        // pra caber um estudo inteiro (decisão de 2026-09-03) — inclusive deixando dois
+        // estudos colados, que é comportamento registrado e não acidente.
+        const ate = nextBlockAfterBreak.start;
+        if (isLong) sessionN++;
+        if (afterBreak > ate) {
+          cur = ate;
+          continue;
+        }
+        if (afterBreak === ate || afterBreak + cfg.pomo <= ate) {
+          cur = pushBreak(cur, breakDur, ate, breakName).end;
+        }
         continue;
       }
-      const pausaExataAteBloqueio = afterBreak === nextStartAfterBreak;
-      if (pausaExataAteBloqueio || afterBreak + cfg.pomo <= nextStartAfterBreak) {
-        cur = pushBreak(cur, breakDur, nextStartAfterBreak, breakName).end;
-      } else if (nextStartAfterBreak < winEnd) {
-        // Antes de um evento a pausa some pra caber um estudo inteiro (ou um mini) — decisão de 2026-09-03.
-        continue;
-      } else if (winEnd - afterBreak >= half) {
-        // Fim da janela: cabe a pausa e ainda sobra pelo menos meio pomo — a sobra vira um mini.
+
+      // ---- Fim da janela ----
+      // A pausa do pomodoro existe pra separar dois estudos. Se depois dela não couber pelo
+      // menos meio pomo, ela seria o último bloco do dia — emitida aqui e jogada fora no laço
+      // final ("o último bloco é sempre estudo"), levando o tempo dela junto. Era exatamente
+      // daí que vinham os 20 minutos mortos do dia padrão: 09:00–18:00 fecha 4 ciclos redondos,
+      // a pausa longa das 17:40 preenchia até as 18:00 e era descartada. A condição de "encosta
+      // exatamente no limite" nasceu pro caso do EVENTO e vazava pra cá, onde não há nada em
+      // que encostar. Sem pausa, não há sessão nova: senão o último estudo do dia nasceria
+      // sozinho num divisor só dele.
+      // A conta é com `place` porque uma pausa registrada do timer que caia dentro da pausa do
+      // pomodoro também a estica.
+      const fimDaPausa = place(cur, breakDur, winEnd).end;
+      if (winEnd - fimDaPausa >= half) {
+        if (isLong) sessionN++;
         cur = pushBreak(cur, breakDur, winEnd, breakName).end;
-      } else {
-        // Sobra menor que isso: sem pausa, o último estudo vai até o fim da janela.
-        const last = studyEndingAt(cur);
-        if (last) stretch(last, winEnd - cur, winEnd);
-        cur = winEnd;
+        continue;
       }
+
+      // O pomo já encostou no fim da janela (uma pausa registrada pode ter esticado ele até lá):
+      // não há sobra, e não há o que decidir. Sem esta guarda o `stretch` de baixo seria chamado
+      // com `extra` zero — e não é no-op: ele reposiciona o bloco, e uma pausa que começa
+      // exatamente no fim dele deixa de ser contada, encolhendo o bloco e sumindo com o `paused`.
+      if (cur >= winEnd) break;
+
+      // Sem pausa, a sobra é resolvida AQUI, e não voltando pro topo do laço: lá a decisão é em
+      // minutos de relógio, e uma pausa registrada que cubra a sobra inteira faria o mini nascer
+      // vazio — o tempo morreria de novo, um nível abaixo. `effective` é o que de fato vale.
+      const sobra = place(cur, winEnd - cur, winEnd);
+      const ultimo = studyEndingAt(cur, win.start);
+      if (sobra.effective >= half) pushStudy(cur, winEnd - cur, winEnd, true);
+      else if (ultimo) stretch(ultimo, winEnd - cur, winEnd);
+      cur = winEnd;
     }
 
     // Próxima janela = nova sessão (separação visual)

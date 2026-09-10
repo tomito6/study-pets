@@ -127,7 +127,8 @@ describe('aplicação: fim de semana pausado', () => {
     expect(blocksForDay('2026-09-12')).toEqual([]);
     expect(allDays().find((d) => d.key === SAB)).toMatchObject({ bonus: true });
     expect(allDays().find((d) => d.key === HOJE)).toMatchObject({ bonus: false });
-    expect(computeStatsNow(AGORA).dayStudyPlanned[SAB]).toBe(100); // 4 pomos de 25 nas 2h
+    // 4 pomos de 25 nas 2h + os 5 min que sobravam, que desde 2026-09-10 esticam o último
+    expect(computeStatsNow(AGORA).dayStudyPlanned[SAB]).toBe(105);
   });
 
   it('"Restaurar rotina" e "Dia livre" devolvem a folga', () => {
@@ -157,7 +158,7 @@ describe('aplicação: fim de semana pausado', () => {
     const stats = computeStatsNow(AGORA);
     expect(stats.totalXP).toBe(50);
     expect(stats.dayStudyDoneMins[SAB_PASSADO]).toBe(25);
-    expect(stats.dayStudyPlanned[SAB_PASSADO]).toBe(100);
+    expect(stats.dayStudyPlanned[SAB_PASSADO]).toBe(105); // idem: a janela de 2h fecha inteira
   });
 
   it('dia bônus na sequência: conta se bateu a meta, e não quebra se não bateu', () => {

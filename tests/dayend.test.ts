@@ -64,9 +64,10 @@ describe('domínio do fim do dia', () => {
 
   it('último estudo do dia, e quando vale perguntar', () => {
     const blocks = blocksForDay(HOJE);
-    expect(lastStudyEnd(blocks)).toBe('17:40');
+    // O dia padrão fecha no fim da janela desde 2026-09-10 (a sobra do rabo virou estudo).
+    expect(lastStudyEnd(blocks)).toBe('18:00');
     expect(lastStudyEnd([])).toBeNull();
-    const base = { dayClosed: false, hasCheckToday: true, lastEnd: '17:40', now: new Date('2026-09-02T17:45:00') };
+    const base = { dayClosed: false, hasCheckToday: true, lastEnd: '18:00', now: new Date('2026-09-02T18:05:00') };
     expect(shouldPromptEndOfDay(base)).toBe(true);
     expect(shouldPromptEndOfDay({ ...base, now: new Date('2026-09-02T17:00:00') })).toBe(false);
     expect(shouldPromptEndOfDay({ ...base, hasCheckToday: false })).toBe(false);
@@ -110,26 +111,26 @@ describe('prompt automático de fim de dia', () => {
     toggleBlockCheck(HOJE, blocksForDay(HOJE)[0]!);
     scheduleEndOfDayPrompt();
     expect(derived.dayEnd.promptOpen).toBe(false);
-    vi.advanceTimersByTime(40 * 60 * 1000 + 1000); // 17:40
+    vi.advanceTimersByTime(60 * 60 * 1000 + 1000); // 18:00
     expect(derived.dayEnd.promptOpen).toBe(true);
-    expect(derived.dayEnd.promptLastEnd).toBe('17:40');
+    expect(derived.dayEnd.promptLastEnd).toBe('18:00');
     promptFinish();
     expect(derived.dayEnd).toMatchObject({ promptOpen: false, confirmOpen: true });
   });
 
   it('não dispara sem check, e prolongar reagenda pro novo horário', () => {
-    resetAt('2026-09-02T17:50:00');
+    resetAt('2026-09-02T18:10:00');
     scheduleEndOfDayPrompt();
     expect(derived.dayEnd.promptOpen).toBe(false); // sem check hoje
 
     toggleBlockCheck(HOJE, blocksForDay(HOJE)[0]!);
-    scheduleEndOfDayPrompt(); // já passou das 17:40 → checa na hora
+    scheduleEndOfDayPrompt(); // já passou das 18:00 → checa na hora
     expect(derived.dayEnd.promptOpen).toBe(true);
 
     extendDay('19:00');
     expect(state.config.end).toBe('19:00');
     expect(derived.dayEnd.promptOpen).toBe(false);
-    expect(lastStudyEnd(blocksForDay(HOJE))! > '17:40').toBe(true);
+    expect(lastStudyEnd(blocksForDay(HOJE))! > '18:00').toBe(true);
   });
 });
 
