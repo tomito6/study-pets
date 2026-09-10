@@ -969,6 +969,16 @@
   .block-row{-webkit-touch-callout:none;}
   .group-summary{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--muted);font-family:var(--font-mono);}
 
+  /* ARRASTAR EVENTO — a alça na linha, a linha que sai do lugar e o alvo
+     (features/events/useEventDrag.ts, features/plan/EventDragGhost.tsx). */
+  .ev-grip{margin-left:2px;padding:0 3px;color:var(--muted);opacity:var(--fade-soft);font-size:13px;line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .ev-grip:hover,.ev-grip:active{opacity:1;color:var(--orange);}
+  .block-row.dragging{opacity:var(--fade-future);cursor:grabbing;}
+  .block-row.dragging .ev-grip{cursor:grabbing;}
+  .drag-ghost{position:absolute;left:-4px;right:-4px;display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border:2px dashed var(--orange);border-radius:var(--radius-sm);background:var(--orange-wash);pointer-events:none;z-index:4;overflow:hidden;transition:top .08s ease-out,height .08s ease-out;}
+  .drag-ghost .dg-time{color:var(--orange);font-family:var(--font-mono);font-size:12px;white-space:nowrap;}
+  .drag-ghost .dg-name{color:var(--text);font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
   /* ERROR BOUNDARY — a tela de "Algo quebrou" (src/app/ErrorBoundary.tsx). */
   .error-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--bg);color:var(--text);}
   .error-card{width:100%;max-width:480px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;}
@@ -1343,6 +1353,10 @@
     .wv-blk.event.done{background:var(--orange);color:var(--on-orange);}
     .wv-blk.pausa.done,.wv-blk.longa.done{background:var(--surface-strong);color:var(--text-soft);}
     .wv-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent-glow-tight);pointer-events:none;}
+    /* arrastar evento na Semana: pega no bloco, solta em qualquer dia */
+    .wv-blk.movable{cursor:grab;touch-action:none;}
+    .wv-blk.dragging{opacity:var(--fade-future);cursor:grabbing;}
+    .wv-ghost{border:2px dashed var(--orange);background:var(--orange-bg);color:var(--orange);font-family:var(--font-mono);pointer-events:none;z-index:2;}
   }
   /* a coluna da esquerda encolhe INTEIRA pra caber na altura da janela — zoom, como Análise e Perfil — mantendo
      as proporções, e a lista ganha a largura que sobra. Quem calcula --col-k (altura disponível ÷ altura natural,

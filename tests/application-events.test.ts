@@ -6,6 +6,9 @@ import {
   deleteSeries,
   deleteSeriesOccurrence,
   findEventEditTarget,
+  isMovableBlock,
+  moveEvent,
+  moveNeedsScope,
   updateEvent,
   updateSeries,
   updateSeriesOccurrence,
@@ -157,5 +160,73 @@ describe('updateSeriesOccurrence — editar só este dia', () => {
     expect(state.eventSeries[0]!.exceptions).toEqual([]);
     expect(state.events[HOJE]).toBeUndefined();
     expect(updateSeriesOccurrence('nao-existe', HOJE, { name: 'x', start: '18:00', end: '19:00', countsAsStudy: false })).toEqual({ ok: false, reason: 'not-found' });
+  });
+});
+
+describe('moveEvent — arrastar', () => {
+  const evento = (dia = HOJE) => blocksForDay(dia).find((b) => b.type === 'event' || b.type === 'intervalo')!;
+
+  it('avulso: muda o horário mantendo nome e "conta como estudo", e o plano acompanha', () => {
+    addEvent(HOJE, { name: 'Aula', start: '14:00', end: '15:30', countsAsStudy: true });
+    const r = moveEvent(HOJE, evento(), { toDateKey: HOJE, start: '10:00', end: '11:30' });
+    expect(r).toEqual({ ok: true, scope: 'day' });
+    expect(state.events[HOJE]).toEqual([{ name: 'Aula', start: '10:00', end: '11:30', countsAsStudy: true }]);
+    expect(blocksForDay(HOJE).some((b) => b.type === 'event' && b.time === '10:00')).toBe(true);
+    expect(blocksForDay(HOJE).some((b) => b.time === '14:00' && b.type === 'event')).toBe(false);
+  });
+
+  it('avulso pra outro dia: sai da lista de lá e entra na de cá', () => {
+    addEvent(HOJE, { name: 'Aula', start: '14:00', end: '15:30', countsAsStudy: true });
+    const r = moveEvent(HOJE, evento(), { toDateKey: PROXIMA_QUARTA, start: '09:00', end: '10:30' });
+    expect(r.ok).toBe(true);
+    expect(state.events[HOJE]).toBeUndefined();
+    expect(state.events[PROXIMA_QUARTA]).toEqual([{ name: 'Aula', start: '09:00', end: '10:30', countsAsStudy: true }]);
+  });
+
+  it('série, "só este dia": vira exceção aqui e avulso no destino; os outros dias seguem iguais', () => {
+    addEventSeries(HOJE, { name: '🍽️ Almoço', start: '13:00', end: '14:00', countsAsStudy: false, weekdays: [3], freq: 'weekly', until: null });
+    const r = moveEvent(HOJE, evento(), { toDateKey: HOJE, start: '12:00', end: '13:00' }, 'day');
+    expect(r).toEqual({ ok: true, scope: 'day' });
+    expect(state.eventSeries![0]!.exceptions).toEqual([HOJE]);
+    expect(state.eventSeries![0]!.start).toBe('13:00'); // a série não se mexeu
+    expect(state.events[HOJE]).toEqual([{ name: '🍽️ Almoço', start: '12:00', end: '13:00', countsAsStudy: false }]);
+    expect(blocksForDay(PROXIMA_QUARTA).some((b) => b.time === '13:00' && b.type === 'intervalo')).toBe(true);
+  });
+
+  it('série, "toda a série": muda o horário em todos os dias, sem exceção nenhuma', () => {
+    addEventSeries(HOJE, { name: 'Treino', start: '18:00', end: '19:00', countsAsStudy: false, weekdays: [3], freq: 'weekly', until: null });
+    const r = moveEvent(HOJE, evento(), { toDateKey: HOJE, start: '17:00', end: '18:00' }, 'series');
+    expect(r).toEqual({ ok: true, scope: 'series' });
+    expect(state.eventSeries![0]).toMatchObject({ start: '17:00', end: '18:00', exceptions: [] });
+    expect(state.events[HOJE]).toBeUndefined();
+    expect(blocksForDay(PROXIMA_QUARTA).some((b) => b.time === '17:00')).toBe(true);
+  });
+
+  it('mudar o dia da semana da série inteira é recusado — isso é edição, não arrasto', () => {
+    addEventSeries(HOJE, { name: 'Treino', start: '18:00', end: '19:00', countsAsStudy: false, weekdays: [3], freq: 'weekly', until: null });
+    const r = moveEvent(HOJE, evento(), { toDateKey: PROXIMA_QUARTA, start: '18:00', end: '19:00' }, 'series');
+    expect(r).toEqual({ ok: false, reason: 'series-other-day' });
+    expect(state.eventSeries![0]!.exceptions).toEqual([]);
+  });
+
+  it('recusa estudo/pausa, dia encerrado, horário invertido e evento que sumiu', () => {
+    addEvent(HOJE, { name: 'Aula', start: '14:00', end: '15:30', countsAsStudy: true });
+    const ev = evento();
+    const estudo = blocksForDay(HOJE).find((b) => b.type === 'estudo')!;
+    expect(moveEvent(HOJE, estudo, { toDateKey: HOJE, start: '10:00', end: '10:25' })).toEqual({ ok: false, reason: 'not-movable' });
+    expect(moveEvent(HOJE, ev, { toDateKey: HOJE, start: '10:00', end: '10:00' })).toEqual({ ok: false, reason: 'end-before-start' });
+    expect(moveEvent(HOJE, { ...ev, time: '07:00' }, { toDateKey: HOJE, start: '10:00', end: '11:00' })).toEqual({ ok: false, reason: 'not-found' });
+    state.closedDays[HOJE] = true;
+    expect(moveEvent(HOJE, ev, { toDateKey: HOJE, start: '10:00', end: '11:00' })).toEqual({ ok: false, reason: 'closed' });
+    expect(state.events[HOJE]).toEqual([{ name: 'Aula', start: '14:00', end: '15:30', countsAsStudy: true }]);
+  });
+
+  it('só evento e intervalo se movem, e só série no mesmo dia pergunta o escopo', () => {
+    expect(isMovableBlock({ type: 'event' })).toBe(true);
+    expect(isMovableBlock({ type: 'intervalo' })).toBe(true);
+    expect(isMovableBlock({ type: 'estudo' })).toBe(false);
+    expect(moveNeedsScope({ _seriesId: 'ser_1' }, true)).toBe(true);
+    expect(moveNeedsScope({ _seriesId: 'ser_1' }, false)).toBe(false); // outro dia: só este dia
+    expect(moveNeedsScope({}, true)).toBe(false);
   });
 });

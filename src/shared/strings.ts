@@ -75,6 +75,8 @@ export const strings = {
     xpGain: (xp: number) => `+${xp} XP`,
     free: 'livre',
     eventTitle: 'Toque pra editar ou apagar este evento',
+    dragTitle: 'Arraste pra mudar o horário',
+    dragGhost: (start: string, end: string) => `${start} – ${end}`,
     freeWeekend: '🌴 Fim de semana livre',
     freeDayHint: 'Quer estudar mesmo assim? Toque em 🕘 Janelas do dia e abra uma janela — só pra este dia.',
     notYet: 'Ainda não chegou 🔮',
@@ -101,6 +103,7 @@ export const strings = {
       hour: (h: number) => `${h}h`,
       rest: { weekend: 'Fim de semana', off: 'Dia livre' },
       open: (day: string) => `Abrir ${day}`,
+      drag: 'Arraste pra mover — pra outro horário ou outro dia',
     },
   },
   groups: {
@@ -173,6 +176,27 @@ export const strings = {
         'end-before-start': 'O horário de fim deve ser depois do início.',
         'no-weekdays': 'Escolha pelo menos um dia da semana pra repetição.',
         'not-found': 'Esse evento não existe mais.',
+      },
+    },
+    /** Arrastar um evento: o toast do que aconteceu e a pergunta de escopo da série. */
+    moved: (name: string, start: string, day: Date | null): string => {
+      const limpo = name.replace(/^📅\s*/, '');
+      if (!day) return `${limpo} → ${start}`;
+      return `${limpo} → ${day.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })}, ${start}`;
+    },
+    move: {
+      title: '📅 Mover evento',
+      text: (name: string, start: string, end: string) =>
+        `"${name}" ia de ${start} a ${end}. Vale só pra este dia ou pra toda a série?`,
+      onlyToday: 'Só este dia',
+      series: 'Toda a série',
+      cancel: 'Cancelar',
+      refusal: {
+        'end-before-start': 'O fim tem que ser depois do início.',
+        'not-found': 'Esse evento não existe mais.',
+        closed: 'Dia encerrado 🔒',
+        'not-movable': 'Estudos e pausas são gerados pelo plano — mexa nas janelas ou nos eventos.',
+        'series-other-day': 'Pra mudar o dia da semana da série, edite a série.',
       },
     },
     remove: {

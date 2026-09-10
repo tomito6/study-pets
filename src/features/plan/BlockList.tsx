@@ -14,7 +14,8 @@ import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state } from '../../store/store';
 import { GroupBox } from '../groups/GroupBox';
-import type { GroupSelection } from '../groups/useGroupSelection';
+import type { GroupSelection, RowSelectionProps } from '../groups/useGroupSelection';
+import type { EventDrag, HandleProps } from '../events/useEventDrag';
 import { spawnCheckRipple, spawnFloatGain } from './feedback';
 
 const NUM_SESSIONS = 6;
@@ -56,12 +57,14 @@ interface RowProps extends BlockActions {
   idx: number;
   inGroup: boolean;
   selection: GroupSelection;
+  /** Arrastar evento pra outro horário. `null` = dia encerrado (ou seleção em andamento). */
+  drag: EventDrag | null;
   now: Date;
   isToday: boolean;
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, timerBlock, onDeleteEvent, onStartBlock }: RowProps) {
+function BlockRow({ dateKey, block: b, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onStartBlock }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -90,9 +93,11 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
     (forfeited ? ' forfeited' : '') +
     (inGroup ? ' in-group' : '') +
     (selection.isSelected(idx) ? ' selecting' : '') +
-    (selection.isAnchor(idx) ? ' selecting-anchor' : '');
+    (selection.isAnchor(idx) ? ' selecting-anchor' : '') +
+    (drag?.isDragging(dateKey, b) ? ' dragging' : '');
 
   const onRowClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (drag?.consumeClick()) return; // o clique que fecha um arrasto não abre o modal
     if (selection.handleClick(idx)) return;
     if ((e.target as HTMLElement).closest('.check')) return;
     const why = refusal(dateKey, now);
@@ -139,6 +144,10 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
 
   const clickable = isEv || isI;
   const title = clickable ? t.eventTitle : undefined;
+  // Evento e intervalo se arrastam; estudo e pausa são gerados pelo planner.
+  const source = { dateKey, block: b };
+  const dragProps = drag && clickable ? drag.handleProps(source) : null;
+  const rowProps = mergePointer(selection.rowProps(idx), dragProps);
 
   return (
     <div
@@ -146,7 +155,8 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
       onClick={onRowClick}
       style={clickable ? { cursor: 'pointer' } : undefined}
       title={title}
-      {...selection.rowProps(idx)}
+      data-drag-block={clickable ? '' : undefined}
+      {...rowProps}
     >
       {!isI && (
         <div className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')} onClick={onCheckClick}>
@@ -160,8 +170,41 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
       {/* O timer ficou pausado dentro deste bloco: o fim inclui a pausa, o XP não — a etiqueta é o que fecha a conta. */}
       {b.paused ? <span className="block-paused" title={t.pausedTitle(b.paused)}>{t.pausedTag(b.paused)}</span> : null}
       {xpLabel}
+      {drag && clickable && (
+        <span className="ev-grip" title={t.dragTitle} aria-hidden="true" {...drag.handleProps(source, true)}>
+          ⠿
+        </span>
+      )}
     </div>
   );
+}
+
+/**
+ * As duas máquinas de ponteiro vivem na mesma linha: a seleção de grupo (botão
+ * direito, toque longo) e o arrasto de evento (mouse com botão esquerdo, ou a
+ * alça). Cada uma ignora o que não é dela, então basta chamar as duas.
+ */
+function mergePointer(sel: RowSelectionProps, drag: HandleProps | null): RowSelectionProps {
+  if (!drag) return sel;
+  return {
+    ...sel,
+    onPointerDown: (e) => {
+      sel.onPointerDown(e);
+      drag.onPointerDown(e);
+    },
+    onPointerMove: (e) => {
+      sel.onPointerMove(e);
+      drag.onPointerMove(e);
+    },
+    onPointerUp: (e) => {
+      sel.onPointerUp(e);
+      drag.onPointerUp(e);
+    },
+    onPointerCancel: (e) => {
+      sel.onPointerCancel(e);
+      drag.onPointerCancel(e);
+    },
+  };
 }
 
 interface ListProps extends BlockActions {
@@ -169,13 +212,14 @@ interface ListProps extends BlockActions {
   blocks: StudyBlock[];
   groups: StudyGroup[];
   selection: GroupSelection;
+  drag: EventDrag | null;
   now: Date;
   timerBlock: StudyBlock | null;
   /** Dia sem blocos: o título (dia livre / fim de semana) e, se o dia é editável, como estudar mesmo assim. */
   empty: { label: string; hint: string | null };
 }
 
-export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
+export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
   if (blocks.length === 0) {
     return (
       <div className="empty-day">
@@ -267,6 +311,7 @@ export function BlockList({ dateKey, blocks, groups, selection, now, timerBlock,
         idx={i}
         inGroup={box !== null}
         selection={selection}
+        drag={drag}
         now={now}
         isToday={isToday}
         timerBlock={timerBlock}

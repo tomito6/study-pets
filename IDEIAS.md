@@ -660,6 +660,14 @@ notificar do que cabe em toast e selo — hoje provavelmente não.
 
 ## Mexer e manipular tudo direto na Semana (laptop) — 2026-09-07
 
+> **Parcialmente feito em 2026-09-08** (branch `feat/arrastar-eventos`, plan file
+> `plans/2026-09-08_1944_arrastar-eventos.md`): **arrastar um evento move** — na Semana (inclusive
+> pra outro dia) e também no Dia, pela alça `⠿` da linha. Continuam abertos: arrastar no vazio pra
+> **criar**, puxar a borda pra **esticar**, puxar a ponta da coluna pra mexer nas **janelas**, e
+> arrastar sobre um trecho pra **agrupar** na Semana. As decisões que aquele trabalho já tomou (o
+> gesto convive com o clique; granularidade de 5 min; o quanto compartilhar com `useGroupSelection`
+> — saiu `shared/touchScroll.ts`) valem pros itens que faltam.
+
 Pedido do Tomi logo depois de a Semana entrar no laptop (branch `feat/laptop`, 2026-09-06): hoje ela é
 só de olhar — um dia por coluna, blocos na altura da duração, e clicar num dia abre o Dia dele. A ideia
 é ela virar o lugar de **planejar com a mão**, no espírito de um app de calendário: arrastar pra criar,

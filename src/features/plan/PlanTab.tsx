@@ -1,18 +1,19 @@
 // Aba Plano: XP, stats do dia, seletor de semana/dia, blocos, grupos e "Encerrar o dia".
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { canEditDayWindows, dayWindowsOverride, restKindKey } from '../../application/dayWindows';
-import { findEventEditTarget } from '../../application/events';
+import { canMoveEvents, findEventEditTarget, moveEvent, moveNeedsScope } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
 import { clearStartRequest, tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
+import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
-import { dk } from '../../domain/time';
+import { dk, timeToMins } from '../../domain/time';
 import type { Stats } from '../../domain/stats';
 import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
@@ -22,13 +23,17 @@ import { showToast } from '../../shared/toast';
 import { useWide } from '../../shared/useWide';
 import { setDay, setView, useAppState } from '../../store/store';
 import { EventDeleteModal, type EventToDelete } from '../events/EventDeleteModal';
+import { EventMoveModal, type PendingMove } from '../events/EventMoveModal';
 import { EventPanel } from '../events/EventPanel';
+import { useEventDrag } from '../events/useEventDrag';
+import type { DragSource, DropTarget } from '../events/useEventDrag';
 import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
 import { SelectionRect } from '../groups/SelectionRect';
 import { useGroupSelection } from '../groups/useGroupSelection';
 import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
+import { EventDragGhost } from './EventDragGhost';
 import { useMinuteTick } from './useMinuteTick';
 import { WeekView } from './WeekView';
 
@@ -39,6 +44,8 @@ type PlanModal =
   | { kind: 'delete'; target: EventToDelete }
   | { kind: 'windows'; dateKey: DateKey }
   | { kind: 'group'; target: GroupTarget }
+  /** Arrastou uma ocorrência de série: só este dia ou a série inteira? */
+  | { kind: 'move'; move: PendingMove }
   /** Modo hardcore ligado: o consentimento antes de abrir o foco. */
   | { kind: 'hardcore'; block: StudyBlock };
 
@@ -213,6 +220,43 @@ export function PlanTab() {
     cancelSelection(); // trocou de dia: a seleção era do outro
   }, [viewKey, cancelSelection]);
 
+  // Arrastar evento. A geometria é medida no início do gesto, na tela que estiver
+  // aberta: a lista do Dia (uma faixa por linha) ou as colunas da Semana (uma faixa
+  // por dia, proporcional). Coordenadas do documento, pra aguentar a rolagem.
+  const measureDrag = useCallback((): DragField<DateKey>[] => {
+    if (weekMode) return measureWeekColumns();
+    const list = document.getElementById('blocks-list');
+    if (!list) return [];
+    const anchors: DragAnchor[] = [];
+    for (const el of list.querySelectorAll('[data-row]')) {
+      const b = blocks[Number(el.getAttribute('data-row'))];
+      if (!b) continue;
+      const r = el.getBoundingClientRect();
+      anchors.push({
+        top: r.top + window.scrollY,
+        bottom: r.bottom + window.scrollY,
+        startMin: timeToMins(b.time),
+        endMin: timeToMins(b.endTime),
+      });
+    }
+    // A lista inteira é o dia visível: qualquer x cai nela.
+    return anchors.length ? [{ key: viewKey, left: -Infinity, right: Infinity, anchors }] : [];
+  }, [weekMode, blocks, viewKey]);
+
+  const onDrop = useCallback((source: DragSource, to: DropTarget) => {
+    // Numa série, mover é a mesma pergunta de sempre: este dia ou todos?
+    if (moveNeedsScope(source.block, to.dateKey === source.dateKey)) {
+      setModal({ kind: 'move', move: { source, to } });
+      return;
+    }
+    const r = moveEvent(source.dateKey, source.block, { toDateKey: to.dateKey, start: to.start, end: to.end });
+    if (!r.ok) showToast(strings.events.move.refusal[r.reason]);
+  }, []);
+
+  const drag = useEventDrag({ measure: measureDrag, onDrop });
+  // Durante a seleção de trecho, tocar numa linha é escolher — não arrastar.
+  const dayDrag = canMoveEvents(viewKey) && !selection.active ? drag : null;
+
   // Tocar num estudo/pausa: com o hardcore ligado, o consentimento vem antes; senão, o foco abre direto.
   const startBlock = (b: StudyBlock, at: Date) => {
     if (hardcoreEnabled()) {
@@ -268,6 +312,7 @@ export function PlanTab() {
         <WeekView
           week={week}
           now={now}
+          drag={drag}
           onPickDay={(i) => {
             setDay(i);
             setMode('day');
@@ -305,6 +350,7 @@ export function PlanTab() {
           blocks={blocks}
           groups={groups}
           selection={selection}
+          drag={dayDrag}
           now={now}
           timerBlock={timerBlock}
           empty={{ label: rest === 'weekend' ? t.freeWeekend : t.freeDay, hint: canWindows ? t.freeDayHint : null }}
@@ -313,6 +359,7 @@ export function PlanTab() {
           onStartBlock={startBlock}
         />
         <SelectionRect range={selection.range} listId="blocks-list" />
+        <EventDragGhost preview={drag.preview} listId="blocks-list" />
       </div>
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
         </>
@@ -334,7 +381,32 @@ export function PlanTab() {
       />
       <DayWindowsPanel dateKey={modal.kind === 'windows' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
+      <EventMoveModal move={modal.kind === 'move' ? modal.move : null} onClose={closeModal} />
       <HardcoreStartModal block={modal.kind === 'hardcore' ? modal.block : null} onClose={closeModal} />
     </>
   );
+}
+
+/**
+ * As colunas da Semana, em coordenadas do documento. Os dados vêm de atributos que
+ * a própria `WeekView` escreve (`data-day-key` e a faixa de horas), então a medida
+ * não precisa saber como ela calcula a grade — e dia de descanso, que não tem os
+ * atributos, fica de fora: soltar um evento lá o esconderia do plano.
+ */
+function measureWeekColumns(): DragField<DateKey>[] {
+  const out: DragField<DateKey>[] = [];
+  for (const el of document.querySelectorAll('#week-view .wv-col[data-day-key]')) {
+    const key = el.getAttribute('data-day-key');
+    const from = Number(el.getAttribute('data-from'));
+    const to = Number(el.getAttribute('data-to'));
+    if (!key || !Number.isFinite(from) || !Number.isFinite(to) || to <= from) continue;
+    const r = el.getBoundingClientRect();
+    out.push({
+      key,
+      left: r.left + window.scrollX,
+      right: r.right + window.scrollX,
+      anchors: [{ top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, startMin: from, endMin: to }],
+    });
+  }
+  return out;
 }

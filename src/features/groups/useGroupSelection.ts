@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react';
+import { edgeScrollStep, lockTouchScroll } from '../../shared/touchScroll';
 
 export type GroupEdge = 'start' | 'end';
 
@@ -37,9 +38,6 @@ export interface Range {
 const LONG_PRESS_MS = 450;
 const MOVE_TOLERANCE_PX = 10;
 const ROW_ATTR = 'data-row';
-/** Faixa perto da borda da tela em que o arrasto rola a página sozinho. */
-const EDGE_PX = 64;
-const EDGE_STEP_PX = 12;
 
 interface Options {
   /** false = dia encerrado ou vazio: nada aqui responde. */
@@ -98,13 +96,6 @@ function rowIndexAt(x: number, y: number): number | null {
   if (!el) return null;
   const n = Number(el.getAttribute(ROW_ATTR));
   return Number.isFinite(n) ? n : null;
-}
-
-/** Segura o scroll da página enquanto o dedo arrasta. Devolve o "solta". */
-function lockTouchScroll(): () => void {
-  const block = (ev: TouchEvent) => ev.preventDefault();
-  document.addEventListener('touchmove', block, { passive: false });
-  return () => document.removeEventListener('touchmove', block);
 }
 
 const isDragging = (m: SelectionMode): boolean => (m.kind === 'anchored' && m.drag) || m.kind === 'resizing';
@@ -208,7 +199,7 @@ export function useGroupSelection({ enabled, onRange, onResize, onRefuse }: Opti
     edgeLoop.current = null;
     const p = lastPointer.current;
     if (!p || !isDragging(modeRef.current)) return;
-    const dy = p.y < EDGE_PX ? -EDGE_STEP_PX : p.y > window.innerHeight - EDGE_PX ? EDGE_STEP_PX : 0;
+    const dy = edgeScrollStep(p.y);
     if (dy === 0) return;
     window.scrollBy(0, dy);
     focusAt(p.x, p.y);

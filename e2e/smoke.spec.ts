@@ -975,6 +975,116 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row.event-row')).toHaveCount(1); // editou, não duplicou
   });
 
+  test('41. arrastar um evento pela alça muda o horário dele, e o plano se refaz em volta', async ({ page }) => {
+    await abrirApp(page);
+    await page.getByRole('button', { name: '+ Evento' }).click();
+    await page.locator('#ev-name').fill('Aula de Cálculo');
+    await page.locator('#ev-start').fill('14:00');
+    await page.locator('#ev-end').fill('15:30');
+    await page.locator('#event-panel').getByRole('button', { name: 'Adicionar' }).click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+
+    const evento = page.locator('.block-row.event-row', { hasText: 'Aula de Cálculo' });
+    await expect(evento).toContainText('14:00–15:30');
+
+    // Pega na alça e sobe até a linha das 10:30 — o fantasma mostra onde vai cair.
+    await evento.scrollIntoViewIfNeeded();
+    const alca = await evento.locator('.ev-grip').boundingBox();
+    const alvo = await page.locator('.block-row', { hasText: '11:45–12:10' }).boundingBox();
+    if (!alca || !alvo) throw new Error('sem posição na tela');
+    await page.mouse.move(alca.x + alca.width / 2, alca.y + alca.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(alvo.x + alvo.width / 2, alvo.y + alvo.height / 2, { steps: 8 });
+    const fantasma = page.locator('#drag-ghost');
+    await expect(fantasma).toBeVisible();
+    await expect(evento).toHaveClass(/dragging/);
+    const horario = (await fantasma.locator('.dg-time').textContent())!.replace(/\s/g, '');
+    await page.mouse.up();
+
+    // Onde o fantasma estava é onde o evento ficou — e o modal do evento não abriu.
+    await expect(fantasma).toBeHidden();
+    await expect(page.locator('#event-delete-confirm')).toBeHidden();
+    const movido = page.locator('.block-row.event-row', { hasText: 'Aula de Cálculo' });
+    await expect(movido).toContainText(horario.replace('–', '–'));
+    await expect(page.locator('.block-row.event-row')).toHaveCount(1); // moveu, não duplicou
+    // O plano se refez: nenhum estudo por cima do evento, e sobrou estudo às 14h.
+    const inicio = horario.split('–')[0]!;
+    await expect(page.locator('.block-row', { hasText: `${inicio}–` })).toHaveCount(1);
+    await expect(page.locator('.blocks-list')).toContainText('14:');
+  });
+
+  test('42. arrastar a refeição pergunta se é só hoje; "só este dia" não mexe nos outros', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click(); // o balão do tour cobre as abas dos dias
+    const refeicao = page.locator('.block-row.almoco-row');
+    await expect(refeicao).toContainText('13:00–14:00');
+
+    await refeicao.scrollIntoViewIfNeeded();
+    const alca = await refeicao.locator('.ev-grip').boundingBox();
+    const alvo = await page.locator('.block-row', { hasText: '11:45–12:10' }).boundingBox();
+    if (!alca || !alvo) throw new Error('sem posição na tela');
+    await page.mouse.move(alca.x + alca.width / 2, alca.y + alca.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(alvo.x + alvo.width / 2, alvo.y + alvo.height / 2, { steps: 8 });
+    const horario = (await page.locator('#drag-ghost .dg-time').textContent())!.replace(/\s/g, '');
+    await page.mouse.up();
+
+    // É uma série: a pergunta vem antes de mexer em qualquer coisa.
+    await expect(page.locator('#event-move-scope')).toBeVisible();
+    await expect(page.locator('.block-row.almoco-row')).toContainText('13:00–14:00'); // ainda no lugar
+    await page.locator('#event-move-day').click();
+    await expect(page.locator('#event-move-scope')).toBeHidden();
+    await expect(page.locator('.block-row.almoco-row')).toContainText(horario);
+
+    // Amanhã continua almoçando às 13:00.
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    await expect(page.locator('.block-row.almoco-row')).toContainText('13:00–14:00');
+  });
+
+  // A Semana só existe a partir de 1100px — é lá que arrastar muda o evento de dia.
+  test.describe('na Semana', () => {
+    test.use({ viewport: { width: 1280, height: 900 } });
+
+    test('43. arrastar um evento na Semana leva ele pra outro dia', async ({ page }) => {
+      await abrirApp(page);
+      await page.getByRole('button', { name: '+ Evento' }).click();
+      await page.locator('#ev-name').fill('Aula de Cálculo');
+      await page.locator('#ev-start').fill('14:00');
+      await page.locator('#ev-end').fill('15:30');
+      await page.locator('#event-panel').getByRole('button', { name: 'Adicionar' }).click();
+      await expect(page.locator('#event-panel')).toBeHidden();
+
+      await page.locator('#view-week').click();
+      await expect(page.locator('#week-view')).toBeVisible();
+      const quarta = page.locator('.wv-col[data-day-key="2026-09-02"]');
+      const quinta = page.locator('.wv-col[data-day-key="2026-09-03"]');
+      await expect(quarta.locator('.wv-blk.event')).toHaveCount(1);
+      await expect(quinta.locator('.wv-blk.event')).toHaveCount(0);
+
+      // Pega o evento na quarta e leva pra quinta, na mesma altura (mesmo horário).
+      const bloco = await quarta.locator('.wv-blk.event').boundingBox();
+      const col = await quinta.boundingBox();
+      if (!bloco || !col) throw new Error('sem posição na tela');
+      const y = bloco.y + bloco.height / 2;
+      await page.mouse.move(bloco.x + bloco.width / 2, y);
+      await page.mouse.down();
+      await page.mouse.move(col.x + col.width / 2, y, { steps: 10 });
+      await expect(page.locator('#wv-ghost')).toBeVisible();
+      await expect(quinta.locator('#wv-ghost')).toHaveCount(1); // o fantasma já está na quinta
+      await page.mouse.up();
+
+      // Mudou de coluna, e o clique que fecha o arrasto não abriu o Dia.
+      await expect(page.locator('#week-view')).toBeVisible();
+      await expect(quarta.locator('.wv-blk.event')).toHaveCount(0);
+      await expect(quinta.locator('.wv-blk.event')).toHaveCount(1);
+      await expect(quinta.locator('.wv-blk.event')).toHaveAttribute('title', /Arraste/);
+
+      // E o Dia da quinta mostra o evento no horário de sempre.
+      await page.locator('.wv-day', { hasText: 'Qui' }).click();
+      await expect(page.locator('.block-row.event-row', { hasText: 'Aula de Cálculo' })).toContainText('14:00–15:30');
+    });
+  });
+
   test('10. recarregar a página preserva o que foi salvo', async ({ page }) => {
     await abrirApp(page);
     await checksDeEstudo(page).first().click();
@@ -1329,6 +1439,32 @@ test.describe('Study Pets — smoke', () => {
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(antes + 50);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       await expect(page.locator('#group-panel')).toBeVisible(); // soltou longe da âncora: virou grupo
+    });
+
+    test('44. a alça do evento arrasta com o dedo, sem virar seleção de grupo', async ({ page }) => {
+      await abrirApp(page);
+      const refeicao = page.locator('.block-row.almoco-row');
+      await expect(refeicao).toContainText('13:00–14:00');
+      await refeicao.scrollIntoViewIfNeeded();
+
+      const cdp = await page.context().newCDPSession(page);
+      const toque = (type: 'touchStart' | 'touchMove' | 'touchEnd', p?: { x: number; y: number }) =>
+        cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [p] : [] });
+      const alca = (await refeicao.locator('.ev-grip').boundingBox())!;
+      const alvo = (await page.locator('.block-row', { hasText: '11:45–12:10' }).boundingBox())!;
+      const a = { x: alca.x + alca.width / 2, y: alca.y + alca.height / 2 };
+
+      await toque('touchStart', a);
+      for (let i = 1; i <= 6; i++) await toque('touchMove', { x: a.x, y: a.y + ((alvo.y + alvo.height / 2 - a.y) * i) / 6 });
+      // É arrasto de evento, não seleção de trecho: nada de linha selecionada.
+      await expect(page.locator('#drag-ghost')).toBeVisible();
+      await expect(page.locator('.block-row.selecting')).toHaveCount(0);
+      const horario = (await page.locator('#drag-ghost .dg-time').textContent())!.replace(/\s/g, '');
+      await toque('touchEnd');
+
+      await expect(page.locator('#event-move-scope')).toBeVisible();
+      await page.locator('#event-move-day').click();
+      await expect(page.locator('.block-row.almoco-row')).toContainText(horario);
     });
 
     test('18. a alça da caixa responde ao dedo', async ({ page }) => {
