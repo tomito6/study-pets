@@ -645,6 +645,18 @@ cedo? tudo bem, ajusta"). A assimetria é o bug de design mais visível que sobr
 
 ## Aba de notificações — 2026-09-06
 
+> **→ virou implementação** em 2026-09-11, na branch `feat/notificacoes` (plan file
+> `plans/2026-09-11_0130_notificacoes-sininho.md`). O Tomi decidiu a primeira pergunta —
+> **sininho ao lado da engrenagem** — e as outras três foram decididas junto: é **histórico**
+> (teto de 40, com "Limpar"), e o que entra é só **o que o app descobre depois do fato ou com
+> ninguém olhando**. Isso deu oito linhas, todas presas ou ao `closeDay` ou ao boot
+> (`applyPendingPetXP`, `resumeHardcoreOnBoot`) — porque a regra do dia fechado faz com que
+> nenhum marco de progresso aconteça em outro lugar. O buraco que justificou a feature: **o pet
+> subia de nível de madrugada, no boot que credita um dia fechado com o app desligado, e não
+> havia tela nenhuma que contasse**. O catálogo completo, incluindo as ~18 que foram recusadas e
+> o porquê de cada uma, está no plan file. A preocupação abaixo ("isso infla o app?") virou a
+> régua: metade do catálogo é "nunca".
+
 Ideia do Tomi, ainda sem decisão (veio da branch `docs/pendencias-pets`, apagada em 2026-09-06 depois
 que os outros dois itens dela — avisar quando o pet pode evoluir, e o bônus da skill subindo com o nível
 — viraram código). Um lugar onde os avisos se acumulam em vez de passarem voando num toast: pet pode
