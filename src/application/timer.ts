@@ -24,12 +24,13 @@
 // que ficou no dispositivo) moram em application/pause.ts, que precisa daqui;
 // aqui ficam só os ganchos do runtime — o mesmo arranjo do hardcore.
 
-import { canToggleCheck } from '../domain/checks';
+import { canToggleCheck, isDayClosed } from '../domain/checks';
+import { isForfeited } from '../domain/hardcore';
 import { pauseSessionFor } from '../domain/pauses';
 import { dk } from '../domain/time';
 import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerProgress } from '../domain/timer';
-import type { StartCheck } from '../domain/timer';
-import type { StudyBlock } from '../domain/types';
+import type { StartCheck, StartContext } from '../domain/timer';
+import type { DateKey, StudyBlock } from '../domain/types';
 import { playSound as playSoundInfra } from '../infrastructure/audio/sounds';
 import type { SoundType } from '../infrastructure/audio/sounds';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
@@ -154,9 +155,21 @@ export function startTimer(block: StudyBlock, now: Date = new Date()): void {
   requestNotificationPermission();
 }
 
+/**
+ * O contexto do bloco pro `canStartBlock`, lido do estado. Fonte única: quem
+ * quiser abrir uma porta nova pro timer passa por aqui, e recusa igual às outras.
+ */
+export function startContextFor(block: Pick<StudyBlock, 'time'>, key: DateKey): StartContext {
+  return {
+    closed: isDayClosed(state.closedDays, key),
+    forfeited: isForfeited(state.penalties, key, block.time),
+  };
+}
+
 /** Valida contra o dia visível e o relógio; a UI mostra o motivo se recusar. */
 export function tryStartTimer(block: StudyBlock, now: Date = new Date()): StartCheck {
-  const check = canStartBlock(block, currentDayKey(), now);
+  const key = currentDayKey();
+  const check = canStartBlock(block, key, now, startContextFor(block, key));
   if (!check.ok) return check;
   startTimer(block);
   return check;

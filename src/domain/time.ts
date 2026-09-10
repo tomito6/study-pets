@@ -50,17 +50,3 @@ export const isWeekendKey = (key: DateKey): boolean => {
   return dow === 0 || dow === 6;
 };
 
-/** Soma minutos cumpridos e planejados num conjunto de dias, com o percentual. */
-export function aggregateMins(
-  doneObj: Record<DateKey, number>,
-  plannedObj: Record<DateKey, number>,
-  keys: DateKey[],
-): { done: number; planned: number; pct: number } {
-  let done = 0;
-  let planned = 0;
-  keys.forEach((k) => {
-    done += doneObj[k] || 0;
-    planned += plannedObj[k] || 0;
-  });
-  return { done, planned, pct: planned > 0 ? Math.round((done / planned) * 100) : 0 };
-}

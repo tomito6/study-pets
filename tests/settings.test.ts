@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CFG } from '../src/domain/config';
+import type { PlannerConfig } from '../src/domain/types';
 import {
   defaultDraft,
   deriveStartEnd,
@@ -91,6 +92,41 @@ describe('janelas', () => {
 
   it('deriva start/end com defaults quando não há janela válida', () => {
     expect(deriveStartEnd([])).toEqual({ start: '09:00', end: '18:00' });
+  });
+});
+
+describe('resumo do dia — a sobra que é só a pausa final', () => {
+  const base = { pomo: 25, shortBreak: 5, longBreak: 20, dailyStudyMin: 60 };
+  const dia = (start: string, end: string) =>
+    summarizeConfig({ ...base, start, end, studyWindows: [{ start, end }] } as PlannerConfig);
+
+  it('o dia padrão não é aviso: a sobra é a pausa longa que o dia não emite', () => {
+    const s = dia('09:00', '18:00');
+    if (s.kind !== 'ok') throw new Error('devia gerar blocos');
+    expect(s.diffMins).toBe(-20); // fecha 17:40
+    expect(s.restGap).toBe(true);
+  });
+
+  it('sobra do tamanho da pausa curta também é normal', () => {
+    const s = dia('18:00', '23:00');
+    if (s.kind !== 'ok') throw new Error('devia gerar blocos');
+    expect(s.restGap).toBe(true);
+  });
+
+  it('sobra maior que qualquer pausa continua sendo aviso', () => {
+    const s = summarizeConfig({
+      ...base, longBreak: 5, start: '09:00', end: '12:00',
+      studyWindows: [{ start: '09:00', end: '12:00' }],
+    } as PlannerConfig);
+    if (s.kind !== 'ok') throw new Error('devia gerar blocos');
+    if (s.diffMins < 0) expect(s.restGap).toBe(Math.abs(s.diffMins) <= 5);
+  });
+
+  it('dia que fecha exato não tem sobra nenhuma', () => {
+    const s = dia('09:00', '17:00');
+    if (s.kind !== 'ok') throw new Error('devia gerar blocos');
+    expect(s.diffMins).toBe(0);
+    expect(s.restGap).toBe(false);
   });
 });
 

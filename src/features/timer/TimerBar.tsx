@@ -7,7 +7,7 @@
 
 import { pauseTimer, resumeTimer } from '../../application/pause';
 import { blocksForDay } from '../../application/plan';
-import { requestStartBlock, setVolume, stopTimer, toggleMute } from '../../application/timer';
+import { requestStartBlock, setVolume, startContextFor, stopTimer, toggleMute } from '../../application/timer';
 import { blockDurationMin, canStartBlock, cleanBlockName, timerProgress } from '../../domain/timer';
 import { dk } from '../../domain/time';
 import type { StudyBlock } from '../../domain/types';
@@ -24,7 +24,7 @@ function agoraBlock(now: Date): StudyBlock | null {
   const key = dk(now);
   for (const b of blocksForDay(key)) {
     if (b.type !== 'estudo' && b.type !== 'pausa') continue;
-    if (canStartBlock(b, key, now).ok) return b;
+    if (canStartBlock(b, key, now, startContextFor(b, key)).ok) return b;
   }
   return null;
 }

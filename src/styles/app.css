@@ -402,6 +402,8 @@
   .adh-card .bar-track { height:5px; }
   .adh-card .adh-pct { font-size:11px; color:var(--accent); font-family:var(--font-mono); margin-top:6px; text-align:right; }
   .adh-card.low .bar-fill { background:var(--orange); }
+  .adh-card.met { border-color:var(--accent); }
+  .adh-card.met .adh-pct { font-weight:600; }
   .adh-card.zero .bar-fill { background:var(--track); }
   .adh-card.zero .adh-pct { color:var(--muted); }
   .adh-card.adh-big { padding:20px; }
@@ -430,7 +432,7 @@
   .goal-dot.met { background:var(--accent); color:var(--on-accent); font-weight:600; }
   .goal-dot.miss { background:var(--track); color:var(--muted); opacity:var(--fade-soft); }
   .goal-dot.future { background:transparent; border:1px dashed var(--border); color:var(--muted); }
-  .goal-dot.weekend { background:var(--rest-fill-soft); color:var(--muted); opacity:var(--fade-weekend); }
+  .goal-dot.weekend, .goal-dot.before { background:var(--rest-fill-soft); color:var(--muted); opacity:var(--fade-weekend); }
   .goal-dot.today { outline:2px solid var(--accent); outline-offset:2px; }
 
   /* Sparkline */

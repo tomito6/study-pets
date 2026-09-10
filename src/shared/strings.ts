@@ -391,18 +391,21 @@ export const strings = {
     toNext: (xp: number, name: string) => `Faltam ${xp} XP para ${name}`,
     maxLevel: 'Nível máximo atingido! 🏆',
     sparkline: 'Tendência (8 sem)',
-    sparklineTitle: (mins: readonly number[]) => `Últimas 8 semanas: ${mins.map((m) => `${m}min`).join(' · ')}`,
+    sparklineTitle: (mins: readonly number[]) => `Últimas 8 semanas: ${mins.map((m) => `${m} min`).join(' · ')}`,
     views: { hoje: 'Hoje', semana: 'Semana', geral: 'Geral', recordes: 'Recordes' },
     adhToday: 'Realizado hoje',
     adhWeek: 'Realizado na semana',
     adhAll: 'Realizado no geral',
-    adhVal: (done: number, planned: number) => `${done} / ${planned} min`,
+    /** A régua é a meta do período; o plano vem na linha de baixo, como contexto. */
+    adhVal: (done: number, goal: number) => `${done} / ${goal} min`,
     adhValNone: '— / — min',
-    adhSub: (doneH: number, plannedH: number) => `${doneH}h de ${plannedH}h`,
-    noData: 'sem dados ainda',
-    goalHeadline: ['Você bateu a meta de ', 'min em ', ' esta semana'],
+    adhSub: (doneH: number, plannedH: number) => `${doneH}h de estudo · ${plannedH}h no plano`,
+    adhPct: (pct: number, met: boolean) => `${pct}%${met ? ' ✓' : ''}`,
+    noData: 'nenhum dia cobra meta aqui',
+    goalHeadline: ['Você bateu a meta de ', ' min em ', ' esta semana'],
     day: 'dia',
     days: 'dias',
+    dotBefore: (d: string) => `${d} — antes de você começar`,
     dotWeekend: (d: string) => `${d} — fim de semana pausado`,
     dotOff: (d: string) => `${d} — dia livre`,
     dotFuture: (d: string) => `${d} — futuro`,
@@ -414,6 +417,7 @@ export const strings = {
     session: (n: number) => `Sessão ${n}`,
     heatmapTitle: 'Plano cumprido — 16 semanas',
     cellFuture: (d: string) => `${d} — futuro`,
+    cellBefore: (d: string) => `${d} — antes de você começar`,
     cellWeekend: (d: string) => `${d} — fim de semana`,
     cellOff: (d: string) => `${d} — dia livre`,
     cellValue: (d: string, today: boolean, done: number, goal: number, pct: number) =>
@@ -449,9 +453,12 @@ export const strings = {
       xpApprox: (xp: number) => `~${xp}`,
       windows: (n: number) => `Distribuídos em ${n} janelas de estudo.`,
       noteOk: (end: string) => `Fecha o dia às ${end}, certinho no fim da última janela.`,
-      noteOver: (diff: number, end: string) => `Passa ${diff}min das ${end} — o último bloco vaza da janela.`,
+      noteOver: (diff: number, end: string) => `Passa ${diff} min das ${end} — o último bloco vaza da janela.`,
       noteUnder: (actual: string, diff: number, end: string) =>
-        `Para às ${actual}, ${diff}min antes das ${end} — sobra um tempo sem bloco.`,
+        `Para às ${actual}, ${diff} min antes das ${end} — sobra um tempo sem bloco.`,
+      /** A sobra é só a pausa final, que o dia não emite. Nada se perde — não é aviso. */
+      noteRest: (actual: string, diff: number, end: string) =>
+        `Fecha às ${actual}: os ${diff} min até as ${end} seriam a última pausa, e o dia nunca termina em pausa.`,
     },
     windows: {
       title: 'Janelas de estudo',
@@ -617,8 +624,9 @@ export const strings = {
       : r.reason === 'not-running' ? 'O bloco ainda não começou ⏳'
       : r.reason === 'day-closed' ? 'Dia encerrado 🔒'
       : 'Nenhum bloco rodando',
-    refusal: (r: { reason: 'not-today' } | { reason: 'ended' } | { reason: 'forfeited' }) =>
+    refusal: (r: { reason: import('../domain/timer').StartRefusal['reason'] }) =>
       r.reason === 'not-today' ? 'Só dá pra iniciar timer em blocos de hoje 📅'
+      : r.reason === 'day-closed' ? 'Dia encerrado 🔒'
       : r.reason === 'forfeited' ? 'Você desistiu deste bloco 🔥'
       : 'Este bloco já terminou ⏎',
     /** "✓ Estudo 3 concluído · +50 XP · +25 🪙" — a faixa no foco e o toast no plano. */

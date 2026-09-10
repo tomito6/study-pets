@@ -8,12 +8,13 @@ import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
-import { clearStartRequest, tryStartTimer } from '../../application/timer';
+import { clearStartRequest, startContextFor, tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
 import { dk, timeToMins } from '../../domain/time';
+import { canStartBlock } from '../../domain/timer';
 import type { Stats } from '../../domain/stats';
 import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
@@ -259,6 +260,13 @@ export function PlanTab() {
 
   // Tocar num estudo/pausa: com o hardcore ligado, o consentimento vem antes; senão, o foco abre direto.
   const startBlock = (b: StudyBlock, at: Date) => {
+    // A recusa vem ANTES do consentimento: abrir "sair antes do fim custa XP" pra um
+    // bloco que nem pode começar (dia encerrado, já terminou) é pedir compromisso com nada.
+    const can = canStartBlock(b, viewKey, at, startContextFor(b, viewKey));
+    if (!can.ok) {
+      showToast(strings.timer.refusal(can));
+      return;
+    }
     if (hardcoreEnabled()) {
       setModal({ kind: 'hardcore', block: b });
       return;

@@ -12,6 +12,7 @@ import {
   timerProgress,
 } from '../src/domain/timer';
 import type { StudyBlock } from '../src/domain/types';
+import { strings } from '../src/shared/strings';
 
 const estudo = (time: string, endTime: string, session = 0): StudyBlock => ({
   time, endTime, name: `📖 Estudo ${time}`, type: 'estudo', xp: 50, session,
@@ -88,26 +89,44 @@ describe('timerProgress — o restante vem do relógio, não de um contador', ()
 describe('canStartBlock — bloco de hoje que ainda não terminou', () => {
   const b = estudo('10:00', '10:25');
   const HOJE = '2026-09-02';
+  const livre = { closed: false, forfeited: false };
 
   it('aceita durante o bloco, no dia visível = hoje', () => {
-    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:10:00'))).toEqual({ ok: true });
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:10:00'), livre)).toEqual({ ok: true });
   });
 
   it('aceita bloco que ainda não começou — vai ficar em espera', () => {
-    expect(canStartBlock(b, HOJE, new Date('2026-09-02T09:48:00'))).toEqual({ ok: true });
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T09:48:00'), livre)).toEqual({ ok: true });
   });
 
   it('recusa se a aba mostra outro dia', () => {
-    expect(canStartBlock(b, '2026-09-03', new Date('2026-09-02T10:10:00'))).toEqual({ ok: false, reason: 'not-today' });
+    expect(canStartBlock(b, '2026-09-03', new Date('2026-09-02T10:10:00'), livre)).toEqual({ ok: false, reason: 'not-today' });
   });
 
   it('recusa bloco que já terminou', () => {
-    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:25:00'))).toEqual({ ok: false, reason: 'ended' });
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:25:00'), livre)).toEqual({ ok: false, reason: 'ended' });
+  });
+
+  it('recusa bloco de dia encerrado — o check está travado, começar não pagaria nada', () => {
+    const fechado = { closed: true, forfeited: false };
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:10:00'), fechado)).toEqual({ ok: false, reason: 'day-closed' });
+    // e antes da hora também: o dia encerrou, não há bloco pela frente que valha
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T09:48:00'), fechado)).toEqual({ ok: false, reason: 'day-closed' });
   });
 
   it('recusa bloco abandonado no modo hardcore (depois das outras recusas)', () => {
-    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:10:00'), true)).toEqual({ ok: false, reason: 'forfeited' });
-    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:25:00'), true)).toEqual({ ok: false, reason: 'ended' });
+    const desistiu = { closed: false, forfeited: true };
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:10:00'), desistiu)).toEqual({ ok: false, reason: 'forfeited' });
+    expect(canStartBlock(b, HOJE, new Date('2026-09-02T10:25:00'), desistiu)).toEqual({ ok: false, reason: 'ended' });
+  });
+
+  it('todo motivo de recusa tem texto — nenhum vaza como undefined', () => {
+    const motivos = ['not-today', 'ended', 'day-closed', 'forfeited'] as const;
+    for (const reason of motivos) {
+      const txt = strings.timer.refusal({ reason });
+      expect(txt, reason).toBeTruthy();
+      expect(txt, reason).not.toContain('undefined');
+    }
   });
 });
 

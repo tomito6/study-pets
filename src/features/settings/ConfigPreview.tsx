@@ -22,7 +22,9 @@ export function ConfigPreview({ cfg }: { cfg: PlannerConfig }) {
     s.diffMins > 0
       ? { cls: 'warn', text: t.noteOver(s.diffMins, s.end) }
       : s.diffMins < 0
-        ? { cls: 'warn', text: t.noteUnder(s.actualEnd, Math.abs(s.diffMins), s.end) }
+        ? s.restGap
+          ? { cls: 'ok', text: t.noteRest(s.actualEnd, Math.abs(s.diffMins), s.end) }
+          : { cls: 'warn', text: t.noteUnder(s.actualEnd, Math.abs(s.diffMins), s.end) }
         : { cls: 'ok', text: t.noteOk(s.actualEnd) };
 
   const tile = (num: string | number, lbl: string, cls = '') => (

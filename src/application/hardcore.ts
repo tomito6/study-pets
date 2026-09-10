@@ -18,7 +18,7 @@ import { activePet, petById } from './pets';
 import { blocksForDay, clearBlockCache, computeStatsNow, currentDayKey } from './plan';
 import { saveNow } from './save';
 import { syncBlocking } from './siteBlock';
-import { startTimer, stopTimer } from './timer';
+import { startContextFor, startTimer, stopTimer } from './timer';
 
 export const hardcoreEnabled = (): boolean => state.config.hardcore?.enabled === true;
 
@@ -29,7 +29,7 @@ export const hardcoreEnabled = (): boolean => state.config.hardcore?.enabled ===
  */
 export function startHardcore(block: StudyBlock, now: Date = new Date()): StartCheck {
   const todayKey = dk(now);
-  const check = canStartBlock(block, currentDayKey(), now, isForfeited(state.penalties, todayKey, block.time));
+  const check = canStartBlock(block, currentDayKey(), now, startContextFor(block, todayKey));
   if (!check.ok) return check;
   beginHardcoreSession(block, now);
   startTimer(block, now);

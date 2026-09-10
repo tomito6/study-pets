@@ -109,21 +109,37 @@ export function timerProgress(
 export type StartRefusal =
   | { ok: false; reason: 'not-today' }
   | { ok: false; reason: 'ended' }
+  /** O dia foi encerrado à mão: o check está travado, então começar não renderia nada. */
+  | { ok: false; reason: 'day-closed' }
   /** Abandonado no modo hardcore: sem check e sem timer, o bloco já era. */
   | { ok: false; reason: 'forfeited' };
 
 export type StartCheck = { ok: true } | StartRefusal;
+
+/**
+ * O que o domínio não tem como descobrir sozinho sobre o bloco. **Obrigatório de
+ * propósito**: enquanto isto era um parâmetro opcional, o "Iniciar" do cartão
+ * Agora (laptop) passava direto e o foco abria num dia encerrado, prometendo um
+ * XP que o check travado nunca ia pagar. Porta nova é obrigada a responder.
+ */
+export interface StartContext {
+  /** `closedDays[dia]` — encerrado à mão. */
+  closed: boolean;
+  /** Tem registro de desistência no modo hardcore. */
+  forfeited: boolean;
+}
 
 /** Só dá pra iniciar um bloco de hoje que ainda não terminou — antes da hora ele fica em espera. */
 export function canStartBlock(
   block: Pick<StudyBlock, 'time' | 'endTime'>,
   viewKey: DateKey,
   now: Date,
-  forfeited = false,
+  ctx: StartContext,
 ): StartCheck {
   if (viewKey !== dk(now)) return { ok: false, reason: 'not-today' };
   if (now >= todayAt(block.endTime, now)) return { ok: false, reason: 'ended' };
-  if (forfeited) return { ok: false, reason: 'forfeited' };
+  if (ctx.closed) return { ok: false, reason: 'day-closed' };
+  if (ctx.forfeited) return { ok: false, reason: 'forfeited' };
   return { ok: true };
 }
 

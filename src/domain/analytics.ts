@@ -22,10 +22,24 @@ export function nextLevel(totalXP: number): { threshold: number; name: string } 
   return found ? { threshold: found[0], name: found[1] } : null;
 }
 
+/**
+ * Dia anterior ao início do período: a conta não existia, então não é falha nem
+ * descanso — é ausência. Sem isso, quem cria a conta numa quinta abre a Análise e
+ * vê segunda, terça e quarta reprovadas, e um heatmap de 16 semanas zerado.
+ */
+function beforeStart(startedAt: DateKey | null | undefined): (key: DateKey) => boolean {
+  if (!startedAt) return () => false;
+  return (key) => key < startedAt;
+}
+
 // ---------------------------------------------------------------- meta diária (7 dots)
 
-/** `weekend` = fim de semana pausado; `off` = dia declarado livre. Os dois neutros. Um sábado com janelas abertas é dia normal. */
-export type GoalDotKind = 'weekend' | 'off' | 'future' | 'met' | 'miss';
+/**
+ * `weekend` = fim de semana pausado; `off` = dia declarado livre; `before` = dia
+ * anterior ao início do período (a conta ainda não existia). Os três neutros. Um
+ * sábado com janelas abertas é dia normal.
+ */
+export type GoalDotKind = 'before' | 'weekend' | 'off' | 'future' | 'met' | 'miss';
 
 /** Por que um dia é neutro (fim de semana pausado / dia livre), ou null se ele conta. */
 export type RestKindOf = (key: DateKey) => RestKind | null;
@@ -47,12 +61,13 @@ export interface GoalWeek {
 
 export function goalWeek(
   stats: Pick<Stats, 'dayMetGoal' | 'dayStudyDoneMins'>,
-  opts: { now: Date; restKind?: RestKindOf },
+  opts: { now: Date; restKind?: RestKindOf; startedAt?: DateKey | null },
 ): GoalWeek {
   const weekKeys = currentWeekKeys(opts.now);
   const todayKey = dk(opts.now);
   const rest: RestKindOf = (key) => opts.restKind?.(key) ?? null;
-  const considered = weekKeys.filter((k) => rest(k) === null);
+  const before = beforeStart(opts.startedAt);
+  const considered = weekKeys.filter((k) => !before(k) && rest(k) === null);
   const passed = considered.filter((k) => k <= todayKey);
   return {
     metCount: passed.filter((k) => stats.dayMetGoal[k]).length,
@@ -61,13 +76,66 @@ export function goalWeek(
       const done = stats.dayStudyDoneMins[key] || 0;
       const r = rest(key);
       const kind: GoalDotKind =
-        r === 'weekend' ? 'weekend'
+        before(key) ? 'before'
+        : r === 'weekend' ? 'weekend'
         : r === 'off' ? 'off'
         : key > todayKey ? 'future'
         : stats.dayMetGoal[key] ? 'met'
         : 'miss';
       return { key, dayIdx, kind, done, isToday: key === todayKey };
     }),
+  };
+}
+
+// ---------------------------------------------------------------- realizado (contra a meta)
+
+export interface Adherence {
+  /** Minutos de estudo cumpridos no período — inclusive em dia que não cobra meta. */
+  done: number;
+  /** A meta do período: meta diária × dias que contam e já chegaram. */
+  goal: number;
+  /** O que o plano reservou no período. Contexto: é o teto do dia, não a expectativa. */
+  planned: number;
+  /** `done` sobre `goal`. Passa de 100 quando se estuda além da meta — e isso é pra aparecer. */
+  pct: number;
+  met: boolean;
+  /** Nenhum dia cobra meta ainda (antes de começar, folga): não há o que reprovar. */
+  empty: boolean;
+}
+
+/**
+ * A régua do card "Realizado". É a **meta diária**, não o plano cheio: o plano de
+ * um dia padrão tem 6h40, e medir contra ele fazia bater a meta de 60 min aparecer
+ * como 19% em laranja — na mesma tela em que o dot da meta ficava verde. Duas
+ * réguas discordando sobre o mesmo dia. O plano continua no card, como contexto.
+ *
+ * Estudar em dia de folga entra no `done` e não infla o `goal`: na folga o extra
+ * ajuda, nunca cobra.
+ */
+export function adherence(
+  stats: Pick<Stats, 'dayStudyDoneMins' | 'dayStudyPlanned'>,
+  keys: DateKey[],
+  opts: { now: Date; dailyGoal: number; restKind?: RestKindOf; startedAt?: DateKey | null },
+): Adherence {
+  const todayKey = dk(opts.now);
+  const before = beforeStart(opts.startedAt);
+  const cobra = (key: DateKey) => key <= todayKey && !before(key) && (opts.restKind?.(key) ?? null) === null;
+  let done = 0;
+  let planned = 0;
+  let dias = 0;
+  for (const key of keys) {
+    done += stats.dayStudyDoneMins[key] || 0;
+    planned += stats.dayStudyPlanned[key] || 0;
+    if (cobra(key)) dias++;
+  }
+  const goal = dias * Math.max(0, opts.dailyGoal);
+  return {
+    done,
+    goal,
+    planned,
+    pct: goal > 0 ? Math.round((done / goal) * 100) : 0,
+    met: goal > 0 && done >= goal,
+    empty: goal === 0,
   };
 }
 
@@ -78,8 +146,8 @@ export const HEAT_COLORS = ['var(--heat0)', 'var(--heat1)', 'var(--heat2)', 'var
 export interface HeatCell {
   key: DateKey;
   date: Date;
-  /** `day-off` = dia declarado livre, neutro como o fim de semana. */
-  kind: 'future' | 'weekend-off' | 'day-off' | 'value';
+  /** `day-off` = dia declarado livre e `before` = antes do início do período: neutros como o fim de semana. */
+  kind: 'future' | 'before' | 'weekend-off' | 'day-off' | 'value';
   /** 0–4, índice em HEAT_COLORS. */
   intensity: number;
   done: number;
@@ -90,7 +158,7 @@ export interface HeatCell {
 /** Células em ordem de coluna (semana) e depois linha (dia) — o grid usa `grid-auto-flow: column`. */
 export function heatmap(
   dayStudyDoneMins: Record<DateKey, number>,
-  opts: { now: Date; goal: number; weeks?: number; restKind?: RestKindOf },
+  opts: { now: Date; goal: number; weeks?: number; restKind?: RestKindOf; startedAt?: DateKey | null },
 ): HeatCell[] {
   const weeks = opts.weeks ?? 16;
   const today = new Date(opts.now);
@@ -98,6 +166,7 @@ export function heatmap(
   const todayKey = dk(today);
   const startMon = mondayOf(today);
   startMon.setDate(startMon.getDate() - 7 * (weeks - 1));
+  const before = beforeStart(opts.startedAt);
   const cells: HeatCell[] = [];
   for (let col = 0; col < weeks; col++) {
     for (let row = 0; row < 7; row++) {
@@ -107,6 +176,10 @@ export function heatmap(
       const done = dayStudyDoneMins[key] || 0;
       if (d > today) {
         cells.push({ key, date: d, kind: 'future', intensity: 0, done, pct: 0, isToday: false });
+        continue;
+      }
+      if (before(key)) {
+        cells.push({ key, date: d, kind: 'before', intensity: 0, done, pct: 0, isToday: false });
         continue;
       }
       const rest = opts.restKind?.(key) ?? null;

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { calcStreaksNow, computeStatsNow } from '../../application/plan';
 import {
   HEAT_COLORS,
+  adherence,
   currentWeekKeys,
   dropoff,
   goalWeek,
@@ -14,11 +15,11 @@ import {
   nextLevel,
   sparkline,
 } from '../../domain/analytics';
-import type { GoalWeek } from '../../domain/analytics';
+import type { Adherence, GoalWeek } from '../../domain/analytics';
 import { restDayKind } from '../../domain/dayWindows';
 import { getLevel, getLevelPct } from '../../domain/progression';
 import type { Stats } from '../../domain/stats';
-import { aggregateMins, dk, isWeekendKey } from '../../domain/time';
+import { dk, isWeekendKey } from '../../domain/time';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 
@@ -58,15 +59,18 @@ function ProfileCard({ stats, now }: { stats: Stats; now: Date }) {
   );
 }
 
-function AdherenceCard({ id, label, agg, big }: { id: string; label: string; agg: { done: number; planned: number; pct: number }; big?: boolean }) {
-  const cls = 'adh-card' + (big ? ' adh-big' : '') + (agg.planned === 0 ? ' zero' : agg.pct < 20 ? ' low' : '');
+function AdherenceCard({ id, label, agg, big }: { id: string; label: string; agg: Adherence; big?: boolean }) {
+  // A meta é a régua; o plano do período fica na linha de baixo, como contexto.
+  const cls =
+    'adh-card' + (big ? ' adh-big' : '') +
+    (agg.empty ? ' zero' : agg.met ? ' met' : agg.pct < 20 ? ' low' : '');
   return (
     <div className={cls} id={id}>
       <div className="adh-label">{label}</div>
-      <div className="adh-val">{agg.planned > 0 ? t.adhVal(agg.done, agg.planned) : t.adhValNone}</div>
-      <div className="adh-sub">{agg.planned === 0 ? t.noData : t.adhSub(hours1(agg.done), hours1(agg.planned))}</div>
+      <div className="adh-val">{agg.empty ? t.adhValNone : t.adhVal(agg.done, agg.goal)}</div>
+      <div className="adh-sub">{agg.empty ? t.noData : t.adhSub(hours1(agg.done), hours1(agg.planned))}</div>
       <div className="bar-track"><div className="bar-fill" style={{ width: `${Math.min(100, agg.pct)}%` }} /></div>
-      <div className="adh-pct">{agg.pct}%</div>
+      <div className="adh-pct">{agg.empty ? '' : t.adhPct(agg.pct, agg.met)}</div>
     </div>
   );
 }
@@ -82,7 +86,8 @@ function GoalWeekCard({ goal, min, headlineId, dotsId, highlightToday }: { goal:
         {goal.dots.map((d) => {
           const label = strings.plan.days[d.dayIdx]!;
           const title =
-            d.kind === 'weekend' ? t.dotWeekend(label)
+            d.kind === 'before' ? t.dotBefore(label)
+              : d.kind === 'weekend' ? t.dotWeekend(label)
               : d.kind === 'off' ? t.dotOff(label)
               : d.kind === 'future' ? t.dotFuture(label)
                 : d.kind === 'met' ? t.dotMet(label, d.done)
@@ -112,9 +117,11 @@ export function AnalyticsTab() {
   const min = config.dailyStudyMin || 60;
   // Fim de semana pausado e dia declarado livre são neutros; um sábado com janelas abertas é dia normal.
   const restKind = (key: string) => restDayKind({ skipWeekends: skip, isWeekend: isWeekendKey(key), override: windowOverrides[key] });
-  const goal = goalWeek(stats, { now, restKind });
+  const startedAt = config.periodStart ?? null;
+  const goal = goalWeek(stats, { now, restKind, startedAt });
+  const adhOpts = { now, dailyGoal: min, restKind, startedAt };
   const streaks = calcStreaksNow(stats.dayStudyMins, now);
-  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, restKind });
+  const cells = heatmap(stats.dayStudyDoneMins, { now, goal: min, restKind, startedAt });
   const bars = hourBars(stats.hourCounts, config.start, config.end);
   const rows = dropoff(stats.sessionStats);
 
@@ -131,12 +138,12 @@ export function AnalyticsTab() {
       </div>
 
       <div className={'subview' + (view === 'hoje' ? ' active' : '')} data-view="hoje">
-        <AdherenceCard id="adherence-today" label={t.adhToday} agg={aggregateMins(stats.dayStudyDoneMins, stats.dayStudyPlanned, [todayKey])} big />
+        <AdherenceCard id="adherence-today" label={t.adhToday} agg={adherence(stats, [todayKey], adhOpts)} big />
         <GoalWeekCard goal={goal} min={min} headlineId="goal-week-headline-h" dotsId="goal-week-dots-h" highlightToday />
       </div>
 
       <div className={'subview' + (view === 'semana' ? ' active' : '')} data-view="semana">
-        <AdherenceCard id="adherence-week" label={t.adhWeek} agg={aggregateMins(stats.dayStudyDoneMins, stats.dayStudyPlanned, weekKeys)} />
+        <AdherenceCard id="adherence-week" label={t.adhWeek} agg={adherence(stats, weekKeys, adhOpts)} />
         <GoalWeekCard goal={goal} min={min} headlineId="goal-week-headline" dotsId="goal-week-dots" highlightToday={false} />
         <div className="chart-card">
           <div className="section-title">{t.dropoffTitle} <span className="historic-tag">{t.historic}</span></div>
@@ -158,13 +165,14 @@ export function AnalyticsTab() {
       </div>
 
       <div className={'subview' + (view === 'geral' ? ' active' : '')} data-view="geral">
-        <AdherenceCard id="adherence-geral" label={t.adhAll} agg={aggregateMins(stats.dayStudyDoneMins, stats.dayStudyPlanned, allKeys)} />
+        <AdherenceCard id="adherence-geral" label={t.adhAll} agg={adherence(stats, allKeys, adhOpts)} />
         <div className="chart-card">
           <div className="section-title">{t.heatmapTitle}</div>
           <div className="heatmap-gh" id="heatmap-grid-gh" style={{ gridTemplateColumns: 'repeat(16, 1fr)' }}>
             {cells.map((c) => {
               const day = fmtDay(c.date);
               if (c.kind === 'future') return <div key={c.key} className="heatmap-cell future" title={t.cellFuture(day)} />;
+              if (c.kind === 'before') return <div key={c.key} className="heatmap-cell weekend-off before" title={t.cellBefore(day)} />;
               if (c.kind === 'weekend-off') return <div key={c.key} className="heatmap-cell weekend-off" title={t.cellWeekend(day)} />;
               if (c.kind === 'day-off') return <div key={c.key} className="heatmap-cell weekend-off day-off" title={t.cellOff(day)} />;
               return (

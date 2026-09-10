@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentWeekKeys, dropoff, goalWeek, heatmap, hourBars, nextLevel, sparkline } from '../src/domain/analytics';
+import { adherence, currentWeekKeys, dropoff, goalWeek, heatmap, hourBars, nextLevel, sparkline } from '../src/domain/analytics';
 import type { RestKind } from '../src/domain/dayWindows';
 import { isWeekendKey } from '../src/domain/time';
 
@@ -52,6 +52,83 @@ describe('meta diária — 7 dots', () => {
     expect(g).toMatchObject({ metCount: 2, totalDays: 6 });
     expect(g.dots[1]!.kind).toBe('off');
     expect(g.dots[0]!.kind).toBe('met');
+  });
+});
+
+describe('antes de você começar — o período da conta', () => {
+  const stats = {
+    dayMetGoal: { '2026-09-02': true },
+    dayStudyDoneMins: { '2026-09-02': 90 },
+  };
+
+  it('dia anterior ao periodStart é neutro, não "miss"', () => {
+    // conta criada na quarta: segunda e terça não existiam
+    const g = goalWeek(stats, { now: QUA, startedAt: '2026-09-02' });
+    expect(g.dots.map((d) => d.kind)).toEqual(['before', 'before', 'met', 'future', 'future', 'future', 'future']);
+    expect(g.totalDays).toBe(5); // os dois de antes saem da conta
+    expect(g.metCount).toBe(1);
+  });
+
+  it('sem periodStart nada muda — quem já usava o app continua vendo o que via', () => {
+    const g = goalWeek(stats, { now: QUA });
+    expect(g.dots.map((d) => d.kind)).toEqual(['miss', 'miss', 'met', 'future', 'future', 'future', 'future']);
+    expect(g.totalDays).toBe(7);
+  });
+
+  it('no heatmap, o que veio antes é neutro em vez de 0%', () => {
+    const cells = heatmap({}, { now: QUA, goal: 60, startedAt: '2026-09-01' });
+    const antes = cells.filter((c) => c.key < '2026-09-01');
+    expect(antes.length).toBeGreaterThan(100); // 16 semanas de conta que não existia
+    expect(antes.every((c) => c.kind === 'before')).toBe(true);
+    expect(cells.find((c) => c.key === '2026-09-01')!.kind).toBe('value');
+  });
+
+  it('o futuro continua futuro, mesmo antes do início', () => {
+    const cells = heatmap({}, { now: QUA, goal: 60, startedAt: '2026-09-30' });
+    expect(cells.find((c) => c.key === '2026-09-03')!.kind).toBe('future');
+    expect(cells.find((c) => c.key === '2026-09-01')!.kind).toBe('before');
+  });
+});
+
+describe('realizado — a régua é a meta, não o plano cheio', () => {
+  const HOJE = '2026-09-02';
+  const stats = {
+    dayStudyDoneMins: { '2026-09-02': 75 },
+    dayStudyPlanned: { '2026-08-31': 385, '2026-09-01': 385, '2026-09-02': 385 },
+  };
+  const base = { now: QUA, dailyGoal: 60 };
+
+  it('bater a meta do dia não pode parecer fracasso', () => {
+    const a = adherence(stats, [HOJE], base);
+    expect(a).toMatchObject({ done: 75, goal: 60, met: true, pct: 125 });
+    // o plano do dia continua no card, como contexto
+    expect(a.planned).toBe(385);
+  });
+
+  it('pouco estudo continua sendo pouco: 10 de 60 min é 17%', () => {
+    const a = adherence({ dayStudyDoneMins: { [HOJE]: 10 }, dayStudyPlanned: {} }, [HOJE], base);
+    expect(a).toMatchObject({ pct: 17, met: false });
+  });
+
+  it('a meta da semana é a diária vezes os dias que já contam', () => {
+    const semana = currentWeekKeys(QUA);
+    const a = adherence(stats, semana, base);
+    expect(a.goal).toBe(180); // seg, ter, qua — quinta em diante ainda não chegou
+    expect(a.done).toBe(75);
+  });
+
+  it('folga não cobra meta, mas estudar na folga conta', () => {
+    const semana = currentWeekKeys(QUA);
+    const soFolga = adherence(stats, semana, { ...base, restKind: () => 'off' });
+    expect(soFolga).toMatchObject({ goal: 0, empty: true, pct: 0, met: false });
+    expect(soFolga.done).toBe(75); // o que se estudou não some
+  });
+
+  it('dia anterior ao início não entra na meta do período', () => {
+    const semana = currentWeekKeys(QUA);
+    const a = adherence(stats, semana, { ...base, startedAt: HOJE });
+    expect(a.goal).toBe(60); // só hoje cobra
+    expect(a.met).toBe(true);
   });
 });
 

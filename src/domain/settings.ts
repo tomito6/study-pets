@@ -142,6 +142,14 @@ export type ConfigSummary =
       actualEnd: TimeString;
       end: TimeString;
       diffMins: number;
+      /**
+       * A sobra no fim é só a pausa que o dia não emite? O último bloco do dia é
+       * sempre estudo, então a pausa final some — e o tempo dela aparece como
+       * sobra. Não é desperdício: você ia estar descansando de qualquer jeito.
+       * Sem isso o app pintava de laranja o próprio padrão (09:00–18:00 fecha 4
+       * ciclos redondos e "sobra" a pausa longa de 20 min).
+       */
+      restGap: boolean;
     };
 
 /** "Como fica o dia": um dia só com as janelas e o ritmo (sem eventos — refeição inclusive). */
@@ -155,8 +163,11 @@ export function summarizeConfig(cfg: PlannerConfig): ConfigSummary {
   const study = blocks.filter((b) => b.type === 'estudo');
   const pause = blocks.filter((b) => b.type === 'pausa');
   const actualEnd = calcActualEnd(cfg);
+  const diffMins = timeToMins(actualEnd) - timeToMins(cfg.end);
+  const sobra = -diffMins;
   return {
     kind: 'ok',
+    restGap: sobra > 0 && sobra <= Math.max(cfg.shortBreak, cfg.longBreak),
     pomos: study.length,
     studyMins: study.reduce((s, b) => s + dur(b), 0),
     pauseMins: pause.reduce((s, b) => s + dur(b), 0),
@@ -164,7 +175,7 @@ export function summarizeConfig(cfg: PlannerConfig): ConfigSummary {
     windowsCount: validWindows.length,
     actualEnd,
     end: cfg.end,
-    diffMins: timeToMins(actualEnd) - timeToMins(cfg.end),
+    diffMins,
   };
 }
 
