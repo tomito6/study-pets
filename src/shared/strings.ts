@@ -2,6 +2,18 @@
 // trocar este arquivo — e não caçar 300 literais. Só o que já migrou pro React
 // entra aqui; o legado ainda tem os textos dele inline.
 
+/** Os números e nomes de uma notificação (ver domain/notifications.ts). Estrutural de
+ *  propósito: `strings.ts` não importa domínio. */
+type NotifData = {
+  n?: number;
+  nome?: string;
+  pet?: string;
+  xp?: number;
+  petXp?: number;
+  coins?: number;
+  dia?: string;
+};
+
 export const strings = {
   login: {
     charAlt: 'Personagem',
@@ -766,6 +778,56 @@ export const strings = {
       abandoned: (name: string, cost: { userXp: number; petXp: number }, pet: string | null) =>
         `🔥 O app fechou no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
     },
+  },
+  notifications: {
+    open: 'Notificações',
+    title: 'Notificações',
+    /** Passou de 9, o selo vira "9+" — o número exato ali não muda nada. */
+    badge: (n: number) => (n > 9 ? '9+' : String(n)),
+    clear: 'Limpar',
+    emptyTitle: 'Nada por aqui ainda.',
+    emptyBody: 'O que acontece enquanto você não está olhando aparece aqui: o dia que fechou, o nível que subiu, o pet que pode evoluir.',
+    /** "há 5 min", "ontem". Recebe o que `ageOf` devolve. */
+    when: (age: { unit: string; n?: number }) => {
+      if (age.unit === 'agora') return 'agora';
+      if (age.unit === 'min') return `há ${age.n} min`;
+      if (age.unit === 'h') return `há ${age.n}h`;
+      if (age.unit === 'ontem') return 'ontem';
+      return `há ${age.n} dias`;
+    },
+    icon: {
+      nivel: '🆙',
+      'pet-nivel': '🐾',
+      'pet-evolucao': '✨',
+      dia: '✓',
+      sequencia: '🔥',
+      'recorde-dia': '🏆',
+      moedas: '🪙',
+      abandono: '💀',
+    } as Record<string, string>,
+    /** A primeira linha. Sempre existe. */
+    text: {
+      nivel: (d: NotifData) => `Você chegou no nível ${d.n}`,
+      'pet-nivel': (d: NotifData) => `${d.nome} chegou no Lv. ${d.n}`,
+      'pet-evolucao': (d: NotifData) => `${d.nome} pode evoluir`,
+      dia: () => 'Dia encerrado',
+      sequencia: (d: NotifData) => `${d.n} dias seguidos batendo a meta`,
+      'recorde-dia': () => 'Melhor dia até agora',
+      moedas: () => 'Dá pra adotar mais um pet',
+      abandono: (d: NotifData) => `O app fechou no meio de ${d.nome}`,
+    } as Record<string, (d: NotifData) => string>,
+    /** A segunda linha. Pode ser vazia. */
+    body: {
+      nivel: (d: NotifData) => d.nome ?? '',
+      'pet-nivel': () => '',
+      'pet-evolucao': () => 'Escolha o caminho quando quiser — é pra sempre.',
+      dia: (d: NotifData) => `+${d.xp ?? 0} XP · +${d.coins ?? 0} 🪙`,
+      sequencia: (d: NotifData) => (d.coins ? `Rende ${d.coins} 🪙 de bônus por dia.` : ''),
+      'recorde-dia': (d: NotifData) => `${d.xp} XP num dia só.`,
+      moedas: (d: NotifData) => `Você tem ${d.coins} 🪙 — a loja fica no Perfil.`,
+      abandono: (d: NotifData) =>
+        `−${d.xp} XP pra você` + (d.pet && d.petXp ? ` · ${d.pet} −${d.petXp} XP` : ''),
+    } as Record<string, (d: NotifData) => string>,
   },
   calendarImport: {
     settings: {

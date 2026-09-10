@@ -342,6 +342,9 @@ export function legacyPetInstance(speciesId: PetId, xp: number, skill: string | 
 /** Saldo = ganho − gasto, nunca negativo. */
 export const coinBalance = (earned: number, spent: number): number => Math.max(0, earned - (spent || 0));
 
+/** O pet mais barato do catálogo — o preço a partir do qual dá pra adotar alguém. */
+export const cheapestPetPrice = (): number => Math.min(...Object.values(PETS).map((p) => p.price));
+
 /** "3h20min", "2h", "0h" — como aparece no card de estudo do perfil. */
 export function formatStudyHours(mins: number): string {
   const h = Math.floor(mins / 60);

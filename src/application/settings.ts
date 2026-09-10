@@ -50,6 +50,9 @@ export function cancelSession(): void {
   state.windowOverrides = {};
   state.penalties = {};
   state.pauses = {};
+  // O sininho zera junto: cada linha fala de um nível, um pet ou um dia que
+  // acabaram de deixar de existir — mantê-las seria guardar um diário de mentira.
+  state.notifications = [];
   // `avatar` e `tutorialSeen` ficam: o personagem é identidade e quem cancelou já conhece o app.
   rebuildWeeks();
   clearBlockCache();

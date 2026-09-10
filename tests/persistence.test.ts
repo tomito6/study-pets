@@ -101,6 +101,14 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     });
   });
 
+  it('doc de antes do sininho: sem `notifications` → []; lixo vira vazio; linha válida passa', () => {
+    expect(hydrateUserDoc({ coinsSpent: 5 }).notifications).toEqual([]);
+    expect(hydrateUserDoc({ notifications: 'x' }).notifications).toEqual([]);
+    expect(hydrateUserDoc({ notifications: [{ id: 'nivel:2', kind: 'nivel', at: 7, read: true, data: { n: 2 } }, { kind: 'dia' }] }).notifications).toEqual([
+      { id: 'nivel:2', kind: 'nivel', at: 7, read: true, data: { n: 2 } },
+    ]);
+  });
+
   it('doc de antes das pausas: sem `pauses` → {}; lixo vira vazio; registro válido passa, em ordem', () => {
     expect(hydrateUserDoc({ coinsSpent: 5 }).pauses).toEqual({});
     expect(hydrateUserDoc({ pauses: 'x' }).pauses).toEqual({});
@@ -286,6 +294,7 @@ describe('serializeState', () => {
     delete parcial.tutorialSeen;
     delete parcial.avatar;
     delete parcial.pauses;
+    delete parcial.notifications;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -297,6 +306,7 @@ describe('serializeState', () => {
     expect(doc.tutorialSeen).toEqual({});
     expect(doc.avatar).toEqual(DEFAULT_AVATAR);
     expect(doc.pauses).toEqual({});
+    expect(doc.notifications).toEqual([]);
   });
 });
 
@@ -324,6 +334,10 @@ describe('ida e volta', () => {
       avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado', body: 'curvo' },
       penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
       pauses: { '2026-09-02': [{ at: '10:10', mins: 7 }, { at: '15:02', mins: 1 }] },
+      notifications: [
+        { id: 'nivel:4', kind: 'nivel', at: 1_700_000_000_000, read: false, data: { n: 4, nome: 'Dedicado' } },
+        { id: 'dia:2026-09-01', kind: 'dia', at: 1_600_000_000_000, read: true, data: { dia: '2026-09-01', xp: 320, coins: 160 } },
+      ],
       config: { ...DEFAULT_CFG, hardcore: { enabled: true }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);

@@ -3,11 +3,14 @@
 
 import { computePendingPetXP, isDayClosed } from '../domain/checks';
 import { emptyPets } from '../domain/persistence';
-import { PETS, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm } from '../domain/pets';
+import { PETS, canEvolveNow, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm, petLevel } from '../domain/pets';
 import type { EvolveRefusal } from '../domain/pets';
+import { petNotices } from '../domain/progressNotices';
+import type { PetProgress } from '../domain/progressNotices';
 import { dk } from '../domain/time';
 import type { PetId, PetInstance, PetInstanceId, SkillId } from '../domain/types';
 import { notify, state } from '../store/store';
+import { pushNotifications } from './notifications';
 import { blocksForDay, computeStatsNow } from './plan';
 import { scheduleSave } from './save';
 
@@ -24,8 +27,13 @@ export const activePet = (): PetInstance | null => petById(state.pets.active);
  * (`blocksForDay`: eventos e janelas daquele dia incluídos) — senão um check
  * num horário que só existe com as janelas daquele dia não bateria com nada.
  */
+/** O retrato dos pets pro diff de nível/evolução (ver domain/progressNotices.ts). */
+const petProgress = (): PetProgress[] =>
+  state.pets.owned.map((p) => ({ id: p.id, name: p.name, level: petLevel(p), canEvolve: canEvolveNow(p) }));
+
 export function applyPendingPetXP(now: Date = new Date()): void {
   if (!state.pets) state.pets = emptyPets();
+  const antes = petProgress();
   const yest = new Date(now);
   yest.setDate(yest.getDate() - 1);
   const pending = computePendingPetXP({
@@ -47,6 +55,10 @@ export function applyPendingPetXP(now: Date = new Date()): void {
   // criaria o documento antes do onboarding terminar — e um reload pularia o
   // onboarding (e o pet inicial). O marcador vai junto com o próximo save.
   if (!pending.resetXp || Object.keys(pending.gains).length > 0) scheduleSave();
+  // O pet que subiu de nível (ou destravou uma evolução) enquanto o app estava
+  // fechado só é descoberto aqui — o resumo do fim do dia nunca aconteceu. Os ids
+  // derivam do pet e do nível, então o dispositivo que já registrou não duplica.
+  pushNotifications(petNotices(antes, petProgress()), now);
 }
 
 export function coinBalance(now: Date = new Date()): number {

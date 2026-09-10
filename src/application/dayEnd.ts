@@ -8,14 +8,17 @@ import { daySummary } from '../domain/daySummary';
 import type { DaySummary, ProgressSnapshot } from '../domain/daySummary';
 import { extendDayTo, extendWindowsTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
 import { pausesTotal } from '../domain/pauses';
+import { cheapestPetPrice, coinBalance } from '../domain/pets';
+import { dayCloseNotices } from '../domain/progressNotices';
 import { getLevelIdx } from '../domain/progression';
 import { dk } from '../domain/time';
 import type { TimeString } from '../domain/types';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, notify, state } from '../store/store';
+import { pushNotifications } from './notifications';
 import { applyPendingPetXP } from './pets';
-import { blocksForDay, clearBlockCache, computeStatsNow } from './plan';
+import { blocksForDay, calcStreaksNow, clearBlockCache, computeStatsNow } from './plan';
 import { scheduleSave } from './save';
 import { stopBlocking } from './siteBlock';
 import { stopTimer } from './timer';
@@ -41,8 +44,9 @@ export const openFinishDay = (): void => set({ confirmOpen: true });
 export const closeFinishDay = (): void => set({ confirmOpen: false });
 export const closeSummary = (): void => set({ summary: null });
 
-function snapshot(now: Date): ProgressSnapshot {
-  const stats = computeStatsNow(now);
+type StatsNow = ReturnType<typeof computeStatsNow>;
+
+function snapshotFrom(stats: StatsNow): ProgressSnapshot {
   return {
     totalXP: stats.totalXP,
     coins: stats.coins,
@@ -57,7 +61,10 @@ function snapshot(now: Date): ProgressSnapshot {
  */
 export function closeDay(now: Date = new Date()): DaySummary {
   const todayKey = dk(now);
-  const before = snapshot(now);
+  // `computeStatsNow` é memoizado por versão do store: chamar antes e depois de
+  // fechar dá duas fotos de verdade, e o custo é o de uma passada cada.
+  const statsBefore = computeStatsNow(now);
+  const before = snapshotFrom(statsBefore);
   if (derived.timerPausedAt != null) stopTimer(); // encerrar o dia com o timer pausado: a pausa acaba aqui, sem registro
   if (!state.closedDays) state.closedDays = {};
   state.closedDays[todayKey] = true;
@@ -65,7 +72,24 @@ export function closeDay(now: Date = new Date()): DaySummary {
   scheduleSave(); // notifica → o memo de stats invalida
   clearPromptTimer();
   stopBlocking(); // o dia acabou: nada mais bloqueia
-  const summary = daySummary(before, snapshot(now), state.pets.owned, pausesTotal(state.pauses?.[todayKey]));
+  const statsAfter = computeStatsNow(now);
+  const summary = daySummary(before, snapshotFrom(statsAfter), state.pets.owned, pausesTotal(state.pauses?.[todayKey]));
+  // O resumo é um modal que some; o sininho é o que fica. Os ids derivam do dia e
+  // do nível, então o outro dispositivo recebe estas mesmas linhas pelo documento
+  // sem gerar cópias.
+  pushNotifications(
+    dayCloseNotices({
+      dia: todayKey,
+      summary,
+      streak: calcStreaksNow(statsAfter.dayStudyMins, now).cur,
+      bestDayXPBefore: statsBefore.bestDayXP,
+      bestDayXPAfter: statsAfter.bestDayXP,
+      balanceBefore: coinBalance(statsBefore.coins, state.coinsSpent),
+      balanceAfter: coinBalance(statsAfter.coins, state.coinsSpent),
+      cheapestPet: cheapestPetPrice(),
+    }),
+    now,
+  );
   set({ confirmOpen: false, promptOpen: false, summary });
   return summary;
 }

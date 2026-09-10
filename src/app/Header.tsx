@@ -5,14 +5,17 @@
 // esquerda, as abas como texto no meio, e à direita o XP com o avatar (que é o Sair). Abaixo disso o
 // DOM é o de sempre — o celular não muda.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { computeStatsNow } from '../application/plan';
 import { signOut } from '../application/session';
 import { requestSettings } from '../application/settings';
 import { getLevel } from '../domain/progression';
+import { NotificationBell } from '../features/notifications/NotificationBell';
 import { strings } from '../shared/strings';
+import { useDismiss } from '../shared/useDismiss';
 import { useWide } from '../shared/useWide';
 import { setTab, TABS, useAppState } from '../store/store';
+import { useTopbarHeight } from './useTopbarHeight';
 
 function todayLabel(): string {
   return new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -31,15 +34,7 @@ function GearIcon() {
 /** O avatar com a inicial: abre um menu (Configurações · Sair). Clicar fora ou Esc fecha. */
 function AvatarMenu({ initial }: { initial: string }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [open]);
+  const ref = useDismiss<HTMLDivElement>(open, useCallback(() => setOpen(false), []));
   const t = strings.header;
   return (
     <div className="avatar-wrap" ref={ref}>
@@ -71,6 +66,10 @@ export function Header() {
   const { tab, totalXP, user } = useAppState((s) => ({ tab: s.uiTab, totalXP: computeStatsNow().totalXP, user: s.user }));
   const today = useMemo(todayLabel, []);
   const wide = useWide();
+  // A `.timer-bar` gruda em `top: var(--topbar-h)`: a altura tem que ser a de verdade,
+  // não um número fixo — numa tela estreita esta barra quebra em duas linhas.
+  const barra = useRef<HTMLDivElement>(null);
+  useTopbarHeight(barra, [wide]);
 
   const tabs = (
     <div className="nav-tabs">
@@ -96,12 +95,13 @@ export function Header() {
   if (wide) {
     const initial = (user?.displayName || user?.email || '·').trim().charAt(0).toUpperCase();
     return (
-      <div className="topbar topbar-wide">
+      <div className="topbar topbar-wide" ref={barra}>
         <div className="brand"><PawIcon />{strings.header.brand}<span className="brand-dot">.</span></div>
         {tabs}
         <div className="topbar-right">
           <span className="sub" id="today-label" hidden>{today}</span>
           {xp}
+          <NotificationBell />
           <button className="gear-btn" id="gear-btn" onClick={() => requestSettings()} aria-label={strings.header.settings} title={strings.header.settings}><GearIcon /></button>
           <AvatarMenu initial={initial} />
         </div>
@@ -110,13 +110,14 @@ export function Header() {
   }
 
   return (
-    <div className="topbar">
+    <div className="topbar" ref={barra}>
       <div className="topbar-left">
         {tabs}
         <div className="sub" id="today-label">{today}</div>
       </div>
       <div className="topbar-right">
         {xp}
+        <NotificationBell />
         <button className="icon-btn" onClick={() => void signOut()}>
           {strings.header.sair}
         </button>

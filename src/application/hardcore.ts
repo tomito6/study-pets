@@ -9,11 +9,13 @@ import { dk } from '../domain/time';
 import { canStartBlock } from '../domain/timer';
 import type { StartCheck } from '../domain/timer';
 import type { PenaltyRecord, StudyBlock } from '../domain/types';
+import { abandonNotice } from '../domain/progressNotices';
 import { readHardcoreSession } from '../infrastructure/hardcoreSession';
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { armHardcoreIfRunning, adoptHardcoreSession, beginHardcoreSession, endHardcoreSession } from './hardcoreRuntime';
+import { pushNotifications } from './notifications';
 import { activePet, petById } from './pets';
 import { blocksForDay, clearBlockCache, computeStatsNow, currentDayKey } from './plan';
 import { saveNow } from './save';
@@ -107,6 +109,9 @@ export function resumeHardcoreOnBoot(now: Date = new Date()): BootResolution {
     if (!cost.free) {
       applyPenalty(session, cost, 'abandon', now);
       showToast(strings.hardcore.toast.abandoned(session.name, cost, pet?.name ?? null));
+      // O toast do boot passa por cima de quem ainda está abrindo o app; a conta
+      // cobrada sem ninguém ver é justamente o que o sininho existe pra guardar.
+      pushNotifications([abandonNotice(session.dateKey, session, cost, pet?.name ?? null)], now);
       notify();
     }
     return 'abandoned';

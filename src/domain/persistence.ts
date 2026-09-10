@@ -21,6 +21,8 @@ import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
 import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
+import { normalizeNotifications } from './notifications';
+import type { Notification } from './notifications';
 import { normalizePauses } from './pauses';
 import { migrateSiteBlock } from './siteBlock';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
@@ -72,6 +74,13 @@ export interface PersistedState {
   penalties: PenaltiesByDate;
   /** Pausas do timer por dia: o bloco que contém cada uma fica mais longo e o resto do dia desliza (ver domain/pauses.ts). */
   pauses: PausesByDate;
+  /**
+   * O que aconteceu enquanto você não estava olhando (ver domain/notifications.ts).
+   * Persistido de propósito: o `read` precisa sobreviver ao reload, senão o selo do
+   * sininho voltaria a acender a cada abertura do app — e o ganho de um dia que
+   * fechou com o app desligado só existe aqui.
+   */
+  notifications: Notification[];
   /**
    * A aparência do personagem (tom de pele, cor e penteado do cabelo). Fica fora
    * de `config` de propósito: é identidade, não regra do dia — "Cancelar sessão"
@@ -125,6 +134,7 @@ export function emptyPersistedState(): PersistedState {
     tutorialSeen: {},
     penalties: {},
     pauses: {},
+    notifications: [],
     avatar: { ...DEFAULT_AVATAR },
   };
 }
@@ -265,6 +275,9 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     penalties: normalizePenalties(d.penalties),
     // Doc de antes de pausar existir: sem pausa nenhuma.
     pauses: normalizePauses(d.pauses),
+    // Doc de antes do sininho: nenhuma notificação (nada é reconstruído pra trás —
+    // o painel começa vazio e vai enchendo com o que acontecer daqui em diante).
+    notifications: normalizeNotifications(d.notifications),
   };
 }
 
@@ -291,5 +304,6 @@ export function serializeState(s: PersistedState): UserDoc {
     avatar: normalizeAvatar(s.avatar),
     penalties: s.penalties || {},
     pauses: s.pauses || {},
+    notifications: s.notifications || [],
   };
 }

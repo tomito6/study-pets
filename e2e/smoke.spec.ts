@@ -778,6 +778,60 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#char-coins')).toHaveText('25');
   });
 
+  test('48. o sininho guarda o que o dia deixou, e o selo apaga depois de aberto', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+
+    // Conta nova: nada aconteceu ainda, então nem selo nem lista — só a frase do vazio.
+    await expect(page.locator('#notif-badge')).toHaveCount(0);
+    await page.locator('#notif-btn').click();
+    await expect(page.locator('#notif-empty')).toBeVisible();
+    await page.locator('#notif-btn').click();
+    await expect(page.locator('#notif-panel')).toHaveCount(0);
+
+    await checksDeEstudo(page).first().click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+
+    // O resumo é um modal que some; o sininho é o que fica. Um estudo de 25 min
+    // deixa duas linhas: o dia encerrado e o pet que chegou no Lv. 2 com os 50 XP.
+    await expect(page.locator('#notif-badge')).toHaveText('2');
+    await page.locator('#notif-btn').click();
+    const linhas = page.locator('#notif-list .notif-item');
+    await expect(linhas).toHaveCount(2);
+    await expect(linhas.first()).toContainText('Dia encerrado');
+    await expect(linhas.first()).toContainText('+50 XP');
+    await expect(linhas.nth(1)).toContainText('Lv. 2');
+    // Com o painel aberto elas ainda são as novidades — e o selo continua lá.
+    await expect(linhas.first()).toHaveClass(/unread/);
+    await expect(page.locator('#notif-badge')).toHaveText('2');
+
+    // Fechar é que marca como visto.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#notif-panel')).toHaveCount(0);
+    await expect(page.locator('#notif-badge')).toHaveCount(0);
+
+    // A lista é salva: sobrevive ao reload, e continua lida (senão o selo voltaria a
+    // acender toda vez que o app abrisse). O save é debounced — esperar o indicador
+    // é o que o teste 10 já faz.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#notif-badge')).toHaveCount(0);
+    await page.locator('#notif-btn').click();
+    await expect(page.locator('#notif-list .notif-item')).toHaveCount(2);
+
+    // "Limpar" zera o diário — e o dia encerrado não gera a linha de novo no boot
+    // seguinte: o id vem do dia, não do relógio.
+    await page.locator('#notif-clear').click();
+    await expect(page.locator('#notif-empty')).toBeVisible();
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#notif-badge')).toHaveCount(0);
+  });
+
   test('34. a aba Análise mostra, nas quatro sub-abas, o que o dia encerrado deixou', async ({ page }) => {
     test.slow(); // 7 checks, fechar o dia e percorrer as quatro vistas
     await abrirApp(page);
@@ -1299,6 +1353,61 @@ test.describe('Study Pets — smoke', () => {
       await page.getByRole('button', { name: /Análise/ }).click();
       await expect(page.locator('#tour-balloon')).toContainText('Tô fazendo o que planejei?');
       await balaoUtilizavel(page);
+    });
+
+    test('49. no laptop o sininho fica ao lado da engrenagem, e o painel cabe na tela', async ({ page }) => {
+      await abrirApp(page);
+      await page.locator('#tour-skip').click();
+
+      // A ordem da barra é contrato: XP · sininho · engrenagem · avatar.
+      const ordem = await page.evaluate(() => {
+        const direita = document.querySelector('.topbar-wide .topbar-right');
+        return [...direita!.children].map((e) => e.id || e.className.split(' ')[0]);
+      });
+      expect(ordem).toEqual(['today-label', 'xp-badge', 'notif-wrap', 'gear-btn', 'avatar-wrap']);
+
+      await page.locator('#notif-btn').click();
+      const painel = page.locator('#notif-panel');
+      await expect(painel).toBeVisible();
+      // Pendurado no botão e inteiro dentro da janela — nada de sangrar pela beirada.
+      const m = await page.evaluate(() => {
+        const p = document.querySelector('#notif-panel')!.getBoundingClientRect();
+        const b = document.querySelector('#notif-btn')!.getBoundingClientRect();
+        return { esq: Math.round(p.left), dir: Math.round(p.right), base: Math.round(p.bottom), botao: Math.round(b.bottom), largura: window.innerWidth, altura: window.innerHeight };
+      });
+      expect(m.esq).toBeGreaterThanOrEqual(0);
+      expect(m.dir).toBeLessThanOrEqual(m.largura);
+      expect(m.base).toBeLessThanOrEqual(m.altura);
+      expect(m.esq, 'o painel nasce abaixo do sininho').toBeGreaterThan(0);
+
+      // Clicar fora fecha.
+      await page.locator('.brand').click();
+      await expect(painel).toHaveCount(0);
+    });
+  });
+
+  test.describe('num celular estreito', () => {
+    test.use({ viewport: { width: 393, height: 850 } });
+
+    test('50. com a barra do topo em duas linhas, a barra do timer gruda abaixo dela', async ({ page }) => {
+      await abrirApp(page, '10:10');
+      await page.locator('#tour-skip').click();
+
+      // Nesta largura a barra do topo quebra em duas linhas (o "Sair" desce), como já
+      // acontecia em 360px antes do sininho. `--topbar-h` tem que ser a altura MEDIDA:
+      // com o 76px que estava cravado no CSS, a barra do timer subia pra debaixo dela.
+      await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+      await page.locator('.focus-exit').click();
+      await expect(page.locator('#timer-bar')).toHaveClass(/active/);
+
+      const m = await page.evaluate(() => {
+        const topo = document.querySelector('.topbar')!.getBoundingClientRect();
+        const timer = document.querySelector('#timer-bar')!.getBoundingClientRect();
+        const varH = document.getElementById('app')!.style.getPropertyValue('--topbar-h');
+        return { base: Math.round(topo.bottom), topoTimer: Math.round(timer.top), altura: Math.round(topo.height), varH };
+      });
+      expect(m.varH).toBe(`${m.altura}px`);
+      expect(m.topoTimer, 'a barra do timer some atrás da barra do topo').toBeGreaterThanOrEqual(m.base);
     });
   });
 

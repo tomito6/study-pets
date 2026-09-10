@@ -122,6 +122,7 @@ function resetToLoggedOut(): void {
   state.config = { ...DEFAULT_CFG };
   state.pets = emptyPets();
   state.coinsSpent = 0;
+  state.notifications = [];
 }
 
 let started = false;

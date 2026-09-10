@@ -200,11 +200,40 @@
   .topbar{position:sticky;top:0;z-index:100;background:var(--bg-blur);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
   .topbar-left h1{font-size:15px;font-weight:600;font-family:var(--font-title);}
   .topbar-left .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:var(--font-mono);}
-  .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .topbar-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:var(--font-mono);display:flex;align-items:center;gap:6px;}
   .xp-badge .level-tag{font-size:10px;color:var(--accent2);border-left:1px solid var(--accent2);padding-left:6px;}
   .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;cursor:pointer;font-family:var(--font-ui);transition:all .15s;}
   .icon-btn:hover{border-color:var(--border-strong);color:var(--text);}
+
+  /* SININHO (features/notifications/NotificationBell.tsx) — o painel do que aconteceu
+     enquanto você não estava olhando. No celular a barra é estreita e um popover
+     ancorado sangraria pela beirada, então ele é uma folha fixa logo abaixo dela;
+     no laptop (>=1100px) ele pendura no botão, como o menu do avatar.
+     O selo é da cor do accent, não vermelho: aqui não chega nada urgente. */
+  .notif-wrap{position:relative;display:flex;}
+  .notif-btn{position:relative;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;}
+  .notif-btn:hover{color:var(--text);background:var(--surface-hover);}
+  .notif-badge{position:absolute;top:-1px;right:-2px;min-width:15px;height:15px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on-accent);font:600 9px/15px var(--font-mono);text-align:center;pointer-events:none;}
+  .notif-panel{position:fixed;top:calc(var(--topbar-h, 76px) + 6px);left:12px;right:12px;z-index:120;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-raised);overflow:hidden;}
+  .notif-panel-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 9px;font:600 12px/1 var(--font-ui);color:var(--text);border-bottom:1px solid var(--border);}
+  .notif-clear{background:none;border:0;padding:0;font:500 11px/1 var(--font-ui);color:var(--muted);cursor:pointer;}
+  .notif-clear:hover{color:var(--text);}
+  .notif-list{list-style:none;margin:0;padding:4px;max-height:min(420px,60vh);overflow-y:auto;}
+  .notif-item{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:var(--radius-md);}
+  .notif-item.clickable{cursor:pointer;}
+  .notif-item.clickable:hover{background:var(--surface-hover);}
+  .notif-item.unread{background:var(--accent-wash-soft);}
+  .notif-item.unread.clickable:hover{background:var(--accent-wash-2);}
+  .notif-icon{flex:none;width:18px;text-align:center;font-size:13px;line-height:1.5;}
+  .notif-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+  .notif-head{font:500 12.5px/1.35 var(--font-ui);color:var(--text);}
+  .notif-body{font-size:11px;line-height:1.35;color:var(--muted);}
+  .notif-when{flex:none;font:400 10px/1.6 var(--font-mono);color:var(--text-dim);white-space:nowrap;}
+  .notif-empty{display:flex;flex-direction:column;gap:5px;padding:18px 16px 20px;}
+  .notif-empty-title{font:500 12.5px/1.35 var(--font-ui);color:var(--text-soft);}
+  .notif-empty-body{font-size:11px;line-height:1.45;color:var(--muted);}
+  .notif-btn:focus-visible,.notif-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   /* MAIN */
   .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
 
@@ -1245,6 +1274,9 @@
     .topbar-wide .nav-tab:hover{color:var(--text);border-color:transparent;}
     .topbar-wide .nav-tab.active{background:transparent;color:var(--accent);font-weight:600;}
     .topbar-wide .topbar-right{justify-self:end;display:flex;align-items:center;gap:12px;flex-wrap:nowrap;}
+    /* no laptop o sininho tem o tamanho dos irmãos (engrenagem e avatar), e o painel pendura nele */
+    .notif-btn{width:30px;height:30px;}
+    .notif-panel{position:absolute;top:38px;left:auto;right:0;width:340px;}
     /* no laptop a porta das Configurações é o #gear-btn da barra — o FAB some */
     .fab-config{display:none;}
     .topbar-wide .xp-badge{background:transparent;border:0;padding:0;font-size:11px;color:var(--accent);gap:5px;}
