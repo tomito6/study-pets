@@ -2,7 +2,7 @@
 // Essa escolha é deliberada: o app raciocina sobre "o dia do usuário", então
 // alguém em Munique e alguém em São Paulo veem cada um o seu próprio dia.
 
-import type { DateKey, TimeString } from './types';
+import type { DateKey, StudyBlock, TimeString } from './types';
 
 /** Data -> "YYYY-MM-DD" no fuso local. */
 export const dk = (d: Date): DateKey =>
@@ -17,6 +17,15 @@ export const timeToMins = (t: TimeString): number => {
 /** Minutos desde a meia-noite -> "HH:MM". */
 export const minsToTime = (m: number): TimeString =>
   `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+/**
+ * A duração de um bloco que vale: do início ao fim, menos o tempo em que o timer
+ * ficou pausado dentro dele. É a ÚNICA conta de duração do app — XP, moedas, meta,
+ * grupos e o anel do foco passam por aqui, senão uma pausa de 7 min viraria 7
+ * moedas e 7 min de meta (um teste varre o código atrás de `endTime - time` solto).
+ */
+export const blockMins = (b: Pick<StudyBlock, 'time' | 'endTime'> & { paused?: number | undefined }): number =>
+  timeToMins(b.endTime) - timeToMins(b.time) - (b.paused ?? 0);
 
 /** Segunda-feira da semana da data dada, à meia-noite. Domingo pertence à semana anterior. */
 export function mondayOf(date: Date): Date {

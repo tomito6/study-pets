@@ -84,9 +84,30 @@ export interface StudyBlock {
   session?: number | undefined;
   /** Estudo menor que um pomo, encaixado num gap. */
   mini?: boolean;
+  /**
+   * Minutos em que o timer ficou pausado dentro deste bloco (ver `PauseRecord`). O
+   * `endTime` já inclui esse tempo: um pomo de 25 min com 7 de pausa vai de 09:00
+   * a 09:32. A duração que vale (XP, moedas, meta) é `blockMins`, que desconta isto.
+   */
+  paused?: number;
   /** Presente quando o bloco veio de uma série recorrente. */
   _seriesId?: string;
 }
+
+/**
+ * Uma pausa do timer que acabou, salva em `users/{uid}.pauses[dia]`: o minuto do
+ * relógio em que começou e quanto durou. O gerador estica o bloco que contém `at`
+ * e empurra o resto do dia; eventos e o fim da janela continuam fixos. Só `at` e
+ * `mins`: o bloco que a contém sai do próprio plano, sem chave que envelheça.
+ */
+export interface PauseRecord {
+  at: TimeString;
+  /** Inteiro, mínimo 1 (segundos arredondados pra cima — quem pausou nunca perde tempo). */
+  mins: number;
+}
+
+/** Pausas por dia, em ordem de `at`. */
+export type PausesByDate = Record<DateKey, PauseRecord[]>;
 
 /** Compromisso do usuário — avulso ou expandido de uma série. */
 export interface StudyEvent {

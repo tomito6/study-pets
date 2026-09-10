@@ -157,6 +157,8 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, now, isToday, ti
         {b.time}–{b.endTime}
       </span>
       <span className="block-name">{b.name}</span>
+      {/* O timer ficou pausado dentro deste bloco: o fim inclui a pausa, o XP não — a etiqueta é o que fecha a conta. */}
+      {b.paused ? <span className="block-paused" title={t.pausedTitle(b.paused)}>{t.pausedTag(b.paused)}</span> : null}
       {xpLabel}
     </div>
   );

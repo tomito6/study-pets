@@ -474,6 +474,57 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).toContainText('Pausa');
   });
 
+  test('38. pausar o bloco congela o relógio; retomar estica o bloco, empurra o dia, e sobrevive a um reload', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00');
+
+    // Pausar: o restante congela, e o app diz há quanto tempo.
+    await page.locator('#focus-pause').click();
+    await expect(page.locator('#focus-time-sub')).toContainText('pausado');
+    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    await page.clock.setFixedTime(new Date(`${DIA}T10:12:30`));
+    await expect(page.locator('#focus-time-sub')).toContainText('há 02:30');
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // não andou
+
+    // Retomar às 10:13: a pausa vira 3 min, o bloco vai até 10:28 (com o mesmo XP), a pausa seguinte começa às 10:28.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:13:00`));
+    await page.locator('#focus-pause').click();
+    await expect(page.locator('#focus-time-sub')).toContainText('completou');
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00');
+    await expect(page.locator('#toast')).toContainText('Pausa de 3 min');
+    await page.locator('.focus-exit').click();
+    const esticado = page.locator('.block-row', { hasText: '10:00–10:28' });
+    await expect(esticado).toBeVisible();
+    await expect(esticado.locator('.block-paused')).toHaveText('⏸ 3 min');
+    await expect(esticado.locator('.block-xp')).toHaveText('+50 XP');
+    await expect(page.locator('.block-row', { hasText: '10:28–10:33' })).toContainText('Pausa');
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
+
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
+      .toEqual([{ at: '10:10', mins: 3 }]); // salvo na hora, sem debounce
+
+    // Pausar de novo pela barra e recarregar: a pausa fica no dispositivo, o timer volta pausado.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:15:00`));
+    await page.locator('#timer-pause').click();
+    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    await page.clock.setFixedTime(new Date(`${DIA}T10:20:00`));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#timer-bar')).toHaveClass(/active/);
+    await expect(page.locator('#timer-bar')).toContainText('Pausado · há 05:00');
+    await expect(page.locator('#timer-display')).toHaveText('13:00');
+    await page.locator('#timer-pause').click(); // ▶ Retomar: mais 5 min no bloco, que agora vai até 10:33
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
+    await expect(page.locator('.block-row', { hasText: '10:00–10:33' }).locator('.block-paused')).toHaveText('⏸ 8 min');
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
+      .toEqual([{ at: '10:10', mins: 3 }, { at: '10:15', mins: 5 }]);
+  });
+
   /**
    * Dia 1 fechado com 7 estudos (350 XP; o gato inicial vai pro Lv. 5), dia 2 às 10:10 com o
    * modo hardcore ligado em Configurações → Geral. O que os testes 28 e 29 precisam pra ter
@@ -629,8 +680,8 @@ test.describe('Study Pets — smoke', () => {
     await abrirApp(page);
     await page.locator('#tour-skip').click(); // o balão do Plano cobre as abas dos dias
 
-    // O dia padrão tem 15 estudos (370 min planejados; o almoço das 13h corta o 8º).
-    // Marcar os 7 primeiros = 175 min cumpridos, e encerrar consolida tudo.
+    // O dia padrão tem 16 estudos (385 min planejados; o almoço das 13h corta o 8º, e a sobra de 15 min
+    // antes das 18h vira um mini — desde 2026-09-10). Marcar os 7 primeiros = 175 min cumpridos, e encerrar consolida tudo.
     for (let i = 0; i < 7; i++) await checksDeEstudo(page).nth(i).click();
     await page.locator('.finish-day-btn').click();
     await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
@@ -649,12 +700,12 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#an-xp-next')).toHaveText('750 XP');
     await expect(page.locator('#an-sparkline polyline')).toHaveAttribute('points', /\d/);
 
-    // Hoje é a vista padrão: 175 dos 370 min planejados.
+    // Hoje é a vista padrão: 175 dos 385 min planejados.
     await expect(page.locator('#an-subnav .subnav-chip.active')).toHaveText('Hoje');
-    expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, planned: 370 });
+    expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, planned: 385 });
     await expect(page.locator('#adherence-today')).toHaveClass(/adh-big/);
-    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2.9h de 6.2h');
-    await expect(page.locator('#adherence-today .adh-pct')).toHaveText('47%'); // 175/370
+    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2.9h de 6.4h');
+    await expect(page.locator('#adherence-today .adh-pct')).toHaveText('45%'); // 175/385
     // Meta de 60 min: só hoje bateu, e hoje é o dot com anel.
     await expect(page.locator('#goal-week-headline-h')).toContainText('1 de 7 dias');
     await expect(page.locator('#goal-week-dots-h .goal-dot')).toHaveCount(7);
@@ -666,12 +717,12 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.subview[data-view="semana"]')).toHaveClass(/active/);
     const semana = await realizado(page, 'adherence-week');
     expect(semana.done).toBe(175);
-    expect(semana.planned).toBeGreaterThan(370);
+    expect(semana.planned).toBeGreaterThan(385);
     await expect(page.locator('#goal-week-dots .goal-dot.today')).toHaveCount(0); // o anel é só na vista Hoje
     // Conclusão por sessão: as quatro sessões do dia, com o que foi marcado em cada uma —
     // a 1ª inteira (4 estudos), a 2ª parou no 3º, e as duas da tarde ficaram zeradas.
     // O denominador conta os dias JÁ FECHADOS da semana (seg, ter e hoje, que foi
-    // encerrado): 3 × 4 estudos nas três primeiras sessões, 3 × 3 na última. Dia
+    // encerrado): 3 × 4 estudos em cada sessão (a última ganhou o mini das 17:45). Dia
     // futuro NÃO entra — era o bug do `isPast`, que inflava isto pro período inteiro.
     const sessoes = page.locator('#dropoff-chart .dropoff-row');
     await expect(sessoes).toHaveCount(4);
@@ -679,13 +730,13 @@ test.describe('Study Pets — smoke', () => {
     await expect(sessoes.nth(0).locator('.do-count')).toHaveText('4/12');
     await expect(sessoes.nth(1).locator('.do-count')).toHaveText('3/12');
     await expect(sessoes.nth(2).locator('.do-count')).toHaveText('0/12');
-    await expect(sessoes.nth(3).locator('.do-count')).toHaveText('0/9');
+    await expect(sessoes.nth(3).locator('.do-count')).toHaveText('0/12');
 
     // Geral: agrega todos os dias com dados até hoje; heatmap 7×16 e as horas da rotina (9h–19h).
     await page.locator('#an-subnav .subnav-chip[data-view="geral"]').click();
     const geral = await realizado(page, 'adherence-geral');
     expect(geral.done).toBe(175);
-    expect(geral.planned).toBeGreaterThanOrEqual(370);
+    expect(geral.planned).toBeGreaterThanOrEqual(385);
     await expect(page.locator('#heatmap-grid-gh .heatmap-cell')).toHaveCount(7 * 16);
     await expect(page.locator('#heatmap-grid-gh .heatmap-cell[title^="02/09"]')).toHaveAttribute('title', '02/09 (hoje): 175 de 60 min (292%)');
     await expect(page.locator('#hour-bar-chart .bar-wrap')).toHaveCount(11);

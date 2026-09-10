@@ -146,6 +146,23 @@ describe('computeStats — o que conta como estudo', () => {
   });
 });
 
+describe('computeStats — bloco esticado por uma pausa do timer', () => {
+  // 09:00–09:37 com 7 min pausados: valem 30 min, como o pomo que era. Moedas, meta, aderência e o
+  // total de horas descontam a pausa; o XP é o do bloco (o gerador já o calcula pela duração que vale).
+  const comPausa = (): StudyBlock[] => [{ ...estudo('09:00', '09:30'), endTime: '09:37', paused: 7 }, pausa('09:37', '09:42'), estudo('09:42', '10:12')];
+
+  it('vale o mesmo que o dia sem pausa', () => {
+    const sem = computeStats(entrada({ checks: marcandoTudo(ONTEM, ['09:00', '09:35']) }));
+    const com = computeStats(entrada({ getBlocks: comPausa, checks: marcandoTudo(ONTEM, ['09:00', '09:42']) }));
+    expect(com.totalXP).toBe(sem.totalXP);
+    expect(com.coins).toBe(sem.coins);
+    expect(com.studyMins).toBe(sem.studyMins);
+    expect(com.dayStudyMins[ONTEM]).toBe(60);
+    expect(com.dayStudyPlanned[ONTEM]).toBe(60);
+    expect(com.dayStudyDoneMins[ONTEM]).toBe(60);
+  });
+});
+
 describe('computeStats — aderência inclui hoje de propósito', () => {
   it('conta o planejado de todos os dias', () => {
     const stats = computeStats(entrada());

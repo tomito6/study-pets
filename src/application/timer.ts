@@ -18,8 +18,14 @@
 // O bloqueio de sites acompanha o timer daqui: `syncBlocking` a cada acerto de
 // relógio (é ele que vê "em espera" virar "rodando") e `stopBlocking` quando o
 // app encerra. Com ou sem hardcore — ver application/siteBlock.ts.
+//
+// Pausar (`derived.timerPausedAt`) congela o relógio: enquanto dura, o bloco não
+// termina e a extensão continua bloqueando. Os verbos (pausar, retomar, a pausa
+// que ficou no dispositivo) moram em application/pause.ts, que precisa daqui;
+// aqui ficam só os ganchos do runtime — o mesmo arranjo do hardcore.
 
 import { canToggleCheck } from '../domain/checks';
+import { pauseSessionFor } from '../domain/pauses';
 import { dk } from '../domain/time';
 import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerProgress } from '../domain/timer';
 import type { StartCheck } from '../domain/timer';
@@ -27,6 +33,7 @@ import type { StudyBlock } from '../domain/types';
 import { playSound as playSoundInfra } from '../infrastructure/audio/sounds';
 import type { SoundType } from '../infrastructure/audio/sounds';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
+import { clearPauseSession, writePauseSession } from '../infrastructure/pauseSession';
 import type { Unsubscribe } from '../infrastructure/ports';
 import { onVisible } from '../infrastructure/visibility';
 import { reacquireWakeLockIfWanted, releaseWakeLock, requestWakeLock } from '../infrastructure/wakeLock';
@@ -45,14 +52,28 @@ function clearWatcher(): void {
   endWatcher = null;
 }
 
+function startWatcher(): void {
+  clearWatcher();
+  endWatcher = setInterval(() => reconcileTimer(), 1000);
+}
+
+const uid = (): string | null => state.user?.uid ?? null;
+
+/** Esquece a pausa em andamento (runtime e dispositivo). */
+function clearPause(): void {
+  derived.timerPausedAt = null;
+  const u = uid();
+  if (u) clearPauseSession(u);
+}
+
 /** Põe o bloco no timer, abre o foco (com a tela segura pelo Wake Lock) e fica de olho no fim. */
 function runBlock(block: StudyBlock): void {
-  clearWatcher();
+  clearPause();
   derived.timerBlock = block;
   derived.focusOpen = true;
   notify();
   void requestWakeLock();
-  endWatcher = setInterval(() => reconcileTimer(), 1000);
+  startWatcher();
 }
 
 /**
@@ -64,9 +85,54 @@ function runBlock(block: StudyBlock): void {
  */
 export function reconcileTimer(now: Date = new Date()): void {
   if (derived.hardcore) armHardcoreIfRunning(now); // o bloco em espera começou: a sessão passa a valer
+  const pausedAt = derived.timerPausedAt;
+  if (pausedAt != null && derived.timerBlock) {
+    // Pausado, o bloco não termina. Só a meia-noite encerra: o dia acabou sem retomar, e nada é registrado.
+    if (dk(now) !== dk(new Date(pausedAt))) {
+      stopTimer();
+      showToast(strings.timer.pauseMidnight);
+      return;
+    }
+    syncBlocking(now); // a extensão continua bloqueando, com o fim que desliza
+    return;
+  }
   let guard = 0;
   while (derived.timerBlock && timerProgress(derived.timerBlock, now).done && guard++ < 100) finishTimer(now);
   syncBlocking(now); // "em espera" virou "rodando" (ou o bloco acabou): a extensão acompanha
+}
+
+// ---- os ganchos da pausa (application/pause.ts decide; aqui é só o runtime) ----
+
+/** O relógio congela agora: a pausa vai pro dispositivo, a tela pode travar, a extensão segue bloqueando. */
+export function pauseRuntime(now: Date): void {
+  const block = derived.timerBlock;
+  if (!block) return;
+  derived.timerPausedAt = now.getTime();
+  const u = uid();
+  if (u) writePauseSession(u, pauseSessionFor(block, dk(now), now.getTime()));
+  releaseWakeLock();
+  syncBlocking(now);
+  notify();
+}
+
+/** Retomou: o bloco em andamento passa a ser o regenerado (fim novo) e o relógio volta a correr. */
+export function resumeRuntime(block: StudyBlock, now: Date): void {
+  clearPause();
+  derived.timerBlock = block;
+  startWatcher();
+  if (derived.focusOpen) void requestWakeLock();
+  syncBlocking(now);
+  notify();
+}
+
+/** Ao abrir o app com uma pausa aberta no dispositivo: o timer volta pausado, na barra (o foco fechado). */
+export function adoptPausedBlock(block: StudyBlock, pausedAt: number): void {
+  derived.timerBlock = block;
+  derived.timerPausedAt = pausedAt;
+  derived.focusOpen = false;
+  derived.timerCompleted = null;
+  startWatcher();
+  notify();
 }
 
 let visibilityWatch: Unsubscribe | null = null;
@@ -165,6 +231,7 @@ export function clearStartRequest(): void {
 export function stopTimer(): void {
   if (derived.hardcore) return;
   clearWatcher();
+  clearPause(); // "Parar" no meio de uma pausa: nada é registrado — registro é só de bloco que continuou
   derived.timerBlock = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;

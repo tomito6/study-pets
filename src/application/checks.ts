@@ -4,7 +4,7 @@ import { canCheckBlock, previousCountingDay, previousDayKey } from '../domain/ch
 import { blockInGroup, countsForGroup, groupOf } from '../domain/groups';
 import { petLevel } from '../domain/pets';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
-import { timeToMins } from '../domain/time';
+import { blockMins } from '../domain/time';
 import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/types';
 import { state } from '../store/store';
 import { isRestDayKey } from './dayWindows';
@@ -20,7 +20,7 @@ export interface CheckResult {
   coins: number;
 }
 
-const mins = (b: Pick<StudyBlock, 'time' | 'endTime'>): number => timeToMins(b.endTime) - timeToMins(b.time);
+const mins = blockMins;
 
 const isStudyish = (b: Pick<StudyBlock, 'type'>): boolean => b.type === 'estudo' || b.type === 'event';
 

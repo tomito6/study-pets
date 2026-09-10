@@ -4,13 +4,16 @@
 //
 // Um bloco de hoje pode ser aberto antes da hora: o timer fica "em espera"
 // (contagem até o início) e começa sozinho quando o relógio chega lá.
+//
+// Pausado (`pausedAt`): o restante é `fim − pausedAt`, congelado; o bloco não
+// termina enquanto a pausa durar. Quem estica o `endTime` do bloco ao retomar é
+// o gerador, com o registro da pausa (ver domain/pauses.ts).
 
-import { timeToMins } from './time';
-import { dk } from './time';
+import { blockMins, dk } from './time';
 import type { DateKey, StudyBlock } from './types';
 
-export const blockDurationMin = (b: Pick<StudyBlock, 'time' | 'endTime'>): number =>
-  timeToMins(b.endTime) - timeToMins(b.time);
+/** A duração que vale de um bloco (a mesma conta de `blockMins`: sem o tempo pausado). */
+export const blockDurationMin = blockMins;
 
 /** Nome sem os emojis de tipo — como aparece no timer e na notificação. */
 export const cleanBlockName = (name: string): string => name.replace(/📖|🧘|☕/g, '').trim();
@@ -36,8 +39,8 @@ export function formatCountdown(sec: number): string {
 export const formatClock = (now: Date): string =>
   `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-/** Em espera (aberto antes da hora), rodando, ou acabou. */
-export type TimerPhase = 'waiting' | 'running' | 'done';
+/** Em espera (aberto antes da hora), rodando, pausado, ou acabou. */
+export type TimerPhase = 'waiting' | 'running' | 'paused' | 'done';
 
 export interface TimerProgress {
   phase: TimerPhase;
@@ -57,19 +60,36 @@ export interface TimerProgress {
   /** Fração 0–1 já passada — o anel do modo foco usa isto. */
   elapsedFraction: number;
   done: boolean;
+  /** Há quanto tempo está pausado (0 fora da pausa). */
+  pausedSec: number;
+  /** "MM:SS" (ou "H:MM:SS") da pausa em andamento. */
+  pausedDisplay: string;
 }
 
-export function timerProgress(block: Pick<StudyBlock, 'time' | 'endTime'>, now: Date): TimerProgress {
+/**
+ * O relógio do bloco. `pausedAt` (ms) congela o restante naquele instante — o bloco
+ * fica em `paused` até retomar, mesmo que o relógio de parede já tenha passado do
+ * fim. O total é a duração que vale (sem o tempo já pausado, que o `endTime` inclui),
+ * então o anel drena sobre os minutos de estudo, não sobre a parede.
+ */
+export function timerProgress(
+  block: Pick<StudyBlock, 'time' | 'endTime'> & { paused?: number | undefined },
+  now: Date,
+  pausedAt: number | null = null,
+): TimerProgress {
   const start = todayAt(block.time, now);
   const end = todayAt(block.endTime, now);
-  const totalSec = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 1000));
-  const phase: TimerPhase = now >= end ? 'done' : now < start ? 'waiting' : 'running';
+  const totalSec = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 1000) - (block.paused ?? 0) * 60);
+  const paused = pausedAt != null && pausedAt >= start.getTime() && pausedAt < end.getTime();
+  const ref = paused ? new Date(pausedAt) : now;
+  const phase: TimerPhase = paused ? 'paused' : now >= end ? 'done' : now < start ? 'waiting' : 'running';
   // `ceil`: em espera nunca mostra 00:00 — no segundo em que zera, já está rodando.
   const untilStartSec = phase === 'waiting' ? Math.ceil((start.getTime() - now.getTime()) / 1000) : 0;
   // Em espera o bloco ainda está inteiro: anel cheio, restante = duração toda.
   const remainingSec =
-    phase === 'waiting' ? totalSec : Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
-  const elapsedFraction = 1 - remainingSec / totalSec;
+    phase === 'waiting' ? totalSec : Math.max(0, Math.floor((end.getTime() - ref.getTime()) / 1000));
+  const elapsedFraction = Math.max(0, Math.min(1, 1 - remainingSec / totalSec));
+  const pausedSec = paused ? Math.max(0, Math.floor((now.getTime() - pausedAt) / 1000)) : 0;
   return {
     phase,
     totalSec,
@@ -77,10 +97,12 @@ export function timerProgress(block: Pick<StudyBlock, 'time' | 'endTime'>, now: 
     display: formatMMSS(remainingSec),
     untilStartSec,
     untilStartDisplay: formatCountdown(untilStartSec),
-    ending: phase !== 'waiting' && remainingSec <= 60,
+    ending: phase === 'running' && remainingSec <= 60,
     pct: Math.round(elapsedFraction * 100),
     elapsedFraction,
     done: phase === 'done',
+    pausedSec,
+    pausedDisplay: formatCountdown(pausedSec),
   };
 }
 

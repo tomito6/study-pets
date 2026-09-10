@@ -21,6 +21,7 @@ import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
 import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
+import { normalizePauses } from './pauses';
 import { migrateSiteBlock } from './siteBlock';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
 import { normalizeTutorialSeen } from './tutorial';
@@ -29,6 +30,7 @@ import type {
   ChecksByDate,
   DateKey,
   GroupsByDate,
+  PausesByDate,
   PenaltiesByDate,
   PetInstance,
   PetInstanceId,
@@ -68,6 +70,8 @@ export interface PersistedState {
   tutorialSeen: TutorialSeen;
   /** Desistências no modo hardcore, por dia (ver domain/hardcore.ts). */
   penalties: PenaltiesByDate;
+  /** Pausas do timer por dia: o bloco que contém cada uma fica mais longo e o resto do dia desliza (ver domain/pauses.ts). */
+  pauses: PausesByDate;
   /**
    * A aparência do personagem (tom de pele, cor e penteado do cabelo). Fica fora
    * de `config` de propósito: é identidade, não regra do dia — "Cancelar sessão"
@@ -120,6 +124,7 @@ export function emptyPersistedState(): PersistedState {
     windowOverrides: {},
     tutorialSeen: {},
     penalties: {},
+    pauses: {},
     avatar: { ...DEFAULT_AVATAR },
   };
 }
@@ -258,6 +263,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
     avatar: normalizeAvatar(d.avatar),
     penalties: normalizePenalties(d.penalties),
+    // Doc de antes de pausar existir: sem pausa nenhuma.
+    pauses: normalizePauses(d.pauses),
   };
 }
 
@@ -283,5 +290,6 @@ export function serializeState(s: PersistedState): UserDoc {
     tutorialSeen: s.tutorialSeen || {},
     avatar: normalizeAvatar(s.avatar),
     penalties: s.penalties || {},
+    pauses: s.pauses || {},
   };
 }

@@ -63,6 +63,7 @@ function DaySummaryModal() {
               );
             })}
             {summary.empty && <div className="ds-empty-msg">{t.empty[0]}<br />{t.empty[1]}</div>}
+            {summary.pauses && <div className="ds-pauses" id="ds-pauses">{t.pauses(summary.pauses.count, summary.pauses.mins)}</div>}
           </>
         )}
       </div>

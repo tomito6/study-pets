@@ -83,6 +83,9 @@ export const strings = {
     dayClosedBanner: 'Dia encerrado',
     floatXp: (xp: number) => `+${xp} XP`,
     floatCoins: (coins: number) => `+${coins} 🪙`,
+    /** Na linha do bloco: quanto o timer ficou pausado dentro dele. */
+    pausedTag: (mins: number) => `⏸ ${mins} min`,
+    pausedTitle: (mins: number) => `O timer ficou ${mins} min pausado neste bloco — o fim inclui isso; o XP não`,
     /** Tela grande: o toggle Dia · Semana, a coluna da direita e a Semana. */
     view: { day: 'Dia', week: 'Semana' },
     side: {
@@ -290,6 +293,7 @@ export const strings = {
     petLevelUp: (from: number, to: number) => `Lv. ${from} → ${to} ✨`,
     petCanEvolve: '✨ Pode evoluir — quando quiser',
     empty: ['Nenhum bloco marcado hoje.', 'Dia encerrado sem ganhos.'],
+    pauses: (count: number, mins: number) => `⏸ ${count === 1 ? '1 pausa' : `${count} pausas`} · ${mins} min`,
     continue: 'Continuar',
     promptTitle: '🌙 Passou do horário',
     promptIntro: (lastEnd: string) => `O último bloco de estudo (${lastEnd}) já passou. O que você quer fazer?`,
@@ -565,8 +569,24 @@ export const strings = {
     },
     inProgress: 'Em andamento',
     startsIn: 'Começa em',
+    /** "Pausado · há 03:12" — o rótulo da barra enquanto o relógio está congelado. */
+    pausedFor: (since: string) => `Pausado · há ${since}`,
+    pause: '⏸ Pausar',
+    resume: '▶ Retomar',
     stop: '✕ Parar',
     mute: 'Silenciar',
+    /** Ao retomar: quanto durou e o que mudou no plano (os pedaços vêm de `planDeltaParts`). */
+    pauseRecorded: (mins: number, parts: string[], droppedChecks: number) =>
+      `⏸ Pausa de ${mins} min · o dia anda ${mins} min` +
+      (parts.length ? ` · ${parts.join(' · ')}` : '') +
+      (droppedChecks > 0 ? ` · ${droppedChecks === 1 ? '1 check ficou sem bloco' : `${droppedChecks} checks ficaram sem bloco`}` : ''),
+    pauseEnded: 'O bloco terminou durante a pausa — marque à mão se quiser ✓',
+    pauseMidnight: 'A pausa atravessou a meia-noite: o timer foi encerrado 🌙',
+    pauseRefusal: (r: { reason: 'no-timer' } | { reason: 'hardcore' } | { reason: 'not-running' } | { reason: 'day-closed' }) =>
+      r.reason === 'hardcore' ? 'No modo hardcore não tem pausa 🔥'
+      : r.reason === 'not-running' ? 'O bloco ainda não começou ⏳'
+      : r.reason === 'day-closed' ? 'Dia encerrado 🔒'
+      : 'Nenhum bloco rodando',
     refusal: (r: { reason: 'not-today' } | { reason: 'ended' } | { reason: 'forfeited' }) =>
       r.reason === 'not-today' ? 'Só dá pra iniciar timer em blocos de hoje 📅'
       : r.reason === 'forfeited' ? 'Você desistiu deste bloco 🔥'
@@ -587,6 +607,7 @@ export const strings = {
       breakOf: (min: number) => `Pausa de ${min} min`,
       completed: (pct: number) => `completou · ${pct}%`,
       startsAt: (time: string) => `começa às ${time}`,
+      pausedFor: (since: string) => `pausado · há ${since}`,
       onComplete: ' ao concluir',
       next: 'Em seguida',
       endOfDay: 'Fim do dia 🌙',

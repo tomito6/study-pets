@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describePlanDelta, planDelta } from '../src/domain/planDelta';
+import { describePlanDelta, planDelta, planDeltaParts } from '../src/domain/planDelta';
 import type { StudyBlock } from '../src/domain/types';
 
 const estudo = (time: string, endTime: string): StudyBlock => ({ time, endTime, name: 'e', type: 'estudo', xp: 50 });
@@ -34,5 +34,14 @@ describe('planDelta / describePlanDelta', () => {
 
   it('sem mudança relevante, nada de toast', () => {
     expect(describePlanDelta({ studyDelta: 0, newEnd: null })).toBeNull();
+  });
+
+  it('o último estudo que mudou de tamanho (uma pausa empurrou o dia) entra na frase', () => {
+    const antes = [estudo('09:00', '09:25'), estudo('17:00', '17:25')];
+    const depois = [{ ...estudo('09:00', '09:32'), paused: 7 }, estudo('17:07', '17:30')];
+    const d = planDelta(antes, depois);
+    expect(d).toMatchObject({ studyDelta: 0, newEnd: '17:30', lastStudyMins: 23 });
+    expect(planDeltaParts(d)).toEqual(['termina às 17:30', 'último estudo com 23 min']);
+    expect(planDelta(antes, antes).lastStudyMins).toBeNull();
   });
 });

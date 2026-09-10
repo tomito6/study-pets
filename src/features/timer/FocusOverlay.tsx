@@ -1,6 +1,8 @@
 // Modo foco: tela cheia com o anel que drena, o próximo bloco e o ganho ao concluir.
-// Sem controles centrais (sem pausar, sem pular) — decisão consciente do produto.
-// "← Sair do foco" só fecha o overlay; o timer segue na barra.
+// Sem "pular" — decisão consciente do produto (pular é fugir do plano). "⏸ Pausar"
+// existe desde 2026-09-10: a vida interrompe, e o relógio congela até "▶ Retomar"
+// (fora do hardcore, e só com o bloco rodando). "← Sair do foco" só fecha o
+// overlay; o timer segue na barra.
 //
 // No modo hardcore não há "Sair do foco": a única porta é "Desistir…" (com a conta
 // na confirmação), "Parar aqui" numa pausa ou "Cancelar" enquanto espera — os dois
@@ -14,6 +16,7 @@
 
 import { useEffect, useState } from 'react';
 import { quitHardcore } from '../../application/hardcore';
+import { pauseTimer, resumeTimer } from '../../application/pause';
 import { petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
 import { closeFocus } from '../../application/timer';
@@ -27,6 +30,7 @@ import {
   timerProgress,
 } from '../../domain/timer';
 import { strings } from '../../shared/strings';
+import { showToast } from '../../shared/toast';
 import { useAppState } from '../../store/store';
 import { HardcoreQuitModal } from './HardcoreModals';
 import { SiteBlockBadge } from './SiteBlockBadge';
@@ -38,11 +42,12 @@ const NUM_SESSIONS = 6;
 const COMPLETED_BANNER_MS = 4000;
 
 export function FocusOverlay() {
-  const { block, open, completed, hardcore } = useAppState((_, d) => ({
+  const { block, open, completed, hardcore, pausedAt } = useAppState((_, d) => ({
     block: d.timerBlock,
     open: d.focusOpen,
     completed: d.timerCompleted,
     hardcore: d.hardcore,
+    pausedAt: d.timerPausedAt,
   }));
   const showing = open && !!block;
   useSecondTick(showing);
@@ -76,13 +81,22 @@ export function FocusOverlay() {
   const durMin = blockDurationMin(block);
   const coins = block.type === 'estudo' ? coinsForStudyBlock(durMin) : 0;
   const next = nextBlockAfter(dayBlocks, block);
-  const p = timerProgress(block, now);
+  const p = timerProgress(block, now, pausedAt);
   const waiting = p.phase === 'waiting';
+  const paused = p.phase === 'paused';
   const th = strings.hardcore.focus;
   const hcPet = hardcore ? petById(hardcore.pet) : null;
+  const togglePause = () => {
+    if (paused) {
+      resumeTimer();
+      return;
+    }
+    const r = pauseTimer();
+    if (!r.ok) showToast(strings.timer.pauseRefusal(r));
+  };
 
   return (
-    <div className={'focus-overlay' + (showing ? ' open' : '') + (hardcore ? ' hardcore' : '')} id="focus-overlay">
+    <div className={'focus-overlay' + (showing ? ' open' : '') + (hardcore ? ' hardcore' : '') + (paused ? ' paused' : '')} id="focus-overlay">
       <div className="focus-inner">
         <div className="focus-topbar">
           <span id="focus-clock">{formatClock(now)}</span>
@@ -119,11 +133,11 @@ export function FocusOverlay() {
             />
           </svg>
           <div className="focus-timer-center">
-            <div className={'focus-time-big' + (p.ending ? ' ending' : '') + (waiting ? ' waiting' : '')} id="focus-time-big">
+            <div className={'focus-time-big' + (p.ending ? ' ending' : '') + (waiting ? ' waiting' : '') + (paused ? ' paused' : '')} id="focus-time-big">
               {waiting ? p.untilStartDisplay : p.display}
             </div>
             <div className="focus-time-sub" id="focus-time-sub">
-              {waiting ? t.startsAt(block.time) : t.completed(p.pct)}
+              {paused ? t.pausedFor(p.pausedDisplay) : waiting ? t.startsAt(block.time) : t.completed(p.pct)}
             </div>
           </div>
         </div>
@@ -143,6 +157,13 @@ export function FocusOverlay() {
           <div className="focus-next-name" id="focus-next-name">{next ? cleanBlockName(next.name) : t.endOfDay}</div>
           <div className="focus-next-dur" id="focus-next-dur">{next ? t.minutes(blockDurationMin(next)) : '—'}</div>
         </div>
+        {!hardcore && !waiting && (
+          <div className="focus-actions">
+            <button type="button" className="focus-pause" id="focus-pause" onClick={togglePause}>
+              {paused ? strings.timer.resume : strings.timer.pause}
+            </button>
+          </div>
+        )}
         {hardcore && (
           <div className="focus-hc-actions">
             {waiting ? (

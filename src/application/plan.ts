@@ -8,7 +8,7 @@ import { generateBlocks as generateBlocksPure } from '../domain/planner';
 import { computeStats, calcStreaks } from '../domain/stats';
 import type { Stats } from '../domain/stats';
 import { dk, isWeekendKey } from '../domain/time';
-import type { DateKey, PlannerConfig, StudyBlock, StudyEvent } from '../domain/types';
+import type { DateKey, PauseRecord, PlannerConfig, StudyBlock, StudyEvent } from '../domain/types';
 import { buildWeeks, dateForWeekDay as dateForWeekDayIn, findWeek as findWeekIn, weekDays } from '../domain/weeks';
 import type { WeekDay } from '../domain/weeks';
 import { isDayClosed } from '../domain/checks';
@@ -18,11 +18,11 @@ import { derived, getVersion, notify, state } from '../store/store';
 // Memoização é preocupação de performance da UI, não regra de domínio — por isso mora aqui.
 const blockCache = new Map<string, StudyBlock[]>();
 
-export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = []): StudyBlock[] {
-  const cacheKey = JSON.stringify({ cfg, events });
+export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pauses: PauseRecord[] = []): StudyBlock[] {
+  const cacheKey = JSON.stringify({ cfg, events, pauses });
   const hit = blockCache.get(cacheKey);
   if (hit) return hit;
-  const blocks = generateBlocksPure(cfg, events);
+  const blocks = generateBlocksPure(cfg, events, pauses);
   blockCache.set(cacheKey, blocks);
   if (blockCache.size > 500) {
     for (const k of [...blockCache.keys()].slice(0, 250)) blockCache.delete(k);
@@ -30,7 +30,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = []): S
   return blocks;
 }
 
-/** Sempre que config ou eventos mudarem. */
+/** Sempre que config, eventos ou as pausas de um dia mudarem. */
 export function clearBlockCache(): void {
   blockCache.clear();
   statsCache = null;
@@ -46,6 +46,7 @@ export function rebuildWeeks(now: Date = new Date()): void {
       ...Object.keys(state.events),
       ...Object.keys(state.groups),
       ...Object.keys(state.windowOverrides),
+      ...Object.keys(state.pauses ?? {}),
     ],
     today: now,
   });
@@ -107,7 +108,7 @@ export function blocksForDay(dateKey: DateKey): StudyBlock[] {
   const windowOv = state.windowOverrides[dateKey];
   const events = getEventsForDate(dateKey);
   const dayCfg = configForDay(state.config, windowOv); // as janelas só deste dia, se houver
-  return generateBlocks(dayCfg, events);
+  return generateBlocks(dayCfg, events, state.pauses?.[dateKey] ?? []); // e as pausas do timer daquele dia
 }
 
 // ---------------------------------------------------------------- estatísticas

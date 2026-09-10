@@ -1,7 +1,7 @@
 // XP, moedas, níveis e skills. Regras puras — nada aqui lê estado global.
 
 import type { BlockType, CheckRecord, DateKey, PetInstanceId, SkillId, StudyBlock } from './types';
-import { dk, timeToMins } from './time';
+import { blockMins, dk } from './time';
 
 /** Níveis do usuário: [XP mínimo, nome]. (Os pets têm curva própria em `pets.ts`.) */
 export const LEVELS: ReadonlyArray<readonly [number, string]> = [
@@ -270,8 +270,6 @@ export interface SkillContext {
   /** "Agora" — injetado pra ser testável. */
   now: Date;
 }
-
-const blockMins = (b: Pick<StudyBlock, 'time' | 'endTime'>): number => timeToMins(b.endTime) - timeToMins(b.time);
 
 /**
  * A skill ativa vale pra este bloco? Além da regra da skill, só conta hoje e só

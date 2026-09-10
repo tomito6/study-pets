@@ -5,7 +5,7 @@ import { DEFAULT_CFG } from './config';
 import { normalizeHardcoreConfig } from './hardcore';
 import { normalizeSiteBlockConfig, normalizeSites } from './siteBlock';
 import { calcActualEnd, generateBlocks } from './planner';
-import { timeToMins } from './time';
+import { blockMins, timeToMins } from './time';
 import type { DateKey, PlannerConfig, SiteBlockMode, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
 
 /** O formulário como o usuário digita — números em string pra permitir campo vazio. */
@@ -151,7 +151,7 @@ export function summarizeConfig(cfg: PlannerConfig): ConfigSummary {
   if (validWindows.length === 0) return { kind: 'warn', reason: 'no-windows' };
   const blocks = generateBlocks(cfg, []);
   if (blocks.length === 0) return { kind: 'warn', reason: 'no-blocks' };
-  const dur = (b: { time: string; endTime: string }) => timeToMins(b.endTime) - timeToMins(b.time);
+  const dur = blockMins;
   const study = blocks.filter((b) => b.type === 'estudo');
   const pause = blocks.filter((b) => b.type === 'pausa');
   const actualEnd = calcActualEnd(cfg);
@@ -211,7 +211,7 @@ export function fitStudySuggestions(cfgBase: PlannerConfig, events: StudyEvent[]
       for (const long of longs) {
         const blocks = generateBlocks({ ...cfgBase, pomo, shortBreak: short, longBreak: long }, events);
         const study = blocks.filter((b) => b.type === 'estudo');
-        const studyTotal = study.reduce((s, b) => s + (timeToMins(b.endTime) - timeToMins(b.time)), 0);
+        const studyTotal = study.reduce((s, b) => s + blockMins(b), 0);
         const lastEnd = blocks.length > 0 ? timeToMins(blocks[blocks.length - 1]!.endTime) : 0;
         const penalty = Math.abs(pomo - ideal.pomo) + Math.abs(short - ideal.short) * 0.5 + Math.abs(long - ideal.long) * 0.3;
         candidates.push({ pomo, short, long, studyTotal, lastEnd, studyCount: study.length, score: studyTotal - penalty * 0.5 });

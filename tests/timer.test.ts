@@ -62,6 +62,27 @@ describe('timerProgress — o restante vem do relógio, não de um contador', ()
     const depois = timerProgress(b, new Date('2026-09-02T10:05:42')).remainingSec;
     expect(a - depois).toBe(42);
   });
+
+  it('pausado: o restante congela no instante da pausa e o bloco não termina, mesmo passando do fim', () => {
+    const pausedAt = new Date('2026-09-02T10:10:00').getTime();
+    const p = timerProgress(b, new Date('2026-09-02T10:13:12'), pausedAt);
+    expect(p).toMatchObject({ phase: 'paused', remainingSec: 900, display: '15:00', pausedSec: 192, pausedDisplay: '03:12', done: false, ending: false });
+    expect(timerProgress(b, new Date('2026-09-02T10:40:00'), pausedAt)).toMatchObject({ phase: 'paused', display: '15:00', done: false });
+    expect(timerProgress(b, new Date('2026-09-02T11:20:00'), pausedAt).pausedDisplay).toBe('1:10:00');
+  });
+
+  it('o total é a duração que vale: um bloco esticado pela pausa drena sobre os 25 min, não sobre a parede', () => {
+    const esticado = { ...b, endTime: '10:32', paused: 7 };
+    const p = timerProgress(esticado, new Date('2026-09-02T10:22:00'));
+    expect(p.totalSec).toBe(1500);
+    expect(p.remainingSec).toBe(600);
+    expect(p.pct).toBe(60);
+  });
+
+  it('pausedAt fora do bloco (antes de começar, ou já depois do fim) não conta como pausa', () => {
+    expect(timerProgress(b, new Date('2026-09-02T10:10:00'), new Date('2026-09-02T09:50:00').getTime()).phase).toBe('running');
+    expect(timerProgress(b, new Date('2026-09-02T10:30:00'), new Date('2026-09-02T10:26:00').getTime()).phase).toBe('done');
+  });
 });
 
 describe('canStartBlock — bloco de hoje que ainda não terminou', () => {

@@ -3,7 +3,9 @@
 // **A regra, em uma frase:** enquanto um ESTUDO está rodando no timer do app —
 // foco aberto ou só a barra, com ou sem hardcore — os sites da lista mostram o
 // pet em vez da página. Pausa não bloqueia (é a saída natural), bloco em espera
-// também não (nada começou ainda).
+// também não (nada começou ainda). Estudo **pausado** continua bloqueando, com o
+// fim deslizando minuto a minuto: se pausar liberasse, pausar seria o desbloqueio
+// de um clique — quem quer navegar no meio do estudo tem o "✕ Parar", que é livre.
 //
 // O app é a única fonte: quem publica pra extensão é só este arquivo. O hardcore
 // cuida de sessão e penalidade e não fala mais com a extensão.
@@ -19,7 +21,7 @@
 
 import { expandSites, normalizeSiteBlockConfig, siteBlockArmable } from '../domain/siteBlock';
 import { petForm } from '../domain/pets';
-import { cleanBlockName, timerProgress, todayAt } from '../domain/timer';
+import { cleanBlockName, formatClock, timerProgress, todayAt } from '../domain/timer';
 import type { SiteBlockMode, StudyBlock } from '../domain/types';
 import {
   extensionDetected,
@@ -44,11 +46,20 @@ let published: string | null = null;
 
 const appUrl = (): string => (typeof location !== 'undefined' ? location.origin : '');
 
-/** O estudo que faz o bloqueio valer agora: de hoje, rodando (nem em espera, nem pausa). */
+/** O estudo que faz o bloqueio valer agora: de hoje, rodando ou pausado (nem em espera, nem pausa do pomodoro). */
 function runningStudy(now: Date): StudyBlock | null {
   const b = derived.timerBlock;
   if (!b || b.type !== 'estudo') return null;
-  return timerProgress(b, now).phase === 'running' ? b : null;
+  const phase = timerProgress(b, now, derived.timerPausedAt).phase;
+  return phase === 'running' || phase === 'paused' ? b : null;
+}
+
+/** Quando o estudo termina, visto de agora: pausado, o fim desliza (em minutos cheios, pra não republicar a cada segundo). */
+function projectedEnd(block: StudyBlock, now: Date): Date {
+  const end = todayAt(block.endTime, now).getTime();
+  const pausedAt = derived.timerPausedAt;
+  const pausedMs = pausedAt != null ? Math.max(0, Math.ceil((now.getTime() - pausedAt) / 60000) * 60000) : 0;
+  return new Date(end + pausedMs);
 }
 
 function petPayload(): BlockingPet | null {
@@ -84,13 +95,14 @@ function desiredPayload(now: Date): BlockingPayload {
   const block = runningStudy(now);
   const cfg = normalizeSiteBlockConfig(state.config.siteBlock);
   if (!block || !siteBlockArmable(cfg)) return STOPPED;
+  const until = projectedEnd(block, now);
   return {
     v: 2,
     active: true,
-    until: todayAt(block.endTime, now).getTime(),
+    until: until.getTime(),
     mode: cfg.mode,
     sites: expandSites(cfg.sites),
-    block: { name: cleanBlockName(block.name), endTime: block.endTime },
+    block: { name: cleanBlockName(block.name), endTime: formatClock(until) },
     pet: petPayload(),
     appUrl: appUrl(),
     hardcore: derived.hardcore?.armed === true,

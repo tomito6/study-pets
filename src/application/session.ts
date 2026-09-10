@@ -12,13 +12,14 @@ import { derived, markAuthReady, notify, state } from '../store/store';
 import { scheduleEndOfDayPrompt } from './dayEnd';
 import { resumeHardcoreOnBoot } from './hardcore';
 import { endHardcoreSession } from './hardcoreRuntime';
+import { resumePauseOnBoot } from './pause';
 import { stopBlocking, watchExtension } from './siteBlock';
 import { openOnboarding } from './onboarding';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
 import { blockSaves } from './save';
 import { rememberDoc, subscribeRemote, unsubscribeRemote } from './sync';
-import { watchVisibility } from './timer';
+import { stopTimer, watchVisibility } from './timer';
 
 export async function signIn(): Promise<void> {
   try {
@@ -105,13 +106,16 @@ export function initAfterLoad(now: Date = new Date()): void {
   state.uiDay = week ? Math.min(6, Math.max(0, Math.floor((now.getTime() - week.start.getTime()) / 86400000))) : 0;
   notify();
   resumeHardcoreOnBoot(now); // a sessão hardcore que ficou neste dispositivo: volta pro foco, ou cobra o abandono
+  resumePauseOnBoot(now); // a pausa que ficou aberta neste dispositivo: o timer volta pausado
 }
 
 function resetToLoggedOut(): void {
   if (derived.hardcore) endHardcoreSession(); // antes de perder o uid: limpa a sessão do dispositivo
+  if (derived.timerPausedAt != null) stopTimer(); // idem a pausa aberta
   stopBlocking(); // saiu da conta: a extensão libera na hora
   state.user = null;
   state.penalties = {};
+  state.pauses = {};
   state.checks = {};
   state.events = {};
   state.closedDays = {};

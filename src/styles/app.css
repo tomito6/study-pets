@@ -307,6 +307,8 @@
   .check.checked svg{display:block;}
   .block-time{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:95px;}
   .block-name{font-size:13px;color:var(--text);flex:1;}
+  /* "⏸ 7 min": o timer ficou pausado dentro do bloco (o fim inclui a pausa; o XP não). */
+  .block-paused{font-size:10px;font-family:var(--font-mono);color:var(--muted);white-space:nowrap;}
   .block-xp{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:99px;white-space:nowrap;}
   .block-xp.almoco-xp{color:var(--muted);background:var(--bg3);}
   .block-xp.event-xp{color:var(--orange);background:var(--orange-bg);}
@@ -611,6 +613,7 @@
   .ds-pet-row .ds-pet-lv.up { color:var(--accent); }
   .ds-pet-row .ds-pet-evo { font-size:10px; color:var(--gold); margin-top:2px; }
   .ds-empty-msg { text-align:center; padding:14px; color:var(--muted); font-size:13px; line-height:1.5; }
+  .ds-pauses { text-align:center; color:var(--muted); font-family:var(--font-mono); font-size:11px; margin-top:4px; }
 
   /* END-OF-DAY PROMPT (auto) */
   .eop-choice { width:100%; padding:14px 16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; margin-bottom:10px; text-align:left; transition:border-color .15s, background .15s; display:flex; gap:12px; align-items:center; font-family:inherit; color:var(--text); }
@@ -647,6 +650,13 @@
   /* Aberto antes da hora: anel cheio e apagado, contagem até o início em cinza. */
   .focus-timer-fill.waiting { opacity:.3; }
   .focus-time-big.waiting { color:var(--muted); }
+  /* Pausado: o anel para onde estava, o número apaga, e "pausado · há N" embaixo. */
+  .focus-time-big.paused { color:var(--muted); }
+  .focus-overlay.paused .focus-timer-fill { opacity:.45; }
+  .focus-actions { display:flex; justify-content:center; margin-top:clamp(14px, 2.5vmin, 24px); }
+  .focus-pause { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
+  .focus-pause:hover { border-color:var(--border-strong); color:var(--text); }
+  .focus-overlay.paused .focus-pause { border-color:var(--accent2); color:var(--accent); }
   /* "✓ Estudo 3 concluído · +50 XP · +25 🪙" — aparece ao emendar no próximo bloco e some sozinha. */
   .focus-done { position:fixed; top:clamp(56px, 9vmin, 76px); left:50%; z-index:1; background:var(--accent-bg); border:1px solid var(--accent2); color:var(--accent); border-radius:99px; padding:8px 18px; font-family:var(--font-mono); font-size:clamp(12px, 1.7vmin, 14px); white-space:nowrap; box-shadow:0 0 20px var(--accent-glow); pointer-events:none; animation:focus-done-pop .5s cubic-bezier(.34,1.56,.64,1) both, focus-done-fade .6s ease 3.4s forwards; }
   @keyframes focus-done-pop { 0% { opacity:0; transform:translate(-50%,-10px) scale(.85); } 100% { opacity:1; transform:translate(-50%,0) scale(1); } }
@@ -751,8 +761,10 @@
   .timer-time { font-size:22px; font-weight:600; font-family:var(--font-mono); color:var(--accent); min-width:60px; text-align:right; }
   .timer-time.ending { color:var(--danger-soft); }
   .timer-time.waiting { color:var(--muted); }
-  .timer-stop { background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--muted); font-size:11px; padding:4px 8px; cursor:pointer; font-family:var(--font-ui); }
-  .timer-stop:hover { border-color:var(--border-strong); color:var(--text); }
+  /* Pausado: o restante congela em cinza — é o mesmo "apagado" do bloco em espera. */
+  .timer-time.paused { color:var(--muted); }
+  .timer-stop, .timer-pause { background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--muted); font-size:11px; padding:4px 8px; cursor:pointer; font-family:var(--font-ui); white-space:nowrap; }
+  .timer-stop:hover, .timer-pause:hover { border-color:var(--border-strong); color:var(--text); }
   .volume-wrap { display:flex; align-items:center; gap:6px; }
   .vol-btn { background:transparent; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0; }
   .vol-slider { -webkit-appearance:none; appearance:none; width:60px; height:3px; border-radius:99px; background:var(--border); outline:none; cursor:pointer; }
@@ -1233,8 +1245,10 @@
     .volume-wrap{order:2;margin-top:calc(6 * var(--s));}
     .vol-btn{font-size:calc(16 * var(--s));}
     .vol-slider{width:calc(60 * var(--s));}
-    .timer-stop{order:3;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);}
-    .timer-stop:hover{color:var(--text);}
+    .timer-pause{order:3;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
+    .timer-stop{order:4;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
+    .timer-stop:hover,.timer-pause:hover{color:var(--text);}
+    .block-paused{font-size:calc(10 * var(--s));}
     /* a coluna é um painel da altura da janela: Hoje/Meta e o quarto em cima (rolam por dentro se não couberem,
        sem barra), o cartão Agora sempre no pé. O quarto encolhe com a altura da janela (clamp em vh). */
     .plan-col{grid-column:1;grid-row:2 / 4;align-self:start;position:sticky;zoom:var(--col-k);top:calc(var(--topbar-h) / var(--col-k));height:calc((100vh - var(--topbar-h)) / var(--col-k));display:flex;flex-direction:column;align-items:stretch;}

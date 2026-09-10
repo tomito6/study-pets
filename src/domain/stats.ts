@@ -3,7 +3,7 @@
 
 import type { ChecksByDate, DateKey, PenaltiesByDate, StudyBlock } from './types';
 import { coinsForBlock, dailyBonusForStreak, xpFromCheck } from './progression';
-import { timeToMins } from './time';
+import { blockMins } from './time';
 import { isChecked } from './checks';
 
 /** Um dia a considerar, já resolvido por quem chama (que conhece WEEKS e skipWeekends). */
@@ -127,7 +127,7 @@ export function computeStats(input: StatsInput): Stats {
     blocks.forEach((b) => {
       const isStudyLike = b.type === 'estudo' || b.type === 'event';
       if (isStudyLike) {
-        const dur = timeToMins(b.endTime) - timeToMins(b.time);
+        const dur = blockMins(b); // a duração que vale: sem o tempo em que o timer ficou pausado
         dayPlanned += dur;
         if (isChecked(checks, key, b.time)) dayDone += dur;
         if (isPast) {
@@ -143,7 +143,7 @@ export function computeStats(input: StatsInput): Stats {
         else stats.pausasToday.total++;
       }
       if (isChecked(checks, key, b.time)) {
-        const dur = timeToMins(b.endTime) - timeToMins(b.time);
+        const dur = blockMins(b);
         // Counters do próprio dia (incluindo hoje) — usados pra streak/melhor dia
         dayChecks++;
         if (isStudyLike) dayStudyMins += dur;

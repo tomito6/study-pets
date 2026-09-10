@@ -101,6 +101,14 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     });
   });
 
+  it('doc de antes das pausas: sem `pauses` → {}; lixo vira vazio; registro válido passa, em ordem', () => {
+    expect(hydrateUserDoc({ coinsSpent: 5 }).pauses).toEqual({});
+    expect(hydrateUserDoc({ pauses: 'x' }).pauses).toEqual({});
+    expect(hydrateUserDoc({ pauses: { '2026-09-02': [{ at: '10:30', mins: 3 }, { at: '10:10', mins: 7 }, 'lixo', { at: '10:00', mins: 0 }] } }).pauses).toEqual({
+      '2026-09-02': [{ at: '10:10', mins: 7 }, { at: '10:30', mins: 3 }],
+    });
+  });
+
   it('doc de antes do modo hardcore: sem `penalties` → {}, e a config nasce desligada', () => {
     const s = hydrateUserDoc({ coinsSpent: 5, config: { pomo: 30 } });
     expect(s.penalties).toEqual({});
@@ -277,6 +285,7 @@ describe('serializeState', () => {
     delete parcial.windowOverrides;
     delete parcial.tutorialSeen;
     delete parcial.avatar;
+    delete parcial.pauses;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -287,6 +296,7 @@ describe('serializeState', () => {
     expect(doc.windowOverrides).toEqual({});
     expect(doc.tutorialSeen).toEqual({});
     expect(doc.avatar).toEqual(DEFAULT_AVATAR);
+    expect(doc.pauses).toEqual({});
   });
 });
 
@@ -313,6 +323,7 @@ describe('ida e volta', () => {
       tutorialSeen: { plan: true, analytics: true },
       avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado' },
       penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
+      pauses: { '2026-09-02': [{ at: '10:10', mins: 7 }, { at: '15:02', mins: 1 }] },
       config: { ...DEFAULT_CFG, hardcore: { enabled: true }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);

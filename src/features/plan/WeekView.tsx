@@ -6,7 +6,7 @@
 import type { KeyboardEvent } from 'react';
 import { blocksForDay, dateForWeekDay, restKindOf } from '../../application/plan';
 import { isChecked } from '../../domain/checks';
-import { dk, timeToMins } from '../../domain/time';
+import { blockMins, dk, timeToMins } from '../../domain/time';
 import { cleanBlockName } from '../../domain/timer';
 import type { StudyBlock } from '../../domain/types';
 import { strings } from '../../shared/strings';
@@ -27,7 +27,7 @@ interface Props {
 }
 
 const kindOf = (b: StudyBlock): string =>
-  b.type === 'pausa' && timeToMins(b.endTime) - timeToMins(b.time) >= LONG_BREAK_MIN ? 'longa' : b.type;
+  b.type === 'pausa' && blockMins(b) >= LONG_BREAK_MIN ? 'longa' : b.type;
 
 export function WeekView({ week, now, onPickDay }: Props) {
   const checks = useAppState((s) => s.checks);

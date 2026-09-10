@@ -4,6 +4,9 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// O `document` falso abaixo só tem o <html> que a extensão marca; o toast (que retomar a pausa mostra) fica mudo.
+vi.mock('../src/shared/toast', () => ({ showToast: () => {} }));
+
 const win = new EventTarget();
 const publicados: unknown[] = [];
 const doc = { documentElement: { dataset: {} as Record<string, string> } };
@@ -71,6 +74,29 @@ describe('quando o bloqueio vale', () => {
     expect(publicados).toHaveLength(0); // em espera não bloqueia
     relogioEm('10:30:01');
     expect(ultimo()).toMatchObject({ active: true, block: { name: 'Estudo 4', endTime: '10:55' } });
+  });
+
+  it('estudo pausado continua bloqueando, com o fim deslizando minuto a minuto; retomar publica o fim novo', async () => {
+    const { pauseTimer, resumeTimer } = await import('../src/application/pause');
+    startTimer(estudo, AGORA);
+    expect(ultimo()).toMatchObject({ active: true, until: new Date(`${HOJE}T10:25:00`).getTime() });
+    expect(pauseTimer(AGORA)).toEqual({ ok: true });
+    // O fim projetado arredonda pra cima ao minuto: nunca cai no passado (a extensão limparia as regras), e muda uma vez por minuto.
+    relogioEm('10:10:30');
+    expect(ultimo()).toMatchObject({ active: true, until: new Date(`${HOJE}T10:26:00`).getTime(), block: { name: 'Estudo 3', endTime: '10:26' } });
+    const antes = publicados.length;
+    relogioEm('10:10:50');
+    expect(publicados.length).toBe(antes); // dentro do mesmo minuto nada muda
+    relogioEm('10:11:01');
+    expect(ultimo()).toMatchObject({ active: true, until: new Date(`${HOJE}T10:27:00`).getTime(), block: { endTime: '10:27' } });
+    // Retomou às 10:13: a pausa vira 3 min, o bloco vai até 10:28, e é isso que a extensão recebe.
+    vi.setSystemTime(new Date(`${HOJE}T10:13:00`));
+    expect(resumeTimer(new Date(`${HOJE}T10:13:00`))).toBe('resumed');
+    expect(ultimo()).toMatchObject({ active: true, until: new Date(`${HOJE}T10:28:00`).getTime(), block: { endTime: '10:28' } });
+    relogioEm('10:27:58'); // 10:27:59 — ainda falta 1s
+    expect(ultimo()).toMatchObject({ active: true });
+    relogioEm('10:27:59'); // 10:28:00
+    expect(ultimo()).toEqual({ v: 2, active: false, reason: 'stopped' }); // acabou → emendou na pausa
   });
 
   it('pausa não bloqueia: a emenda estudo → pausa manda parar', () => {

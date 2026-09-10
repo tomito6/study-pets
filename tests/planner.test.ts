@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_CFG } from '../src/domain/config';
 import { calcActualEnd, generateBlocks } from '../src/domain/planner';
-import type { PlannerConfig, StudyEvent } from '../src/domain/types';
+import { blockMins } from '../src/domain/time';
+import type { PauseRecord, PlannerConfig, StudyEvent } from '../src/domain/types';
 
 const base: PlannerConfig = {
   studyWindows: [{ start: '09:00', end: '18:00' }],
@@ -230,7 +232,7 @@ describe('generateBlocks — pausa nunca invade um bloqueio', () => {
       '09:00-09:30 estudo',
       '09:30-10:00 estudo', // a pausa das 09:30 é pulada pra caber um pomo inteiro antes do evento
       '10:00-10:20 event',
-      '10:20-10:50 estudo',
+      '10:20-11:00 estudo', // a sobra de 10 min no fim da janela estica o último estudo (2026-09-10; antes era jogada fora)
     ]);
   });
 
@@ -256,6 +258,143 @@ describe('generateBlocks — pausa nunca invade um bloqueio', () => {
         const next = blocks[i + 1];
         if (b.type === 'pausa' && next) expect(next.time >= b.endTime, `${b.time}-${b.endTime} pausa invade ${next.time}`).toBe(true);
       });
+    }
+  });
+});
+
+describe('generateBlocks — a sobra no fim da janela vira estudo (2026-09-10)', () => {
+  // Até aqui a regra "mini se >= metade, senão estica" só valia antes de um evento: no fim da
+  // janela, depois de um pomo normal, o laço saía e a sobra sumia — 20 min com pomo de 25 não
+  // viravam nada. Agora o fim da janela é tratado como qualquer outro limite.
+  const janela = (end: string, over: Partial<PlannerConfig> = {}) =>
+    generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '09:00', end }], ...over }));
+  const resumo = (blocks: ReturnType<typeof generateBlocks>) => blocks.map((b) => `${b.time}-${b.endTime} ${b.type}${b.mini ? ' mini' : ''}`);
+
+  it('sobra >= metade do pomo depois da pausa: a pausa fica e a sobra vira mini', () => {
+    expect(resumo(janela('09:50'))).toEqual(['09:00-09:25 estudo', '09:25-09:30 pausa', '09:30-09:50 estudo mini']);
+    expect(janela('09:50')[2]!.xp).toBe(40);
+  });
+
+  it('sobra menor que isso: sem pausa, o último estudo vai até o fim da janela', () => {
+    expect(resumo(janela('09:35'))).toEqual(['09:00-09:35 estudo']);
+    expect(janela('09:35')[0]!.xp).toBe(70);
+  });
+
+  it('o dia inteiro: 10:20 ganha um mini de 20 min que antes sumia', () => {
+    expect(resumo(janela('10:20'))).toEqual([
+      '09:00-09:25 estudo', '09:25-09:30 pausa', '09:30-09:55 estudo', '09:55-10:00 pausa', '10:00-10:20 estudo mini',
+    ]);
+  });
+
+  it('janela que fecha em ciclo não muda: o dia padrão continua terminando em estudo cheio', () => {
+    const blocks = generateBlocks(DEFAULT_CFG);
+    expect(blocks[blocks.length - 1]).toMatchObject({ time: '17:15', endTime: '17:40', type: 'estudo', xp: 50 });
+    expect(blocks.some((b) => b.mini)).toBe(false);
+  });
+
+  it('o último estudo só é esticado se termina exatamente onde a sobra começa', () => {
+    // Antes: com dois eventos próximos, o gerador esticava o estudo de ANTES do primeiro evento pra
+    // absorver os 10 min de depois dele — um estudo por cima da pausa e do evento. Agora a sobra
+    // pequena depois de um bloqueio fica livre.
+    const blocks = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '09:00', end: '12:00' }] }), [
+      { name: 'A', start: '10:00', end: '10:30', countsAsStudy: false },
+      { name: 'B', start: '10:40', end: '11:00', countsAsStudy: false },
+    ]);
+    expect(resumo(blocks).slice(2, 7)).toEqual([
+      '09:30-09:55 estudo', '09:55-10:00 pausa', '10:00-10:30 intervalo', '10:40-11:00 intervalo', '11:00-11:25 estudo',
+    ]);
+    blocks.forEach((b, i) => {
+      const next = blocks[i + 1];
+      if (next) expect(next.time >= b.endTime, `${b.time}-${b.endTime} passa por cima de ${next.time}`).toBe(true);
+    });
+  });
+});
+
+describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)', () => {
+  const janela = (end: string, pauses: PauseRecord[], events: StudyEvent[] = [], over: Partial<PlannerConfig> = {}) =>
+    generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '09:00', end }], ...over }), events, pauses);
+  const resumo = (blocks: ReturnType<typeof generateBlocks>) =>
+    blocks.map((b) => `${b.time}-${b.endTime} ${b.type}${b.mini ? ' mini' : ''}${b.paused ? ` p${b.paused}` : ''}`);
+
+  it('o bloco que contém a pausa fica mais longo, com o mesmo XP; tudo depois desliza', () => {
+    const blocks = janela('10:20', [{ at: '09:10', mins: 7 }]);
+    expect(resumo(blocks)).toEqual([
+      '09:00-09:32 estudo p7', '09:32-09:37 pausa', '09:37-10:02 estudo', '10:02-10:07 pausa', '10:07-10:20 estudo mini',
+    ]);
+    expect(blocks[0]).toMatchObject({ xp: 50, paused: 7 });
+    expect(blockMins(blocks[0]!)).toBe(25);
+    expect(blocks[4]).toMatchObject({ xp: 26 }); // o último estudo encolheu pra 13 min
+  });
+
+  it('o fim da janela não se move: a pausa no último bloco encurta o estudo', () => {
+    const blocks = janela('09:50', [{ at: '09:40', mins: 10 }]);
+    expect(resumo(blocks)).toEqual(['09:00-09:25 estudo', '09:25-09:30 pausa', '09:30-09:50 estudo mini p10']);
+    expect(blocks[2]).toMatchObject({ xp: 20 }); // 10 min que valem
+    expect(blockMins(blocks[2]!)).toBe(10);
+  });
+
+  it('um evento fixo corta o bloco empurrado; a pausa que atravessa o evento se dissolve nele', () => {
+    const almoco: StudyEvent = { name: '🍽️ Almoço', start: '13:00', end: '14:00', countsAsStudy: false };
+    const blocks = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '12:00', end: '15:00' }] }), [almoco], [{ at: '12:40', mins: 10 }]);
+    expect(resumo(blocks).slice(0, 5)).toEqual([
+      '12:00-12:25 estudo', '12:25-12:30 pausa', '12:30-13:00 estudo p10', '13:00-14:00 intervalo', '14:00-14:25 estudo',
+    ]);
+    expect(blockMins(blocks[2]!)).toBe(20);
+    // Pausa que passa do evento: só o que cabe antes conta como pausa do bloco.
+    const cross = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '12:00', end: '15:00' }] }), [almoco], [{ at: '12:50', mins: 15 }]);
+    expect(cross[2]).toMatchObject({ time: '12:30', endTime: '13:00', paused: 10, xp: 40 });
+  });
+
+  it('duas pausas no mesmo bloco somam; a segunda pode cair no trecho já esticado', () => {
+    const blocks = janela('10:20', [{ at: '09:05', mins: 5 }, { at: '09:20', mins: 5 }]);
+    expect(blocks[0]).toMatchObject({ time: '09:00', endTime: '09:35', paused: 10, xp: 50 });
+  });
+
+  it('pausar a pausa do pomodoro: ela estica, o XP dela não muda, e o estudo seguinte emenda nela', () => {
+    const blocks = janela('10:20', [{ at: '09:27', mins: 10 }]);
+    expect(blocks[1]).toMatchObject({ time: '09:25', endTime: '09:40', type: 'pausa', paused: 10, xp: 5 });
+    expect(blockMins(blocks[1]!)).toBe(5);
+    expect(blocks[2]!.time).toBe('09:40');
+  });
+
+  it('pausa cedo empurra o dia inteiro contra o fim da janela; o ciclo de 4 pomos não muda', () => {
+    const sem = janela('17:30', []);
+    const com = janela('17:30', [{ at: '10:00', mins: 20 }]);
+    expect(com.filter((b) => b.type === 'estudo').length).toBe(sem.filter((b) => b.type === 'estudo').length - 1);
+    expect(com[com.length - 1]).toMatchObject({ endTime: '17:30', type: 'estudo' });
+    expect(com.filter((b) => b.name.includes('longa')).map((b) => b.time)).toEqual(['11:15', '13:25', '15:35']);
+    for (const b of com) if (b.type === 'estudo' && !b.paused) expect(blockMins(b)).toBeGreaterThanOrEqual(12);
+  });
+
+  it('pausa que não cai em estudo/pausa nenhum é ignorada em silêncio', () => {
+    const almoco: StudyEvent = { name: 'Almoço', start: '10:00', end: '11:00', countsAsStudy: false };
+    expect(janela('12:00', [{ at: '10:20', mins: 10 }], [almoco])).toEqual(janela('12:00', [], [almoco]));
+    expect(janela('12:00', [{ at: '13:00', mins: 10 }])).toEqual(janela('12:00', []));
+    expect(janela('12:00', [{ at: 'xx', mins: 10 } as PauseRecord, { at: '09:00', mins: 0 }])).toEqual(janela('12:00', []));
+  });
+
+  it('a pausa que engole o bloco inteiro contra um limite não emite bloco nenhum', () => {
+    const almoco: StudyEvent = { name: 'Almoço', start: '09:01', end: '10:00', countsAsStudy: false };
+    // Sobra de 1 min antes do almoço não vira nada; e uma pausa nesse minuto não pode criar um bloco de 0 min.
+    const blocks = janela('12:00', [{ at: '09:00', mins: 30 }], [almoco]);
+    expect(blocks.every((b) => blockMins(b) > 0)).toBe(true);
+  });
+
+  it('nunca produz blocos sobrepostos, com qualquer combinação de pausas e eventos', () => {
+    const eventos: StudyEvent[] = [
+      { name: 'A', start: '10:00', end: '10:30', countsAsStudy: false },
+      { name: 'B', start: '13:00', end: '14:00', countsAsStudy: false },
+    ];
+    for (const at of ['09:00', '09:12', '09:27', '09:59', '10:31', '12:50', '14:00', '16:55', '17:20']) {
+      for (const mins of [1, 5, 13, 30, 90]) {
+        const blocks = janela('17:30', [{ at, mins }], eventos);
+        blocks.forEach((b, i) => {
+          const next = blocks[i + 1];
+          if (next) expect(next.time >= b.endTime, `${at}+${mins}: ${b.time}-${b.endTime} invade ${next.time}`).toBe(true);
+          expect(blockMins(b), `${at}+${mins}: ${b.time}-${b.endTime} sem duração`).toBeGreaterThan(0);
+        });
+        expect(blocks[blocks.length - 1]!.type).not.toBe('pausa');
+      }
     }
   });
 });

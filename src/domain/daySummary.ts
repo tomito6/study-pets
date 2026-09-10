@@ -33,13 +33,20 @@ export interface DaySummary {
   pets: PetGain[];
   /** Nada marcado: dia encerrado sem ganhos. */
   empty: boolean;
+  /** As pausas do timer no dia (só aparece se houve alguma). */
+  pauses?: { count: number; mins: number };
 }
 
 /**
  * `owned` são as instâncias depois de creditar: é delas que sai se a evolução
  * destravou hoje (o snapshot só tem XP). Sem elas, `evolutionUnlocked` fica falso.
  */
-export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot, owned: readonly PetInstance[] = []): DaySummary {
+export function daySummary(
+  before: ProgressSnapshot,
+  after: ProgressSnapshot,
+  owned: readonly PetInstance[] = [],
+  pauses?: { count: number; mins: number },
+): DaySummary {
   const pets: PetGain[] = [];
   for (const id of Object.keys(after.petXP)) {
     const oldXP = before.petXP[id] || 0;
@@ -54,7 +61,7 @@ export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot, ow
   }
   const userXP = after.totalXP - before.totalXP;
   const userCoins = after.coins - before.coins;
-  return {
+  const out: DaySummary = {
     userXP,
     userCoins,
     userLevelUp: after.userLevelIdx > before.userLevelIdx,
@@ -63,4 +70,6 @@ export function daySummary(before: ProgressSnapshot, after: ProgressSnapshot, ow
     pets,
     empty: userXP === 0 && userCoins === 0 && pets.length === 0,
   };
+  if (pauses && pauses.count > 0) out.pauses = pauses;
+  return out;
 }

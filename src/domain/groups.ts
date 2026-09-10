@@ -6,7 +6,7 @@
 // os blocos se deslocam, o grupo continua cobrindo o mesmo trecho e pega o que
 // estiver lá. Puro — sem estado, sem DOM.
 
-import { minsToTime, timeToMins } from './time';
+import { blockMins, minsToTime, timeToMins } from './time';
 import type { CheckRecord, StudyBlock, StudyGroup, TimeString } from './types';
 
 export const DEFAULT_GROUP_NAME = 'Grupo';
@@ -46,7 +46,7 @@ export function groupProgress(
   const p: GroupProgress = { done: 0, total: 0, minsDone: 0, minsTotal: 0 };
   for (const b of blocks) {
     if (!countsForGroup(b) || !blockInGroup(b, g)) continue;
-    const dur = timeToMins(b.endTime) - timeToMins(b.time);
+    const dur = blockMins(b);
     p.total++;
     p.minsTotal += dur;
     if (dayChecks && dayChecks[b.time]) {

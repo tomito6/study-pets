@@ -7,6 +7,7 @@ import { isDayClosed } from '../domain/checks';
 import { daySummary } from '../domain/daySummary';
 import type { DaySummary, ProgressSnapshot } from '../domain/daySummary';
 import { extendDayTo, extendWindowsTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
+import { pausesTotal } from '../domain/pauses';
 import { getLevelIdx } from '../domain/progression';
 import { dk } from '../domain/time';
 import type { TimeString } from '../domain/types';
@@ -17,6 +18,7 @@ import { applyPendingPetXP } from './pets';
 import { blocksForDay, clearBlockCache, computeStatsNow } from './plan';
 import { scheduleSave } from './save';
 import { stopBlocking } from './siteBlock';
+import { stopTimer } from './timer';
 
 export interface DayEndState {
   confirmOpen: boolean;
@@ -56,13 +58,14 @@ function snapshot(now: Date): ProgressSnapshot {
 export function closeDay(now: Date = new Date()): DaySummary {
   const todayKey = dk(now);
   const before = snapshot(now);
+  if (derived.timerPausedAt != null) stopTimer(); // encerrar o dia com o timer pausado: a pausa acaba aqui, sem registro
   if (!state.closedDays) state.closedDays = {};
   state.closedDays[todayKey] = true;
   applyPendingPetXP(now);
   scheduleSave(); // notifica → o memo de stats invalida
   clearPromptTimer();
   stopBlocking(); // o dia acabou: nada mais bloqueia
-  const summary = daySummary(before, snapshot(now), state.pets.owned);
+  const summary = daySummary(before, snapshot(now), state.pets.owned, pausesTotal(state.pauses?.[todayKey]));
   set({ confirmOpen: false, promptOpen: false, summary });
   return summary;
 }
@@ -84,6 +87,8 @@ function todayLastStudyEnd(now: Date): TimeString | null {
 
 function checkEndOfDayPrompt(now: Date): void {
   if (promptShown) return;
+  // Com o timer pausado o último estudo ainda vai mudar — quem retoma reagenda; um "encerrar?" em cima de um pomo pausado é a coisa errada na hora errada.
+  if (derived.timerPausedAt != null) return;
   const todayKey = dk(now);
   const ok = shouldPromptEndOfDay({
     dayClosed: isDayClosed(state.closedDays, todayKey),

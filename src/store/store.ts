@@ -66,6 +66,8 @@ export interface CompletedBlock {
 export interface Derived {
   weeks: Week[];
   timerBlock: StudyBlock | null;
+  /** ms de quando o bloco em andamento foi pausado; null rodando. O registro no doc só nasce ao retomar. */
+  timerPausedAt: number | null;
   focusOpen: boolean;
   /** Preenchido quando o foco emenda de um bloco no seguinte; limpo ao parar/iniciar. */
   timerCompleted: CompletedBlock | null;
@@ -95,6 +97,7 @@ export interface SiteBlockRuntime {
 export const derived: Derived = {
   weeks: [],
   timerBlock: null,
+  timerPausedAt: null,
   focusOpen: false,
   timerCompleted: null,
   startRequest: null,
