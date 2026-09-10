@@ -115,30 +115,75 @@ export interface BalloonPlacement {
   arrowX: number;
 }
 
+/**
+ * A faixa do documento que o usuário enxerga agora — em coordenadas do documento,
+ * como os retângulos. `top` já vem descontado do que a barra fixa do topo cobre
+ * (a `.topbar` é sticky em qualquer largura, e a `.timer-bar` gruda abaixo dela
+ * enquanto um bloco roda): o pixel de cima da faixa é o primeiro que a pessoa vê,
+ * não o primeiro do documento. Sem isso, "cabe acima do elemento" era mentira toda
+ * vez que o espaço acima ficava embaixo da barra.
+ */
+export interface TourViewport {
+  width: number;
+  /** Primeiro Y visível (scroll + a altura da barra do topo). */
+  top: number;
+  /** Último Y visível (scroll + a altura da janela). */
+  bottom: number;
+}
+
 /** Espaço entre o elemento e o balão, e a margem mínima até a borda da tela. */
 export const TOUR_GAP = 10;
 export const TOUR_MARGIN = 8;
 const ARROW_INSET = 18;
 
 /**
- * Onde o balão fica em relação ao elemento ancorado. Vira pro outro lado só se o
- * lado preferido não cabe (acima do topo do documento); horizontalmente nunca sai
- * da tela — em 480px, o balão de 280px fica sempre inteiro.
+ * Onde o balão fica em relação ao elemento ancorado, nos dois eixos.
+ *
+ * Vertical: fica no lado preferido se o balão couber inteiro na faixa visível;
+ * senão vira pro outro; se nenhum dos dois couber (janela baixa, elemento grande),
+ * fica no preferido encostado na borda — um balão deslocado ainda se lê, um balão
+ * fora da tela não. Horizontal: nunca sai da tela — em 480px, o balão de 280px
+ * fica sempre inteiro.
  */
-export function placeBalloon(anchor: Rect, balloon: Size, viewportWidth: number, step: Pick<TourStep, 'side' | 'align'>): BalloonPlacement {
-  const above = anchor.top - TOUR_GAP - balloon.height;
-  const side: TourSide = step.side === 'above' && above < TOUR_MARGIN ? 'below' : step.side;
-  const top = side === 'above' ? above : anchor.top + anchor.height + TOUR_GAP;
+export function placeBalloon(anchor: Rect, balloon: Size, viewport: TourViewport, step: Pick<TourStep, 'side' | 'align'>): BalloonPlacement {
+  const topOf = (s: TourSide) =>
+    s === 'above' ? anchor.top - TOUR_GAP - balloon.height : anchor.top + anchor.height + TOUR_GAP;
+  const fits = (s: TourSide) => {
+    const t = topOf(s);
+    return t >= viewport.top + TOUR_MARGIN && t + balloon.height <= viewport.bottom - TOUR_MARGIN;
+  };
+  const other: TourSide = step.side === 'above' ? 'below' : 'above';
+  const side: TourSide = fits(step.side) || !fits(other) ? step.side : other;
+
+  const minTop = viewport.top + TOUR_MARGIN;
+  const maxTop = Math.max(minTop, viewport.bottom - balloon.height - TOUR_MARGIN);
+  const top = Math.min(maxTop, Math.max(minTop, topOf(side)));
 
   let left =
     step.align === 'start' ? anchor.left
     : step.align === 'end' ? anchor.left + anchor.width - balloon.width
     : anchor.left + anchor.width / 2 - balloon.width / 2;
-  const maxLeft = Math.max(TOUR_MARGIN, viewportWidth - balloon.width - TOUR_MARGIN);
+  const maxLeft = Math.max(TOUR_MARGIN, viewport.width - balloon.width - TOUR_MARGIN);
   left = Math.min(maxLeft, Math.max(TOUR_MARGIN, left));
 
   const anchorCenter = anchor.left + anchor.width / 2;
   const arrowX = Math.min(balloon.width - ARROW_INSET, Math.max(ARROW_INSET, anchorCenter - left));
 
   return { side, top: Math.round(top), left: Math.round(left), arrowX: Math.round(arrowX) };
+}
+
+/**
+ * Precisa rolar a página pra mostrar o elemento? Só quando ele está de fato fora da
+ * faixa visível — o último balão do Plano aponta pro "Encerrar o dia", lá no fim da
+ * lista, e sem isso ele nascia centenas de pixels abaixo da dobra: a pessoa clicava
+ * "Próximo" e o tour parecia sumir. Elemento já visível não faz a página pular.
+ *
+ * Devolve o `scrollY` alvo (o elemento centrado na faixa, pra sobrar espaço pro balão
+ * dos dois lados) ou null pra não mexer. Quem rola é a feature; aqui é só a conta.
+ */
+export function scrollToShow(anchor: Rect, viewport: TourViewport, scrollY: number): number | null {
+  if (anchor.top >= viewport.top && anchor.top + anchor.height <= viewport.bottom) return null;
+  const inset = viewport.top - scrollY;
+  const centre = anchor.top + anchor.height / 2;
+  return Math.max(0, Math.round(centre - inset - (viewport.bottom - viewport.top) / 2));
 }

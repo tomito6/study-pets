@@ -116,7 +116,7 @@ function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode }: Picke
   return (
     <>
       <div className="week-row">
-        <select id="week-select" value={week} onChange={(e) => setView(Number(e.target.value), 0)}>
+        <select id="week-select" aria-label={t.weekLabel} value={week} onChange={(e) => setView(Number(e.target.value), 0)}>
           {weeks.map((w) => (
             <option key={w.n} value={w.n}>{t.weekOption(w.n, fmtDay(w.start), fmtDay(w.end))}</option>
           ))}

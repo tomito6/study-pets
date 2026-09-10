@@ -52,6 +52,36 @@ function vigiarErros(page: Page): string[] {
 
 const checksDeEstudo = (page: Page) => page.locator('.block-row:not(.pausa-row) .check');
 
+/**
+ * O balão do tour está de fato utilizável? `toBeVisible()` do Playwright olha CSS e
+ * caixa — passa com o elemento atrás de uma barra fixa ou centenas de pixels abaixo
+ * da dobra, que foi exatamente como dois bugs de posicionamento viveram verdes aqui.
+ * Isto cobra o que o olho cobra: dentro da janela e fora de baixo da `.topbar`.
+ */
+async function balaoUtilizavel(page: Page) {
+  // Medido dentro da página: `getBoundingClientRect` é relativo à janela, sem dúvida
+  // de qual sistema de coordenadas está em jogo.
+  const m = await page.evaluate(() => {
+    const b = document.querySelector('#tour-balloon');
+    const barra = document.querySelector('.topbar');
+    if (!b || !barra) return null;
+    const r = b.getBoundingClientRect();
+    return {
+      passo: b.getAttribute('data-step'),
+      topo: Math.round(r.top),
+      base: Math.round(r.bottom),
+      barra: Math.round(barra.getBoundingClientRect().bottom),
+      janela: window.innerHeight,
+    };
+  });
+  expect(m, 'o balão do tour não está na tela').not.toBeNull();
+  const { passo, topo, base, barra, janela } = m!;
+  expect(topo, `${passo}: o balão começa acima da dobra`).toBeGreaterThanOrEqual(0);
+  expect(base, `${passo}: o balão termina abaixo da dobra`).toBeLessThanOrEqual(janela);
+  // A `.topbar` é sticky com z-index acima do balão: encostar nela é sumir atrás dela.
+  expect(topo, `${passo}: o balão fica atrás da barra do topo`).toBeGreaterThanOrEqual(barra);
+}
+
 /** Lê "175 / 370 min" de um card de realizado da Análise, pra comparar por valor. */
 async function realizado(page: Page, id: string): Promise<{ done: number; planned: number }> {
   const texto = await page.locator(`#${id} .adh-val`).innerText();
@@ -1218,6 +1248,51 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: /Análise/ }).click();
     await expect(page.locator('#analytics-page')).toHaveClass(/visible/);
     await expect(balao).toHaveCount(0);
+  });
+
+  // O tour em tela grande. O layout B7 pôs uma `.topbar` sticky de z-index 100 acima do
+  // balão (z-index 80), e a barra do dia é sticky logo abaixo dela: "acima do elemento"
+  // virou "atrás da barra". Só aparece a partir de 1100px, e o resto da suíte roda em 480.
+  test.describe('no laptop', () => {
+    test.use({ viewport: { width: 1280, height: 800 } });
+
+    test('45. os balões do Plano ficam inteiros na tela, sem sumir atrás da barra do topo', async ({ page }) => {
+      await abrirApp(page);
+      const balao = page.locator('#tour-balloon');
+
+      await expect(balao).toContainText('Seu dia já está montado');
+      await balaoUtilizavel(page);
+      // Sem espaço acima da barra do dia, o balão vira pra baixo em vez de encostar na barra.
+      await expect(balao).toHaveClass(/tour-below/);
+
+      await page.locator('#tour-next').click();
+      await expect(balao).toContainText('A vida muda, o plano acompanha');
+      await balaoUtilizavel(page);
+
+      // O último aponta pro "Encerrar o dia", no fim da lista: a página tem que ir até ele.
+      await page.locator('#tour-next').click();
+      await expect(balao).toContainText('No fim do dia, encerre');
+      await balaoUtilizavel(page);
+      await expect(page.locator('#finish-day-wrap .finish-day-btn')).toBeInViewport();
+
+      await expect(page.locator('#tour-next')).toHaveText('Entendi');
+      await page.locator('#tour-next').click();
+      await expect(balao).toHaveCount(0);
+    });
+
+    test('46. o balão do Perfil e o da Análise também ficam inteiros no laptop', async ({ page }) => {
+      await abrirApp(page);
+      await page.locator('#tour-skip').click();
+
+      await page.getByRole('button', { name: /Perfil/ }).click();
+      await expect(page.locator('#tour-balloon')).toContainText('Pets são horas estudadas');
+      await balaoUtilizavel(page);
+      await page.locator('#tour-skip').click();
+
+      await page.getByRole('button', { name: /Análise/ }).click();
+      await expect(page.locator('#tour-balloon')).toContainText('Tô fazendo o que planejei?');
+      await balaoUtilizavel(page);
+    });
   });
 
   test('37. o personagem: trocar tom de pele, cor e cabelo muda o sprite na hora e sobrevive ao reload', async ({ page }) => {

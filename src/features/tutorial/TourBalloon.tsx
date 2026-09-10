@@ -12,8 +12,8 @@
 
 import { useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { finishTour } from '../../application/tutorial';
-import { activeTourArea, nextTourStep, placeBalloon, tourSteps } from '../../domain/tutorial';
-import type { BalloonPlacement, Rect } from '../../domain/tutorial';
+import { activeTourArea, nextTourStep, placeBalloon, scrollToShow, tourSteps } from '../../domain/tutorial';
+import type { BalloonPlacement, Rect, TourViewport } from '../../domain/tutorial';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
 
@@ -45,6 +45,39 @@ function docRect(el: Element): Rect {
   };
 }
 
+/**
+ * As barras grudadas no topo da janela. A `.topbar` é sticky em qualquer largura e a
+ * `.timer-bar` gruda logo abaixo dela enquanto um bloco roda — as duas cobrem o topo
+ * da tela, e o balão precisa saber disso pra não nascer atrás delas.
+ */
+const TOP_CHROME = '.topbar, .timer-bar';
+
+/** Quantos pixels do alto da janela estão cobertos por barra fixa agora. */
+function topInset(): number {
+  const barras = [...document.querySelectorAll(TOP_CHROME)]
+    .filter((el) => {
+      const pos = getComputedStyle(el).position;
+      return pos === 'sticky' || pos === 'fixed';
+    })
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.height > 0)
+    .sort((a, b) => a.top - b.top);
+  // Empilhadas: cada uma só conta se começa onde a anterior terminou (uma barra
+  // que ainda está longe do topo não cobre nada).
+  let inset = 0;
+  for (const r of barras) if (r.top <= inset + 1) inset = Math.max(inset, r.bottom);
+  return Math.max(0, Math.round(inset));
+}
+
+/** A faixa visível do documento, já descontada a barra do topo. */
+function tourViewport(): TourViewport {
+  return {
+    width: window.innerWidth,
+    top: window.scrollY + topInset(),
+    bottom: window.scrollY + window.innerHeight,
+  };
+}
+
 export function TourBalloon() {
   const { area, seen } = useAppState((s, d) => ({
     area: activeTourArea(s.tutorialSeen, s.uiTab, { onboardingOpen: d.onboardingOpen, loaded: !!s.user && d.weeks.length > 0 }),
@@ -63,6 +96,19 @@ export function TourBalloon() {
   const steps = area ? tourSteps(area) : [];
   const step = steps[Math.min(index, steps.length - 1)] ?? null;
 
+  // Antes de medir: traz o elemento pra vista se ele estiver fora dela. Precisa vir
+  // antes do efeito abaixo (layout effects rodam na ordem em que são declarados) —
+  // o lado do balão é decidido contra a faixa visível, então a página tem que já
+  // estar no lugar quando a medida acontece. Rolagem instantânea de propósito: com
+  // rolagem suave a medida aconteceria no meio do caminho.
+  useLayoutEffect(() => {
+    if (!step) return;
+    const el = document.querySelector(step.anchor);
+    if (!el) return;
+    const alvo = scrollToShow(docRect(el), tourViewport(), window.scrollY);
+    if (alvo !== null) window.scrollTo({ top: alvo });
+  }, [step]);
+
   // Mede e posiciona depois de cada render: se nada mudou, `samePos` segura o re-render.
   useLayoutEffect(() => {
     if (!step || !ref.current) return;
@@ -77,7 +123,7 @@ export function TourBalloon() {
       const ring = hl ? docRect(hl) : anchor;
       next = {
         mode: 'anchored',
-        place: placeBalloon(anchor, { width: b.width, height: b.height }, window.innerWidth, step),
+        place: placeBalloon(anchor, { width: b.width, height: b.height }, tourViewport(), step),
         ring: ring.width > 0 && ring.height > 0 ? ring : anchor,
       };
     }

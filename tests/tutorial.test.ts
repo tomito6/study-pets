@@ -13,6 +13,7 @@ import {
   nextTourStep,
   normalizeTutorialSeen,
   placeBalloon,
+  scrollToShow,
   tourSteps,
 } from '../src/domain/tutorial';
 import type { TutorialSeen } from '../src/domain/tutorial';
@@ -98,35 +99,37 @@ describe('qual área mostra o tour', () => {
 describe('placeBalloon — onde o balão cabe', () => {
   const balloon = { width: 280, height: 120 };
   const row = { top: 449, left: 16, width: 448, height: 46 }; // a primeira linha do plano em 480px
+  // A tela do celular sem nada rolado: a `.topbar` (sticky) come os 76px de cima.
+  const tela = { width: 480, top: 76, bottom: 900 };
 
   it('acima e alinhado à esquerda: termina 10px antes da linha, começa na borda dela', () => {
-    const p = placeBalloon(row, balloon, 480, { side: 'above', align: 'start' });
+    const p = placeBalloon(row, balloon, tela, { side: 'above', align: 'start' });
     expect(p).toEqual({ side: 'above', top: 449 - 10 - 120, left: 16, arrowX: 240 - 16 });
   });
 
   it('abaixo e alinhado à direita: encosta na borda direita do elemento', () => {
     const btn = { top: 381, left: 394, width: 70, height: 26 };
-    const p = placeBalloon(btn, balloon, 480, { side: 'below', align: 'end' });
+    const p = placeBalloon(btn, balloon, tela, { side: 'below', align: 'end' });
     expect(p.side).toBe('below');
     expect(p.top).toBe(381 + 26 + 10);
     expect(p.left).toBe(394 + 70 - 280);
     expect(p.arrowX).toBe(429 - 184); // no centro do botão, relativo ao balão
     // Elemento colado na borda direita da tela: a seta para antes do canto.
-    const canto = placeBalloon({ top: 381, left: 460, width: 20, height: 26 }, balloon, 480, { side: 'below', align: 'end' });
+    const canto = placeBalloon({ top: 381, left: 460, width: 20, height: 26 }, balloon, tela, { side: 'below', align: 'end' });
     expect(canto.left).toBe(480 - 280 - TOUR_MARGIN);
     expect(canto.arrowX).toBe(280 - 18);
   });
 
   it('centralizado, e clampado na tela quando o elemento está na borda', () => {
-    const p = placeBalloon({ top: 300, left: 16, width: 448, height: 47 }, balloon, 480, { side: 'above', align: 'center' });
+    const p = placeBalloon({ top: 300, left: 16, width: 448, height: 47 }, balloon, tela, { side: 'above', align: 'center' });
     expect(p.left).toBe(100);
-    const borda = placeBalloon({ top: 300, left: 0, width: 40, height: 40 }, balloon, 480, { side: 'above', align: 'center' });
+    const borda = placeBalloon({ top: 300, left: 0, width: 40, height: 40 }, balloon, tela, { side: 'above', align: 'center' });
     expect(borda.left).toBe(TOUR_MARGIN);
     expect(borda.arrowX).toBe(18);
   });
 
   it('vira pra baixo quando não cabe acima do topo do documento', () => {
-    const p = placeBalloon({ top: 60, left: 16, width: 448, height: 40 }, balloon, 480, { side: 'above', align: 'start' });
+    const p = placeBalloon({ top: 60, left: 16, width: 448, height: 40 }, balloon, tela, { side: 'above', align: 'start' });
     expect(p.side).toBe('below');
     expect(p.top).toBe(60 + 40 + 10);
   });
@@ -139,7 +142,7 @@ describe('placeBalloon — onde o balão cabe', () => {
     ];
     for (const a of anchors) {
       for (const align of ['start', 'center', 'end'] as const) {
-        const p = placeBalloon(a, balloon, 480, { side: 'below', align });
+        const p = placeBalloon(a, balloon, tela, { side: 'below', align });
         expect(p.left).toBeGreaterThanOrEqual(TOUR_MARGIN);
         expect(p.left + balloon.width).toBeLessThanOrEqual(480 - TOUR_MARGIN);
         expect(p.arrowX).toBeGreaterThanOrEqual(0);
@@ -149,8 +152,95 @@ describe('placeBalloon — onde o balão cabe', () => {
   });
 
   it('tela mais estreita que o balão: encosta na margem esquerda', () => {
-    const p = placeBalloon(row, { width: 280, height: 100 }, 260, { side: 'below', align: 'center' });
+    const p = placeBalloon(row, { width: 280, height: 100 }, { ...tela, width: 260 }, { side: 'below', align: 'center' });
     expect(p.left).toBe(TOUR_MARGIN);
+  });
+
+  // ---- o eixo vertical: a barra do topo e a dobra ----
+
+  it('a barra do topo empurra o balão pra baixo do elemento', () => {
+    // O caso real do laptop: a barra do dia é sticky logo abaixo da `.topbar` de 69px,
+    // e o espaço que sobra acima dela (104px) não cabe o balão de 120. Antes, o balão
+    // nascia em y=44 — 25px dele escondidos atrás da barra.
+    const barraDoDia = { top: 173, left: 261, width: 900, height: 32 };
+    const laptop = { width: 1480, top: 69, bottom: 900 };
+    const p = placeBalloon(barraDoDia, balloon, laptop, { side: 'above', align: 'start' });
+    expect(p.side).toBe('below');
+    expect(p.top).toBeGreaterThanOrEqual(laptop.top + TOUR_MARGIN);
+  });
+
+  it('sem a barra do topo, o mesmo elemento continua com o balão acima', () => {
+    const barraDoDia = { top: 173, left: 261, width: 900, height: 32 };
+    const p = placeBalloon(barraDoDia, balloon, { width: 1480, top: 0, bottom: 900 }, { side: 'above', align: 'start' });
+    expect(p.side).toBe('above');
+    expect(p.top).toBe(173 - 10 - 120);
+  });
+
+  it('vira pra cima quando não cabe abaixo da dobra', () => {
+    // Abaixo dele sobrariam 850..970, e a dobra é em 900: não cabe.
+    const perto = { top: 800, left: 16, width: 448, height: 40 };
+    const p = placeBalloon(perto, balloon, tela, { side: 'below', align: 'start' });
+    expect(p.side).toBe('above');
+    expect(p.top).toBe(800 - 10 - 120);
+  });
+
+  it('não cabendo de lado nenhum, fica dentro da faixa visível mesmo assim', () => {
+    // Janela baixa (celular deitado) com o elemento ocupando quase tudo.
+    const baixa = { width: 480, top: 76, bottom: 400 };
+    const grande = { top: 90, left: 16, width: 448, height: 290 };
+    const p = placeBalloon(grande, balloon, baixa, { side: 'above', align: 'start' });
+    expect(p.top).toBeGreaterThanOrEqual(baixa.top + TOUR_MARGIN);
+    expect(p.top + balloon.height).toBeLessThanOrEqual(baixa.bottom);
+  });
+
+  it('o balão nunca fica atrás da barra do topo nem abaixo da dobra', () => {
+    const telas = [
+      { width: 480, top: 76, bottom: 900 },
+      { width: 1480, top: 69, bottom: 900 },
+      { width: 1280, top: 69, bottom: 720 },
+    ];
+    for (const v of telas) {
+      for (const side of ['above', 'below'] as const) {
+        for (const top of [0, 100, 400, v.bottom - 20, v.bottom + 200]) {
+          const p = placeBalloon({ top, left: 16, width: 300, height: 40 }, balloon, v, { side, align: 'start' });
+          expect(p.top).toBeGreaterThanOrEqual(v.top + TOUR_MARGIN);
+          expect(p.top + balloon.height).toBeLessThanOrEqual(v.bottom);
+        }
+      }
+    }
+  });
+});
+
+describe('scrollToShow — quando a página precisa rolar até o elemento', () => {
+  const tela = { width: 480, top: 76, bottom: 900 };
+
+  it('elemento já visível não faz a página pular', () => {
+    expect(scrollToShow({ top: 300, left: 16, width: 448, height: 46 }, tela, 0)).toBeNull();
+    expect(scrollToShow({ top: 76, left: 16, width: 448, height: 46 }, tela, 0)).toBeNull();
+  });
+
+  it('elemento abaixo da dobra: centraliza ele na faixa visível', () => {
+    // O caso real do último balão do Plano: "Encerrar o dia" no fim de uma lista longa.
+    const botao = { top: 1900, left: 16, width: 448, height: 40 };
+    const alvo = scrollToShow(botao, tela, 0)!;
+    expect(alvo).not.toBeNull();
+    // Depois de rolar, o elemento está dentro da faixa — com folga dos dois lados.
+    const depois = { ...tela, top: alvo + 76, bottom: alvo + 900 };
+    expect(botao.top).toBeGreaterThan(depois.top);
+    expect(botao.top + botao.height).toBeLessThan(depois.bottom);
+  });
+
+  it('elemento acima da faixa (a pessoa rolou pra baixo): volta pra ele', () => {
+    const acima = { top: 100, left: 16, width: 448, height: 40 };
+    const alvo = scrollToShow(acima, { width: 480, top: 1076, bottom: 1900 }, 1000)!;
+    expect(alvo).toBeLessThan(1000);
+    expect(alvo).toBeGreaterThanOrEqual(0);
+  });
+
+  it('nunca rola pra antes do começo do documento', () => {
+    const alto = { top: 0, left: 16, width: 448, height: 20 };
+    const alvo = scrollToShow(alto, { width: 480, top: 576, bottom: 1400 }, 500);
+    expect(alvo).toBe(0);
   });
 });
 

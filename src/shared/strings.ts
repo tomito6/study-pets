@@ -65,6 +65,7 @@ export const strings = {
     stats: { estudos: 'Estudos', pausas: 'Pausas', semana: 'Semana' },
     weekChecks: (n: number) => `${n} ✓`,
     weekOption: (n: number, start: string, end: string) => `Semana ${n}  ·  ${start} – ${end}`,
+    weekLabel: 'Semana visível',
     days: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
     sessions: ['Sessão 1', 'Sessão 2', 'Sessão 3', 'Sessão 4', 'Sessão 5', 'Sessão 6'],
     sessionFallback: 'Sessão',
