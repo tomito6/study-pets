@@ -51,7 +51,7 @@ function render(grid, palette) {
 function write(dir, cfg) {
   mkdirSync(dir, { recursive: true });
   const palette = avatarPalette(cfg);
-  avatarFrames(cfg.style).forEach((grid, i) => {
+  avatarFrames(cfg.style, cfg.body).forEach((grid, i) => {
     writeFileSync(join(dir, `${i}.png`), encodePNG(AVATAR_W, AVATAR_H, render(grid, palette)));
   });
 }

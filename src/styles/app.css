@@ -865,6 +865,15 @@
     .av-card{grid-template-columns:1fr;justify-items:center;}
     .av-controls{width:100%;}
   }
+  /* Os mesmos controles no onboarding: sem caixa, preview maior — ali o personagem
+     é o assunto da tela, não um item de uma lista de ajustes. */
+  .onb-avatar{margin:14px 0 2px;}
+  .onb-avatar .av-preview{width:88px;height:154px;}
+  .onb-avatar .av-preview img{width:76px;height:133px;}
+  @media (max-width:520px){
+    .onb-avatar{grid-template-columns:1fr;justify-items:center;}
+    .onb-avatar .av-controls{width:100%;}
+  }
   .st-card .fit-study-btn{margin-bottom:0;}
   .st-card .ghost-btn{margin-top:10px;}
 

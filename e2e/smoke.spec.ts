@@ -9,9 +9,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 const DIA = '2026-09-02';
 
-/** Passa pelo onboarding: o gato como pet inicial (com o nome sugerido) e o período padrão. */
+/** Passa pelo onboarding: o personagem padrão, o gato como pet inicial (com o nome
+ *  sugerido) e o período padrão. */
 async function passarOnboarding(page: Page) {
   await expect(page.locator('#onboarding-panel')).toBeVisible();
+  await page.locator('#onb-avatar-next').click();
   await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
   await expect(page.locator('#starter-name')).not.toHaveValue('');
   await page.locator('#onb-next').click();
@@ -74,6 +76,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await expect(page.locator('#login-screen')).toBeHidden();
     await expect(page.locator('#onboarding-panel')).toBeVisible();
+    await expect(page.locator('#onb-avatar')).toBeVisible(); // o primeiro passo é o personagem
+    await page.locator('#onb-avatar-next').click();
     await expect(page.locator('#starter-grid .starter-card')).toHaveCount(5);
     await expect(page.locator('#today-label')).toContainText('quarta-feira');
   });
@@ -82,6 +86,7 @@ test.describe('Study Pets — smoke', () => {
     await page.clock.setFixedTime(new Date(`${DIA}T17:30:00`));
     await page.goto('/');
     await expect(page.locator('#onboarding-panel')).toBeVisible();
+    await page.locator('#onb-avatar-next').click();
     await expect(page.locator('.starter-notice')).toContainText('todos os outros');
     await expect(page.locator('#onb-next')).toBeDisabled(); // sem escolher, não passa
 
@@ -1139,6 +1144,46 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await page.getByRole('button', { name: /Perfil/ }).click();
     await expect(page.locator('#char-sprite')).toHaveAttribute('src', comCabelo!);
+  });
+
+  test('40. o personagem no onboarding: a escolha do primeiro passo é a que vale depois', async ({ page }) => {
+    await page.clock.setFixedTime(new Date(`${DIA}T17:30:00`));
+    await page.goto('/');
+    await expect(page.locator('#onb-avatar')).toBeVisible();
+
+    const preview = page.locator('#onb-avatar-preview');
+    const antes = await preview.getAttribute('src');
+    expect(antes).toMatch(/^data:image\/png/);
+
+    await page.locator('#onb-avatar [data-swatch="ebano"]').click();
+    await page.locator('#onb-avatar [data-style="longo"]').click();
+    await page.locator('#onb-avatar [data-body="curvo"]').click();
+    const escolhido = await preview.getAttribute('src');
+    expect(escolhido).not.toBe(antes);
+
+    // Ir pro pet e voltar não perde a escolha.
+    await page.locator('#onb-avatar-next').click();
+    await page.locator('#onb-avatar-back').click();
+    await expect(page.locator('#onb-avatar [data-body="curvo"]')).toHaveClass(/selected/);
+    await expect(preview).toHaveAttribute('src', escolhido!);
+
+    await page.locator('#onb-avatar-next').click();
+    await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
+    await page.locator('#onb-next').click();
+    await page.getByRole('button', { name: 'Começar' }).click();
+    await expect(page.locator('#onboarding-panel')).toBeHidden();
+
+    // É a mesma aparência no Perfil…
+    await page.locator('#tour-skip').click();
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await expect(page.locator('#char-sprite')).toHaveAttribute('src', escolhido!);
+
+    // …e as Configurações abrem com ela selecionada.
+    await page.getByRole('button', { name: /Plano/ }).click();
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await expect(page.locator('#avatar-picker [data-swatch="ebano"]')).toHaveClass(/selected/);
+    await expect(page.locator('#avatar-picker [data-body="curvo"]')).toHaveClass(/selected/);
   });
 
   test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {

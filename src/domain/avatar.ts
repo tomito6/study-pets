@@ -39,6 +39,16 @@ export interface HairStyle {
 }
 
 /**
+ * A silhueta do corpo. Duas por enquanto: `reto` (ombro e quadril na mesma
+ * largura) e `curvo` (ombro mais estreito, cintura marcada, pernas juntas).
+ * É forma, não gênero — qualquer penteado combina com qualquer corpo.
+ */
+export interface BodyShape {
+  id: string;
+  name: string;
+}
+
+/**
  * Seis tons, do mais claro ao mais escuro, com passo parelho — nenhum é "o
  * padrão" e nenhum é um desvio dos outros. O contorno é sempre uma versão bem
  * escura do próprio tom: contorno preto chapado achata a pele escura.
@@ -64,6 +74,11 @@ export const HAIRS: readonly HairColor[] = [
   { id: 'azul', name: 'Azul', base: [86, 130, 190], shade: [58, 96, 150] },
 ];
 
+export const BODIES: readonly BodyShape[] = [
+  { id: 'reto', name: 'Reto' },
+  { id: 'curvo', name: 'Curvo' },
+];
+
 export const HAIR_STYLES: readonly HairStyle[] = [
   { id: 'curto', name: 'Curto' },
   { id: 'ondulado', name: 'Ondulado' },
@@ -77,9 +92,10 @@ export interface AvatarConfig {
   skin: string;
   hair: string;
   style: string;
+  body: string;
 }
 
-export const DEFAULT_AVATAR: AvatarConfig = { skin: 'mel', hair: 'castanho', style: 'curto' };
+export const DEFAULT_AVATAR: AvatarConfig = { skin: 'mel', hair: 'castanho', style: 'curto', body: 'reto' };
 
 const has = <T extends { id: string }>(list: readonly T[], id: unknown): boolean =>
   typeof id === 'string' && list.some((x) => x.id === id);
@@ -91,15 +107,19 @@ export function normalizeAvatar(raw: unknown): AvatarConfig {
     skin: has(SKINS, a.skin) ? a.skin! : DEFAULT_AVATAR.skin,
     hair: has(HAIRS, a.hair) ? a.hair! : DEFAULT_AVATAR.hair,
     style: has(HAIR_STYLES, a.style) ? a.style! : DEFAULT_AVATAR.style,
+    body: has(BODIES, a.body) ? a.body! : DEFAULT_AVATAR.body,
   };
 }
 
 export const skinOf = (id: string): SkinTone => SKINS.find((s) => s.id === id) ?? SKINS[1]!;
 export const hairOf = (id: string): HairColor => HAIRS.find((h) => h.id === id) ?? HAIRS[1]!;
 
+const darker = (c: RGB, k: number): RGB => [Math.round(c[0] * k), Math.round(c[1] * k), Math.round(c[2] * k)];
+
 /**
  * As letras do grid → cor. `S`/`s` pele e sombra, `K` traço, `H`/`h` cabelo e
- * sombra, `W`/`E` olho, `C`/`c` camiseta, `P`/`p` calça, `B` sapato.
+ * sombra, `L` cílio, `W`/`E` branco do olho e pupila, `C`/`c` camiseta,
+ * `P`/`p` calça, `B` sapato.
  */
 export function avatarPalette(cfg: AvatarConfig): Record<string, RGB> {
   const skin = skinOf(cfg.skin);
@@ -110,6 +130,7 @@ export function avatarPalette(cfg: AvatarConfig): Record<string, RGB> {
     K: skin.line,
     H: hair.base,
     h: hair.shade,
+    L: darker(skin.line, 0.62),
     W: [252, 250, 248],
     E: [58, 44, 38],
     C: [122, 154, 108],
@@ -170,37 +191,73 @@ const HEAD: ReadonlyArray<readonly [number, number]> = [
   [5, 12], [5, 13], [5, 14], [5, 15], [5, 16], [6, 17], [7, 18], [9, 19],
 ];
 
-/** O corpo, sem cabelo: cabeça, rosto, tronco, braços e pernas. */
-function body(g: Grid): void {
+/** Cabeça, rosto e pescoço: iguais nos dois corpos. */
+function head(g: Grid): void {
   for (const [x0, y] of HEAD) band(g, x0, y, y, 'S');
 
-  // rosto
-  pair(g, 8, 12, 9, 13, 'W');
-  pair(g, 8, 13, 9, 13, 'E');
+  // rosto: o olho é cílio (a pálpebra de cima) + branco + pupila no meio
+  pair(g, 7, 12, 9, 12, 'L');
+  pair(g, 7, 13, 9, 13, 'W');
+  pair(g, 8, 13, 8, 13, 'E');
   pair(g, 8, 10, 9, 10, 'K');       // sobrancelhas
   dots(g, [[11, 15], [12, 15]], 's'); // nariz
-  pair(g, 7, 14, 7, 15, 's');        // maçãs do rosto
-  rect(g, 10, 17, 13, 17, 'K');      // boca
+  pair(g, 7, 15, 7, 15, 's');        // maçãs do rosto: um pixel só, na altura do nariz —
+                                     // dois, logo abaixo do olho, liam como lágrima
+  dots(g, [[10, 17], [13, 17]], 'K'); // boca: os cantos ficam onde a linha reta estava…
+  rect(g, 11, 18, 12, 18, 'K');      // …e o meio desce um pixel
 
-  // pescoço e tronco
-  rect(g, 10, 20, 13, 21, 'S');
+  rect(g, 10, 20, 13, 21, 'S');      // pescoço
   rect(g, 10, 21, 13, 21, 's');
-  rect(g, 8, 22, 15, 33, 'C');
-  band(g, 8, 22, 22, 'c');           // gola
-  pair(g, 8, 23, 8, 33, 'c');        // o vinco que separa o tronco do braço
-  band(g, 8, 33, 33, 'c');           // barra da camiseta
-
-  // braços: manga, antebraço, mão
-  pair(g, 6, 23, 7, 28, 'C');
-  pair(g, 6, 24, 6, 28, 'c');
-  pair(g, 6, 29, 7, 32, 'S');
-  pair(g, 6, 30, 6, 32, 's');
-
-  // pernas e sapatos
-  pair(g, 8, 34, 10, 39, 'P');
-  pair(g, 8, 35, 8, 39, 'p');
-  pair(g, 7, 40, 10, 41, 'B');
 }
+
+/**
+ * Do ombro pra baixo — é só aqui que os corpos diferem. A roupa é a mesma nos
+ * dois (a camiseta e a calça de sempre); o que muda é a forma de quem a veste.
+ */
+const BODY_DRAW: Record<string, (g: Grid) => void> = {
+  // Ombro e quadril na mesma largura, pernas afastadas.
+  reto(g) {
+    rect(g, 8, 22, 15, 33, 'C');
+    band(g, 8, 22, 22, 'c');           // gola
+    pair(g, 8, 23, 8, 33, 'c');        // o vinco que separa o tronco do braço
+    band(g, 8, 33, 33, 'c');           // barra da camiseta
+
+    pair(g, 6, 23, 7, 28, 'C');        // braços: manga, antebraço, mão
+    pair(g, 6, 24, 6, 28, 'c');
+    pair(g, 6, 29, 7, 32, 'S');
+    pair(g, 6, 30, 6, 32, 's');
+
+    pair(g, 8, 34, 10, 39, 'P');       // pernas e sapatos
+    pair(g, 8, 35, 8, 39, 'p');
+    pair(g, 7, 40, 10, 41, 'B');
+  },
+  // Ombro mais estreito, cintura recortada e quadril aberto; pernas juntas. O
+  // braço é o mesmo do reto — o que muda é o corpo ao lado dele.
+  curvo(g) {
+    rect(g, 9, 22, 14, 29, 'C');       // ombro, peito e cintura
+    band(g, 9, 22, 22, 'c');           // gola
+    pair(g, 9, 23, 9, 26, 'c');        // o vinco lateral do peito
+    pair(g, 10, 25, 10, 25, 'c');      // a sombra do busto, dois pixels
+    pair(g, 9, 27, 9, 29, '.');        // a cintura: recorta 1 px de cada lado
+    rect(g, 8, 30, 15, 33, 'C');       // e o quadril abre de volta
+    pair(g, 8, 30, 8, 33, 'c');
+    band(g, 8, 33, 33, 'c');           // barra da camiseta
+
+    pair(g, 6, 23, 7, 28, 'C');        // braços: manga, antebraço, mão
+    pair(g, 6, 24, 6, 28, 'c');
+    pair(g, 8, 23, 8, 28, 'c');        // a sombra do lado de dentro, que o tronco
+    pair(g, 6, 29, 7, 32, 'S');        // não encosta mais pra fazer na cintura
+    pair(g, 6, 30, 6, 32, 's');
+    pair(g, 8, 29, 8, 29, 's');
+
+    pair(g, 9, 34, 11, 39, 'P');       // pernas juntas, com o vinco no meio
+    band(g, 11, 34, 39, 'p');
+    pair(g, 9, 35, 9, 39, 'p');
+    pair(g, 8, 40, 10, 41, 'B');
+  },
+};
+
+const bodyDraw = (id: string): ((g: Grid) => void) => BODY_DRAW[id] ?? BODY_DRAW[DEFAULT_AVATAR.body]!;
 
 /** Cada penteado desenha a metade esquerda; `back` é o que fica atrás do corpo. */
 type HairFn = (g: Grid, back: boolean) => void;
@@ -310,21 +367,24 @@ const cache = new Map<string, string[][]>();
  * personagem original: cabeça e ombros sobem 1 px nos frames do meio e voltam —
  * dois pra dentro, dois pra fora, no ritmo dos pets (180 ms).
  */
-export function avatarFrames(styleId: string): string[][] {
-  const cached = cache.get(styleId);
+export function avatarFrames(styleId: string, bodyId: string = DEFAULT_AVATAR.body): string[][] {
+  const key = `${styleId}|${bodyId}`;
+  const cached = cache.get(key);
   if (cached) return cached;
 
   const draw = HAIR_DRAW[styleId] ?? HAIR_DRAW.curto!;
   const g = blank();
   draw(g, true);   // o cabelo que fica atrás do corpo
-  body(g);
+  head(g);
+  bodyDraw(bodyId)(g);
   draw(g, false);  // e o que fica na frente
 
   const rest = g.map((r) => r.join(''));
   const frames = [outline(rest), outline(headUp(rest, 1, 21)), outline(headUp(rest, 1, 21)), outline(rest)];
-  cache.set(styleId, frames);
+  cache.set(key, frames);
   return frames;
 }
 
 /** Uma aparência em texto — o que os testes comparam e o que o script mostra no terminal. */
-export const avatarAscii = (styleId: string, frame = 0): string => avatarFrames(styleId)[frame]!.join('\n');
+export const avatarAscii = (styleId: string, frame = 0, bodyId: string = DEFAULT_AVATAR.body): string =>
+  avatarFrames(styleId, bodyId)[frame]!.join('\n');

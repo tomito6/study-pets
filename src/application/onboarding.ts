@@ -1,7 +1,13 @@
 // Onboarding: aparece na primeira vez (doc não existe) e ao cancelar a sessão.
-// Escolhe o pet inicial (quando não há pet nenhum), o período de uso e se pula
-// fins de semana; o resto é editável depois.
+// Monta o personagem, escolhe o pet inicial (quando não há pet nenhum), o período
+// de uso e se pula fins de semana; o resto é editável depois.
+//
+// A aparência chega aqui em vez de ser aplicada na hora de propósito: `setAvatar`
+// salva, e um documento criado antes do onboarding terminar faria um reload pular
+// o pet inicial.
 
+import { normalizeAvatar } from '../domain/avatar';
+import type { AvatarConfig } from '../domain/avatar';
 import { LUNCH_SERIES_ID, mealSeries } from '../domain/eventPresets';
 import { PETS, normalizePetName } from '../domain/pets';
 import { dk } from '../domain/time';
@@ -27,6 +33,8 @@ export interface OnboardingInput {
   skipWeekends: boolean;
   /** Obrigatório quando o usuário ainda não tem pet (ver `needsStarter`). */
   starter?: StarterChoice | null;
+  /** A aparência montada no primeiro passo. Ausente = fica a que já estava. */
+  avatar?: AvatarConfig | null;
 }
 
 export type OnboardingRefusal = 'end-before-start' | 'no-starter' | 'unknown-species' | 'invalid-name';
@@ -55,6 +63,7 @@ export function finishOnboarding(input: OnboardingInput, now: Date = new Date())
     if (!state.eventSeries) state.eventSeries = [];
     if (!state.eventSeries.some((s) => s.id === LUNCH_SERIES_ID)) state.eventSeries.push(mealSeries('13:00', 60));
   }
+  if (input.avatar) state.avatar = normalizeAvatar(input.avatar);
   state.config = { ...state.config, periodStart, periodEnd, skipWeekends: input.skipWeekends };
   derived.onboardingOpen = false;
   rebuildWeeks(now);

@@ -219,7 +219,7 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
   it('documento de antes do personagem (sem avatar) nasce com a aparência padrão; id fora do catálogo idem', () => {
     expect(hydrateUserDoc({}).avatar).toEqual(DEFAULT_AVATAR);
     expect(hydrateUserDoc({ avatar: { skin: 'ebano', hair: 'preto', style: 'raspado' } }).avatar)
-      .toEqual({ skin: 'ebano', hair: 'preto', style: 'raspado' });
+      .toEqual({ skin: 'ebano', hair: 'preto', style: 'raspado', body: DEFAULT_AVATAR.body });
     expect(hydrateUserDoc({ avatar: { skin: 'inexistente', hair: 'preto', style: 'raspado' } }).avatar)
       .toEqual({ ...DEFAULT_AVATAR, hair: 'preto', style: 'raspado' });
   });
@@ -321,7 +321,7 @@ describe('ida e volta', () => {
       groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
       windowOverrides: { '2026-09-01': { studyWindows: [] }, '2026-09-03': { studyWindows: [{ start: '10:10', end: '12:00' }] } },
       tutorialSeen: { plan: true, analytics: true },
-      avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado' },
+      avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado', body: 'curvo' },
       penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
       pauses: { '2026-09-02': [{ at: '10:10', mins: 7 }, { at: '15:02', mins: 1 }] },
       config: { ...DEFAULT_CFG, hardcore: { enabled: true }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },

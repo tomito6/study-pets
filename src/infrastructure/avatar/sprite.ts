@@ -11,7 +11,7 @@ import { AVATAR_FRAMES, AVATAR_H, AVATAR_W, avatarFrames, avatarPalette } from '
 import type { AvatarConfig } from '../../domain/avatar';
 
 const cache = new Map<string, string[]>();
-const keyOf = (cfg: AvatarConfig): string => `${cfg.skin}|${cfg.hair}|${cfg.style}`;
+const keyOf = (cfg: AvatarConfig): string => `${cfg.skin}|${cfg.hair}|${cfg.style}|${cfg.body}`;
 
 const EMPTY: string[] = Array.from({ length: AVATAR_FRAMES }, () => '');
 
@@ -45,7 +45,7 @@ export function avatarSprites(cfg: AvatarConfig): string[] {
   const hit = cache.get(key);
   if (hit) return hit;
   const palette = avatarPalette(cfg);
-  const frames = avatarFrames(cfg.style).map((grid) => paint(grid, palette));
+  const frames = avatarFrames(cfg.style, cfg.body).map((grid) => paint(grid, palette));
   cache.set(key, frames);
   return frames;
 }
