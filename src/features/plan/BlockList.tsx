@@ -8,6 +8,8 @@ import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { cleanBlockName as cleanName } from '../../domain/timer';
 import { isForfeited } from '../../domain/hardcore';
 import { blockInGroup, groupHeaderPositions, groupProgress } from '../../domain/groups';
+import { closedSessionOf, sessionSummary } from '../../domain/sessions';
+import { formatCompact } from '../../domain/settings';
 import type { GroupHeaderPosition } from '../../domain/groups';
 import { dk, timeToMins } from '../../domain/time';
 import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
@@ -17,7 +19,7 @@ import { state } from '../../store/store';
 import { GroupBox } from '../groups/GroupBox';
 import type { GroupSelection, RowSelectionProps } from '../groups/useGroupSelection';
 import type { EventDrag, HandleProps } from '../events/useEventDrag';
-import { spawnCheckRipple, spawnFloatGain } from './feedback';
+import { spawnCheckRipple, spawnFloatGain, spawnSessionCheer } from './feedback';
 
 const NUM_SESSIONS = 6;
 const GROUP_COLORS = 6;
@@ -54,6 +56,8 @@ export interface BlockActions {
 interface RowProps extends BlockActions {
   dateKey: DateKey;
   block: StudyBlock;
+  /** O dia inteiro — a sessão fechada é uma pergunta sobre a leva, não sobre a linha. */
+  blocks: StudyBlock[];
   /** Posição na lista — é o que a seleção de grupo usa. */
   idx: number;
   inGroup: boolean;
@@ -65,7 +69,7 @@ interface RowProps extends BlockActions {
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onStartBlock }: RowProps) {
+function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onStartBlock }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -131,9 +135,17 @@ function BlockRow({ dateKey, block: b, idx, inGroup, selection, drag, now, isTod
     const rect = e.currentTarget.getBoundingClientRect();
     const result = toggleBlockCheck(dateKey, b, now);
     if (result?.checked) {
-      playSound('check');
+      // Fechou a leva? O som muda (o mesmo 'deu certo' do fim de bloco no foco) e a
+      // faixa comemora. Não credita nada — o XP continua entrando só no fim do dia.
+      const leva = closedSessionOf(blocks, b, state.checks[dateKey]);
+      playSound(leva ? 'sucesso' : 'check');
       spawnCheckRipple(rect);
       spawnFloatGain(rect, result.xp, result.coins);
+      if (leva) {
+        const nome = strings.plan.sessions[leva.session % NUM_SESSIONS] ?? strings.plan.sessionFallback;
+        const c = strings.plan.sessionCheer;
+        spawnSessionCheer(c.title(nome), c.sub(leva.done, formatCompact(leva.minsDone), leva.xp, isToday && !closed));
+      }
     }
   };
 
@@ -310,12 +322,21 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
     if (isPomodoroPart(b) && b.session !== undefined && b.session !== lastSession) {
       lastSession = b.session;
       const sIdx = b.session % NUM_SESSIONS;
+      // Leva inteira marcada: o divisor vira o carimbo dela. É estado, não evento —
+      // por isso vale até pra sessão de um bloco só, que não ganha faixa (ver sessions.ts).
+      const resumo = sessionSummary(blocks, b.session, dayChecks);
+      const nome = strings.plan.sessions[sIdx] ?? strings.plan.sessionFallback;
       const sessionHasNow =
         isToday && blocks.some((bl) => bl.session === b.session && isPomodoroPart(bl) && isHappeningNow(bl, now));
       divider = (
-        <div key={`s-${b.session}-${i}`} className={`session-divider s${sIdx}` + (sessionHasNow ? ' now-session' : '')}>
+        <div
+          key={`s-${b.session}-${i}`}
+          className={`session-divider s${sIdx}` + (sessionHasNow ? ' now-session' : '') + (resumo.complete ? ' done' : '')}
+        >
           <div className="sd-line" />
-          <span className="sd-label">{strings.plan.sessions[sIdx] ?? strings.plan.sessionFallback}</span>
+          <span className="sd-label">
+            {resumo.complete ? strings.plan.sessionDone(nome, formatCompact(resumo.minsDone)) : nome}
+          </span>
           <div className="sd-line" />
         </div>
       );
@@ -336,6 +357,7 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
         key={`${b.type}-${b.time}-${b.endTime}`}
         dateKey={dateKey}
         block={b}
+        blocks={blocks}
         idx={i}
         inGroup={box !== null}
         selection={selection}

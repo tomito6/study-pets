@@ -17,10 +17,12 @@
 import { useEffect, useState } from 'react';
 import { quitHardcore } from '../../application/hardcore';
 import { pauseTimer, resumeTimer } from '../../application/pause';
-import { petById } from '../../application/pets';
+import { activePet, petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
 import { closeFocus } from '../../application/timer';
+import { petForm } from '../../domain/pets';
 import { coinsForStudyBlock } from '../../domain/progression';
+import { formatCompact } from '../../domain/settings';
 import {
   blockDurationMin,
   cleanBlockName,
@@ -39,6 +41,10 @@ const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7, o perímetro do círculo do S
 const NUM_SESSIONS = 6;
 /** Quanto tempo a faixa "concluído" fica na tela depois de emendar no próximo bloco. */
 const COMPLETED_BANNER_MS = 4000;
+/** A leva fechada é o marco maior do dia: fica mais tempo, e é a única faixa com o pet. */
+const SESSION_BANNER_MS = 6500;
+
+const sessionNameOf = (n: number): string => strings.plan.sessions[n % NUM_SESSIONS] ?? strings.plan.sessionFallback;
 
 export function FocusOverlay() {
   const { block, open, completed, hardcore, pausedAt } = useAppState((_, d) => ({
@@ -76,7 +82,10 @@ export function FocusOverlay() {
 
   const isPausa = block.type === 'pausa';
   const dayBlocks = blocksForDay(currentDayKey());
-  const sessionName = strings.plan.sessions[(block.session ?? 0) % NUM_SESSIONS] ?? strings.plan.sessionFallback;
+  const sessionName = sessionNameOf(block.session ?? 0);
+  // O pet só aparece na faixa da leva fechada — companhia no marco, não decoração fixa.
+  const cheerPet = completed?.session ? activePet() : null;
+  const petSprite = cheerPet ? petForm(cheerPet).sprite(0) : null;
   const durMin = blockDurationMin(block);
   const coins = block.type === 'estudo' ? coinsForStudyBlock(durMin) : 0;
   const next = nextBlockAfter(dayBlocks, block);
@@ -105,8 +114,20 @@ export function FocusOverlay() {
             <button className="focus-exit" onClick={closeFocus}>{t.exit}</button>
           )}
         </div>
-        {completed && now.getTime() - completed.at < COMPLETED_BANNER_MS && (
-          <div className="focus-done" id="focus-done">{strings.timer.completed(completed)}</div>
+        {completed && now.getTime() - completed.at < (completed.session ? SESSION_BANNER_MS : COMPLETED_BANNER_MS) && (
+          completed.session ? (
+            <div className="focus-done session" id="focus-done">
+              {petSprite && <img className="fd-pet" src={petSprite} alt="" />}
+              <div className="fd-text">
+                <div className="fd-title">{strings.plan.sessionCheer.title(sessionNameOf(completed.session.session))}</div>
+                <div className="fd-sub">
+                  {strings.plan.sessionCheer.sub(completed.session.done, formatCompact(completed.session.minsDone), completed.session.xp, true)}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="focus-done" id="focus-done">{strings.timer.completed(completed)}</div>
+          )
         )}
         <div className="focus-header">
           <div className={'focus-chip' + (isPausa ? ' pausa' : '')} id="focus-chip">

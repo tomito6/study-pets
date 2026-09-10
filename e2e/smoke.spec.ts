@@ -1373,6 +1373,54 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row', { hasText: '12:00' })).toHaveCount(0);
   });
 
+  test('48. a leva fecha na lista: marcar o último estudo da sessão comemora e carimba o divisor', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    const checks = checksDeEstudo(page);
+    const divisor = page.locator('.session-divider').first();
+    await expect(divisor).toContainText('Sessão 1');
+
+    // Três dos quatro estudos da leva: ainda não fechou nada.
+    for (const i of [0, 1, 2]) await checks.nth(i).click();
+    await expect(page.locator('#session-cheer')).toHaveCount(0);
+    await expect(divisor).not.toHaveClass(/done/);
+
+    // O quarto fecha a leva: faixa com a conta da sessão, e o divisor vira o carimbo.
+    await checks.nth(3).click();
+    const faixa = page.locator('#session-cheer');
+    await expect(faixa).toBeVisible();
+    await expect(faixa).toContainText('Sessão 1 completa');
+    await expect(faixa).toContainText('4 estudos · 1h40 · +200 XP no fim do dia');
+    await expect(divisor).toHaveClass(/done/);
+    await expect(divisor).toContainText('Sessão 1 ✓ · 1h40');
+
+    // Nada foi travado nem creditado: desmarcar continua valendo, e o dia segue aberto.
+    await checks.nth(3).click();
+    await expect(divisor).not.toHaveClass(/done/);
+    await expect(page.locator('.finish-day-btn')).toBeVisible();
+  });
+
+  test('49. a leva que fecha dentro do foco vira a faixa grande, com o pet', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    const checks = checksDeEstudo(page);
+    for (const i of [0, 1, 2]) await checks.nth(i).click();
+    await expect(page.locator('#session-cheer')).toHaveCount(0);
+
+    // O último da leva termina no foco: a faixa de bloco dá lugar à da sessão.
+    await page.locator('.block-row', { hasText: '10:30–10:55' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await page.clock.setFixedTime(new Date(`${DIA}T10:55:01`));
+
+    const faixa = page.locator('#focus-done');
+    await expect(faixa).toHaveClass(/session/);
+    await expect(faixa).toContainText('Sessão 1 completa');
+    await expect(faixa).toContainText('4 estudos · 1h40 · +200 XP no fim do dia');
+    await expect(faixa.locator('.fd-pet')).toHaveAttribute('src', /idle\/pets\/cat\//);
+    // E o foco seguiu no plano: emendou na pausa longa.
+    await expect(page.locator('#focus-block-name')).toHaveText('Pausa longa');
+  });
+
   test('40. o personagem no onboarding: a escolha do primeiro passo é a que vale depois', async ({ page }) => {
     await page.clock.setFixedTime(new Date(`${DIA}T17:30:00`));
     await page.goto('/');

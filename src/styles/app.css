@@ -229,6 +229,13 @@
   @keyframes gain-fly-coin{0%{opacity:0;transform:translate(0,6px) scale(.55);}22%{opacity:1;transform:translate(6px,-6px) scale(1.2);}100%{opacity:0;transform:translate(20px,-50px) scale(.92);}}
   .check-ripple{position:fixed;pointer-events:none;z-index:9998;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,var(--accent-ripple),transparent 70%);transform:translate(-50%,-50%);animation:check-ripple .6s ease-out forwards;}
   @keyframes check-ripple{0%{transform:translate(-50%,-50%) scale(.5);opacity:1;}100%{transform:translate(-50%,-50%) scale(4.2);opacity:0;}}
+  /* A leva fechada (features/plan/feedback.ts): comemora sem interromper — rodapé,
+     sem botão, acima do toast e abaixo dos modais. */
+  .session-cheer{position:fixed;bottom:clamp(64px,8vh,88px);left:50%;width:max-content;z-index:400;background:var(--accent-bg);border:1px solid var(--accent2);border-radius:var(--radius-lg);padding:10px 20px;text-align:center;pointer-events:none;box-shadow:0 6px 28px var(--accent-glow);max-width:calc(100vw - 32px);animation:sc-pop .45s cubic-bezier(.34,1.56,.64,1) both,sc-fade .5s ease 3.2s forwards;}
+  .session-cheer .sc-title{font-family:var(--font-mono);font-weight:600;font-size:14px;color:var(--accent);}
+  .session-cheer .sc-sub{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono);}
+  @keyframes sc-pop{0%{opacity:0;transform:translate(-50%,14px) scale(.92);}100%{opacity:1;transform:translate(-50%,0) scale(1);}}
+  @keyframes sc-fade{to{opacity:0;transform:translate(-50%,-6px) scale(.98);}}
   .bar-track{height:4px;background:var(--track);border-radius:99px;overflow:hidden;}
   .bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);}
 
@@ -670,6 +677,11 @@
   .focus-done { position:fixed; top:clamp(56px, 9vmin, 76px); left:50%; z-index:1; background:var(--accent-bg); border:1px solid var(--accent2); color:var(--accent); border-radius:99px; padding:8px 18px; font-family:var(--font-mono); font-size:clamp(12px, 1.7vmin, 14px); white-space:nowrap; box-shadow:0 0 20px var(--accent-glow); pointer-events:none; animation:focus-done-pop .5s cubic-bezier(.34,1.56,.64,1) both, focus-done-fade .6s ease 3.4s forwards; }
   @keyframes focus-done-pop { 0% { opacity:0; transform:translate(-50%,-10px) scale(.85); } 100% { opacity:1; transform:translate(-50%,0) scale(1); } }
   @keyframes focus-done-fade { to { opacity:0; } }
+  /* A leva fechada: a mesma faixa, maior, com o pet do lado e duas linhas. */
+  .focus-done.session { display:flex; width:max-content; align-items:center; gap:clamp(10px,1.6vmin,16px); border-radius:var(--radius-lg); padding:clamp(10px,1.4vmin,14px) clamp(16px,2.2vmin,22px); white-space:normal; text-align:left; max-width:min(92vw,440px); animation:focus-done-pop .5s cubic-bezier(.34,1.56,.64,1) both, focus-done-fade .6s ease 5.9s forwards; }
+  .focus-done.session .fd-pet { width:clamp(30px,4.4vmin,44px); height:clamp(30px,4.4vmin,44px); image-rendering:pixelated; flex-shrink:0; }
+  .focus-done.session .fd-title { font-weight:600; font-size:clamp(13px,1.9vmin,16px); }
+  .focus-done.session .fd-sub { color:var(--muted); font-size:clamp(10px,1.4vmin,12px); margin-top:2px; }
   .focus-time-sub { font-size:clamp(11px, 1.6vmin, 14px); color:var(--muted); margin-top:8px; font-family:var(--font-mono); }
   .focus-scene { background:linear-gradient(180deg, transparent 0%, var(--scene-floor) 60%); border-radius:var(--radius-2xl); padding:clamp(16px, 2.5vmin, 28px) clamp(16px, 2.5vmin, 28px) clamp(12px, 2vmin, 20px); margin:clamp(12px, 2vmin, 24px) 0 clamp(14px, 2.5vmin, 28px); position:relative; overflow:hidden; }
   .focus-scene-stage { display:flex; align-items:flex-end; justify-content:center; gap:12px; height:clamp(100px, 14vmin, 160px); margin-bottom:10px; }
@@ -818,6 +830,8 @@
   .session-divider { display:flex; align-items:center; gap:8px; margin: 10px 0 4px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
   .session-divider .sd-line { flex:1; height:1px; background: var(--sc-border); opacity:.4; }
   .session-divider .sd-label { color: var(--sc); }
+  .session-divider.done .sd-line { background: var(--accent); opacity:.3; }
+  .session-divider.done .sd-label { color: var(--accent); }
 
   /* SAVE INDICATOR */
   #save-indicator{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}

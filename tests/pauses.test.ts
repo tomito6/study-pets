@@ -166,7 +166,7 @@ describe('higiene: a duração de um bloco é sempre blockMins', () => {
       for (const name of readdirSync(dir)) {
         const p = join(dir, name);
         if (statSync(p).isDirectory()) walk(p);
-        else if (/\.(ts|tsx)$/.test(name) && !p.endsWith('domain/time.ts')) {
+        else if (/\.(ts|tsx)$/.test(name) && !p.replace(/\\/g, '/').endsWith('domain/time.ts')) {
           const src = readFileSync(p, 'utf8');
           if (/timeToMins\((\w+)\.endTime\)\s*-\s*timeToMins\(\1\.time\)/.test(src)) offenders.push(p);
         }

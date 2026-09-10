@@ -27,6 +27,7 @@
 import { canToggleCheck, isDayClosed } from '../domain/checks';
 import { isForfeited } from '../domain/hardcore';
 import { pauseSessionFor } from '../domain/pauses';
+import { closedSessionOf } from '../domain/sessions';
 import { dk } from '../domain/time';
 import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerProgress } from '../domain/timer';
 import type { StartCheck, StartContext } from '../domain/timer';
@@ -196,12 +197,16 @@ function finishTimer(now: Date = new Date()): void {
   if (derived.focusOpen && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
     const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
     playSound('sucesso');
+    // Este bloco fechou a leva? Só quando o check é DESTE momento: se ele já estava
+    // marcado à mão, a leva fechou lá na lista e já foi comemorada lá.
+    const leva = result ? closedSessionOf(blocksForDay(todayKey), block, state.checks[todayKey]) : null;
     const completed = {
       name: cleanBlockName(block.name),
       type: block.type,
       xp: result?.xp ?? 0,
       coins: result?.coins ?? 0,
       at: now.getTime(),
+      session: leva,
     };
     const next = chainedBlockAfter(blocksForDay(todayKey), block);
     if (next) {

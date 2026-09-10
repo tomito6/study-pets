@@ -69,6 +69,13 @@ export const strings = {
     days: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
     sessions: ['Sessão 1', 'Sessão 2', 'Sessão 3', 'Sessão 4', 'Sessão 5', 'Sessão 6'],
     sessionFallback: 'Sessão',
+    /** A leva fechada: o divisor vira verde e uma faixa comemora (ver domain/sessions.ts). */
+    sessionDone: (name: string, dur: string) => `${name} ✓ · ${dur}`,
+    sessionCheer: {
+      title: (name: string) => `✓ ${name} completa`,
+      sub: (studies: number, dur: string, xp: number, pending: boolean) =>
+        `${studies} ${studies === 1 ? 'estudo' : 'estudos'} · ${dur} · +${xp} XP` + (pending ? ' no fim do dia' : ''),
+    },
     addEvent: '+ Evento',
     dayWindows: '🕘 Janelas do dia',
     dayWindowsEdited: '🕘 Janelas · editado',

@@ -30,3 +30,34 @@ export function spawnFloatGain(rect: DOMRect, xp: number, coins: number): void {
   document.body.appendChild(wrap);
   setTimeout(() => wrap.remove(), 1400);
 }
+
+/** Quanto tempo a faixa da sessão fica na tela (o CSS some sozinho um pouco antes). */
+const CHEER_MS = 3800;
+let cheerEl: HTMLElement | null = null;
+
+/**
+ * A faixa "✓ Sessão 2 completa" quando a última linha da leva é marcada na lista.
+ * É o marco intermediário entre o check de um bloco e o fim do dia — por isso
+ * comemora, mas não interrompe: fica no rodapé, sem botão e sem pedir nada.
+ * (No modo foco quem faz esse papel é a faixa do `FocusOverlay`.)
+ */
+export function spawnSessionCheer(title: string, sub: string): void {
+  if (typeof document === 'undefined') return;
+  cheerEl?.remove(); // uma por vez, como o toast
+  const el = document.createElement('div');
+  el.className = 'session-cheer';
+  el.id = 'session-cheer';
+  const t = document.createElement('div');
+  t.className = 'sc-title';
+  t.textContent = title;
+  const s = document.createElement('div');
+  s.className = 'sc-sub';
+  s.textContent = sub;
+  el.append(t, s);
+  document.body.appendChild(el);
+  cheerEl = el;
+  setTimeout(() => {
+    el.remove();
+    if (cheerEl === el) cheerEl = null;
+  }, CHEER_MS);
+}
