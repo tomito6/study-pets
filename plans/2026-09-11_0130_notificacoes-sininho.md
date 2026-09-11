@@ -50,7 +50,7 @@ Tudo que não cai num desses dois casos já é dito em outro lugar, e repetir se
 
 | id | o que diz | gatilho | chave de dedup |
 |---|---|---|---|
-| `dia` | "Dia encerrado · +390 XP · +200 🪙" | o dia entrou na conta e rendeu alguma coisa | `dia:<dia>` |
+| `dia` | "Dia encerrado" · "10/09 · +390 XP · +200 🪙" | o dia entrou na conta e rendeu alguma coisa | `dia:<dia>` |
 | `nivel` | "Você chegou no nível 4 · Dedicado" | o XP dos dias que entraram cruzou um degrau de `LEVELS` | `nivel:<nível>` |
 | `pet-nivel` | "Bolt chegou no Lv. 5" | nível do pet antes < depois de creditar | `pet-nivel:<pet>:<nível>` |
 | `pet-evolucao` | "Bolt pode evoluir" | idem, `canEvolveNow` virou verdadeiro | `pet-evolucao:<pet>:<nível>` |
@@ -59,8 +59,12 @@ Tudo que não cai num desses dois casos já é dito em outro lugar, e repetir se
 | `moedas` | "Dá pra adotar mais um pet" | o saldo **cruzou** o preço do pet mais barato | `moedas:<dia>` |
 | `abandono` | "O app fechou no meio de Estudo 3 · −100 XP pra você · Bolt −100 XP" | `resumeHardcoreOnBoot`, resolução `abandon` | `abandono:<dia>:<hora>` |
 
-**As sete primeiras têm UM gatilho só**: `applyPendingPetXP`, que é por onde passam as duas portas
-de um dia entrar na conta — o `closeDay` chama, e o boot chama. A janela é a mesma que o XP dos
+**As sete primeiras têm UM gatilho só**: `applyPendingPetXP`, que é por onde passam as **três**
+portas de um dia entrar na conta — o `closeDay` chama, o boot chama, e a virada da meia-noite com
+o app aberto chama (`application/dayRollover.ts`, um `setTimeout` pro instante da virada mais o
+`onVisible`, no mesmo espírito sem-polling do prompt de fim de dia; sem isso, quem deixa o app
+aberto na aba Plano atravessando a meia-noite ficava sem o crédito do pet e sem linha nenhuma até
+recarregar). A janela é a mesma que o XP dos
 pets percorre (`(pending.from, pending.processedUntil]`, agora exposta pelo domínio), e os números
 por dia vêm de dois campos novos do `computeStats`: `dayXP` e `dayCoins`, acumulados na mesma
 passada que já existia. Duas fontes calculando os mesmos ids com números possivelmente diferentes
@@ -101,7 +105,12 @@ Três detalhes que não são acidente:
 | `hora-de-estudar` (lembrete de bloco) | **nunca** aqui | Isso é notificação do SISTEMA (Web Notifications), não linha de histórico. Já existe no fim do bloco. |
 | `save-falhou` / `offline` | **nunca** | O `#save-indicator` é o lugar certo, e uma notificação de "não consegui salvar" que precisa ser salva pra existir é uma contradição. |
 | `doc-mudou-em-outro-dispositivo` | **nunca** | É estado de sistema; e o que mudou chega como as próprias linhas, pelo documento. |
-| `extensao-sumiu-no-meio-do-estudo` | **depois** | Real, mas raro, e a seção de Bloqueio de sites já mostra o status. Só vale se acontecer de verdade. |
+| `extensao-sumiu-no-meio-do-estudo` | **depois** | É **estado**, não acontecimento — e você está olhando, no meio de um estudo. Estado mora em indicador (a faixa 🛡️ da barra do timer deixando de sumir calada), não em histórico lido depois. |
+| `dia-estudado-sem-pet-equipado` | **depois** | Perda silenciosa e irreversível de verdade: check sem pet não credita ninguém, e reequipar depois não recupera. Mas a linha chega tarde demais pra consertar o dia, e "você fez errado" é o tom que o app não usa. Se entrar, é como aviso **antes** — no Plano, enquanto dá pra equipar. |
+| `skill-do-pet-desligada-na-leitura` | **depois** | `normalizePetInstance` desliga sozinha a skill que a forma atual não tem (foi o que aconteceu quando a coruja virou pomba). O bônus some no boot, sem uma palavra. Raro: só em rebalanceamento de catálogo. |
+| `tempo-de-casa-do-pet` | **depois** | "Bolt faz 30 dias com você · 42h estudadas juntos" — `adoptedAt` já existe. É a versão saudável do "pet com saudade": celebra, não cobra. Boa candidata pra v2. |
+| `meta-diaria-mudada-reescreve-o-passado` | **nunca** aqui | Mudar `dailyStudyMin` recalcula sequência, dots, heatmap e bônus de moedas **retroativamente**, e ninguém avisa. É um buraco real — mas o canal é o próprio Salvar das Configurações, não um histórico. |
+| `documento-remoto-descartado-pelo-sync` | **nunca** | `applyRemoteDoc` joga fora o doc do outro aparelho quando há save local pendente ("o local vence" do v1). É perda de verdade, e silenciosa — mas o app não sabe **o que** perdeu, e uma linha dizendo "algo se perdeu" sem dizer o quê só assusta. |
 | `desistiu-no-hardcore` (o "Desistir" voluntário) | **depois** | Diferente do abandono: a pessoa clicou, leu a conta exata num modal e confirmou. O toast basta. |
 | `pet-pode-evoluir` fora do fim do dia | **nunca** | O selo "✨ Pode evoluir" no card do pet já cobre o estado; a notificação cobre o **instante** em que destravou. |
 | `skill-rende-mais-agora` (bônus subiu com o nível) | **depois** | O número aparece no card da skill. Uma linha por nível de pet seria ruído semanal. |
@@ -188,13 +197,19 @@ esconder o nome do nível ("Zero", "Mestre") no selo de XP abaixo de 420px, ou t
 
 ## Testes
 
-- `tests/notifications.test.ts` (19) — o módulo puro: ordem, dedup, teto, `read`, normalização de
-  documento torto, tempo relativo (inclusive carimbo no futuro, de um dispositivo adiantado).
+- `tests/notifications.test.ts` (22) — o módulo puro: ordem, dedup, teto, `read`, normalização de
+  documento torto, tempo relativo (inclusive carimbo no futuro, de um dispositivo adiantado) — e a
+  varredura de todo `NotifKind` contra `strings.notifications`: os três mapas são
+  `Record<string, …>`, então um tipo novo sem texto renderizaria uma linha vazia e o build
+  passaria. O mesmo teste cobra que nenhum texto escreva "undefined" com dados pela metade.
 - `tests/progress-notices.test.ts` (21) — as regras: quem vira linha e quem não vira, e que o id
   não depende do relógio.
-- `tests/application-notifications.test.ts` (17) — o app de verdade: encerrar o dia, encerrar
-  duas vezes, pet que sobe de nível com o app fechado, três dias seguidos virando marco, o
-  cruzamento das moedas acontecendo uma vez só, cancelar sessão zerando.
+- `tests/application-notifications.test.ts` (21) — o app de verdade: encerrar o dia, encerrar
+  duas vezes, pet que sobe de nível com o app fechado, **a virada da meia-noite com o app aberto**,
+  voltar de uma semana fora, três dias seguidos virando marco, o cruzamento das moedas acontecendo
+  uma vez só, cancelar sessão zerando.
+- `tests/stats.test.ts` — a invariante que sustenta os números: soma do `dayXP` menos as
+  penalidades = `totalXP`; soma do `dayCoins` = `coins`.
 - `tests/persistence.test.ts` — campo ausente, lixo, ida e volta.
 - e2e **48** (celular) — o ciclo inteiro: vazio, encerrar o dia, selo "2", as duas linhas, fechar
   marca como lido, sobrevive ao reload, "Limpar" zera e o boot seguinte não recria.
@@ -215,7 +230,12 @@ do timer e o status na seção de Configurações), não em histórico.
 
 E foi um desses desenhos que apontou o buraco na primeira versão desta branch, que só emitia no
 `closeDay`: **o dia que passa sozinho na virada da meia-noite** — justamente o caso mais comum —
-não deixava linha nenhuma.
+não deixava linha nenhuma. Depois, um painel de juízes lendo o código já commitado achou o resto:
+a virada **com o app aberto** (que continuava sem gancho: `applyPendingPetXP` era chamado pelo
+boot, pelo encerrar, pelo sync e pelo Perfil, e o `reconcileTimer`, que roda a cada segundo, nunca
+o chamava); a penalidade do hardcore fora da conta do "antes"; as três linhas de "Dia encerrado"
+saindo idênticas depois de uma ausência (a data entrou no texto); e a falta de uma rede que
+cobrasse texto pra cada `NotifKind`.
 
 ## O que ficou de fora, de propósito
 

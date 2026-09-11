@@ -9,6 +9,7 @@ import {
   pushNotifications,
   unreadNotifications,
 } from '../src/application/notifications';
+import { startDayRollover, stopDayRollover } from '../src/application/dayRollover';
 import { applyPendingPetXP } from '../src/application/pets';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { cancelSession } from '../src/application/settings';
@@ -237,5 +238,47 @@ describe('marcos que só aparecem depois de alguns dias', () => {
     for (const b of estudos) toggleBlockCheck(amanha, b);
     closeDay(new Date('2026-09-03T17:30:00'));
     expect(notifications().some((n) => n.kind === 'moedas')).toBe(false);
+  });
+});
+
+describe('a virada da meia-noite com o app ABERTO', () => {
+  beforeEach(() => {
+    resetAt('2026-09-02T22:00:00');
+    state.pets.owned = [gato()];
+    state.pets.active = 'cat';
+    state.pets.xpProcessedUntil = ONTEM;
+  });
+
+  it('o dia entra na conta sozinho: o pet é creditado e a linha aparece, sem recarregar', () => {
+    marcar(1); // hoje, sem encerrar o dia
+    startDayRollover(new Date('2026-09-02T22:00:00'));
+    expect(notifications()).toEqual([]);
+    expect(state.pets.owned[0]!.xp).toBe(0); // hoje ainda não entrou
+
+    // Duas horas depois já é dia 3, e o timeout da virada dispara.
+    vi.setSystemTime(new Date('2026-09-03T00:00:05'));
+    rebuildWeeks(new Date('2026-09-03T00:00:05'));
+    vi.advanceTimersByTime(2 * 60 * 60 * 1000 + 6000);
+
+    expect(state.pets.owned[0]!.xp).toBe(50);
+    expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-02', 'pet-nivel:cat:2']);
+    stopDayRollover();
+  });
+
+  it('o relógio não virou o dia: nada acontece, e a virada continua agendada', () => {
+    marcar(1);
+    startDayRollover(new Date('2026-09-02T22:00:00'));
+    vi.advanceTimersByTime(60 * 60 * 1000); // uma hora, ainda dia 2
+    expect(notifications()).toEqual([]);
+    stopDayRollover();
+  });
+
+  it('sair da conta desarma a virada', () => {
+    startDayRollover(new Date('2026-09-02T22:00:00'));
+    stopDayRollover();
+    marcar(1);
+    vi.setSystemTime(new Date('2026-09-03T00:00:05'));
+    vi.advanceTimersByTime(3 * 60 * 60 * 1000);
+    expect(notifications()).toEqual([]);
   });
 });

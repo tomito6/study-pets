@@ -10,6 +10,7 @@ import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, markAuthReady, notify, state } from '../store/store';
 import { scheduleEndOfDayPrompt } from './dayEnd';
+import { startDayRollover, stopDayRollover } from './dayRollover';
 import { resumeHardcoreOnBoot } from './hardcore';
 import { endHardcoreSession } from './hardcoreRuntime';
 import { resumePauseOnBoot } from './pause';
@@ -107,9 +108,11 @@ export function initAfterLoad(now: Date = new Date()): void {
   notify();
   resumeHardcoreOnBoot(now); // a sessão hardcore que ficou neste dispositivo: volta pro foco, ou cobra o abandono
   resumePauseOnBoot(now); // a pausa que ficou aberta neste dispositivo: o timer volta pausado
+  startDayRollover(now); // o app aberto atravessando a meia-noite: o dia entra na conta e o sininho conta
 }
 
 function resetToLoggedOut(): void {
+  stopDayRollover();
   if (derived.hardcore) endHardcoreSession(); // antes de perder o uid: limpa a sessão do dispositivo
   if (derived.timerPausedAt != null) stopTimer(); // idem a pausa aberta
   stopBlocking(); // saiu da conta: a extensão libera na hora

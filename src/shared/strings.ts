@@ -4,6 +4,9 @@
 
 /** Os números e nomes de uma notificação (ver domain/notifications.ts). Estrutural de
  *  propósito: `strings.ts` não importa domínio. */
+/** "2026-09-10" → "10/09 · ". Vazio se não houver data. */
+const curtaData = (dia?: string): string => (dia && dia.length === 10 ? `${dia.slice(8, 10)}/${dia.slice(5, 7)} · ` : '');
+
 type NotifData = {
   n?: number;
   nome?: string;
@@ -805,28 +808,32 @@ export const strings = {
       moedas: '🪙',
       abandono: '💀',
     } as Record<string, string>,
-    /** A primeira linha. Sempre existe. */
+    /** A primeira linha. Sempre existe — e nunca escreve "undefined": um documento
+     *  antigo ou torto pode chegar aqui sem um dos números (teste varre os dois mapas). */
     text: {
-      nivel: (d: NotifData) => `Você chegou no nível ${d.n}`,
-      'pet-nivel': (d: NotifData) => `${d.nome} chegou no Lv. ${d.n}`,
-      'pet-evolucao': (d: NotifData) => `${d.nome} pode evoluir`,
+      nivel: (d: NotifData) => (d.n ? `Você chegou no nível ${d.n}` : 'Você subiu de nível'),
+      'pet-nivel': (d: NotifData) => `${d.nome ?? 'Seu pet'} chegou no Lv. ${d.n ?? 1}`,
+      'pet-evolucao': (d: NotifData) => `${d.nome ?? 'Seu pet'} pode evoluir`,
       dia: () => 'Dia encerrado',
-      sequencia: (d: NotifData) => `${d.n} dias seguidos batendo a meta`,
+      sequencia: (d: NotifData) => `${d.n ?? 0} dias seguidos batendo a meta`,
       'recorde-dia': () => 'Melhor dia até agora',
       moedas: () => 'Dá pra adotar mais um pet',
-      abandono: (d: NotifData) => `O app fechou no meio de ${d.nome}`,
+      abandono: (d: NotifData) => `O app fechou no meio de ${d.nome ?? 'um estudo'}`,
     } as Record<string, (d: NotifData) => string>,
     /** A segunda linha. Pode ser vazia. */
     body: {
       nivel: (d: NotifData) => d.nome ?? '',
       'pet-nivel': () => '',
       'pet-evolucao': () => 'Escolha o caminho quando quiser — é pra sempre.',
-      dia: (d: NotifData) => `+${d.xp ?? 0} XP · +${d.coins ?? 0} 🪙`,
+      // A data vai junto: voltar depois de uns dias fora rende até três linhas de
+      // "Dia encerrado" de uma vez, todas carimbadas no mesmo instante — sem o dia,
+      // as três ficam idênticas.
+      dia: (d: NotifData) => `${curtaData(d.dia)}+${d.xp ?? 0} XP · +${d.coins ?? 0} 🪙`,
       sequencia: (d: NotifData) => (d.coins ? `Rende ${d.coins} 🪙 de bônus por dia.` : ''),
-      'recorde-dia': (d: NotifData) => `${d.xp} XP num dia só.`,
-      moedas: (d: NotifData) => `Você tem ${d.coins} 🪙 — a loja fica no Perfil.`,
+      'recorde-dia': (d: NotifData) => `${d.xp ?? 0} XP num dia só.`,
+      moedas: (d: NotifData) => `Você tem ${d.coins ?? 0} 🪙 — a loja fica no Perfil.`,
       abandono: (d: NotifData) =>
-        `−${d.xp} XP pra você` + (d.pet && d.petXp ? ` · ${d.pet} −${d.petXp} XP` : ''),
+        `−${d.xp ?? 0} XP pra você` + (d.pet && d.petXp ? ` · ${d.pet} −${d.petXp} XP` : ''),
     } as Record<string, (d: NotifData) => string>,
   },
   calendarImport: {

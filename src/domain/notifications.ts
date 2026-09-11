@@ -72,11 +72,13 @@ export interface NewNotification {
   data?: NotifData;
 }
 
-const KINDS: readonly NotifKind[] = [
+/** Todos os tipos. Um teste varre esta lista contra `strings.notifications`: kind
+ *  sem texto renderizaria uma linha vazia, e o build passaria. */
+export const NOTIF_KINDS: readonly NotifKind[] = [
   'nivel', 'pet-nivel', 'pet-evolucao', 'dia', 'sequencia', 'recorde-dia', 'moedas', 'abandono',
 ];
 
-const isKind = (v: unknown): v is NotifKind => typeof v === 'string' && KINDS.includes(v as NotifKind);
+const isKind = (v: unknown): v is NotifKind => typeof v === 'string' && NOTIF_KINDS.includes(v as NotifKind);
 
 /**
  * Adiciona as novas e devolve a lista pronta: mais nova primeiro, sem duplicata,

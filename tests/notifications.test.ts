@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { strings } from '../src/shared/strings';
 import {
   MAX_NOTIFICATIONS,
+  NOTIF_KINDS,
   addNotifications,
   ageOf,
   hasUnread,
@@ -138,5 +140,37 @@ describe('ageOf', () => {
   });
   it('carimbo no futuro (relógio do outro dispositivo adiantado) lê como agora', () => {
     expect(ageOf(T0 + 60_000, T0)).toEqual({ unit: 'agora' });
+  });
+});
+
+describe('todo tipo tem texto', () => {
+  // Os três mapas de `strings.notifications` são `Record<string, …>`: um kind novo
+  // sem texto renderiza uma linha vazia e o build passa. Esta é a rede.
+  const dados = { n: 5, nome: 'Bolt', pet: 'Bolt', xp: 100, petXp: 50, coins: 160, dia: '2026-09-11' };
+
+  it('cada NotifKind tem ícone e primeira linha', () => {
+    for (const kind of NOTIF_KINDS) {
+      expect(strings.notifications.icon[kind], `sem ícone: ${kind}`).toBeTruthy();
+      const head = strings.notifications.text[kind];
+      expect(head, `sem texto: ${kind}`).toBeTypeOf('function');
+      expect(head!(dados), `texto vazio: ${kind}`).toBeTruthy();
+    }
+  });
+
+  it('cada NotifKind tem segunda linha (que pode ser vazia, mas a função existe)', () => {
+    for (const kind of NOTIF_KINDS) {
+      const body = strings.notifications.body[kind];
+      expect(body, `sem corpo: ${kind}`).toBeTypeOf('function');
+      expect(body!(dados), `corpo não é texto: ${kind}`).toBeTypeOf('string');
+    }
+  });
+
+  it('nenhum texto vaza "undefined" quando os dados vêm pela metade', () => {
+    for (const kind of NOTIF_KINDS) {
+      const head = strings.notifications.text[kind]!({});
+      const body = strings.notifications.body[kind]!({});
+      expect(head, `${kind} (título)`).not.toContain('undefined');
+      expect(body, `${kind} (corpo)`).not.toContain('undefined');
+    }
   });
 });
