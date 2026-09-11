@@ -393,6 +393,10 @@
   .save-btn:hover{opacity:.9;}
   .reset-btn{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:var(--font-ui);}
   .reset-btn:hover{border-color:var(--border-strong);color:var(--text);}
+  /* A saída antes da porta sem volta: os dois modais da Zona de perigo apagam meses
+     de estudo e o app não tem importação. O botão fica ACIMA da linha de ações, com
+     respiro, pra ser lido antes — e não competir com "Voltar"/"Apagar". */
+  .danger-export{margin-bottom:14px;font-size:13px;padding:10px;}
   .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:var(--font-ui);}
   .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
   .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}

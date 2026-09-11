@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { deleteAccount } from '../../application/account';
+import { exportMyData } from '../../application/export';
 import { cancelSession } from '../../application/settings';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
@@ -36,11 +37,25 @@ export function CancelSessionModal({ open, onClose, onDone }: CancelProps) {
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 18, lineHeight: 1.5 }}>
         {tc.outro}<strong>{tc.outroStrong}</strong>
       </p>
+      <ExportFirst id="cancel-export" />
       <div className="btn-row">
         <button className="reset-btn" onClick={onClose}>{tc.back}</button>
         <button className="danger-btn" onClick={confirm}>{tc.confirm}</button>
       </div>
     </Modal>
+  );
+}
+
+/**
+ * O caminho de volta, oferecido ANTES do botão que não tem volta. Os dois modais
+ * apagam meses de estudo e não existe importação: sem isto, o único backup do
+ * usuário é ele ter lembrado de baixar antes de abrir a Zona de perigo.
+ */
+function ExportFirst({ id }: { id: string }) {
+  return (
+    <button type="button" className="reset-btn danger-export" id={id} onClick={() => exportMyData()}>
+      {tc.exportFirst}
+    </button>
   );
 }
 
@@ -117,6 +132,7 @@ export function DeleteAccountModal({ open, onClose, onDone }: DeleteProps) {
         onChange={(e) => setTyped(e.target.value)}
       />
       <div className="del-acc-status" id="del-acc-status">{status}</div>
+      <ExportFirst id="del-acc-export" />
       <div className="btn-row">
         <button className="reset-btn" onClick={onClose}>{td.back}</button>
         <button className="danger-btn" id="del-acc-btn" disabled={!unlocked} onClick={() => void confirm()}>{td.confirm}</button>
