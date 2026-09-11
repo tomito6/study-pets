@@ -1,0 +1,557 @@
+<!--
+  Study Pets — revisão jurídica e plano de abertura (2026-09-11).
+
+  Página autocontida: abre com dois cliques, offline, sem build e sem dependência.
+  Só as fontes vêm do Google (o que a própria Fase 0 manda o app parar de fazer —
+  aqui não incomoda: esta página não é serviço oferecido a ninguém).
+
+  De onde veio: 27 agentes em nove áreas do direito, cada área com um cético
+  adversarial encarregado de derrubar os próprios achados, mais um crítico de
+  completude. 91 achados, 4 refutados, 71 ajustados — quase todos pra baixo.
+
+  Como atualizar: editar este arquivo à mão. Os 91 achados vivem no
+  <script type="application/json" id="dados"> no fim do arquivo, cada um com
+  tipo (juridico | contratual | produto), gravidade, quando aplica e esforço.
+  Fez uma das ações? Risque da fase e atualize a contagem no topo.
+
+  Isto não é parecer jurídico. Onde há citação de norma, o texto vigente foi
+  conferido na fonte; onde a certeza era menor, está dito no próprio achado.
+-->
+<title>Abrir o Study Pets</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9;
+  --ink:#40382e; --ink-soft:#5d5346; --muted:#6e6455; --faint:#8b8071;
+  --line:rgba(64,56,46,.14); --line-strong:rgba(64,56,46,.26);
+  --accent:#486244; --accent-bg:#e8eddf; --accent-line:#3f5a3c; --on-accent:#fffdf6;
+  --sev-alto:#a04a2e; --sev-alto-bg:rgba(160,74,46,.10);
+  --sev-medio:#8a6a2f; --sev-medio-bg:rgba(138,106,47,.11);
+  --sev-baixo:#486244; --sev-baixo-bg:rgba(72,98,68,.10);
+  --sev-info:#6e6455; --sev-info-bg:rgba(110,100,85,.09);
+  --rail:rgba(64,56,46,.16);
+  --shadow:0 1px 2px rgba(64,56,46,.05), 0 8px 24px -16px rgba(64,56,46,.30);
+  --font-ui:'DM Sans',system-ui,-apple-system,sans-serif;
+  --font-title:'Lora',Georgia,'Times New Roman',serif;
+  --font-mono:'DM Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1713; --bg2:#221e18; --bg3:#15120f;
+    --ink:#ece3d3; --ink-soft:#cbc0ad; --muted:#a2957f; --faint:#867a68;
+    --line:rgba(236,227,211,.14); --line-strong:rgba(236,227,211,.26);
+    --accent:#9cbb8d; --accent-bg:rgba(156,187,141,.13); --accent-line:#9cbb8d; --on-accent:#1a1713;
+    --sev-alto:#e0937a; --sev-alto-bg:rgba(224,147,122,.13);
+    --sev-medio:#d4b072; --sev-medio-bg:rgba(212,176,114,.13);
+    --sev-baixo:#9cbb8d; --sev-baixo-bg:rgba(156,187,141,.12);
+    --sev-info:#a2957f; --sev-info-bg:rgba(162,149,127,.11);
+    --rail:rgba(236,227,211,.18);
+    --shadow:0 1px 2px rgba(0,0,0,.30), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1a1713; --bg2:#221e18; --bg3:#15120f;
+  --ink:#ece3d3; --ink-soft:#cbc0ad; --muted:#a2957f; --faint:#867a68;
+  --line:rgba(236,227,211,.14); --line-strong:rgba(236,227,211,.26);
+  --accent:#9cbb8d; --accent-bg:rgba(156,187,141,.13); --accent-line:#9cbb8d; --on-accent:#1a1713;
+  --sev-alto:#e0937a; --sev-alto-bg:rgba(224,147,122,.13);
+  --sev-medio:#d4b072; --sev-medio-bg:rgba(212,176,114,.13);
+  --sev-baixo:#9cbb8d; --sev-baixo-bg:rgba(156,187,141,.12);
+  --sev-info:#a2957f; --sev-info-bg:rgba(162,149,127,.11);
+  --rail:rgba(236,227,211,.18);
+  --shadow:0 1px 2px rgba(0,0,0,.30), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-ui); font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--font-title);font-weight:600;text-wrap:balance;margin:0}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- cabeça ---------- */
+.cabeca{border-bottom:1px solid var(--line);background:var(--bg2)}
+.cabeca .wrap{padding-top:34px;padding-bottom:30px}
+.marca{display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:20px}
+.pata{width:15px;height:15px;flex:none;color:var(--accent)}
+.cabeca h1{font-size:clamp(30px,5.2vw,46px);line-height:1.1;letter-spacing:-.015em;max-width:15ch}
+.dek{margin-top:14px;font-size:17px;line-height:1.55;color:var(--ink-soft);max-width:58ch}
+.dek em{font-style:normal;color:var(--ink);border-bottom:1.5px solid var(--accent);padding-bottom:1px}
+
+/* ---------- faixa de números ---------- */
+.numeros{display:flex;flex-wrap:wrap;gap:0;margin-top:28px;
+  border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--bg)}
+.num{flex:1 1 140px;padding:14px 18px;border-right:1px solid var(--line)}
+.num:last-child{border-right:0}
+.num b{display:block;font-family:var(--font-mono);font-size:22px;font-weight:500;
+  line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+.num span{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+.num.destaque b{color:var(--accent)}
+
+/* ---------- seções ---------- */
+main .wrap{padding-top:56px;padding-bottom:8px}
+section{margin-bottom:60px}
+.eyebrow{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;margin-bottom:10px}
+section > h2{font-size:26px;letter-spacing:-.01em;margin-bottom:12px}
+.intro{max-width:64ch;color:var(--ink-soft);font-size:16.5px}
+.intro + .intro{margin-top:12px}
+.intro strong{color:var(--ink);font-weight:500}
+
+/* ---------- a trilha ---------- */
+.trilha{display:grid;grid-template-columns:88px 1fr;gap:0 26px;margin-top:34px}
+.fase{display:contents}
+.marca-fase{position:relative;padding-top:4px}
+.marca-fase::before{content:"";position:absolute;left:15px;top:0;bottom:-46px;
+  width:2px;background:var(--rail)}
+.fase:last-child .marca-fase::before{bottom:auto;height:34px}
+.bolha{position:relative;width:32px;height:32px;border-radius:50%;
+  display:grid;place-items:center;background:var(--bg2);border:2px solid var(--rail);
+  font-family:var(--font-mono);font-size:13px;color:var(--muted);z-index:1}
+.fase.agora .bolha{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:500}
+.quando-fase{font-family:var(--font-mono);font-size:11px;color:var(--faint);
+  margin-top:9px;line-height:1.35;letter-spacing:.02em}
+.corpo-fase{padding-bottom:46px;min-width:0}
+.corpo-fase h3{font-size:21px;letter-spacing:-.01em}
+.destrava{margin-top:7px;font-size:14px;color:var(--muted);max-width:58ch}
+.destrava b{color:var(--ink-soft);font-weight:500}
+
+/* linhas de ação — sem caixa, hairline, como a .block-row do laptop */
+.acoes{margin-top:20px;border-top:1px solid var(--line)}
+.acao{display:grid;grid-template-columns:1fr auto;gap:4px 18px;align-items:baseline;
+  padding:15px 0;border-bottom:1px solid var(--line)}
+.acao-t{font-size:16px;font-weight:500;color:var(--ink);line-height:1.4;grid-column:1}
+.acao-c{font-size:14.5px;color:var(--ink-soft);line-height:1.55;grid-column:1;max-width:62ch}
+.acao-c code{font-family:var(--font-mono);font-size:12.5px;background:var(--bg3);
+  padding:1px 5px;border-radius:2px;color:var(--ink);white-space:nowrap}
+.custo{grid-column:2;grid-row:1/span 2;font-family:var(--font-mono);font-size:11px;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+  white-space:nowrap;padding-top:2px;text-align:right}
+.acao.trava{background:var(--sev-alto-bg);margin:0 -14px;padding-left:14px;padding-right:14px;
+  border-bottom-color:transparent;border-radius:2px}
+.acao.trava .acao-t{color:var(--sev-alto)}
+.acao.trava .custo{color:var(--sev-alto)}
+
+/* ---------- listas frias ---------- */
+.limpo{border:1px solid var(--line);border-radius:4px;background:var(--bg2);
+  padding:4px 22px;box-shadow:var(--shadow)}
+.limpo li{list-style:none;padding:13px 0;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+.limpo li:last-child{border-bottom:0}
+.limpo ul{margin:0;padding:0}
+.tique{color:var(--accent);font-family:var(--font-mono);font-size:13px;line-height:1.5}
+.limpo b{font-weight:500;color:var(--ink)}
+.limpo span{color:var(--muted);font-size:14.5px}
+
+.checar{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:22px}
+.chk{border-left:2px solid var(--accent);padding:2px 0 2px 16px}
+.chk b{display:block;font-weight:500;font-size:15.5px;margin-bottom:4px}
+.chk span{font-size:14.5px;color:var(--muted);line-height:1.5}
+
+/* ---------- os três tipos ---------- */
+.tipos{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:24px}
+.tipo-card{background:var(--bg2);border:1px solid var(--line);border-top:3px solid var(--tc);
+  border-radius:4px;padding:16px 18px 18px;box-shadow:var(--shadow)}
+.t-juridico{--tc:var(--sev-alto)} .t-contratual{--tc:var(--sev-medio)} .t-produto{--tc:var(--accent)}
+.tipo-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.tipo-top b{font-family:var(--font-mono);font-size:24px;font-weight:500;
+  font-variant-numeric:tabular-nums;color:var(--tc);line-height:1}
+.tipo-card p{font-size:14.5px;line-height:1.6;color:var(--ink-soft)}
+.tipo-card p b{font-weight:500;color:var(--ink)}
+.tp-juridico{background:var(--sev-alto-bg);color:var(--sev-alto)}
+.tp-contratual{background:var(--sev-medio-bg);color:var(--sev-medio)}
+.tp-produto{background:var(--sev-baixo-bg);color:var(--sev-baixo)}
+
+/* ---------- tabela de referência ---------- */
+.filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:22px 0 4px}
+.chip{font-family:var(--font-ui);font-size:13px;padding:5px 13px;border-radius:99px;
+  border:1px solid var(--line-strong);background:transparent;color:var(--ink-soft);
+  cursor:pointer;transition:background .12s,border-color .12s}
+.chip:hover{background:var(--bg3)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+  color:var(--on-accent);font-weight:500}
+.busca{flex:1 1 190px;min-width:150px;font-family:var(--font-ui);font-size:14px;
+  padding:6px 12px;border-radius:99px;border:1px solid var(--line-strong);
+  background:var(--bg2);color:var(--ink)}
+.busca::placeholder{color:var(--faint)}
+.conta{font-family:var(--font-mono);font-size:12px;color:var(--muted);
+  font-variant-numeric:tabular-nums;padding-left:2px}
+.rolo{overflow-x:auto;margin-top:14px;border:1px solid var(--line);border-radius:4px;background:var(--bg2)}
+table{border-collapse:collapse;width:100%;min-width:740px}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  font-weight:500;text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-strong);
+  background:var(--bg3);position:sticky;top:0}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14.5px}
+tr:last-child td{border-bottom:0}
+.td-t{font-weight:500;line-height:1.4;min-width:260px}
+.td-t em{display:block;font-style:normal;font-weight:400;font-size:13.5px;
+  color:var(--muted);margin-top:4px;line-height:1.5}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;
+  text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap}
+.g-critico,.g-alto{background:var(--sev-alto-bg);color:var(--sev-alto)}
+.g-medio{background:var(--sev-medio-bg);color:var(--sev-medio)}
+.g-baixo{background:var(--sev-baixo-bg);color:var(--sev-baixo)}
+.g-info{background:var(--sev-info-bg);color:var(--sev-info)}
+.td-q,.td-e{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.vazio{padding:26px 14px;color:var(--muted);font-size:14.5px}
+
+/* ---------- rodapé ---------- */
+footer{border-top:1px solid var(--line);background:var(--bg2);margin-top:20px}
+footer .wrap{padding-top:28px;padding-bottom:40px}
+footer p{font-size:13.5px;color:var(--muted);max-width:70ch;line-height:1.6}
+footer p + p{margin-top:10px}
+footer b{color:var(--ink-soft);font-weight:500}
+
+@media (max-width:720px){
+  .wrap{padding:0 18px}
+  .trilha{grid-template-columns:34px 1fr;gap:0 16px}
+  .marca-fase::before{left:15px}
+  .quando-fase{display:none}
+  .acao{grid-template-columns:1fr}
+  .custo{grid-column:1;grid-row:auto;text-align:left;padding-top:6px}
+  .cabeca .wrap{padding-top:26px;padding-bottom:24px}
+  main .wrap{padding-top:40px}
+}
+</style>
+
+<header class="cabeca">
+  <div class="wrap">
+    <div class="marca">
+      <svg class="pata" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <ellipse cx="7" cy="8" rx="2.4" ry="3.1"/><ellipse cx="12" cy="6" rx="2.4" ry="3.2"/>
+        <ellipse cx="17" cy="8" rx="2.4" ry="3.1"/><ellipse cx="12" cy="16.5" rx="5" ry="4.3"/>
+      </svg>
+      Study Pets · revisão jurídica
+    </div>
+    <h1>Do seu app para o app de outras pessoas</h1>
+    <p class="dek">Noventa e um achados, nove áreas do direito, um cético encarregado de derrubar cada um. E a conclusão honesta é que <em>quase nada aqui é encrenca jurídica</em>: dos sete achados graves, quatro são bugs, e os outros três são a mesma página que falta.</p>
+    <div class="numeros">
+      <div class="num destaque"><b>4</b><span>bugs graves — é aqui que dói primeiro</span></div>
+      <div class="num"><b>3</b><span>graves de lei e contrato, e os três são a mesma página faltando</span></div>
+      <div class="num"><b>50</b><span>achados que se resolvem em minutos</span></div>
+      <div class="num"><b>1</b><span>que pede advogado de verdade</span></div>
+      <div class="num"><b>0</b><span>que te expõem hoje, com um usuário só</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <section id="hoje">
+    <div class="eyebrow">Onde você está</div>
+    <h2>Você não está num projeto privado. Está num limbo.</h2>
+    <p class="intro">A proteção que você tem hoje é uma só: existe um usuário, e ele é você. Isso é o que mantém o GDPR fora da conversa — a exceção de atividade puramente pessoal. É uma proteção real e vale bastante.</p>
+    <p class="intro">Só que ela não está na sua mão. O app está no ar, sem <code style="font-family:var(--font-mono);font-size:13px">robots.txt</code> e sem <code style="font-family:var(--font-mono);font-size:13px">noindex</code>, indexável por buscador, e não existe filtro nenhum de quem cria conta — nem lista de e-mail, nem convite, nada. <strong>No minuto em que um estranho clicar em “Criar conta”, a exceção acaba e você descobre depois.</strong> Hoje você tem o ônus de um app pessoal e o risco de um app público.</p>
+    <p class="intro">O que este plano propõe é sair do limbo pelo lado bom: fechar as quatro ou cinco coisas que faltam e abrir de propósito, sabendo o dia.</p>
+  </section>
+
+  <section id="tipos">
+    <div class="eyebrow">Como ler a lista</div>
+    <h2>Três tipos de problema, e só um é jurídico</h2>
+    <p class="intro">Uma revisão jurídica puxa tudo que pode te dar dor de cabeça, e isso mistura coisas de natureza bem diferente. Separadas, a lista fica menos assustadora e muito mais acionável — porque cada tipo se resolve num lugar diferente.</p>
+    <div class="tipos">
+      <div class="tipo-card t-juridico">
+        <div class="tipo-top"><span class="pill tp-juridico">jurídico</span><b>64</b></div>
+        <p>Tem lei atrás: GDPR, LGPD, DDG alemão, marca, imigração. Parece a maioria esmagadora, mas <b>só dois são graves — e são o mesmo</b>: falta a política de privacidade. O resto é baixa gravidade, quase tudo vale só “ao abrir”, e 35 deles se resolvem em minutos. Este tipo se resolve <b>escrevendo</b>, não programando.</p>
+      </div>
+      <div class="tipo-card t-contratual">
+        <div class="tipo-top"><span class="pill tp-contratual">contratual</span><b>10</b></div>
+        <p>Termo de fornecedor, não lei: Google, Vercel, GitHub, Chrome Web Store. Ninguém te processa por isso — o que acontece é administrativo e rápido: conta suspensa, submissão rejeitada, app fora do ar. Um único grave, e é a mesma política de privacidade, agora exigida por contrato em vez de por lei.</p>
+      </div>
+      <div class="tipo-card t-produto">
+        <div class="tipo-top"><span class="pill tp-produto">produto</span><b>17</b></div>
+        <p>Não tem lei nenhuma atrás. Quebra, você perde dado, o login trava, a cota estoura — e o único prejudicado é você. <b>Quatro dos sete achados graves da lista inteira estão aqui</b>, e é por isso que a Fase 0 vem antes de qualquer documento.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="trilha">
+    <div class="eyebrow">O caminho</div>
+    <h2>Quatro blocos, na ordem em que um destrava o outro</h2>
+    <p class="intro">Como um dia no seu próprio app: cada bloco só faz sentido depois do anterior. O primeiro não tem nada de jurídico — é o que protege os meses de dado que você já tem.</p>
+
+    <div class="trilha">
+
+      <div class="fase agora">
+        <div class="marca-fase"><div class="bolha">0</div><div class="quando-fase">este<br>fim de semana</div></div>
+        <div class="corpo-fase">
+          <h3>Proteger o que já existe</h3>
+          <p class="destrava"><b>Destrava:</b> nada jurídico. Destrava você não perder o Study Pets inteiro num dia ruim de rede — que é, honestamente, o risco mais provável desta lista toda.</p>
+          <div class="acoes">
+            <div class="acao trava">
+              <div class="acao-t">Travar o save quando o carregamento falha</div>
+              <div class="acao-c">Hoje, se o <code>users.load</code> lançar erro, o <code>catch</code> em <code>session.ts:88</code> só faz um <code>console.error</code> e um toast de 2,5 s. O app renderiza vazio, sem abrir o onboarding, e qualquer um dos 26 <code>scheduleSave()</code> grava esse vazio por cima do seu histórico — com <code>setDoc</code> sem merge. Existe até um caminho com zero cliques: o <code>resumeHardcoreOnBoot</code> aplica penalidade e chama <code>saveNow()</code>. A trava já está escrita: chame <code>blockSaves(true)</code> no catch e <code>blockSaves(false)</code> só depois de um hydrate bem-sucedido. E mova o <code>subscribeRemote</code> pra antes do <code>initAfterLoad</code>, pro snapshot poder te resgatar.</div>
+              <div class="custo">~5 linhas</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Completar o <code style="font-family:var(--font-mono);font-size:13px">resetToLoggedOut</code></div>
+              <div class="acao-c">Ele limpa checks, events, config, pets e pausas — mas deixa <code>eventSeries</code>, <code>groups</code>, <code>windowOverrides</code>, <code>avatar</code> e <code>tutorialSeen</code> com o conteúdo do usuário anterior (<code>session.ts:127</code>). Num navegador compartilhado, com o load do segundo usuário falhando, as aulas e consultas que vieram do <code>.ics</code> de uma pessoa são gravadas no documento de outra. Deixa de ser durabilidade e vira confidencialidade.</div>
+              <div class="custo">1 linha</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Baixar seus dados hoje — e virar rotina</div>
+              <div class="acao-c">Não existe backup: o PITR e o backup agendado do Firestore exigem faturamento ativo, e você está no Spark. O botão “Baixar (JSON)” já existe em Configurações → Geral. Enquanto a Fase 2 não chega, ele é o backup.</div>
+              <div class="custo">2 min</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Desarmar o “Cancelar sessão”</div>
+              <div class="acao-c">Um clique apaga meses, sem palavra digitada, com um nome que em qualquer outro app significa fazer logout. Em <code>DangerModals.tsx</code>: oferecer o <code>exportMyData()</code> logo acima do botão, e renomear pra “Apagar todo o histórico”.</div>
+              <div class="custo">minutos</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Auto-hospedar as quatro fontes</div>
+              <div class="acao-c">O <code>index.html</code> puxa DM Sans, DM Mono, Lora e Press Start 2P do CDN do Google, com <code>preconnect</code>, antes de qualquer tela — e manda o IP de todo visitante pro Google. É o caso do LG München I (3 O 17493/20). As quatro são SIL OFL: baixe os <code>.woff2</code> pra <code>public/fonts/</code>, escreva os <code>@font-face</code> e apague os três links. Mata o assunto e ainda tira dois handshakes TLS da primeira pintura.</div>
+              <div class="custo">~1 hora</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Tirar “Pomodoro” da vitrine</div>
+              <div class="acao-c">A marca da UE nº 011903242 sobreviveu ao processo de caducidade justamente na classe 9, para <i>downloadable application software</i> — confirmado pelo Tribunal Geral em 19/01/2022 (T-76/21). Você está limpo nos três gatilhos duros (o app não se chama Pomodoro, o domínio não tem, não há tomate nenhum), mas a palavra está no chip da tela de login (<code>strings.ts:24</code>) e na <code>description</code> do manifest — que é exatamente o campo que virou descrição de loja no caso do “Pomodoro One”, obrigado a virar “Tomato One”.</div>
+              <div class="custo">5 min</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Parar de assinar commits com a TUM</div>
+              <div class="acao-c">Os 177 commits do repositório público estão assinados com <code>ge37yoh@mytum.de</code> — seu Kennung, que é o login de todos os serviços da universidade. Não é senha, mas é metade de uma credencial, exposta pra sempre. Há também um <code>t.spielmann+study@tum.de</code> em <code>tests/auth.test.ts:8</code>. Troque o <code>git config user.email</code> para o endereço de contato do projeto — e lembre que o mytum morre três meses depois da formatura.</div>
+              <div class="custo">2 min</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fase">
+        <div class="marca-fase"><div class="bolha">1</div><div class="quando-fase">antes de<br>mandar o link</div></div>
+        <div class="corpo-fase">
+          <h3>O portão</h3>
+          <p class="destrava"><b>Destrava:</b> tudo. Uma página de privacidade sozinha resolve cinco obrigações diferentes — e sem ela você não publica a extensão, não publica a tela do Google e não pode, honestamente, mandar o link pra ninguém.</p>
+          <div class="acoes">
+            <div class="acao">
+              <div class="acao-t">Política de privacidade em <code style="font-family:var(--font-mono);font-size:13px">/privacidade</code></div>
+              <div class="acao-c">Não é só a lei: você já está debaixo de dois contratos que exigem. O <b>GCP ToS §3.2</b> joga em você o dever de avisar e obter consentimento — o Firestore e o Auth caem nele. E o <b>Google APIs ToS §3(d)</b>, aceito só por carregar as fontes do CDN, exige política de privacidade com essas palavras. Diga o que é guardado (e-mail e nome pelo Auth; checks, eventos importados, nomes de pets, grupos, config no Firestore), quem processa e como apagar — e cite os botões “Baixar meus dados” e “Apagar conta”, que já existem e são um ponto forte seu.</div>
+              <div class="custo">algumas horas</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Termos de uso curtos</div>
+              <div class="acao-c">Serviço gratuito também é contrato. O que interessa: dizer que o app não garante disponibilidade nem preservação de dado, e cobrir o §2(a) do Google APIs ToS, que exige que você repasse obrigações aos seus usuários. Existem limites que nem o termo mais bem escrito afasta — dolo e culpa grave —, e tudo bem.</div>
+              <div class="custo">algumas horas</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Identificação do responsável (Impressum)</div>
+              <div class="acao-c">Alemanha, § 5 DDG: nome completo, endereço postal onde você possa ser notificado, e-mail. O incômodo real é publicar o endereço de Munique — é isso que <i>ladungsfähige Anschrift</i> quer dizer. O mesmo bloco serve de canal de contato do Art. 12 do GDPR, então são dois deveres numa página.</div>
+              <div class="custo">30 min</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Publicar a tela de consentimento do Google</div>
+              <div class="acao-c">Todo projeto OAuth nasce em “Testing”, com teto rígido de 100 usuários listados um a um. Se estiver assim, o amigo de número 101 recebe <code>access_denied</code> e você descobre pelo “não consigo entrar”. Com escopos básicos (nome, e-mail, perfil) publica na hora, sem revisão do Google. É console, não código.</div>
+              <div class="custo">10 min</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Perguntar a idade no onboarding</div>
+              <div class="acao-c">Hoje nada pergunta, e o público natural de um app de estudo inclui gente de 15 e 16 anos. Na Alemanha o corte do Art. 8 do GDPR é 16; no Brasil, o ECA e a LGPD tratam criança e adolescente em regime próprio. Um campo no primeiro passo resolve, e cabe bem no tom do onboarding que você já tem.</div>
+              <div class="custo">1 hora</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Um <code style="font-family:var(--font-mono);font-size:13px">LICENSE</code> no repositório</div>
+              <div class="acao-c">Repositório público sem licença significa, por padrão, que ninguém pode usar nada — e que você não pode aceitar contribuição com segurança. Se a ideia é “ajudar outros estudantes”, escolher a licença é parte disso. MIT se quiser que qualquer um use; AGPL se quiser que melhorias voltem.</div>
+              <div class="custo">5 min</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fase">
+        <div class="marca-fase"><div class="bolha">2</div><div class="quando-fase">quando tiver<br>gente de verdade</div></div>
+        <div class="corpo-fase">
+          <h3>Quando virar de verdade</h3>
+          <p class="destrava"><b>Destrava:</b> o app não travar no dia em que der certo. Nada aqui é urgente com dez usuários; tudo aqui dói com quinhentos.</p>
+          <div class="acoes">
+            <div class="acao">
+              <div class="acao-t">Firebase Blaze, com orçamento e alerta</div>
+              <div class="acao-c">A cota gratuita de 20 mil escritas por dia é o teto real de usuários. Estourou, o Firestore devolve <code>RESOURCE_EXHAUSTED</code> e o app vira local-only até a meia-noite do Pacífico — quem trocar de aparelho nesse intervalo perde o dia. O Blaze não tem limite de gasto automático, então o alerta de orçamento é o que existe. Antes disso: pare de salvar na hora o que não precisa (<code>tutorialSeen</code>, <code>avatar</code>, notificações).</div>
+              <div class="custo">1 hora</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Backup agendado do Firestore</div>
+              <div class="acao-c">Só existe com faturamento ativo — ou seja, vem de graça junto com o Blaze. Recuperação a ponto no tempo, janela de 7 dias. É o que substitui o snippet do DevTools.</div>
+              <div class="custo">20 min</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Vercel Pro</div>
+              <div class="acao-c">Resolve duas coisas de uma vez: o DPA da Vercel (o contrato de operador do Art. 28) só vale para Pro e Enterprise, e o plano Hobby é declaradamente para uso não comercial. A transferência em si já está coberta — a Vercel é certificada no EU-US Data Privacy Framework. Falta o contrato, não a garantia.</div>
+              <div class="custo">minutos + assinatura</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Duas páginas pra você mesmo</div>
+              <div class="acao-c">O registro do Art. 30 (que dado você trata, por quê, com quem, por quanto tempo) e um procedimento de incidente (como você percebe, o que faz nas 72 horas, como avisa). Ninguém vai te pedir amanhã. Mas se pedirem um dia, escrever na hora é impossível — e escrever agora leva uma tarde.</div>
+              <div class="custo">uma tarde</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Extensão na Chrome Web Store</div>
+              <div class="acao-c">É o único jeito de outra pessoa usar o bloqueio de sites — mandar o <code>.zip</code> cria uma extensão que nunca mais atualiza. A submissão exige a política de privacidade no ar e a aba Privacy preenchida: a extensão lê a URL das abas abertas, o que conta como <i>web activity</i> mesmo processando tudo localmente. O código não precisa mudar; a permissão <code>tabs</code> é genuinamente necessária.</div>
+              <div class="custo">algumas horas</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">Decidir o que fazer com conta abandonada</div>
+              <div class="acao-c">Hoje nada expira: o documento é um diário minuto a minuto que cresce pra sempre. Uma regra simples escrita na política (“conta sem acesso por 24 meses é apagada, com aviso por e-mail antes”) resolve o princípio e ainda segura sua conta do Firestore.</div>
+              <div class="custo">1 hora</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fase">
+        <div class="marca-fase"><div class="bolha">3</div><div class="quando-fase">só se um dia<br>entrar dinheiro</div></div>
+        <div class="corpo-fase">
+          <h3>Se um dia entrar dinheiro</h3>
+          <p class="destrava"><b>Destrava:</b> nada — este bloco existe pra te fazer parar. É o único item de toda a revisão em que o passo vem <b>antes</b>, e não junto.</p>
+          <div class="acoes">
+            <div class="acao trava">
+              <div class="acao-t">A autorização vem antes do primeiro euro</div>
+              <div class="acao-c">O § 16b AufenthG autoriza <i>Beschäftigung</i> — trabalho assalariado, 140 dias cheios por ano. Ele <b>não</b> autoriza atividade autônoma. Para isso existe o § 21 Abs. 6, que é discricionário (“kann”) e precisa ser pedido à Ausländerbehörde <b>antes</b> de começar. E o gatilho é barato: um botão de doação fixo, um Ko-fi no rodapé, um plano pago, anúncio, patrocínio. Não é o número de usuários — você pode abrir de graça pra dez mil estudantes do mundo inteiro sem nenhuma implicação migratória, e ter um usuário só com um Patreon e já estar em atividade não autorizada.</div>
+              <div class="custo">advogado</div>
+            </div>
+            <div class="acao">
+              <div class="acao-t">E aí muda tudo de uma vez</div>
+              <div class="acao-c">Imposto e registro de atividade, Vercel Pro deixa de ser escolha, o CDC e o direito de arrependimento entram, o Impressum vira obrigação clara em vez de discutível, e a conversa sobre abrir uma UG começa a fazer sentido — lembrando que ela <i>não</i> protege contra o risco principal: no Art. 82 do GDPR quem decide é responsável, e você decide tudo sozinho.</div>
+              <div class="custo">advogado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="nao">
+    <div class="eyebrow">Igualmente importante</div>
+    <h2>O que você <i>não</i> precisa fazer</h2>
+    <p class="intro" style="margin-bottom:22px">Metade do trabalho de uma revisão honesta é derrubar medo. Cada linha aqui foi checada e sobreviveu como “está limpo”.</p>
+    <div class="limpo"><ul>
+      <li><span class="tique">✓</span><span><b>Banner de cookie.</b> O § 25 Abs. 2 TDDDG dispensa consentimento para armazenamento estritamente necessário, e é isso que o app faz — sessão, cache, tema.</span></li>
+      <li><span class="tique">✓</span><span><b>Trocar dependência.</b> As 459 instaladas são MIT, Apache-2.0, ISC ou BSD. Os dois únicos copyleft (MPL-2.0) e o CC-BY-4.0 são ferramenta de build e não vão pro bundle.</span></li>
+      <li><span class="tique">✓</span><span><b>Mudar a mecânica dos pets.</b> Colecionar bicho e evoluir por nível é regra de jogo, e regra de jogo não é obra protegida. A arte é sua, gerada em código.</span></li>
+      <li><span class="tique">✓</span><span><b>Esconder a <code style="font-family:var(--font-mono);font-size:13px">apiKey</code> do Firebase.</b> Ela é pública por natureza. Quem protege os dados são as regras do Firestore — que estão corretas: ninguém lê nem escreve nada além do próprio documento.</span></li>
+      <li><span class="tique">✓</span><span><b>Temer a Abmahnung de Impressum.</b> Desde 2021 o § 13 Abs. 4 Nr. 1 UWG exclui o ressarcimento de custos justamente para violação de dever de informação em telemídia. O cenário real é uma carta que se responde publicando a página.</span></li>
+      <li><span class="tique">✓</span><span><b>Acessibilidade obrigatória (BFSG) e o DSA.</b> Nenhum dos dois te alcança — e o BFSG continua não alcançando nem se você cobrar, pela exceção de microempresa.</span></li>
+      <li><span class="tique">✓</span><span><b>Pedir autorização ao titular da marca Pomodoro.</b> É entregar seu nome a quem já disse publicamente que persegue o termo. A parte agressiva das diretrizes dele — “não crie apps usando a ideia da técnica” — não é oponível: marca protege sinal, não método.</span></li>
+      <li><span class="tique">✓</span><span><b>Abrir uma empresa agora.</b> Não protege o risco principal e adiciona custo, contabilidade e — no seu caso — uma conversa migratória que você ainda não precisa ter.</span></li>
+      <li><span class="tique">✓</span><span><b>Se preocupar com a TUM.</b> O Study Pets é seu. A universidade não tem direito nenhum sobre um projeto pessoal feito fora de vínculo de trabalho ou de pesquisa contratada.</span></li>
+    </ul></div>
+  </section>
+
+  <section id="checar">
+    <div class="eyebrow">Pendente</div>
+    <h2>Três coisas que só você consegue conferir</h2>
+    <p class="intro">Nenhuma delas se lê no código, e as três mudam uma conclusão.</p>
+    <div class="checar">
+      <div class="chk"><b>Qual é o seu título de residência</b><span>Toda a Fase 3 assume o § 16b (estudo). Se for outro, a resposta muda — e é o único ponto da revisão em que errar custa caro de verdade.</span></div>
+      <div class="chk"><b>Em que região está o Firestore</b><span>Console do Firebase. Se estiver na padrão <code style="font-family:var(--font-mono);font-size:12.5px">us-central</code>, seus dados moram nos Estados Unidos — e isso precisa estar escrito na política.</span></div>
+      <div class="chk"><b>O estado da tela OAuth</b><span>“Testing” ou “In production”, em console.cloud.google.com. Se for a primeira, seu app já tem um teto de 100 pessoas e você não sabia.</span></div>
+    </div>
+  </section>
+
+  <section id="ref">
+    <div class="eyebrow">Referência</div>
+    <h2>Os 91 achados</h2>
+    <p class="intro">Tudo que os nove levantamentos produziram, com a gravidade e a probabilidade já <b>ajustadas pelo cético</b> que tentou derrubar cada um. Quatro foram refutados e ficaram de fora da contagem de risco, mas seguem aqui marcados. A coluna <b>Tipo</b> separa o que é lei do que é contrato e do que é só bug.</p>
+    <div class="filtros" role="group" aria-label="Filtros">
+      <button class="chip" data-f="tipo" data-v="juridico" aria-pressed="false">Só jurídico</button>
+      <button class="chip" data-f="tipo" data-v="contratual" aria-pressed="false">Só contratual</button>
+      <button class="chip" data-f="tipo" data-v="produto" aria-pressed="false">Só produto</button>
+      <button class="chip" data-f="q" data-v="hoje" aria-pressed="false">Vale hoje</button>
+      <button class="chip" data-f="q" data-v="ao-abrir" aria-pressed="false">Ao abrir</button>
+      <button class="chip" data-f="g" data-v="alto" aria-pressed="false">Gravidade alta</button>
+      <button class="chip" data-f="e" data-v="minutos" aria-pressed="false">Resolve em minutos</button>
+      <button class="chip" data-f="ver" data-v="refutado" aria-pressed="false">Refutados</button>
+      <input class="busca" id="busca" type="search" placeholder="Buscar por palavra…" aria-label="Buscar nos achados">
+      <span class="conta" id="conta"></span>
+    </div>
+    <div class="rolo">
+      <table>
+        <thead><tr><th>Achado</th><th>Tipo</th><th>Grav.</th><th>Quando</th><th>Esforço</th></tr></thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Como isto foi feito:</b> 27 agentes em paralelo, divididos em nove áreas do direito — inventário de dados, GDPR, direito alemão, LGPD e Marco Civil, termos dos fornecedores, propriedade intelectual que entra, marcas de terceiros, a extensão, e o que falta pra abrir. Cada área teve um cético adversarial encarregado de derrubar os próprios achados do time, e um crítico de completude apontou quatro ângulos que ninguém tinha olhado — entre eles o do visto, que virou o item mais consequente da lista. 4,6 milhões de tokens, 819 chamadas de ferramenta.</p>
+    <p><b>O que isto não é:</b> parecer jurídico. Não sou advogado. Onde há citação de norma, o texto vigente foi conferido na fonte; onde a certeza era menor, está dito no próprio achado. Para a Fase 3 — e só para ela — vale pagar uma consulta de verdade.</p>
+    <p style="font-size:12.5px;color:var(--faint)">Ironia registrada: esta página carrega as fontes do CDN do Google, exatamente o que a Fase 0 te pede pra parar de fazer. A diferença é que ela mora na claude.ai e você não é o responsável pelo tratamento aqui.</p>
+  </div>
+</footer>
+
+<script type="application/json" id="dados">[{"t":"Toda visita ao app manda o IP do visitante pro Google (fontes), sem consentimento e sem política","area":"Inventário de dados pessoais — dados que saem do dispositivo","g":"medio","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"O index.html carrega o CSS e os arquivos das fontes direto dos servidores do Google.","r":"Hospedar as quatro fontes no próprio domínio: baixar os .woff2 (as quatro são de licença aberta — SIL Open Font License), pôr em public/fonts/, escrever os @font-face em src/styles/app.css e apagar os três <link> do index.html.","tipo":"juridico"},{"t":"Sair da conta e apagar a conta deixam a cópia local completa dos dados no navegador","area":"Inventário de dados pessoais — retenção no dispositivo","g":"baixo","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"O Firestore está configurado com cache persistente em IndexedDB (persistentLocalCache com persistentMultipleTabManager).","r":"No logout e no fim do deleteAccount, chamar terminate(db) seguido de clearIndexedDbPersistence(db) (os dois de firebase/firestore) e apagar as chaves study-pets:hardcore:<uid> e study-pets:pause:<uid> do localStorage.","tipo":"juridico"},{"t":"Trocar de conta pode gravar os dados de uma pessoa no documento da outra","area":"Inventário de dados pessoais — isolamento entre titulares","g":"alto","p":"baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"Duas falhas que se somam.","r":"Duas linhas de código.","tipo":"produto"},{"t":"A importação de calendário traz nome de terceiros e possivelmente dado sensível pra dentro do Firestore, e não há como apagar em bloco","area":"Inventário de dados pessoais — dados de terceiros e categorias especiais","g":"medio","p":"media","q":"ambos","e":"horas","ver":"ajustado","o":"O parser lê o SUMMARY do evento e guarda o texto verbatim; esse texto vira o name do evento ou da série e sobe pro Firestore junto com o resto do documento.","r":"Três coisas, em ordem de custo.","tipo":"juridico"},{"t":"Nenhum dado expira: o documento é um diário minuto a minuto que cresce pra sempre","area":"Inventário de dados pessoais — retenção","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O serializeState monta o documento inteiro a cada save e não poda nada — não há corte por idade, arquivamento nem limite.","r":"Não precisa apagar nada: precisa decidir e escrever.","tipo":"juridico"},{"t":"A lista de sites bloqueados é o campo mais revelador do documento e ninguém percebe isso","area":"Inventário de dados pessoais — categorias especiais implícitas","g":"medio","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"config.siteBlock.sites é uma lista que o próprio usuário digita dizendo quais sites o distraem a ponto de precisar bloqueá-los.","r":"Duas medidas baratas e proporcionais, quando abrir.","tipo":"juridico"},{"t":"A extensão lê a URL de todas as abas abertas — sem política, ela não passa na Chrome Web Store","area":"Inventário de dados pessoais — extensão do navegador","g":"medio","p":"alta","q":"ao-abrir","e":"horas","ver":"confirmado","o":"O service worker da extensão consulta todas as abas http/https abertas pra redirecionar as que já estão num site bloqueado, e vigia tabs.onUpdated pra pegar navegação posterior.","r":"Antes de publicar: (1) uma URL pública de política de privacidade — pode ser uma página simples no próprio domínio do app; (2) preencher a aba Privacy do painel da loja marcando \"web activity\" e certificando que o dado não é vendido nem usado fora do propósito declarado, o que é verdade e é fácil de sustentar; (3) uma linha honesta no README e na descrição da loja: \"a extensão lê o endereço das abas abertas pra saber qual redirecionar; nada disso sai do seu computador\".","tipo":"juridico"},{"t":"O \"Baixar meus dados\" entrega o documento, mas não o que o Firebase Auth guarda","area":"Inventário de dados pessoais — portabilidade","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"confirmado","o":"O buildExport devolve o documento do Firestore mais um carimbo exportedAt.","r":"Acrescentar ao objeto exportado um bloco account com o que o app já tem em mãos (state.user: email, displayName, provider, uid) e uma nota curta no arquivo — ou na tela — dizendo que o Firebase Auth guarda também data de criação e último login, e como pedir.","tipo":"juridico"},{"t":"Qualquer pessoa pode criar conta hoje — a exceção doméstica não está na sua mão","area":"GDPR — Art. 2(2)(c), escopo de aplicação","g":"medio","p":"media","q":"ambos","e":"minutos","ver":"ajustado","o":"Enquanto você é o único usuário e os dados tratados são seus, o Art.","r":"Enquanto você não quiser abrir, feche a porta de propósito, em vez de contar com a sorte: no Firebase Console → Authentication, desabilitar a criação de conta nova (ou deixar só o seu provedor), e/ou trocar firestore.rules:18 por uma allowlist explícita do seu uid (request.auth.uid == 'SEU_UID').","tipo":"juridico"},{"t":"Não existe política de privacidade — é o primeiro documento que falta no dia em que houver um segundo usuário","area":"GDPR — Art. 12/13, informação ao titular","g":"alto","p":"alta","q":"ao-abrir","e":"dias","ver":"ajustado","o":"Não há nenhum arquivo de política, termos ou aviso de privacidade no repositório, e nenhuma rota no app.","r":"Uma página estática servida pelo próprio app (rota /privacidade, ou um HTML em public/), linkada na tela de login e nas Configurações.","tipo":"juridico"},{"t":"O index.html carrega Google Fonts do CDN — o IP de todo visitante vai pro Google antes de qualquer tela","area":"GDPR — Art. 6 (base legal) e Art. 44 ss. (transferência)","g":"medio","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"As quatro fontes vêm do CDN do Google, com preconnect, no caminho crítico da primeira pintura.","r":"Baixar as quatro famílias e servir de public/fonts/ com @font-face no CSS, apagando os dois preconnect e o <link> do index.html.","tipo":"juridico"},{"t":"O DPA da Vercel só vale pra Pro e Enterprise — no plano Hobby você fica sem contrato de operador","area":"GDPR — Art. 28, contrato com operador","g":"medio","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O Art.","r":"Três caminhos, em ordem de custo: (a) perguntar à Vercel por escrito se o DPA cobre Hobby — a resposta por e-mail já serve de prova documental; (b) subir pro Pro no dia em que abrir, o que resolve o Art.","tipo":"juridico"},{"t":"A revisão do calendário vem com tudo pré-marcado, inclusive consulta médica","area":"GDPR — Art. 25 (proteção por padrão) e Art. 9 (categoria especial)","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Ao escolher o arquivo .ics, todos os compromissos já chegam marcados pra importar; o usuário precisa desmarcar um a um o que não quer.","r":"Virar o padrão pra desmarcado (include: false em allChosen, na linha 42) e oferecer \"marcar todos\" como um clique — a tela já tem botão de massa pro XP (#ics-all-xp), então o padrão é o mesmo.","tipo":"juridico"},{"t":"\"Baixar meus dados\" entrega o plano de estudo, mas não os dados da conta","area":"GDPR — Art. 15 (acesso) e Art. 20 (portabilidade)","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O botão exporta só o documento do Firestore.","r":"Acrescentar em buildExport um bloco account: { email, displayName, provider } lido de state.user, que já carrega os três (src/infrastructure/ports.ts, interface AuthUser).","tipo":"juridico"},{"t":"Nada pergunta a idade, e na Alemanha o corte do Art. 8 é 16 anos","area":"GDPR — Art. 8, consentimento de criança","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O público declarado é estudante, o que inclui gente de 14 e 15 anos.","r":"Uma linha nos Termos e na política: o serviço é para 16 anos ou mais.","tipo":"juridico"},{"t":"Faltam dois documentos internos: o registro do Art. 30 e o procedimento de incidente","area":"GDPR — Art. 30 (registro) e Art. 33/34 (notificação de violação)","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"confirmado","o":"A exceção do Art.","r":"Um markdown no repo com as colunas do Art.","tipo":"juridico"},{"t":"O index.html carrega Google Fonts do CDN — o IP de todo visitante vai pro Google antes de qualquer login ou consentimento","area":"Direito alemão — proteção de dados / Google Fonts","g":"baixo","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"As quatro fontes (DM Sans, DM Mono, Lora, Press Start 2P) vêm de servidores do Google em vez de virem do próprio app.","r":"Auto-hospedar.","tipo":"juridico"},{"t":"Não existe Impressum — o dever é do dia em que o app deixar de ser só dele, e o preço real é o endereço residencial dele na internet","area":"Direito alemão — DDG (identificação do prestador)","g":"medio","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O app não tem página de identificação, rodapé legal, rota /impressum, nem nada equivalente.","r":"Enquanto for só ele, não fazer nada — é o caso em que o dever provavelmente nem incide.","tipo":"juridico"},{"t":"O tema é gravado no localStorage já na primeira pintura, antes de o usuário escolher qualquer coisa","area":"Direito alemão — § 25 TDDDG (armazenar no dispositivo)","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"`initTheme()` roda antes do React montar.","r":"Separar aplicar de gravar: `applyTheme(id, { persist = true })` e `initTheme()` chamando com `persist: false`.","tipo":"juridico"},{"t":"BFSG (acessibilidade) não alcança ele — e continua não alcançando mesmo se um dia cobrar; quem segura é a exceção de microempresa, não a gratuidade","area":"Direito alemão — BFSG (acessibilidade)","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O Barrierefreiheitsstärkungsgesetz está em vigor desde 28.06.2025 e gerou muito barulho, boa parte dele mal calibrado.","r":"Nada a fazer por obrigação legal, e o conselho aqui é o contrário do usual: não gastar tempo com declaração de acessibilidade nem com auditoria formal, porque isso é dever de quem está dentro do BFSG e ele não está.","tipo":"juridico"},{"t":"Notificação extrajudicial (Abmahnung): hoje ele é alvo implausível, e o gatilho que muda isso é monetizar — não é abrir","area":"Direito alemão — UWG / Abmahnung","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"Vale entender quem pode mandar Abmahnung na Alemanha, porque a resposta descarta a maior parte do medo.","r":"Nada agora.","tipo":"juridico"},{"t":"O app não tem aviso de privacidade nenhum — a única frase sobre dados é \"Dados salvos na nuvem\"","area":"LGPD — dever de informar e transparência","g":"medio","p":"media","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Não existe política de privacidade, aviso de tratamento nem termos de uso — nem no repositório, nem no app.","r":"Uma página estática só (ex.: /privacidade no public/, linkada na tela de login e em Configurações → Geral), no mesmo tom do resto do app: o que é guardado (a lista está pronta em src/domain/persistence.ts:272 — checks, eventos, pets, config, avatar, pausas, penalidades — mais e-mail/nome/foto no Firebase Auth), pra que serve, quem hospeda (Google/Firebase e Vercel, fora do Brasil), por quanto tempo fica, os direitos do art.","tipo":"juridico"},{"t":"Não há nenhum canal de contato — nem e-mail, nem formulário — pra um usuário exercer direitos ou reclamar","area":"LGPD — direitos do titular e encarregado (art. 18/41)","g":"medio","p":"media","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"Você fica dispensado de nomear encarregado (DPO) por ser agente de tratamento de pequeno porte, mas a mesma resolução da ANPD que dá essa dispensa exige, em troca, disponibilizar um canal de comunicação com o titular.","r":"Um e-mail (pode ser um alias do Gmail mesmo) publicado no aviso de privacidade e em Configurações → Geral, com a frase de que pedidos do art.","tipo":"juridico"},{"t":"O app não pergunta idade em lugar nenhum, e desde 17/03/2026 o ECA Digital vale pra app educacional que menor provavelmente acessa","area":"LGPD art. 14 + ECA Digital (Lei 15.211/2025)","g":"medio","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Nem o cadastro nem o onboarding perguntam data de nascimento.","r":"Duas linhas de defesa, ambas baratas: (1) perguntar data de nascimento no cadastro e guardar; (2) enquanto não quiser lidar com menor, declarar nos termos que o serviço é pra maiores de 18 (ou 16) e bloquear quem declarar menos — não é verificação confiável no sentido do ECA Digital, mas já resolve a LGPD art.","tipo":"juridico"},{"t":"A importação de calendário e os campos livres jogam dado de terceiro — e possivelmente dado sensível — dentro do documento na nuvem","area":"LGPD — dado sensível (art. 11) e dado de terceiros","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O importador de .ics salva o nome do compromisso como veio do calendário, sem filtro.","r":"Mitigação de produto, não jurídica: (1) na revisão do .ics, um switch \"importar só o horário (sem o nome)\" que grava 'Compromisso' no lugar do texto — resolve a maior parte do risco com pouquíssimo código, e combina com o app, que só precisa do bloco de tempo; (2) uma linha no painel dizendo que o texto do compromisso fica salvo na sua conta na nuvem; (3) a mesma frase curta embaixo da caixa de sites bloqueados.","tipo":"juridico"},{"t":"Todo o dado sai do Brasil (Firebase, Vercel, Google Fonts) sem base de transferência internacional declarada","area":"LGPD — transferência internacional (art. 33)","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Auth e Firestore rodam no projeto Firebase 'plano-estudos-bf51d' (Google), o site é servido pela Vercel, e o index.html ainda busca as fontes no CDN do Google, o que entrega o IP de todo visitante pra Google antes mesmo do login.","r":"Três passos, do mais barato ao mais chato: (1) informar no aviso de privacidade, em destaque, que os dados ficam em servidores da Google e da Vercel fora do Brasil — isso já sustenta o art.","tipo":"juridico"},{"t":"Não existe plano de incidente, nem como perceber um vazamento, nem como avisar os usuários dentro do prazo","area":"LGPD — incidente de segurança (art. 48)","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O app não tem log próprio, monitoramento, alerta ou canal.","r":"Meia página no repo com: o que conta como incidente, quem você avisa (ANPD pelo formulário e os titulares por e-mail via console do Firebase), em quanto tempo, e o que registra.","tipo":"juridico"},{"t":"O \"Baixar meus dados\" omite de propósito e-mail e identificador — pro art. 18 isso é dado faltando","area":"LGPD — acesso e portabilidade (art. 18)","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"confirmado","o":"A exportação entrega o documento do Firestore e nada mais.","r":"Acrescentar um bloco `conta: { email, nome, provedor, criadaEm, ultimoAcesso }` no `buildExport`, montado a partir do `AuthUser` que já está no store, e ajustar a frase em src/shared/strings.ts:522 pra dizer que o arquivo traz também os dados da conta.","tipo":"juridico"},{"t":"Conta abandonada fica pra sempre: não há prazo de retenção nem eliminação automática","area":"LGPD — término do tratamento (art. 15/16)","g":"baixo","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Só existem dois caminhos de eliminação, e ambos dependem de o usuário agir: \"Cancelar sessão\" (zera dados de uso) e \"Apagar conta\".","r":"Escolher um prazo (ex.: 24 meses sem login) e escrevê-lo no aviso de privacidade — declarar já vale muito.","tipo":"juridico"},{"t":"CDC alcança serviço gratuito, e a tela de login promete mais do que o app garante","area":"Código de Defesa do Consumidor","g":"baixo","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O STJ já firmou que gratuidade não afasta relação de consumo, porque \"mediante remuneração\" no art.","r":"Termos de uso curtos, no mesmo tom do app: serviço gratuito e pessoal, fornecido como está, sem garantia de disponibilidade, com a recomendação explícita de usar o \"Baixar meus dados\" como backup — e sem prometer que nada se perde.","tipo":"juridico"},{"t":"Guarda de logs do Marco Civil: hoje você não é obrigado — e isso muda se o app virar atividade econômica","area":"Marco Civil da Internet","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"confirmado","o":"O dever de guardar registros de acesso a aplicação por 6 meses vale pro provedor de aplicação constituído como pessoa jurídica que exerça a atividade de forma organizada, profissionalmente e com fins econômicos.","r":"Não fazer nada agora — de propósito.","tipo":"juridico"},{"t":"Você provavelmente se enquadra como agente de pequeno porte — e isso te poupa bastante","area":"LGPD — regime simplificado da ANPD","g":"info","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"confirmado","o":"A resolução da ANPD sobre agentes de tratamento de pequeno porte inclui expressamente pessoas naturais que tratam dados como controlador.","r":"Guardar uma nota no repo dizendo que o projeto opera sob o regime de pequeno porte da Res.","tipo":"juridico"},{"t":"A cota gratuita do Firestore (20 mil escritas/dia) é o teto real de usuários do app — e quando estoura, trava pra todo mundo","area":"Firebase / Google Cloud — plano Spark","g":"medio","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O plano Spark do Firebase dá 50 mil leituras, 20 mil escritas e 20 mil exclusões por DIA, 1 GiB de dados e 10 GiB de egresso por mês (confirmado em firebase.google.com/pricing).","r":"Duas coisas, nesta ordem.","tipo":"produto"},{"t":"A tela de consentimento do Google provavelmente está em 'Testing' — nesse estado o login para no 101º usuário","area":"Login com Google (Google Identity / OAuth)","g":"medio","p":"media","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"Todo projeto do Google Cloud tem uma 'tela de consentimento OAuth' com um status de publicação.","r":"Antes de divulgar pra qualquer pessoa: abrir console.cloud.google.com, projeto plano-estudos-bf51d, ir em APIs & Services → OAuth consent screen e ver o status.","tipo":"produto"},{"t":"Dois contratos que ele já assinou exigem política de privacidade — e o segundo é acionado só por carregar as fontes do Google","area":"Google APIs ToS + Google Cloud Platform ToS","g":"alto","p":"media","q":"ambos","e":"horas","ver":"confirmado","o":"Não é só a lei que pede política de privacidade — os contratos do Google pedem, e ele já está debaixo de dois.","r":"Escrever uma política de privacidade em HTML e publicá-la em plano-estudos-one.vercel.app/privacidade, dizendo o que é coletado (e-mail e nome pelo Firebase Auth; checks, eventos importados do calendário, nomes de pets, grupos de estudo, config no Firestore; IP transmitido ao Google pelo carregamento das fontes), quem processa (Google/Firebase) e como apagar (os botões 'Baixar meus dados' e 'Apagar conta' já existem — cite-os, é um ponto forte).","tipo":"contratual"},{"t":"Pra usar o Firebase, ele já declarou que o uso é profissional — isso enfraquece a defesa de 'é só um projeto pessoal'","area":"Firebase Terms of Service","g":"info","p":"muito-baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"A página de Termos de Serviço do Firebase, logo acima da tabela de serviços, traz uma declaração que o desenvolvedor assume ao usar qualquer serviço: 'I agree that my use of any Firebase service is for purposes related to my trade, business, craft, or profession, and that my use is subject to the applicable terms below.' O Google escreve isso de propósito: é a forma de manter o Firebase como relação B2B e afastar as leis de proteção ao consumidor.","r":"Nada a fazer no código — é só consciência da posição.","tipo":"contratual"},{"t":"A extensão só existe hoje porque é ele mesmo instalando — pra outras pessoas, o modelo atual não funciona","area":"Chrome Web Store / distribuição da extensão","g":"medio","p":"media","q":"ao-abrir","e":"dias","ver":"ajustado","o":"O README da extensão é escrito pro usuário final ('Instalar (3 passos, sem loja)': abrir chrome://extensions, ligar o Modo do desenvolvedor, Carregar sem compactação).","r":"Se a extensão for parte da oferta pública: criar a conta de desenvolvedor do Chrome Web Store cedo (a taxa é única e pequena, e a conta leva tempo pra 'esquentar'), e antes de submeter reduzir o escopo — <all_urls> em host_permissions provavelmente pode virar `optional_host_permissions`, pedidos só quando o usuário liga a feature, e vale checar se declarativeNetRequest sozinho já não cobre o bloqueio sem precisar de host_permissions amplo.","tipo":"contratual"},{"t":"O plano Hobby da Vercel cabe hoje e cabe ao abrir de graça — mas a Vercel pode derrubar o app sem aviso e sem motivo","area":"Vercel — plano Hobby","g":"baixo","p":"baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"Duas coisas separadas, e é importante não confundir.","r":"Nada a mudar hoje.","tipo":"contratual"},{"t":"Repositório público sem LICENSE: ninguém pode usar o código, e ele também não pode aceitar contribuição com segurança","area":"GitHub","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O repo github.com/tomito6/study-pets é público e não tem arquivo LICENSE (o `ls` da raiz confirma: nada de LICENSE, COPYING ou equivalente).","r":"Decidir o que ele quer e escrever um arquivo.","tipo":"juridico"},{"t":"O botão do Google é um logo redesenhado à mão, fora das diretrizes de marca","area":"Google Identity — diretrizes de marca","g":"info","p":"muito-baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"O componente GoogleLogo em LoginScreen.tsx desenha o 'G' colorido do Google com paths SVG escritos no próprio arquivo, com as cores oficiais (#EA4335, #4285F4, #FBBC05, #34A853).","r":"Meia hora de trabalho, quando der vontade: baixar o SVG oficial do 'G' no pacote de brand icons do Google Identity, substituir os paths desenhados à mão em LoginScreen.tsx:62-71, e ajustar dois tokens — pôr --google-btn-bg:#ffffff também no tema café (src/styles/themes/cafe.css:114) e dar ao .ls-google-btn uma pilha de fonte com Roboto na frente.","tipo":"contratual"},{"t":"As quatro fontes são SIL OFL 1.1 — livres, mas se ele auto-hospedar precisa levar o arquivo de licença junto","area":"Google Fonts","g":"info","p":"baixa","q":"ao-abrir","e":"horas","ver":"confirmado","o":"As quatro famílias carregadas no index.html são todas SIL Open Font License 1.1 (verificado nos arquivos OFL.txt do repositório oficial google/fonts): DM Sans, DM Mono, Lora e Press Start 2P.","r":"Se e quando auto-hospedar (o que provavelmente vai ser recomendado por motivo de privacidade): baixar as famílias do repositório google/fonts, colocar os .woff2 em public/fonts/, e copiar junto o OFL.txt de cada família — o mais simples é um public/fonts/LICENSES/ com os quatro arquivos, e uma linha no README dizendo que as fontes são SIL OFL 1.1 com link.","tipo":"contratual"},{"t":"\"Pomodoro\" é marca registrada de terceiro e está na descrição pública do app","area":"Marca de terceiro dentro do produto","g":"baixo","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"\"Pomodoro\" e \"Pomodoro Technique\" são marcas registradas de Francesco Cirillo (protegidas pela Cirillo Consulting GmbH, que fica na Alemanha, o mesmo país onde você mora).","r":"Troque a descrição pública primeiro, que é o ponto mais exposto: em public/manifest.webmanifest:4 e package.json:6, algo como \"Plano de estudo adaptável com XP, moedas e pets\" — sem a palavra.","tipo":"juridico"},{"t":"O logo do Google está sobre fundo creme, fora das diretrizes de marca dele","area":"Marca de terceiro dentro do produto","g":"baixo","p":"muito-baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"O \"G\" colorido do Google está embutido como SVG no seu código.","r":"Uma linha: em src/styles/themes/cafe.css:114, troque --google-btn-bg:#fffdf7 por #ffffff.","tipo":"juridico"},{"t":"Repositório público sem LICENSE: por padrão ninguém pode usar nada, nem você aceitar contribuição","area":"Licença do seu próprio código (efeito sobre o que entra)","g":"baixo","p":"baixa","q":"hoje","e":"minutos","ver":"ajustado","o":"O github.com/tomito6/study-pets é público e não tem arquivo LICENSE, não tem README, e o package.json não tem campo \"license\" (tem \"private\": true, mas isso é só uma trava do npm contra publicação acidental — não diz nada sobre direito autoral).","r":"Decida uma coisa só: quer que outras pessoas possam usar o código, ou não?","tipo":"juridico"},{"t":"O tema padrão veio de um pacote que não está no git e não tem registro de origem","area":"Ativo visual de origem não auditável","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O Café de casa é o tema padrão do app desde 2026-09-07 — é a identidade visual que todo mundo vê.","r":"Uma linha no cabeçalho do src/styles/themes/cafe.css dizendo de onde a paleta saiu e sob que condição — por exemplo \"Paleta e tipografia do pacote Café de casa, material próprio, 2026-09\".","tipo":"juridico"},{"t":"Firebase é Apache-2.0 e pede que o texto da licença chegue a quem recebe o app","area":"Licenças das dependências","g":"info","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"confirmado","o":"Das 451 dependências instaladas, nenhuma é copyleft forte — não há GPL, AGPL, LGPL nem SSPL em lugar nenhum, e isso é a notícia boa.","r":"Quando for abrir pra outras pessoas, uma página ou um link discreto de \"Licenças de terceiros\" no rodapé das Configurações, listando Firebase (Apache-2.0), React/React-DOM (MIT), idb (ISC), com o texto das licenças.","tipo":"juridico"},{"t":"Emoji hoje está limpo, mas screenshot pra divulgação é a armadilha","area":"Emojis","g":"info","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"Sua interface usa emoji pra caramba (🍽️ 👥 ☕ 🚌 🐾 🛒 🌴 🛡️ ✨…), e isso está certo do jeito que está feito: o app escreve o código Unicode e quem desenha o símbolo é o sistema operacional de quem lê.","r":"Não mude nada agora.","tipo":"juridico"},{"t":"A palavra \"Pomodoro\" aparece na tela pública de login e na descrição do PWA, e o titular da marca fica em Berlim e cobra","area":"Marcas e IP de terceiros","g":"medio","p":"baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"\"Pomodoro\" (e \"Pomodoro Technique\") é marca registrada de Francesco Cirillo / Cirillo Consulting GmbH, com sede em Berlim, e ele registra e defende ativamente o termo para software e serviços web.","r":"Três coisas, em ordem de custo-benefício.","tipo":"juridico"},{"t":"Já existe um \"Study Pet\" nas duas lojas, no mesmo nicho — investir no nome sem checar é o risco","area":"Marcas e IP de terceiros","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"\"Study Pets\" não é um nome livre.","r":"Antes de gastar um euro no nome: (1) uma tarde de busca, de graça, nas três bases oficiais — INPI e-Marcas (gru.inpi.gov.br/emarcas), EUIPO eSearch e USPTO — por \"study pet\", \"study pets\" e \"studypets\" nas classes 9 (software) e 41/42; mais uma busca nas duas lojas de app.","tipo":"juridico"},{"t":"O repositório é público e a documentação dele diz \"estilo Pokémon\" e \"na linha do Forest\" — a mecânica é livre, o texto é que entrega","area":"Marcas e IP de terceiros","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"refutado","o":"Primeiro a conclusão boa, porque ela é a parte importante: a mecânica de colecionar bicho e evoluir por nível com escolha de caminho NÃO é protegida por direito autoral.","r":"Se ele quiser (e é opcional): reescrever essas quatro linhas do IDEIAS.md em termos funcionais, sem nome de obra alheia — \"pet inicial escolhido na criação da conta\" no lugar de \"estilo Pokémon\"; \"um modo em que sair do foco tem consequência, como fazem outros apps de foco\" no lugar de \"na linha do Forest\".","tipo":"juridico"},{"t":"O app não dá crédito nenhum ao Firebase (Apache-2.0) e ao React (MIT), e as duas licenças exigem isso de quem distribui","area":"Marcas e IP de terceiros","g":"baixo","p":"muito-baixa","q":"ambos","e":"minutos","ver":"confirmado","o":"O app distribui código de terceiros no bundle que vai pro navegador de quem abre a página, e as licenças desse código pedem uma contrapartida mínima que não está sendo cumprida.","r":"Dez minutos, uma vez: criar um THIRD-PARTY-NOTICES.txt (ou uma página /licencas no app, ou uma seção \"Sobre\" nas Configurações, ao lado de \"Meus dados\") listando cada dependência de produção com nome, versão, licença e o texto integral da licença.","tipo":"juridico"},{"t":"Duas imagens de procedência não documentada continuam no histórico público do git — inclusive uma de 1254×1254 que a própria documentação chama de \"IA\"","area":"Marcas e IP de terceiros","g":"baixo","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"A arte que o app usa HOJE está limpa e eu verifiquei isso pixel a pixel (ver o que está limpo).","r":"Duas opções, e a primeira já resolve 90%.","tipo":"juridico"},{"t":"As sugestões de nome de pet incluem Bolt, Simba, Thor, Tom, Salem e Frida — personagens famosos de bicho, oferecidos pra batizar um bicho","area":"Marcas e IP de terceiros","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O app sugere nomes prontos na hora de adotar um pet, e a lista tem uma concentração curiosa de personagens animais de obras conhecidas, cada um oferecido justamente pra a espécie certa:\n\n- Cachorro: \"Bolt\" (o cão protagonista da animação da Disney de 2008) e \"Thor\" (Marvel/Disney).","r":"Um minuto, se ele quiser: trocar os quatro ou cinco nomes que são personagem por nomes igualmente bons e neutros.","tipo":"juridico"},{"t":"O tema \"Café de casa\" veio de um pacote que não está no repositório, e nada registra de onde ele saiu","area":"Marcas e IP de terceiros","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"refutado","o":"O tema visual padrão do app (creme, papel, sálvia, terracota, tipografia Lora) é descrito no CLAUDE.md como fiel a um pacote chamado `study-pets-cafe-de-casa/`, que ficaria na raiz do projeto \"do Tomi, fora do git\".","r":"Uma linha no cabeçalho do próprio cafe.css ou no ASSETS.md sugerido no achado anterior: de onde veio o pacote (quem fez, quando, sob que termos) e, se foi ele mesmo com ajuda de alguma ferramenta, dizer isso.","tipo":"juridico"},{"t":"Sem política de privacidade, a extensão não passa na Chrome Web Store","area":"Extensão de navegador — Chrome Web Store","g":"medio","p":"alta","q":"ao-abrir","e":"horas","ver":"ajustado","o":"A extensão lê a URL de todas as abas abertas e observa toda navegação do navegador.","r":"Antes de submeter, escrever uma política de privacidade específica da extensão e publicá-la numa URL estável (uma página no próprio app resolve), colar o link no painel, preencher Práticas de privacidade marcando \"atividade de navegação na web\" e certificando uso limitado, e escrever a justificativa de cada permissão.","tipo":"contratual"},{"t":"Qualquer página em localhost pode armar o bloqueio, e sem prazo máximo","area":"Extensão de navegador — segurança","g":"medio","p":"baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"O content script é injetado em `http://localhost/*` e `http://127.0.0.1/*`.","r":"Duas mudanças pequenas, ambas no lado da extensão: (1) pôr teto no `until` dentro de `apply()` em background.js — `Math.min(payload.until, Date.now() + 4*60*60*1000)`; nenhum pomodoro chega perto disso; (2) restringir o content script às portas de dev que ele usa (`http://localhost:5173/*`, `http://localhost:5174/*` — o padrão de match do Chrome aceita porta) e/ou conferir `sender.origin` no `chrome.runtime.onMessage` antes de aplicar, aceitando só o domínio de produção e as portas locais.","tipo":"produto"},{"t":"A extensão pede duas permissões acima do mínimo — e cada uma vira um aviso de instalação","area":"Extensão de navegador — permissões","g":"baixo","p":"alta","q":"ambos","e":"minutos","ver":"ajustado","o":"`tabs` é redundante aqui: tudo o que o código usa dela (o filtro `url` em `tabs.query`, a URL em `tabs.onUpdated`) também é liberado por host permission, e a extensão já tem `<all_urls>`.","r":"Tirar `\"tabs\"` de manifest.json:6 e rodar `npm run test:ext` pra confirmar que o redirect de abas já abertas continua funcionando (deve continuar: `<all_urls>` cobre).","tipo":"contratual"},{"t":"A tela do bloqueio busca o pet no servidor dele — cada site bloqueado vira uma batida no log da Vercel","area":"Extensão de navegador — privacidade / LGPD-GDPR","g":"baixo","p":"alta","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O app monta os sprites do pet como URLs absolutas do próprio domínio e manda no payload; a tela `blocked.html` põe isso num `<img>` e ainda troca o frame a cada 250 ms.","r":"O conserto elimina o problema em vez de documentá-lo: mandar os sprites como `data:` URI dentro do payload (são 4 PNGs de 32×32, cabem folgado), ou copiar os PNGs das formas pra dentro da pasta `extension/` e referenciá-los por `chrome.runtime.getURL`.","tipo":"produto"},{"t":"Publicar na loja obriga a declarar trader ou não-trader — e trader significa endereço residencial público","area":"Extensão de navegador — Chrome Web Store / DSA","g":"baixo","p":"alta","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"A Chrome Web Store exige de todo desenvolvedor a autodeclaração de trader ou não-trader, por causa do Digital Services Act e das regras europeias de identificação de vendedores em marketplace.","r":"Na hora de registrar a conta: declarar não-trader enquanto o app for gratuito e sem monetização nenhuma, e usar um e-mail de contato dedicado.","tipo":"contratual"},{"t":"Bloquear site alheio é defensável — e a arquitetura escolhida é justamente a que fica fora do flanco aberto pelo BGH","area":"Extensão de navegador — direito alemão (concorrência e autoral)","g":"info","p":"muito-baixa","q":"ambos","e":"minutos","ver":"confirmado","o":"A pergunta \"posso interferir na exibição do site de outra pessoa?\" já foi respondida na Alemanha em favor de quem bloqueia, com dois recortes que valem entender.","r":"Não há o que corrigir; há o que não fazer.","tipo":"juridico"},{"t":"Mandar o .zip pra colegas cria uma extensão que nunca mais atualiza","area":"Extensão de navegador — distribuição fora da loja","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Instalação \"sem compactação\" não tem canal de atualização: o colega fica com a versão que copiou pra sempre, e o Chrome ainda mostra o aviso recorrente de desativar extensões em modo desenvolvedor.","r":"Enquanto for só ele: nada a fazer, está tudo bem.","tipo":"contratual"},{"t":"Qualquer site consegue detectar que a extensão está instalada","area":"Extensão de navegador — privacidade","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"`blocked.html` está declarada como recurso acessível pela web para `<all_urls>`, o que é tecnicamente necessário (o redirect do declarativeNetRequest só pode apontar para recurso web-accessible).","r":"Acrescentar `\"use_dynamic_url\": true` ao objeto de `web_accessible_resources` em manifest.json:17 e rodar `npm run test:ext` — o redirect por `extensionPath` continua funcionando com URL dinâmica, mas é exatamente o caso que o teste em navegador de verdade existe pra confirmar.","tipo":"produto"},{"t":"Não existe política de privacidade — e ela é a peça que destrava todo o resto","area":"Documentos obrigatórios","g":"alto","p":"alta","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O app cria conta, guarda e-mail (e nome/foto, no login com Google), plano de estudo, nomes de compromissos importados do calendário e a lista de sites que a pessoa quer bloquear — tudo num servidor do Google.","r":"Uma página só, em /privacidade (pt-BR e, se quiser, EN), linkada em três lugares: na tela de login acima do botão de criar conta, nas Configurações → Geral (ao lado do card 'Meus dados', que já existe) e no manifest/rodapé.","tipo":"juridico"},{"t":"O login com Google trava no usuário 101 — e a saída passa por ter a política de privacidade publicada","area":"Pré-requisito operacional pra abrir","g":"alto","p":"alta","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"A tela de entrada oferece 'Continuar com Google'.","r":"Ordem: publicar a política de privacidade numa URL do próprio domínio (plano-estudos-one.vercel.app/privacidade) e linkar dela na home; no console do Google, preencher homepage + privacy policy no branding e clicar em 'Publish app'.","tipo":"produto"},{"t":"Impressum: abrir o app de Munique quase certamente cria o dever, e o preço é publicar o endereço de casa","area":"Identificação do responsável","g":"medio","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"Na Alemanha, quem oferece um serviço digital 'geschäftsmäßig' — de forma duradoura e organizada, com ou sem intenção de lucro — tem que manter visível e acessível o nome completo, um endereço postal real (caixa postal não vale) e um contato rápido, normalmente e-mail.","r":"Uma página /impressum (e um link fixo no rodapé ou nas Configurações) com: nome completo, endereço postal onde ele possa ser notificado, e-mail e, idealmente, a frase de contato.","tipo":"juridico"},{"t":"Sem termos de uso, não há nada dizendo que o app não garante nada — e existem limites que nem os termos podem furar","area":"Relação jurídica com o usuário","g":"baixo","p":"baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Hoje não existe nenhum termo.","r":"Um documento curto, em português claro, com: objeto (app gratuito de organização de estudo, sem garantia de disponibilidade e sem SLA); idade mínima; regras de conta (uma pessoa, senha é dela, ele pode encerrar conta que abuse); que o conteúdo que o usuário escreve é dele; ausência de garantia e limitação de responsabilidade REDIGIDA com as exceções — 'salvo dolo e culpa grave, dano à vida, corpo e saúde, e as demais hipóteses em que a lei não admite limitação'; mudanças no serviço e aviso prévio antes de desligar (30 dias e exportação disponível é um padrão honesto); direito de exportar e apagar (já implementados).","tipo":"juridico"},{"t":"Nenhuma pergunta sobre idade, num app cujo público natural inclui gente de 15 e 16 anos","area":"Menores","g":"medio","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O cadastro pede e-mail e senha, e o onboarding pede personagem, pet e horário.","r":"O caminho proporcional é declarar e não verificar: uma frase nos termos e um aviso no cadastro dizendo 'Study Pets é pra maiores de 16 anos' (16 alinha com o GDPR alemão; 18 é ainda mais simples e defensável, mas fecha a porta pro público de ensino médio, que talvez seja justamente quem ele quer).","tipo":"juridico"},{"t":"Ele hospeda texto escrito por usuários — e é a privacidade do próprio dado que o mantém fora do DSA de plataforma","area":"Conteúdo gerado por usuário / DSA","g":"baixo","p":"muito-baixa","q":"ambos","e":"minutos","ver":"confirmado","o":"O usuário escreve texto livre em três lugares: nome de evento, nome e apelido de pet, e nome/objetivo de grupo de estudo.","r":"Não fazer nada de moderação agora.","tipo":"juridico"},{"t":"Padrões manipulativos: a lei que fala disso não alcança ele hoje — e o único ponto frágil é o abandono que ele não escolheu","area":"Padrões enganosos / design","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"O app tem modo hardcore que tira XP de quem desiste, sequência de dias, moeda virtual e uma extensão que bloqueia sites.","r":"Nada obrigatório.","tipo":"juridico"},{"t":"No dia em que entrar dinheiro, muda tudo de uma vez — inclusive o plano da Vercel, que hoje ele estaria violando","area":"Monetização futura","g":"baixo","p":"baixa","q":"ao-abrir","e":"precisa-advogado","ver":"ajustado","o":"Enquanto o app for grátis e sem anúncio, ele é um projeto pessoal e cabe nos planos gratuitos.","r":"Enquanto for grátis, não fazer nada — e evitar por enquanto anúncio, afiliado e 'compre um café pra mim' ligado ao app, porque qualquer um dos três já muda o enquadramento tanto na Vercel quanto no Impressum alemão.","tipo":"juridico"},{"t":"O 'Baixar meus dados' não inclui o que o Firebase Auth guarda","area":"Direitos do titular","g":"baixo","p":"baixa","q":"ao-abrir","e":"minutos","ver":"confirmado","o":"O botão de exportação entrega o documento do Firestore inteiro mais a data de geração, e deliberadamente deixa de fora uid e e-mail.","r":"Acrescentar ao objeto exportado um bloco 'conta' com e-mail, provedor ('google' ou 'password') e data de criação, e uma frase na política de privacidade dizendo que o botão entrega tudo.","tipo":"juridico"},{"t":"A ordem honesta: o que é obrigatório, o que é prudente e o que é exagero pra um projeto deste tamanho","area":"Priorização","g":"info","p":"alta","q":"ao-abrir","e":"horas","ver":"ajustado","o":"Síntese acionável dos achados desta área, na ordem em que fazem sentido.","r":"Fazer os quatro obrigatórios como uma tarefa só: duas páginas estáticas (/privacidade e /impressum), três links (login, Configurações, rodapé), uma frase no cadastro, e o botão 'Publish app' no console do Google.","tipo":"produto"},{"t":"Se o carregamento falhar, o app grava um documento vazio por cima de todo o histórico — e no pior caso sem ninguém clicar em nada","area":"Durabilidade dos dados / segurança do tratamento (GDPR art. 32)","g":"alto","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"O único caminho de escrita do app substitui o documento inteiro (`setDoc` sem merge), e o caminho de leitura não trava nada quando falha.","r":"A trava já existe e está pronta pra reuso: `blockSaves(true)` em `src/application/save.ts:100` é exatamente \"nenhum save pode sair\" (foi feita pra apagar conta).","tipo":"produto"},{"t":"Não existe backup nenhum — e as duas ferramentas de recuperação do Firestore exigem billing ativo","area":"Backup e recuperação","g":"alto","p":"media","q":"ambos","e":"horas","ver":"confirmado","o":"Varri o repositório inteiro: não há `.github/` (nenhum CI, nenhuma rotina agendada), `firebase.json` declara só `rules`, `indexes` e `emulators` — nada de export —, e `.firebaserc` só aponta o projeto.","r":"Em dois degraus, proporcionais ao momento.","tipo":"produto"},{"t":"O JSON exportado não tem caminho de volta: \"Baixar meus dados\" é portabilidade, não restauração","area":"Backup e recuperação","g":"medio","p":"media","q":"ambos","e":"horas","ver":"ajustado","o":"`src/application/export.ts` produz o documento completo (`serializeState(state)` mais `exportedAt`) — o conteúdo de um backup está certo, não falta campo nenhum.","r":"É a correção mais barata das cinco, porque as duas peças já existem no repo.","tipo":"produto"},{"t":"\"Cancelar sessão\" apaga todo o histórico com um clique, sem palavra digitada e sem oferecer o download antes","area":"Prevenção de perda acidental","g":"medio","p":"baixa","q":"ambos","e":"minutos","ver":"confirmado","o":"Os dois botões destrutivos moram no mesmo card \"Zona de perigo\", um logo acima do outro.","r":"Dois ajustes de minutos, ambos dentro de `DangerModals.tsx`: (1) pôr um \"⬇ Baixar seus dados antes\" nos dois modais, chamando o `exportMyData()` que já existe, acima do botão destrutivo; (2) dar a \"Cancelar sessão\" a mesma palavra digitada que \"Apagar conta\" já tem, ou no mínimo renomeá-la pra algo que diga o que ela faz (\"Apagar todo o histórico\"), porque \"cancelar sessão\" em todo outro app do mundo significa fazer logout.","tipo":"produto"},{"t":"A partir de 9/12/2026, apagar o histórico de alguém vira dano indenizável com nome próprio — e a defesa natural depende de um LICENSE que não existe","area":"Responsabilidade por produto (UE)","g":"baixo","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"A nova diretiva de responsabilidade por produto, (UE) 2024/2853, inclui software na definição de produto e, no art.","r":"Adicionar um arquivo LICENSE na raiz com uma licença OSI reconhecida (MIT ou Apache-2.0 — a Apache-2.0 tem cláusula expressa de isenção de garantia e concessão de patente, o que ajuda aqui), e manter o app efetivamente fora de atividade comercial: sem cobrança, sem anúncio, e sem trocar acesso por dados pessoais.","tipo":"juridico"},{"t":"Se entrar dinheiro no app, a autorização da Ausländerbehörde vem ANTES do primeiro euro — o visto de estudante não cobre trabalho autônomo","area":"Imigração / direito de residência (Alemanha)","g":"medio","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O título de residência pra estudo (§ 16b AufenthG) autoriza Beschäftigung — trabalho assalariado, hoje 140 dias inteiros ou 280 meios por ano, mais atividade estudantil sem limite.","r":"Ordem prática, na sequência: (1) Antes de qualquer coisa, confirmar qual é o título de residência — se for cidadania de país da UE ou outro título que já autorize Erwerbstätigkeit sem restrição, este achado inteiro cai por terra (ver achado separado).","tipo":"juridico"},{"t":"A autorização de residência e o registro fiscal são dois trilhos separados — e nenhuma das outras áreas mapeou o segundo","area":"Imigração / direito comercial e tributário (Alemanha)","g":"info","p":"muito-baixa","q":"ao-abrir","e":"dias","ver":"refutado","o":"Se e quando entrar dinheiro, existem dois conjuntos de obrigações que costumam ser confundidos num só, e que têm autoridades, prazos e consequências diferentes.","r":"Só quando houver decisão de monetizar.","tipo":"juridico"},{"t":"Toda esta área depende de um dado que ninguém checou: qual título de residência ele tem, e se tem cidadania da UE","area":"Imigração / premissa não verificada","g":"info","p":"baixa","q":"ao-abrir","e":"minutos","ver":"ajustado","o":"A análise migratória inteira — este achado incluído — está construída sobre uma inferência, não sobre um fato.","r":"Uma pergunta ao próprio Tomi, que leva um minuto: qual título de residência consta no seu cartão eletrônico (o eAT), e você tem alguma cidadania além da brasileira?","tipo":"juridico"},{"t":"Abrir uma UG não protege contra o risco principal — no art. 82 do GDPR quem decide é responsável, e ele decide tudo sozinho","area":"estrutura-juridica","g":"baixo","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"A pergunta \"contra o que esses riscos batem?\" tem uma resposta só hoje: o patrimônio pessoal do Tomi, sem teto.","r":"Não fundar nada agora: com um usuário que é ele mesmo, não existe terceiro a indenizar, e a UG seria exatamente o exagero a evitar.","tipo":"juridico"},{"t":"Nenhum seguro cobre o cenário provável, e o seguro que cobriria depende de um status que o visto trava","area":"seguro","g":"baixo","p":"muito-baixa","q":"ao-abrir","e":"horas","ver":"ajustado","o":"O outro lado da conta está descoberto e nunca foi verificado.","r":"Passo de horas, não de euros: ler as duas cláusulas da apólice atual (Internetschäden e Vermögensschäden) e a exclusão de atividade gewerblich; depois perguntar à seguradora POR ESCRITO, descrevendo o caso com honestidade (\"app gratuito, sem publicidade, sem receita, aberto a outros estudantes\"), se está coberto — resposta escrita é o que vale num sinistro.","tipo":"juridico"},{"t":"A premissa \"hoje só eu uso\" não vale para as fontes do Google: o site já serve terceiros hoje, antes de qualquer login","area":"responsabilidade-pessoal","g":"baixo","p":"muito-baixa","q":"hoje","e":"minutos","ver":"ajustado","o":"Este item já foi apontado por outra área como problema de privacidade.","r":"Baixar as quatro fontes (DM Sans, DM Mono, Lora, Press Start 2P — todas com licença que permite auto-hospedagem), pôr em public/fonts/, trocar o `<link>` por @font-face no CSS e apagar os dois preconnect.","tipo":"juridico"},{"t":"Sem arquivo LICENSE, ele abre mão de graça da isenção de software livre da nova diretiva de responsabilidade por produto — que a partir de 9.12.2026 cobre exatamente destruição de dados","area":"responsabilidade-por-produto","g":"info","p":"muito-baixa","q":"ao-abrir","e":"minutos","ver":"refutado","o":"A Diretiva (UE) 2024/2853 passa a tratar software como \"produto\" e se aplica a produtos colocados no mercado depois de 9 de dezembro de 2026 — com deploy contínuo na Vercel, toda versão publicada depois dessa data entra na janela.","r":"Criar um LICENSE na raiz com uma licença permissiva reconhecida (MIT ou Apache-2.0 — a Apache-2.0 tem cláusula explícita de ausência de garantia e limitação de responsabilidade, o que ajuda no argumento) e apontar para ela no README.","tipo":"juridico"},{"t":"Ser não comercial é a apólice de seguro que ele tem hoje, e isso não está escrito em lugar nenhum como decisão","area":"estrutura-juridica","g":"baixo","p":"baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"Cinco proteções diferentes penduram no mesmo fato: o app é gratuito, sem anúncio, sem afiliado, sem rastreador de terceiros e sem troca de dados por serviço.","r":"Um parágrafo no CLAUDE.md, na seção de stack e deploy, registrando que gratuidade sem anúncio e sem monetização de dados é decisão de risco e não só falta de ideia — e listando as cinco coisas que caem junto se ela mudar.","tipo":"juridico"},{"t":"Não existe obscuridade pra contar com: nome real e e-mail da TUM em 166 commits públicos, e a URL do app está versionada no mesmo repositório","area":"exposicao-pessoal","g":"info","p":"muito-baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"A proteção informal com que todo projeto de hobby conta — \"ninguém vai saber quem eu sou\" — não existe aqui, e isso é o que dá peso prático a todos os achados acima.","r":"Não é reescrever a história do git (não vale o custo e não adianta: o GitHub guarda forks e caches).","tipo":"produto"},{"t":"Seu login imutável da TUM está em 167 commits de um repositório público","area":"Credenciais e identidade no histórico do git","g":"baixo","p":"baixa","q":"ambos","e":"horas","ver":"ajustado","o":"Todos os 167 commits do repositório — do primeiro (2026-05-06) ao último (2026-09-11), sem uma única exceção — estão assinados como `Tomás Spielmann <ge37yoh@mytum.de>`.","r":"Duas metades, e a segunda tem prazo.","tipo":"produto"},{"t":"Se alguma conta do projeto estiver no mytum.de, ela morre três meses depois de você se formar","area":"Sucessão e continuidade do projeto","g":"medio","p":"baixa","q":"ambos","e":"minutos","ver":"ajustado","o":"O endereço @mytum.de não é seu — é da universidade, e some com a matrícula.","r":"Uma sessão de trinta minutos, e o CLAUDE.md fala em \"TUM, agosto 2026\", o que sugere que você começou agora — ou seja, a formatura está a anos de distância e essa é exatamente a hora barata de fazer, não a hora urgente.","tipo":"produto"},{"t":"O CLAUDE.md público diz quem você é, e os commits completam o resto do dossiê","area":"Credenciais e identidade no histórico do git","g":"info","p":"muito-baixa","q":"hoje","e":"minutos","ver":"ajustado","o":"O `CLAUDE.md` está versionado e o repositório é público.","r":"Duas opções honestas, e nenhuma é obrigatória.","tipo":"produto"},{"t":"Um e-mail pessoal seu de verdade está hardcoded num arquivo de teste","area":"Credenciais e identidade no histórico do git","g":"info","p":"muito-baixa","q":"hoje","e":"minutos","ver":"ajustado","o":"`tests/auth.test.ts` linha 8 testa `isValidEmail('t.spielmann+study@tum.de')`.","r":"Trocar por `t.exemplo+study@example.com` numa linha.","tipo":"produto"},{"t":"O Study Pets é seu — a TUM não tem direito nenhum sobre ele (com uma ressalva estreita pra confirmar)","area":"Direito autoral e vínculo com a universidade","g":"info","p":"muito-baixa","q":"ambos","e":"minutos","ver":"confirmado","o":"Fechando esse fio de vez, e a favor dele.","r":"Responda três perguntas pra si mesmo e feche o assunto: (1) alguma linha deste código foi escrita no exercício de um contrato com a TUM — HiWi, bolsa, projeto de cadeira, trabalho de conclusão?","tipo":"juridico"}]</script>
+<script>
+(function(){
+  var dados = JSON.parse(document.getElementById('dados').textContent);
+  var corpo = document.getElementById('corpo');
+  var conta = document.getElementById('conta');
+  var busca = document.getElementById('busca');
+  var filtros = {};
+  var pesoG = {critico:0, alto:1, medio:2, baixo:3, info:4};
+  var rotuloQ = {hoje:'hoje', 'ao-abrir':'ao abrir', ambos:'hoje e ao abrir'};
+
+  dados.sort(function(a,b){
+    var d = pesoG[a.g] - pesoG[b.g];
+    return d !== 0 ? d : a.t.localeCompare(b.t, 'pt-BR');
+  });
+
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function desenhar(){
+    var termo = busca.value.trim().toLowerCase();
+    var vistos = dados.filter(function(d){
+      for (var k in filtros) { if (d[k] !== filtros[k]) return false; }
+      if (!termo) return true;
+      return (d.t + ' ' + d.o + ' ' + d.r + ' ' + d.area).toLowerCase().indexOf(termo) !== -1;
+    });
+
+    conta.textContent = vistos.length + ' de ' + dados.length;
+
+    if (!vistos.length) {
+      corpo.innerHTML = '<tr><td colspan="5" class="vazio">Nenhum achado com esses filtros.</td></tr>';
+      return;
+    }
+
+    corpo.innerHTML = vistos.map(function(d){
+      var risco = d.ver === 'refutado' ? ' · refutado' : '';
+      return '<tr>' +
+        '<td class="td-t">' + esc(d.t) + '<em>' + esc(d.r) + '</em></td>' +
+        '<td><span class="pill tp-' + d.tipo + '">' + (d.tipo === 'juridico' ? 'jurídico' : d.tipo) + '</span></td>' +
+        '<td><span class="pill g-' + d.g + '">' + d.g + risco + '</span></td>' +
+        '<td class="td-q">' + (rotuloQ[d.q] || d.q) + '</td>' +
+        '<td class="td-e">' + d.e.replace('precisa-advogado','advogado') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(b){
+    b.addEventListener('click', function(){
+      var campo = b.dataset.f, valor = b.dataset.v;
+      var ligado = b.getAttribute('aria-pressed') === 'true';
+      Array.prototype.forEach.call(document.querySelectorAll('.chip[data-f="' + campo + '"]'), function(o){
+        o.setAttribute('aria-pressed', 'false');
+      });
+      if (ligado) { delete filtros[campo]; }
+      else { filtros[campo] = valor; b.setAttribute('aria-pressed', 'true'); }
+      desenhar();
+    });
+  });
+
+  busca.addEventListener('input', desenhar);
+  desenhar();
+})();
+</script>
