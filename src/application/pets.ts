@@ -3,7 +3,7 @@
 
 import { computePendingPetXP, isDayClosed } from '../domain/checks';
 import { emptyPets } from '../domain/persistence';
-import { PETS, canEvolveNow, cheapestPetPrice, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm, petLevel } from '../domain/pets';
+import { PETS, canEvolveNow, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm, petLevel } from '../domain/pets';
 import type { EvolveRefusal } from '../domain/pets';
 import { creditedDaysNotices, petNotices } from '../domain/progressNotices';
 import type { CreditedDay, PetProgress } from '../domain/progressNotices';
@@ -50,6 +50,7 @@ function creditedDays(from: DateKey, until: DateKey, now: Date): CreditedDay[] {
       dia: k,
       xp: stats.dayXP[k] ?? 0,
       coins: stats.dayCoins[k] ?? 0,
+      mins: stats.dayStudyDoneMins[k] ?? 0,
       // A sequência ancorada NAQUELE dia, não em hoje: voltar depois de uma semana
       // fora tem que contar o marco do dia em que ele aconteceu.
       streak: calcStreaksNow(stats.dayStudyMins, dateFromKey(k)).cur,
@@ -95,8 +96,7 @@ export function applyPendingPetXP(now: Date = new Date()): void {
       ...creditedDaysNotices(dias, {
         totalXP: stats.totalXP,
         bestDayXPBefore: melhorAntes,
-        balanceAfter: coinBalanceOf(stats.coins, state.coinsSpent),
-        cheapestPet: cheapestPetPrice(),
+        studyMinsAfter: stats.studyMins,
         penaltyInBatch: dias.reduce(
           (n, d) => n + (state.penalties?.[d.dia] ?? []).reduce((m, p) => m + (p.xp || 0), 0),
           0,

@@ -54,11 +54,13 @@ export function isStreakMilestone(streak: number): boolean {
   return streak > ultimo && streak % ultimo === 0;
 }
 
-/** Um dia que acabou de entrar na conta: o XP e as moedas dele viraram totais agora. */
+/** Um dia que acabou de entrar na conta: o XP dele virou total agora. */
 export interface CreditedDay {
   dia: DateKey;
   xp: number;
   coins: number;
+  /** Minutos de estudo concluídos no dia. */
+  mins: number;
   /** Dias seguidos batendo a meta, contando este dia. */
   streak: number;
 }
@@ -68,8 +70,8 @@ export interface CreditContext {
   totalXP: number;
   /** Melhor dia em XP contando SÓ os dias que já estavam na conta. */
   bestDayXPBefore: number;
-  /** Saldo de moedas DEPOIS de os dias entrarem. */
-  balanceAfter: number;
+  /** Minutos de estudo acumulados DEPOIS de os dias entrarem (`stats.studyMins`). */
+  studyMinsAfter: number;
   /**
    * XP que as desistências do modo hardcore tiraram NOS dias do lote. A penalidade
    * é a única coisa que sai do total sem esperar o dia fechar, então ela já está
@@ -77,10 +79,25 @@ export interface CreditContext {
    * sairia baixo demais e o app anunciaria um nível que a pessoa já tinha.
    */
   penaltyInBatch?: number;
-  /** Preço do pet mais barato da loja. */
-  cheapestPet: number;
   /** Quantas linhas de "dia encerrado" no máximo (as mais recentes). */
   maxDias?: number;
+}
+
+/**
+ * Os marcos de horas estudadas. É a única linha que fala do TOTAL, e não de um
+ * dia — "100 horas de estudo" é a frase que uma pessoa repete pra si mesma, que
+ * é mais do que um número de XP consegue.
+ */
+export const MARCOS_DE_HORAS: readonly number[] = [10, 25, 50, 100, 200, 500, 1000];
+
+/** O maior marco cruzado entre dois totais de minutos, ou null. */
+export function hourMilestoneCrossed(minsAntes: number, minsDepois: number): number | null {
+  let achado: number | null = null;
+  for (const h of MARCOS_DE_HORAS) {
+    const alvo = h * 60;
+    if (minsAntes < alvo && minsDepois >= alvo) achado = h;
+  }
+  return achado;
 }
 
 /** Voltar de duas semanas fora não deve encher o painel de "dia encerrado". */
@@ -108,29 +125,24 @@ export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditCon
   const recentes = new Set(comGanho.slice(-maxDias).map((d) => d.dia));
 
   const xpDosDias = comGanho.reduce((n, d) => n + d.xp, 0);
-  const moedasDosDias = comGanho.reduce((n, d) => n + d.coins, 0);
+  const minsDosDias = comGanho.reduce((n, d) => n + d.mins, 0);
   const xpAntes = Math.max(0, ctx.totalXP - xpDosDias + (ctx.penaltyInBatch ?? 0));
-  let saldo = Math.max(0, ctx.balanceAfter - moedasDosDias);
   let melhorDia = ctx.bestDayXPBefore;
 
   for (const d of comGanho) {
-    if (recentes.has(d.dia)) {
-      out.push({ id: `dia:${d.dia}`, kind: 'dia', data: { dia: d.dia, xp: d.xp, coins: d.coins } });
-    }
-
-    // Recorde só existe contra um dia anterior — no primeiro dia da conta, "melhor
-    // dia até agora" é aritmética, não notícia.
-    if (melhorDia > 0 && d.xp > melhorDia) {
-      out.push({ id: `recorde-dia:${d.dia}`, kind: 'recorde-dia', data: { dia: d.dia, xp: d.xp } });
-    }
+    // Recorde não é uma linha própria: é uma MARCA na linha do dia. Duas linhas
+    // sobre o mesmo dia, carimbadas no mesmo minuto, é como um painel de avisos
+    // começa a virar log. E recorde só existe contra um dia anterior — no primeiro
+    // dia da conta, "melhor dia até agora" é aritmética, não notícia.
+    const recorde = melhorDia > 0 && d.xp > melhorDia;
     if (d.xp > melhorDia) melhorDia = d.xp;
 
-    // O saldo CRUZOU o preço do pet mais barato. Sem o cruzamento seria um lembrete
-    // diário de gastar — que é exatamente o que este app não faz.
-    const saldoAntes = saldo;
-    saldo += d.coins;
-    if (ctx.cheapestPet > 0 && saldoAntes < ctx.cheapestPet && saldo >= ctx.cheapestPet) {
-      out.push({ id: `moedas:${d.dia}`, kind: 'moedas', data: { dia: d.dia, coins: saldo } });
+    if (recentes.has(d.dia)) {
+      out.push({
+        id: `dia:${d.dia}`,
+        kind: 'dia',
+        data: { dia: d.dia, xp: d.xp, mins: d.mins, ...(recorde ? { recorde: true } : {}) },
+      });
     }
 
     if (isStreakMilestone(d.streak)) {
@@ -141,6 +153,10 @@ export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditCon
       });
     }
   }
+
+  // Marco de horas: fala do total, não do dia, então sai uma vez por lote.
+  const marco = hourMilestoneCrossed(Math.max(0, ctx.studyMinsAfter - minsDosDias), ctx.studyMinsAfter);
+  if (marco) out.push({ id: `horas:${marco}`, kind: 'horas', data: { n: marco } });
 
   // Uma linha só pro nível, do nível efetivamente alcançado: voltar de uma semana
   // fora e subir dois níveis não merece duas linhas dizendo a mesma coisa.

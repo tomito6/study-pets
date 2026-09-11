@@ -42,7 +42,10 @@ export function pushNotifications(incoming: readonly NewNotification[], now: Dat
   return novas;
 }
 
-/** Abrir o painel marca tudo como lido — o selo é "tem coisa que você não viu", não uma caixa de tarefas. */
+/**
+ * Marca tudo como lido. Quem chama é o FECHAMENTO do painel, não a abertura: com
+ * ele aberto, o fundo das não lidas é a única pista de quais eram novidade.
+ */
 export function markNotificationsRead(): void {
   const antes = notifications();
   const depois = markAllRead(antes);

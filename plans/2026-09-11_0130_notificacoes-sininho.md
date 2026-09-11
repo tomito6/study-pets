@@ -50,16 +50,15 @@ Tudo que não cai num desses dois casos já é dito em outro lugar, e repetir se
 
 | id | o que diz | gatilho | chave de dedup |
 |---|---|---|---|
-| `dia` | "Dia encerrado" · "10/09 · +390 XP · +200 🪙" | o dia entrou na conta e rendeu alguma coisa | `dia:<dia>` |
+| `dia` | "Dia encerrado" · "02/09 · +390 XP · 3h15 · 🏆 melhor dia" | o dia entrou na conta e rendeu alguma coisa | `dia:<dia>` |
 | `nivel` | "Você chegou no nível 4 · Dedicado" | o XP dos dias que entraram cruzou um degrau de `LEVELS` | `nivel:<nível>` |
 | `pet-nivel` | "Bolt chegou no Lv. 5" | nível do pet antes < depois de creditar | `pet-nivel:<pet>:<nível>` |
 | `pet-evolucao` | "Bolt pode evoluir" | idem, `canEvolveNow` virou verdadeiro | `pet-evolucao:<pet>:<nível>` |
 | `sequencia` | "7 dias seguidos batendo a meta · rende 12 🪙 por dia" | a sequência **naquele dia** caiu num degrau de `DAILY_BONUS_TIERS` | `sequencia:<dia>:<n>` |
-| `recorde-dia` | "Melhor dia até agora · 520 XP" | o dia bateu o melhor dia anterior — **e já havia um** | `recorde-dia:<dia>` |
-| `moedas` | "Dá pra adotar mais um pet" | o saldo **cruzou** o preço do pet mais barato | `moedas:<dia>` |
+| `horas` | "100 horas de estudo" | o total de estudo cruzou um degrau de `MARCOS_DE_HORAS` | `horas:<marco>` |
 | `abandono` | "O app fechou no meio de Estudo 3 · −100 XP pra você · Bolt −100 XP" | `resumeHardcoreOnBoot`, resolução `abandon` | `abandono:<dia>:<hora>` |
 
-**As sete primeiras têm UM gatilho só**: `applyPendingPetXP`, que é por onde passam as **três**
+**As seis primeiras têm UM gatilho só**: `applyPendingPetXP`, que é por onde passam as **três**
 portas de um dia entrar na conta — o `closeDay` chama, o boot chama, e a virada da meia-noite com
 o app aberto chama (`application/dayRollover.ts`, um `setTimeout` pro instante da virada mais o
 `onVisible`, no mesmo espírito sem-polling do prompt de fim de dia; sem isso, quem deixa o app
@@ -70,7 +69,7 @@ por dia vêm de dois campos novos do `computeStats`: `dayXP` e `dayCoins`, acumu
 passada que já existia. Duas fontes calculando os mesmos ids com números possivelmente diferentes
 seria pior do que um caminho só.
 
-Três detalhes que não são acidente:
+Quatro detalhes que não são acidente:
 
 - **`recorde-dia` exige um dia anterior.** No primeiro dia fechado da vida, "melhor dia até
   agora" é aritmética, não notícia.
@@ -105,6 +104,7 @@ Três detalhes que não são acidente:
 | `hora-de-estudar` (lembrete de bloco) | **nunca** aqui | Isso é notificação do SISTEMA (Web Notifications), não linha de histórico. Já existe no fim do bloco. |
 | `save-falhou` / `offline` | **nunca** | O `#save-indicator` é o lugar certo, e uma notificação de "não consegui salvar" que precisa ser salva pra existir é uma contradição. |
 | `doc-mudou-em-outro-dispositivo` | **nunca** | É estado de sistema; e o que mudou chega como as próprias linhas, pelo documento. |
+| `moedas` ("dá pra adotar mais um pet") | **depois** | Foi implementada, testada e **retirada**. É a única linha do catálogo cuja função é fazer você gastar, dentro de um painel que existe pra mostrar o que você perdeu — e ela reaparece a cada vez que o saldo cruza os 150, ou seja, depois de cada adoção. A loja já se destrava sozinha (o card sai de `.locked`) e o saldo já aparece no Perfil e no cabeçalho da loja. Voltar atrás é um `push` de cinco linhas. |
 | `extensao-sumiu-no-meio-do-estudo` | **depois** | É **estado**, não acontecimento — e você está olhando, no meio de um estudo. Estado mora em indicador (a faixa 🛡️ da barra do timer deixando de sumir calada), não em histórico lido depois. |
 | `dia-estudado-sem-pet-equipado` | **depois** | Perda silenciosa e irreversível de verdade: check sem pet não credita ninguém, e reequipar depois não recupera. Mas a linha chega tarde demais pra consertar o dia, e "você fez errado" é o tom que o app não usa. Se entrar, é como aviso **antes** — no Plano, enquanto dá pra equipar. |
 | `skill-do-pet-desligada-na-leitura` | **depois** | `normalizePetInstance` desliga sozinha a skill que a forma atual não tem (foi o que aconteceu quando a coruja virou pomba). O bônus some no boot, sem uma palavra. Raro: só em rebalanceamento de catálogo. |
@@ -202,8 +202,9 @@ esconder o nome do nível ("Zero", "Mestre") no selo de XP abaixo de 420px, ou t
   varredura de todo `NotifKind` contra `strings.notifications`: os três mapas são
   `Record<string, …>`, então um tipo novo sem texto renderizaria uma linha vazia e o build
   passaria. O mesmo teste cobra que nenhum texto escreva "undefined" com dados pela metade.
-- `tests/progress-notices.test.ts` (21) — as regras: quem vira linha e quem não vira, e que o id
-  não depende do relógio.
+- `tests/progress-notices.test.ts` (30) — as regras: quem vira linha e quem não vira, o recorde
+  como marca, os degraus de hora (inclusive cruzar dois de uma vez), e que o id não depende do
+  relógio.
 - `tests/application-notifications.test.ts` (21) — o app de verdade: encerrar o dia, encerrar
   duas vezes, pet que sobe de nível com o app fechado, **a virada da meia-noite com o app aberto**,
   voltar de uma semana fora, três dias seguidos virando marco, o cruzamento das moedas acontecendo
@@ -236,6 +237,11 @@ boot, pelo encerrar, pelo sync e pelo Perfil, e o `reconcileTimer`, que roda a c
 o chamava); a penalidade do hardcore fora da conta do "antes"; as três linhas de "Dia encerrado"
 saindo idênticas depois de uma ausência (a data entrou no texto); e a falta de uma rede que
 cobrasse texto pra cada `NotifKind`.
+
+A síntese final desse mesmo painel cortou duas linhas e acrescentou uma: o **recorde** virou marca
+dentro da linha do dia, **`moedas` saiu** (ver o catálogo) e entrou o marco de **horas estudadas**,
+que é a única linha que fala do total em vez de um dia — e a que mais casa com o que o app diz de
+si mesmo. Um dia de estudo passou a se anunciar em tempo, não em moedas.
 
 ## O que ficou de fora, de propósito
 

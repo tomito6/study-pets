@@ -33,10 +33,9 @@ const DESTINO: Record<Notification['kind'], Tab | null> = {
   nivel: 'perfil',
   'pet-nivel': 'perfil',
   'pet-evolucao': 'perfil',
-  moedas: 'perfil',
   dia: 'analise',
   sequencia: 'analise',
-  'recorde-dia': 'analise',
+  horas: 'analise',
   abandono: null,
 };
 

@@ -25,14 +25,12 @@ export type NotifKind =
   | 'pet-nivel'
   /** Um pet chegou no nível de uma evolução que estava trancada. */
   | 'pet-evolucao'
-  /** O dia foi encerrado: o ganho que entrou. */
+  /** O dia entrou na conta: o ganho que ele deixou. */
   | 'dia'
   /** Marco de sequência (os degraus de DAILY_BONUS_TIERS). */
   | 'sequencia'
-  /** Recorde novo: melhor dia em XP. */
-  | 'recorde-dia'
-  /** O saldo dá pra adotar mais um pet. */
-  | 'moedas'
+  /** Marco de horas estudadas no total (10, 25, 50, 100…). */
+  | 'horas'
   /** O modo hardcore cobrou um abandono (o app fechou no meio do estudo). */
   | 'abandono';
 
@@ -51,6 +49,10 @@ export interface NotifData {
   /** XP que saiu do pet (só no abandono do modo hardcore). */
   petXp?: number;
   coins?: number;
+  /** Minutos de estudo do dia. */
+  mins?: number;
+  /** O dia bateu o melhor dia até então — uma marca na linha do dia, não uma linha própria. */
+  recorde?: boolean;
   /** O dia a que o acontecimento se refere. */
   dia?: DateKey;
 }
@@ -75,7 +77,7 @@ export interface NewNotification {
 /** Todos os tipos. Um teste varre esta lista contra `strings.notifications`: kind
  *  sem texto renderizaria uma linha vazia, e o build passaria. */
 export const NOTIF_KINDS: readonly NotifKind[] = [
-  'nivel', 'pet-nivel', 'pet-evolucao', 'dia', 'sequencia', 'recorde-dia', 'moedas', 'abandono',
+  'nivel', 'pet-nivel', 'pet-evolucao', 'dia', 'sequencia', 'horas', 'abandono',
 ];
 
 const isKind = (v: unknown): v is NotifKind => typeof v === 'string' && NOTIF_KINDS.includes(v as NotifKind);
@@ -135,6 +137,8 @@ export function normalizeNotifications(raw: unknown, cap: number = MAX_NOTIFICAT
     if (typeof rawData.xp === 'number' && Number.isFinite(rawData.xp)) data.xp = rawData.xp;
     if (typeof rawData.petXp === 'number' && Number.isFinite(rawData.petXp)) data.petXp = rawData.petXp;
     if (typeof rawData.coins === 'number' && Number.isFinite(rawData.coins)) data.coins = rawData.coins;
+    if (typeof rawData.mins === 'number' && Number.isFinite(rawData.mins)) data.mins = rawData.mins;
+    if (rawData.recorde === true) data.recorde = true;
     if (typeof rawData.dia === 'string' && rawData.dia) data.dia = rawData.dia;
     out.push({
       id,

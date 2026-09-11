@@ -56,7 +56,7 @@ describe('encerrar o dia deixa o que aconteceu no sininho', () => {
     closeDay();
     const ids = notifications().map((n) => n.id);
     expect(ids).toEqual(['dia:2026-09-02', 'pet-nivel:cat:2']); // a mais nova primeiro
-    expect(notifications()[0]!.data).toEqual({ dia: HOJE, xp: 50, coins: 25 });
+    expect(notifications()[0]!.data).toEqual({ dia: HOJE, xp: 50, mins: 25 });
     expect(unreadNotifications()).toBe(2);
   });
 
@@ -106,7 +106,7 @@ describe('o que aconteceu com o app fechado', () => {
 
     expect(state.pets.owned[0]!.xp).toBe(50);
     expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-01', 'pet-nivel:cat:2']);
-    expect(notifications()[0]!.data).toEqual({ dia: ONTEM, xp: 50, coins: 25 });
+    expect(notifications()[0]!.data).toEqual({ dia: ONTEM, xp: 50, mins: 25 });
   });
 
   it('rodar de novo (outro boot, um sync) não cria a linha duas vezes', () => {
@@ -209,35 +209,18 @@ describe('marcos que só aparecem depois de alguns dias', () => {
     expect(notifications().some((n) => n.kind === 'sequencia')).toBe(false);
   });
 
-  it('bater o próprio melhor dia vira recorde — mas o primeiro dia fechado não', () => {
+  it('bater o próprio melhor dia marca a linha do dia — mas o primeiro dia fechado não', () => {
     diaFechado('2026-09-01', 1); // 50 XP
     marcar(3); // 150 XP hoje
     closeDay();
-    const rec = notifications().find((n) => n.kind === 'recorde-dia');
-    expect(rec).toBeDefined();
-    expect(rec!.data).toMatchObject({ xp: 150 });
+    const linha = notifications().find((n) => n.kind === 'dia' && n.data.dia === HOJE)!;
+    expect(linha.data).toMatchObject({ xp: 150, mins: 75, recorde: true });
   });
 
   it('o primeiro dia fechado da vida não é "melhor dia até agora"', () => {
     marcar(3);
     closeDay();
-    expect(notifications().some((n) => n.kind === 'recorde-dia')).toBe(false);
-  });
-
-  it('o saldo cruzar o preço do pet mais barato avisa uma vez; no dia seguinte, não de novo', () => {
-    marcar(6); // 150 min = 150 moedas, o preço do pet mais barato
-    closeDay();
-    expect(notifications().some((n) => n.kind === 'moedas')).toBe(true);
-
-    // Dia seguinte, mais moedas: já dava pra comprar ontem, então nada de lembrete diário.
-    clearNotifications();
-    vi.setSystemTime(new Date('2026-09-03T17:30:00'));
-    rebuildWeeks(new Date('2026-09-03T17:30:00'));
-    const amanha = '2026-09-03';
-    const estudos = blocksForDay(amanha).filter((b) => b.type === 'estudo').slice(0, 3);
-    for (const b of estudos) toggleBlockCheck(amanha, b);
-    closeDay(new Date('2026-09-03T17:30:00'));
-    expect(notifications().some((n) => n.kind === 'moedas')).toBe(false);
+    expect(notifications().find((n) => n.kind === 'dia')!.data.recorde).toBeUndefined();
   });
 });
 

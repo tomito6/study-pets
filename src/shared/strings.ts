@@ -7,6 +7,15 @@
 /** "2026-09-10" → "10/09 · ". Vazio se não houver data. */
 const curtaData = (dia?: string): string => (dia && dia.length === 10 ? `${dia.slice(8, 10)}/${dia.slice(5, 7)} · ` : '');
 
+/** 155 → "2h35", 120 → "2h", 45 → "45min". */
+const curtaDuracao = (m?: number): string => {
+  if (!m || m <= 0) return '';
+  if (m < 60) return `${m}min`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h}h${String(r).padStart(2, '0')}` : `${h}h`;
+};
+
 type NotifData = {
   n?: number;
   nome?: string;
@@ -14,6 +23,8 @@ type NotifData = {
   xp?: number;
   petXp?: number;
   coins?: number;
+  mins?: number;
+  recorde?: boolean;
   dia?: string;
 };
 
@@ -804,8 +815,7 @@ export const strings = {
       'pet-evolucao': '✨',
       dia: '✓',
       sequencia: '🔥',
-      'recorde-dia': '🏆',
-      moedas: '🪙',
+      horas: '⏳',
       abandono: '💀',
     } as Record<string, string>,
     /** A primeira linha. Sempre existe — e nunca escreve "undefined": um documento
@@ -816,8 +826,7 @@ export const strings = {
       'pet-evolucao': (d: NotifData) => `${d.nome ?? 'Seu pet'} pode evoluir`,
       dia: () => 'Dia encerrado',
       sequencia: (d: NotifData) => `${d.n ?? 0} dias seguidos batendo a meta`,
-      'recorde-dia': () => 'Melhor dia até agora',
-      moedas: () => 'Dá pra adotar mais um pet',
+      horas: (d: NotifData) => `${d.n ?? 0} horas de estudo`,
       abandono: (d: NotifData) => `O app fechou no meio de ${d.nome ?? 'um estudo'}`,
     } as Record<string, (d: NotifData) => string>,
     /** A segunda linha. Pode ser vazia. */
@@ -827,11 +836,14 @@ export const strings = {
       'pet-evolucao': () => 'Escolha o caminho quando quiser — é pra sempre.',
       // A data vai junto: voltar depois de uns dias fora rende até três linhas de
       // "Dia encerrado" de uma vez, todas carimbadas no mesmo instante — sem o dia,
-      // as três ficam idênticas.
-      dia: (d: NotifData) => `${curtaData(d.dia)}+${d.xp ?? 0} XP · +${d.coins ?? 0} 🪙`,
+      // as três ficam idênticas. E o tempo estudado no lugar das moedas: é o que
+      // tira a linha de ser cópia do resumo que a pessoa acabou de fechar.
+      dia: (d: NotifData) =>
+        `${curtaData(d.dia)}+${d.xp ?? 0} XP` +
+        (d.mins ? ` · ${curtaDuracao(d.mins)}` : '') +
+        (d.recorde ? ' · 🏆 melhor dia' : ''),
       sequencia: (d: NotifData) => (d.coins ? `Rende ${d.coins} 🪙 de bônus por dia.` : ''),
-      'recorde-dia': (d: NotifData) => `${d.xp ?? 0} XP num dia só.`,
-      moedas: (d: NotifData) => `Você tem ${d.coins ?? 0} 🪙 — a loja fica no Perfil.`,
+      horas: () => 'Desde o primeiro pomodoro.',
       abandono: (d: NotifData) =>
         `−${d.xp ?? 0} XP pra você` + (d.pet && d.petXp ? ` · ${d.pet} −${d.petXp} XP` : ''),
     } as Record<string, (d: NotifData) => string>,

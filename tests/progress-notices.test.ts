@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { abandonNotice, creditedDaysNotices, isStreakMilestone, petNotices } from '../src/domain/progressNotices';
+import { abandonNotice, creditedDaysNotices, hourMilestoneCrossed, isStreakMilestone, petNotices } from '../src/domain/progressNotices';
 import type { CreditContext, CreditedDay, PetProgress } from '../src/domain/progressNotices';
 
 const pet = (over: Partial<PetProgress> = {}): PetProgress => ({ id: 'dog', name: 'Bolt', level: 3, canEvolve: false, ...over });
@@ -71,22 +71,21 @@ describe('creditedDaysNotices', () => {
   const ctx = (over: Partial<CreditContext> = {}): CreditContext => ({
     totalXP: 3000,
     bestDayXPBefore: 400,
-    balanceAfter: 400,
-    cheapestPet: 150,
+    studyMinsAfter: 5000, // longe de qualquer marco de horas
     ...over,
   });
-  const dia = (over: Partial<CreditedDay> = {}): CreditedDay => ({ dia: '2026-09-11', xp: 320, coins: 160, streak: 2, ...over });
+  const dia = (over: Partial<CreditedDay> = {}): CreditedDay => ({ dia: '2026-09-11', xp: 320, coins: 160, mins: 160, streak: 2, ...over });
 
   it('dia sem ganho nenhum não deixa linha — encerrar um dia em branco não é notícia', () => {
     expect(creditedDaysNotices([dia({ xp: 0, coins: 0 })], ctx())).toEqual([]);
     expect(creditedDaysNotices([], ctx())).toEqual([]);
   });
 
-  it('dia com ganho deixa a linha do dia, com XP e moedas', () => {
+  it('dia com ganho deixa a linha do dia, com XP e minutos', () => {
     const out = creditedDaysNotices([dia()], ctx());
     expect(out).toHaveLength(1);
     expect(out[0]!.id).toBe('dia:2026-09-11');
-    expect(out[0]!.data).toEqual({ dia: '2026-09-11', xp: 320, coins: 160 });
+    expect(out[0]!.data).toEqual({ dia: '2026-09-11', xp: 320, mins: 160 });
   });
 
   it('subir de nível entra por último, pra ficar por cima na lista', () => {
@@ -115,23 +114,41 @@ describe('creditedDaysNotices', () => {
     expect(comConta.some((n) => n.kind === 'nivel')).toBe(false); // antes eram 900: já estava no nível
   });
 
-  it('recorde só quando bate um dia anterior de verdade', () => {
-    expect(creditedDaysNotices([dia({ xp: 520 })], ctx({ bestDayXPBefore: 400 })).some((n) => n.kind === 'recorde-dia')).toBe(true);
-    expect(creditedDaysNotices([dia()], ctx({ bestDayXPBefore: 0 })).some((n) => n.kind === 'recorde-dia')).toBe(false);
-    expect(creditedDaysNotices([dia({ xp: 100 })], ctx({ bestDayXPBefore: 400 })).some((n) => n.kind === 'recorde-dia')).toBe(false);
+  it('o recorde é uma MARCA na linha do dia, não uma linha própria', () => {
+    const bateu = creditedDaysNotices([dia({ xp: 520 })], ctx({ bestDayXPBefore: 400 }));
+    expect(bateu.filter((n) => n.kind === 'dia')).toHaveLength(1);
+    expect(bateu[0]!.data!.recorde).toBe(true);
+    // primeiro dia da conta: "melhor dia até agora" seria aritmética, não notícia
+    expect(creditedDaysNotices([dia()], ctx({ bestDayXPBefore: 0 }))[0]!.data!.recorde).toBeUndefined();
+    expect(creditedDaysNotices([dia({ xp: 100 })], ctx({ bestDayXPBefore: 400 }))[0]!.data!.recorde).toBeUndefined();
   });
 
   it('dentro do lote, o recorde é contra o melhor dia do próprio lote também', () => {
     const dois = [dia({ dia: '2026-09-10', xp: 500 }), dia({ dia: '2026-09-11', xp: 450 })];
-    const ids = creditedDaysNotices(dois, ctx({ bestDayXPBefore: 100, totalXP: 950 })).filter((n) => n.kind === 'recorde-dia').map((n) => n.id);
-    expect(ids).toEqual(['recorde-dia:2026-09-10']); // o segundo dia não bate o primeiro
+    const linhas = creditedDaysNotices(dois, ctx({ bestDayXPBefore: 100, totalXP: 950 })).filter((n) => n.kind === 'dia');
+    expect(linhas.map((n) => [n.data!.dia, n.data!.recorde])).toEqual([
+      ['2026-09-10', true],
+      ['2026-09-11', undefined], // o segundo dia não bate o primeiro
+    ]);
   });
 
-  it('moedas só quando o saldo CRUZA o preço do pet mais barato', () => {
-    expect(creditedDaysNotices([dia({ coins: 160 })], ctx({ balanceAfter: 300 })).some((n) => n.kind === 'moedas')).toBe(true);
-    // já dava pra comprar antes: nada de lembrete diário pra gastar
-    expect(creditedDaysNotices([dia({ coins: 160 })], ctx({ balanceAfter: 460 })).some((n) => n.kind === 'moedas')).toBe(false);
-    expect(creditedDaysNotices([dia({ coins: 40 })], ctx({ balanceAfter: 90 })).some((n) => n.kind === 'moedas')).toBe(false);
+  it('marco de horas: sai uma vez por lote, do maior degrau cruzado', () => {
+    // 9h50 antes, 10h10 depois: cruza o degrau de 10h.
+    const out = creditedDaysNotices([dia({ mins: 20 })], ctx({ studyMinsAfter: 610 }));
+    const horas = out.filter((n) => n.kind === 'horas');
+    expect(horas).toHaveLength(1);
+    expect(horas[0]!.id).toBe('horas:10');
+    expect(horas[0]!.data).toEqual({ n: 10 });
+  });
+
+  it('um lote que cruza dois degraus de hora deixa só o maior', () => {
+    // De 8h a 30h de uma vez: cruza 10 e 25, e sai só o 25.
+    const out = creditedDaysNotices([dia({ mins: 1320 })], ctx({ studyMinsAfter: 1800 }));
+    expect(out.filter((n) => n.kind === 'horas').map((n) => n.id)).toEqual(['horas:25']);
+  });
+
+  it('sem cruzar degrau nenhum, nenhuma linha de horas', () => {
+    expect(creditedDaysNotices([dia({ mins: 60 })], ctx({ studyMinsAfter: 700 })).some((n) => n.kind === 'horas')).toBe(false);
   });
 
   it('marco de sequência entra com o bônus por dia, e o id carrega o dia (a sequência pode ser refeita)', () => {
@@ -145,8 +162,8 @@ describe('creditedDaysNotices', () => {
   });
 
   it('lote grande: no máximo três linhas de dia, as mais recentes', () => {
-    const dias = ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11'].map((d) => dia({ dia: d, xp: 100, coins: 50 }));
-    const out = creditedDaysNotices(dias, ctx({ totalXP: 500, balanceAfter: 250, bestDayXPBefore: 900 }));
+    const dias = ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11'].map((d) => dia({ dia: d, xp: 100, coins: 50, mins: 50 }));
+    const out = creditedDaysNotices(dias, ctx({ totalXP: 500, bestDayXPBefore: 900 }));
     expect(out.filter((n) => n.kind === 'dia').map((n) => n.data!.dia)).toEqual(['2026-09-09', '2026-09-10', '2026-09-11']);
   });
 
@@ -168,5 +185,19 @@ describe('abandonNotice', () => {
     const n = abandonNotice('2026-09-10', { time: '09:00', name: '📖 Estudo 3' }, { userXp: 100, petXp: 0 }, null);
     expect(n.data!.pet).toBeUndefined();
     expect(n.data!.petXp).toBeUndefined();
+  });
+});
+
+describe('hourMilestoneCrossed', () => {
+  it('devolve o degrau cruzado, e null quando nenhum foi', () => {
+    expect(hourMilestoneCrossed(590, 610)).toBe(10);
+    expect(hourMilestoneCrossed(610, 700)).toBeNull();
+    expect(hourMilestoneCrossed(0, 0)).toBeNull();
+  });
+  it('cruzar vários de uma vez devolve o maior', () => {
+    expect(hourMilestoneCrossed(0, 100 * 60)).toBe(100);
+  });
+  it('encostar exatamente no degrau conta', () => {
+    expect(hourMilestoneCrossed(599, 600)).toBe(10);
   });
 });
