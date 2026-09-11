@@ -3,15 +3,15 @@
 
 import { computePendingPetXP, isDayClosed } from '../domain/checks';
 import { emptyPets } from '../domain/persistence';
-import { PETS, canEvolveNow, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm, petLevel } from '../domain/pets';
+import { PETS, canEvolveNow, cheapestPetPrice, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm, petLevel } from '../domain/pets';
 import type { EvolveRefusal } from '../domain/pets';
-import { petNotices } from '../domain/progressNotices';
-import type { PetProgress } from '../domain/progressNotices';
-import { dk } from '../domain/time';
-import type { PetId, PetInstance, PetInstanceId, SkillId } from '../domain/types';
+import { creditedDaysNotices, petNotices } from '../domain/progressNotices';
+import type { CreditedDay, PetProgress } from '../domain/progressNotices';
+import { dateFromKey, dk } from '../domain/time';
+import type { DateKey, PetId, PetInstance, PetInstanceId, SkillId } from '../domain/types';
 import { notify, state } from '../store/store';
 import { pushNotifications } from './notifications';
-import { blocksForDay, computeStatsNow } from './plan';
+import { blocksForDay, calcStreaksNow, computeStatsNow } from './plan';
 import { scheduleSave } from './save';
 
 export const petById = (id: PetInstanceId | null | undefined): PetInstance | null =>
@@ -30,6 +30,31 @@ export const activePet = (): PetInstance | null => petById(state.pets.active);
 /** O retrato dos pets pro diff de nível/evolução (ver domain/progressNotices.ts). */
 const petProgress = (): PetProgress[] =>
   state.pets.owned.map((p) => ({ id: p.id, name: p.name, level: petLevel(p), canEvolve: canEvolveNow(p) }));
+
+/**
+ * As notificações dos dias que acabaram de entrar na conta — `(from, until]`, a
+ * mesma janela que o XP dos pets acabou de percorrer.
+ *
+ * Este é o caminho por onde passam AS DUAS formas de um dia entrar na conta: o
+ * botão "Encerrar o dia" (que chama `applyPendingPetXP` logo depois de fechar) e
+ * a virada da meia-noite, descoberta no boot seguinte. A segunda é a comum — a
+ * pessoa fecha o laptop — e era a que não tinha tela nenhuma contando.
+ */
+function creditedDays(from: DateKey, until: DateKey, now: Date): CreditedDay[] {
+  if (from >= until) return [];
+  const stats = computeStatsNow(now);
+  return Object.keys(stats.dayXP)
+    .filter((k) => k > from && k <= until)
+    .sort()
+    .map((k) => ({
+      dia: k,
+      xp: stats.dayXP[k] ?? 0,
+      coins: stats.dayCoins[k] ?? 0,
+      // A sequência ancorada NAQUELE dia, não em hoje: voltar depois de uma semana
+      // fora tem que contar o marco do dia em que ele aconteceu.
+      streak: calcStreaksNow(stats.dayStudyMins, dateFromKey(k)).cur,
+    }));
+}
 
 export function applyPendingPetXP(now: Date = new Date()): void {
   if (!state.pets) state.pets = emptyPets();
@@ -55,10 +80,27 @@ export function applyPendingPetXP(now: Date = new Date()): void {
   // criaria o documento antes do onboarding terminar — e um reload pularia o
   // onboarding (e o pet inicial). O marcador vai junto com o próximo save.
   if (!pending.resetXp || Object.keys(pending.gains).length > 0) scheduleSave();
-  // O pet que subiu de nível (ou destravou uma evolução) enquanto o app estava
-  // fechado só é descoberto aqui — o resumo do fim do dia nunca aconteceu. Os ids
-  // derivam do pet e do nível, então o dispositivo que já registrou não duplica.
-  pushNotifications(petNotices(antes, petProgress()), now);
+  // O que aconteceu vai pro sininho: o pet que subiu de nível (ou destravou uma
+  // evolução) e os dias que entraram na conta. Os ids derivam do acontecimento,
+  // então o dispositivo que já registrou — ou um boot a mais — não duplica nada.
+  const dias = creditedDays(pending.from, pending.processedUntil, now);
+  const stats = computeStatsNow(now);
+  const novos = new Set(dias.map((d) => d.dia));
+  const melhorAntes = Object.entries(stats.dayXP)
+    .filter(([k]) => !novos.has(k))
+    .reduce((m, [, xp]) => Math.max(m, xp), 0);
+  pushNotifications(
+    [
+      ...petNotices(antes, petProgress()),
+      ...creditedDaysNotices(dias, {
+        totalXP: stats.totalXP,
+        bestDayXPBefore: melhorAntes,
+        balanceAfter: coinBalanceOf(stats.coins, state.coinsSpent),
+        cheapestPet: cheapestPetPrice(),
+      }),
+    ],
+    now,
+  );
 }
 
 export function coinBalance(now: Date = new Date()): number {

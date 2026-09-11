@@ -54,6 +54,14 @@ export interface Stats {
   weekChecksOfCurrent: number;
   dayCheckCounts: Record<DateKey, number>;
   dayStudyMins: Record<DateKey, number>;
+  /**
+   * XP e moedas que cada dia colocou nos TOTAIS — 0 enquanto o dia não fechou, pela
+   * mesma regra do resto. É o que o sininho usa pra dizer "ontem entrou na conta:
+   * +310 XP", tanto no "Encerrar o dia" quanto no boot seguinte a uma virada de
+   * meia-noite (ver domain/progressNotices.ts).
+   */
+  dayXP: Record<DateKey, number>;
+  dayCoins: Record<DateKey, number>;
   dayStudyPlanned: Record<DateKey, number>;
   dayStudyDoneMins: Record<DateKey, number>;
   dayMetGoal: Record<DateKey, boolean>;
@@ -97,6 +105,8 @@ export function computeStats(input: StatsInput): Stats {
     weekChecksOfCurrent: 0,
     dayCheckCounts: {},
     dayStudyMins: {},
+    dayXP: {},
+    dayCoins: {},
     dayStudyPlanned: {},
     dayStudyDoneMins: {},
     dayMetGoal: {},
@@ -116,6 +126,7 @@ export function computeStats(input: StatsInput): Stats {
     const isPast = key < todayKey || dayClosed(key);
     const blocks = getBlocks(key);
     let dayXP = 0;
+    let dayCoins = 0;
     let dayChecks = 0;
     let dayStudyMins = 0;
     let weekHasCheck = false;
@@ -161,7 +172,9 @@ export function computeStats(input: StatsInput): Stats {
           stats.weekXP[wi]! += effXP;
           stats.weekChecks[wi]!++;
           if (isStudyLike) {
-            stats.coins += coinsForBlock(b, dur);
+            const c = coinsForBlock(b, dur);
+            stats.coins += c;
+            dayCoins += c;
             stats.studyMins += dur;
           }
           const hour = parseInt(b.time.split(':')[0] as string);
@@ -193,7 +206,11 @@ export function computeStats(input: StatsInput): Stats {
     if (dayStudyMins >= minDailyMins) {
       runningStreak++;
       // Bônus de streak só conta nas moedas se o dia já fechou
-      if (isPast) stats.coins += dailyBonusForStreak(runningStreak);
+      if (isPast) {
+        const bonus = dailyBonusForStreak(runningStreak);
+        stats.coins += bonus;
+        dayCoins += bonus;
+      }
       // Pra hoje (ainda aberto), expõe o bônus como pendente
       else if (key === todayKey) stats.todayCoins += dailyBonusForStreak(runningStreak);
     } else if (!bonus) {
@@ -204,6 +221,8 @@ export function computeStats(input: StatsInput): Stats {
       stats.bestDayChecks = dayChecks;
       stats.bestDayLabel = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     }
+    stats.dayXP[key] = dayXP;
+    stats.dayCoins[key] = dayCoins;
     if (dayXP > stats.bestDayXP) stats.bestDayXP = dayXP;
     if (weekHasCheck) stats.activeWeeks++;
     if (stats.weekChecks[wi]! > stats.bestWeekChecks) stats.bestWeekChecks = stats.weekChecks[wi]!;

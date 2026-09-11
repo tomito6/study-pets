@@ -7,9 +7,8 @@
 // `pet-nivel:dog:5` é o mesmo id no dispositivo que encerrou o dia e no que só
 // abriu o app depois — então a mesma novidade nunca vira duas linhas.
 
-import type { DaySummary } from './daySummary';
 import type { NewNotification } from './notifications';
-import { DAILY_BONUS_TIERS, dailyBonusForStreak } from './progression';
+import { DAILY_BONUS_TIERS, LEVELS, dailyBonusForStreak, getLevelIdx } from './progression';
 import type { DateKey, PetInstanceId } from './types';
 
 /** Um pet visto de fora: o que basta pra saber se ele avançou. */
@@ -55,60 +54,93 @@ export function isStreakMilestone(streak: number): boolean {
   return streak > ultimo && streak % ultimo === 0;
 }
 
-/** Tudo que o encerramento do dia sabe. Quem monta é `application/dayEnd.ts`. */
-export interface DayCloseFacts {
+/** Um dia que acabou de entrar na conta: o XP e as moedas dele viraram totais agora. */
+export interface CreditedDay {
   dia: DateKey;
-  summary: DaySummary;
-  /** Dias seguidos batendo a meta, contando o dia que acabou de fechar. */
+  xp: number;
+  coins: number;
+  /** Dias seguidos batendo a meta, contando este dia. */
   streak: number;
-  /** Melhor dia em XP antes e depois de fechar — o recorde é a diferença entre os dois. */
-  bestDayXPBefore: number;
-  bestDayXPAfter: number;
-  /** Saldo de moedas antes e depois, e o pet mais barato da loja. */
-  balanceBefore: number;
-  balanceAfter: number;
-  cheapestPet: number;
 }
 
+export interface CreditContext {
+  /** XP total DEPOIS de os dias entrarem (o que `computeStats` devolve agora). */
+  totalXP: number;
+  /** Melhor dia em XP contando SÓ os dias que já estavam na conta. */
+  bestDayXPBefore: number;
+  /** Saldo de moedas DEPOIS de os dias entrarem. */
+  balanceAfter: number;
+  /** Preço do pet mais barato da loja. */
+  cheapestPet: number;
+  /** Quantas linhas de "dia encerrado" no máximo (as mais recentes). */
+  maxDias?: number;
+}
+
+/** Voltar de duas semanas fora não deve encher o painel de "dia encerrado". */
+export const MAX_DIAS_NO_LOTE = 3;
+
 /**
- * O que o fim do dia deixa no sininho. O resumo que aparece na hora é um modal
- * que some; isto é o que fica.
+ * O que um ou mais dias que entraram na conta deixam no sininho.
  *
- * A ordem importa: a mais importante é emitida por último, porque é a última
- * emitida que fica no topo da lista.
+ * **Um caminho só, de propósito.** Um dia entra na conta de duas formas: o botão
+ * "Encerrar o dia", e a virada da meia-noite (`computeStats` conta todo dia
+ * passado, com ou sem `closedDays`). A segunda é a mais comum — a pessoa fecha o
+ * laptop e pronto — e é exatamente a que não tinha tela nenhuma contando.
+ * `applyPendingPetXP` é o único lugar por onde as duas passam, então é de lá que
+ * isto é chamado.
+ *
+ * `dias` vem em ordem cronológica. A ordem de emissão importa: quem é emitido por
+ * último fica no topo da lista, então o nível sai no fim.
  */
-export function dayCloseNotices(f: DayCloseFacts): NewNotification[] {
+export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditContext): NewNotification[] {
+  const comGanho = dias.filter((d) => d.xp > 0 || d.coins > 0);
+  if (comGanho.length === 0) return [];
+
   const out: NewNotification[] = [];
-  const { summary } = f;
+  const maxDias = ctx.maxDias ?? MAX_DIAS_NO_LOTE;
+  const recentes = new Set(comGanho.slice(-maxDias).map((d) => d.dia));
 
-  // Dia sem nada marcado não vira linha: encerrar um dia em branco é uma decisão
-  // legítima e o app não tem nada a comemorar nem a cobrar por ela.
-  if (summary.empty) return out;
+  const xpDosDias = comGanho.reduce((n, d) => n + d.xp, 0);
+  const moedasDosDias = comGanho.reduce((n, d) => n + d.coins, 0);
+  const xpAntes = Math.max(0, ctx.totalXP - xpDosDias);
+  let saldo = Math.max(0, ctx.balanceAfter - moedasDosDias);
+  let melhorDia = ctx.bestDayXPBefore;
 
-  out.push({ id: `dia:${f.dia}`, kind: 'dia', data: { dia: f.dia, xp: summary.userXP, coins: summary.userCoins } });
+  for (const d of comGanho) {
+    if (recentes.has(d.dia)) {
+      out.push({ id: `dia:${d.dia}`, kind: 'dia', data: { dia: d.dia, xp: d.xp, coins: d.coins } });
+    }
 
-  // Recorde só existe contra um dia anterior — no primeiro dia fechado, "melhor
-  // dia até agora" não é notícia, é aritmética.
-  if (f.bestDayXPBefore > 0 && f.bestDayXPAfter > f.bestDayXPBefore) {
-    out.push({ id: `recorde-dia:${f.dia}`, kind: 'recorde-dia', data: { dia: f.dia, xp: f.bestDayXPAfter } });
+    // Recorde só existe contra um dia anterior — no primeiro dia da conta, "melhor
+    // dia até agora" é aritmética, não notícia.
+    if (melhorDia > 0 && d.xp > melhorDia) {
+      out.push({ id: `recorde-dia:${d.dia}`, kind: 'recorde-dia', data: { dia: d.dia, xp: d.xp } });
+    }
+    if (d.xp > melhorDia) melhorDia = d.xp;
+
+    // O saldo CRUZOU o preço do pet mais barato. Sem o cruzamento seria um lembrete
+    // diário de gastar — que é exatamente o que este app não faz.
+    const saldoAntes = saldo;
+    saldo += d.coins;
+    if (ctx.cheapestPet > 0 && saldoAntes < ctx.cheapestPet && saldo >= ctx.cheapestPet) {
+      out.push({ id: `moedas:${d.dia}`, kind: 'moedas', data: { dia: d.dia, coins: saldo } });
+    }
+
+    if (isStreakMilestone(d.streak)) {
+      out.push({
+        id: `sequencia:${d.dia}:${d.streak}`,
+        kind: 'sequencia',
+        data: { dia: d.dia, n: d.streak, coins: dailyBonusForStreak(d.streak) },
+      });
+    }
   }
 
-  // O saldo CRUZOU o preço do pet mais barato hoje. Sem o cruzamento seria um
-  // lembrete diário de gastar — que é exatamente o que este app não faz.
-  if (f.cheapestPet > 0 && f.balanceBefore < f.cheapestPet && f.balanceAfter >= f.cheapestPet) {
-    out.push({ id: `moedas:${f.dia}`, kind: 'moedas', data: { dia: f.dia, coins: f.balanceAfter } });
-  }
-
-  if (isStreakMilestone(f.streak)) {
-    out.push({
-      id: `sequencia:${f.dia}:${f.streak}`,
-      kind: 'sequencia',
-      data: { dia: f.dia, n: f.streak, coins: dailyBonusForStreak(f.streak) },
-    });
-  }
-
-  if (summary.userLevelUp) {
-    out.push({ id: `nivel:${summary.newLevel}`, kind: 'nivel', data: { n: summary.newLevel, nome: summary.newLevelName } });
+  // Uma linha só pro nível, do nível efetivamente alcançado: voltar de uma semana
+  // fora e subir dois níveis não merece duas linhas dizendo a mesma coisa.
+  const idxAntes = getLevelIdx(xpAntes);
+  const idxDepois = getLevelIdx(ctx.totalXP);
+  if (idxDepois > idxAntes) {
+    out.push({ id: `nivel:${idxDepois + 1}`, kind: 'nivel', data: { n: idxDepois + 1, nome: LEVELS[idxDepois]?.[1] ?? '' } });
   }
 
   return out;

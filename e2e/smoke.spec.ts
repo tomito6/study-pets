@@ -832,6 +832,36 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#notif-badge')).toHaveCount(0);
   });
 
+  test('51. o dia que passou sozinho enquanto o app estava fechado aparece no sininho', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await checksDeEstudo(page).first().click();
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+
+    // Ninguém apertou "Encerrar o dia": o app fechou e o dia virou. É o caso comum,
+    // e era o único em que nada no app contava o que tinha entrado na conta.
+    await expect(page.locator('#notif-badge')).toHaveCount(0);
+    await page.clock.setFixedTime(new Date('2026-09-03T09:00:00'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+
+    await expect(page.locator('#notif-badge')).toHaveText('2');
+    await page.locator('#notif-btn').click();
+    const linhas = page.locator('#notif-list .notif-item');
+    await expect(linhas.first()).toContainText('Dia encerrado');
+    await expect(linhas.first()).toContainText('+50 XP');
+    await expect(linhas.nth(1)).toContainText('Lv. 2'); // o pet foi creditado no mesmo boot
+
+    // E abrir o app de novo no dia seguinte não recria as mesmas linhas.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('#notif-badge')).toHaveCount(0);
+    await page.locator('#notif-btn').click();
+    await expect(page.locator('#notif-list .notif-item')).toHaveCount(2);
+  });
+
   test('34. a aba Análise mostra, nas quatro sub-abas, o que o dia encerrado deixou', async ({ page }) => {
     test.slow(); // 7 checks, fechar o dia e percorrer as quatro vistas
     await abrirApp(page);

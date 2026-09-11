@@ -30,10 +30,11 @@ Duas coisas do app produzem exatamente isso:
 1. **A regra do dia fechado.** XP e moedas do usuário só entram nos totais quando o dia encerra
    (`computeStats` só agrega dia fechado), e o XP dos pets é creditado por `applyPendingPetXP`.
    Então todo marco de progresso — subir de nível, o pet evoluir, bater um recorde — só pode
-   acontecer em dois instantes: no `closeDay`, e no **boot** que credita os dias que fecharam com
-   o app desligado. O primeiro já tem o modal de resumo. O segundo **não tinha dono nenhum**: o
-   pet subia de nível às 3 da manhã e não havia tela que contasse. É o buraco mais claro do app,
-   e é a razão de o sininho existir.
+   acontecer quando **um dia entra na conta**. E isso tem duas portas: o botão "Encerrar o dia" e
+   a **virada da meia-noite** (`computeStats` conta todo dia passado, com ou sem `closedDays`).
+   A primeira já tem o modal de resumo. A segunda — que é a comum, a pessoa fecha o laptop e
+   pronto — **não tinha dono nenhum**: o pet subia de nível às 3 da manhã, o dia entrava na conta,
+   e não havia tela que contasse. É o buraco mais claro do app, e é a razão de o sininho existir.
 2. **O boot assíncrono.** O modo hardcore cobra o abandono em `resumeHardcoreOnBoot` com um
    toast — que dispara enquanto a página ainda está montando, por cima de quem acabou de abrir
    o app. Uma penalidade de XP cobrada sem ninguém ver é o pior lugar possível pra um toast.
@@ -49,14 +50,21 @@ Tudo que não cai num desses dois casos já é dito em outro lugar, e repetir se
 
 | id | o que diz | gatilho | chave de dedup |
 |---|---|---|---|
-| `dia` | "Dia encerrado · +390 XP · +200 🪙" | `closeDay`, se o resumo não é vazio | `dia:<dia>` |
-| `nivel` | "Você chegou no nível 4 · Dedicado" | `closeDay`, `summary.userLevelUp` | `nivel:<nível>` |
-| `pet-nivel` | "Bolt chegou no Lv. 5" | `applyPendingPetXP`, nível antes < depois | `pet-nivel:<pet>:<nível>` |
+| `dia` | "Dia encerrado · +390 XP · +200 🪙" | o dia entrou na conta e rendeu alguma coisa | `dia:<dia>` |
+| `nivel` | "Você chegou no nível 4 · Dedicado" | o XP dos dias que entraram cruzou um degrau de `LEVELS` | `nivel:<nível>` |
+| `pet-nivel` | "Bolt chegou no Lv. 5" | nível do pet antes < depois de creditar | `pet-nivel:<pet>:<nível>` |
 | `pet-evolucao` | "Bolt pode evoluir" | idem, `canEvolveNow` virou verdadeiro | `pet-evolucao:<pet>:<nível>` |
-| `sequencia` | "7 dias seguidos batendo a meta · rende 12 🪙 por dia" | `closeDay`, sequência num degrau de `DAILY_BONUS_TIERS` | `sequencia:<dia>:<n>` |
-| `recorde-dia` | "Melhor dia até agora · 520 XP" | `closeDay`, `bestDayXP` subiu **e já havia um dia anterior** | `recorde-dia:<dia>` |
-| `moedas` | "Dá pra adotar mais um pet" | `closeDay`, o saldo **cruzou** o preço do pet mais barato | `moedas:<dia>` |
+| `sequencia` | "7 dias seguidos batendo a meta · rende 12 🪙 por dia" | a sequência **naquele dia** caiu num degrau de `DAILY_BONUS_TIERS` | `sequencia:<dia>:<n>` |
+| `recorde-dia` | "Melhor dia até agora · 520 XP" | o dia bateu o melhor dia anterior — **e já havia um** | `recorde-dia:<dia>` |
+| `moedas` | "Dá pra adotar mais um pet" | o saldo **cruzou** o preço do pet mais barato | `moedas:<dia>` |
 | `abandono` | "O app fechou no meio de Estudo 3 · −100 XP pra você · Bolt −100 XP" | `resumeHardcoreOnBoot`, resolução `abandon` | `abandono:<dia>:<hora>` |
+
+**As sete primeiras têm UM gatilho só**: `applyPendingPetXP`, que é por onde passam as duas portas
+de um dia entrar na conta — o `closeDay` chama, e o boot chama. A janela é a mesma que o XP dos
+pets percorre (`(pending.from, pending.processedUntil]`, agora exposta pelo domínio), e os números
+por dia vêm de dois campos novos do `computeStats`: `dayXP` e `dayCoins`, acumulados na mesma
+passada que já existia. Duas fontes calculando os mesmos ids com números possivelmente diferentes
+seria pior do que um caminho só.
 
 Três detalhes que não são acidente:
 
@@ -66,7 +74,11 @@ Três detalhes que não são acidente:
   seria um lembrete diário de gastar — o padrão que este app não usa. E funciona de novo depois
   de comprar, porque o cruzamento volta a acontecer.
 - **`sequencia` carrega o dia no id.** `sequencia:7` sozinho impediria a linha de aparecer numa
-  segunda sequência de 7 dias, meses depois.
+  segunda sequência de 7 dias, meses depois. E a sequência é medida **ancorada naquele dia**, não
+  em hoje: voltar depois de uma semana fora tem que contar o marco do dia em que ele aconteceu.
+- **Voltar de muitos dias fora não enche o painel.** No máximo três linhas de "dia encerrado"
+  (`MAX_DIAS_NO_LOTE`), as mais recentes — mas os marcos do período inteiro entram, e dois níveis
+  num lote só viram **uma** linha, do nível efetivamente alcançado.
 
 ### As que ficaram de fora
 
@@ -182,6 +194,22 @@ esconder o nome do nível ("Zero", "Mestre") no selo de XP abaixo de 420px, ou t
   marca como lido, sobrevive ao reload, "Limpar" zera e o boot seguinte não recria.
 - e2e **49** (laptop) — a ordem da barra e o painel inteiro dentro da janela.
 - e2e **50** (393px) — a barra do timer abaixo de uma barra do topo de duas linhas.
+- e2e **51** — o caso principal de ponta a ponta: marcar um estudo, **não** encerrar o dia, virar
+  o relógio pro dia seguinte, recarregar — e achar "Dia encerrado · +50 XP" no sininho; e o boot
+  seguinte não recriando as mesmas linhas.
+
+## Como isso foi checado
+
+Três desenhos independentes do sistema rodaram em paralelo com ângulos diferentes ("o mínimo
+honesto", "memória do esforço", "o que você perdeu"), cada um com o catálogo exaustivo. **Os três
+chegaram nas mesmas oito**, o que é a melhor evidência disponível de que a régua está certa. O
+terceiro acrescentou uma nona — "o bloqueio de sites não pegou" — que ficou em `depois` por dois
+votos contra um: é **estado**, não acontecimento, e estado mora em indicador (a faixa 🛡️ da barra
+do timer e o status na seção de Configurações), não em histórico.
+
+E foi um desses desenhos que apontou o buraco na primeira versão desta branch, que só emitia no
+`closeDay`: **o dia que passa sozinho na virada da meia-noite** — justamente o caso mais comum —
+não deixava linha nenhuma.
 
 ## O que ficou de fora, de propósito
 

@@ -91,8 +91,9 @@ describe('encerrar o dia deixa o que aconteceu no sininho', () => {
 describe('o que aconteceu com o app fechado', () => {
   beforeEach(() => resetAt('2026-09-02T09:00:00'));
 
-  it('o pet que subiu de nível num dia fechado ontem é descoberto no boot', () => {
-    // Ontem foi encerrado com um estudo marcado, e o app nunca creditou o pet.
+  it('o dia que passou sozinho e o pet que subiu de nível são descobertos no boot', () => {
+    // Ontem teve um estudo marcado e o app foi fechado. Ninguém apertou "Encerrar o
+    // dia": a virada da meia-noite pôs o dia na conta, e nenhuma tela contou isso.
     state.pets.owned = [gato()];
     state.pets.active = 'cat';
     state.pets.xpProcessedUntil = '2026-08-31';
@@ -103,7 +104,8 @@ describe('o que aconteceu com o app fechado', () => {
     applyPendingPetXP(new Date('2026-09-02T09:00:00'));
 
     expect(state.pets.owned[0]!.xp).toBe(50);
-    expect(notifications().map((n) => n.id)).toEqual(['pet-nivel:cat:2']);
+    expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-01', 'pet-nivel:cat:2']);
+    expect(notifications()[0]!.data).toEqual({ dia: ONTEM, xp: 50, coins: 25 });
   });
 
   it('rodar de novo (outro boot, um sync) não cria a linha duas vezes', () => {
@@ -115,8 +117,25 @@ describe('o que aconteceu com o app fechado', () => {
     state.checks[ONTEM] = { [b.time]: { pet: 'cat', bonus: 0 } };
 
     applyPendingPetXP(new Date('2026-09-02T09:00:00'));
+    const primeiro = notifications().map((n) => n.id);
     applyPendingPetXP(new Date('2026-09-02T09:05:00'));
-    expect(notifications()).toHaveLength(1);
+    expect(notifications().map((n) => n.id)).toEqual(primeiro);
+  });
+
+  it('voltar de uma semana fora não enche o painel: no máximo três "dia encerrado"', () => {
+    state.pets.xpProcessedUntil = '2026-08-25';
+    for (const dia of ['2026-08-26', '2026-08-27', '2026-08-28', '2026-08-31', '2026-09-01']) {
+      const estudos = blocksForDay(dia).filter((b) => b.type === 'estudo').slice(0, 3);
+      state.checks[dia] = Object.fromEntries(estudos.map((b) => [b.time, { pet: null, bonus: 0 }]));
+    }
+    rebuildWeeks(new Date('2026-09-02T09:00:00')); // as semanas se estendem pra trás quando há dados antigos
+    applyPendingPetXP(new Date('2026-09-02T09:00:00'));
+    const dias = notifications().filter((n) => n.kind === 'dia').map((n) => n.data.dia);
+    expect(dias).toEqual(['2026-09-01', '2026-08-31', '2026-08-28']); // as mais recentes, no topo
+    // Mas o que aconteceu ao longo da semana não se perde: o nível é uma linha só.
+    const niveis = notifications().filter((n) => n.kind === 'nivel');
+    expect(niveis).toHaveLength(1);
+    expect(niveis[0]!.data.n).toBe(3); // 5 dias × 150 XP = 750, e o nível 3 começa em 750
   });
 
   it('conta nova no primeiro boot não inventa notificação nenhuma', () => {

@@ -98,6 +98,8 @@ export interface PendingPetXPInput {
 export interface PendingPetXPResult {
   /** XP a somar por pet adotado (id da instância — o que o check guarda). */
   gains: Record<PetInstanceId, number>;
+  /** Último dia que JÁ estava creditado: os dias novos são `(from, processedUntil]`. */
+  from: DateKey;
   /** Novo valor de `xpProcessedUntil`. */
   processedUntil: DateKey;
   /** Primeira execução: zera o XP acumulado antes de aplicar os ganhos. */
@@ -127,7 +129,7 @@ export function computePendingPetXP(input: PendingPetXPInput): PendingPetXPResul
 
   if (from >= endKey) {
     // Nada a creditar. Mas se é a primeira execução, o reset ainda precisa acontecer.
-    return resetXp ? { gains: {}, processedUntil: from, resetXp: true } : null;
+    return resetXp ? { gains: {}, from, processedUntil: from, resetXp: true } : null;
   }
 
   const gains: Record<PetInstanceId, number> = {};
@@ -146,5 +148,5 @@ export function computePendingPetXP(input: PendingPetXPInput): PendingPetXPResul
     }
   }
 
-  return { gains, processedUntil: endKey, resetXp };
+  return { gains, from, processedUntil: endKey, resetXp };
 }

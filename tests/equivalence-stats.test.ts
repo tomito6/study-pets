@@ -170,8 +170,10 @@ function rodarLegado(c: Cenario) {
 }
 
 function rodarNovo(c: Cenario) {
-  // `penaltyXP`/`quits` (modo hardcore) não existiam no legado: ficam de fora da comparação.
-  const { penaltyXP: _p, quits: _q, ...stats } = computeStats({
+  // `penaltyXP`/`quits` (modo hardcore) e `dayXP`/`dayCoins` (o sininho) não existiam
+  // no legado: ficam de fora da comparação. Os dois últimos são recortes do mesmo
+  // somatório, e `tests/stats.test.ts` cobra que eles fechem com os totais.
+  const { penaltyXP: _p, quits: _q, dayXP: _dx, dayCoins: _dc, ...stats } = computeStats({
     days: c.dias,
     getBlocks: (key) => generateBlocks(c.cfg, c.eventosPorDia[key] || []),
     checks: c.checks,

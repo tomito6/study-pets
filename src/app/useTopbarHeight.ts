@@ -15,7 +15,12 @@ export function useTopbarHeight(ref: RefObject<HTMLDivElement | null>, deps: unk
     const el = ref.current;
     const app = document.getElementById('app');
     if (!el || !app) return;
-    const escrever = () => app.style.setProperty('--topbar-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    // Altura 0 = a barra está escondida (tela de login, `#app.app-hidden`). Escrever
+    // isso deixaria o `#app` com `--topbar-h: 0px` até o ResizeObserver acordar.
+    const escrever = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      if (h > 0) app.style.setProperty('--topbar-h', `${h}px`);
+    };
     escrever();
     if (typeof ResizeObserver === 'undefined') return; // ambiente sem a API: fica o valor do CSS
     const ro = new ResizeObserver(escrever);
