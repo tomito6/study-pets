@@ -67,7 +67,8 @@ describe('fontes servidas pelo próprio domínio', () => {
       }
     };
     varrer(new URL('src/styles/', raiz));
-    expect(css.length).toBeGreaterThanOrEqual(3);
+    varrer(new URL('public/legal/', raiz)); // as páginas estáticas têm CSS próprio
+    expect(css.length).toBeGreaterThanOrEqual(4);
     for (const caminho of [...css, new URL('index.html', raiz).pathname]) {
       const texto = readFileSync(caminho, 'utf8');
       expect(texto, `${caminho} fala com o Google Fonts`).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);

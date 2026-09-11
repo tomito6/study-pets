@@ -188,6 +188,13 @@ export function LoginScreen() {
           {t.google}
         </button>
         <div className="ls-fine-print">{t.finePrint}</div>
+        <div className="ls-legal">
+          <a href="/legal/privacidade.html">{t.legal.privacy}</a>
+          <span aria-hidden="true">·</span>
+          <a href="/legal/termos.html">{t.legal.terms}</a>
+          <span aria-hidden="true">·</span>
+          <a href="/legal/impressum.html">{t.legal.imprint}</a>
+        </div>
       </div>
     </div>
   );

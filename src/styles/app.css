@@ -397,6 +397,13 @@
      de estudo e o app não tem importação. O botão fica ACIMA da linha de ações, com
      respiro, pra ser lido antes — e não competir com "Voltar"/"Apagar". */
   .danger-export{margin-bottom:14px;font-size:13px;padding:10px;}
+
+  /* A seção "Documentos" das Configurações: mesma anatomia da Zona de perigo (título +
+     descrição à esquerda, ação à direita), mas a ação é um link que abre noutra aba —
+     ninguém deve perder o que estava configurando pra ler uma política. */
+  .st-legal-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:4px 0;}
+  .st-legal-link{flex:none;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);white-space:nowrap;}
+  .st-legal-link:hover{border-color:var(--accent);}
   .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:var(--font-ui);}
   .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
   .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}

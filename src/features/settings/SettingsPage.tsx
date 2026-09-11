@@ -274,6 +274,37 @@ export function SettingsPage() {
               </div>
 
               <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{t.legal.title}</div></div>
+                <div className="st-section-desc">{t.legal.desc}</div>
+                <div className="st-card">
+                  {([
+                    ['privacidade', t.legal.privacy, t.legal.privacyDesc],
+                    ['termos', t.legal.terms, t.legal.termsDesc],
+                    ['impressum', t.legal.imprint, t.legal.imprintDesc],
+                  ] as const).map(([arquivo, titulo, desc], i) => (
+                    <div key={arquivo}>
+                      {i > 0 && <div className="st-divider" />}
+                      <div className="st-legal-row">
+                        <div>
+                          <div className="dr-title">{titulo}</div>
+                          <div className="dr-desc">{desc}</div>
+                        </div>
+                        <a
+                          className="st-legal-link"
+                          id={`legal-${arquivo}`}
+                          href={`/legal/${arquivo}.html`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {t.legal.open}
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title danger">{t.danger.title}</div></div>
                 <div className="st-card st-danger">
                   <div className="st-danger-row">

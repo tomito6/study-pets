@@ -59,6 +59,7 @@ export const strings = {
       'unknown': 'Não deu pra completar. Tenta de novo.',
     } satisfies Record<import('../domain/auth').AuthErrorReason, string>,
     google: 'Continuar com Google',
+    legal: { privacy: 'Privacidade', terms: 'Termos', imprint: 'Impressum' },
     finePrint: 'Dados salvos na nuvem · Sincronizado em todos os dispositivos',
   },
   tabs: {
@@ -590,6 +591,17 @@ export const strings = {
       rowTitle: 'Ver o tour de novo',
       rowDesc: 'Os cinco balões voltam, começando pelo Plano. Nada mais muda.',
       button: 'Ver de novo',
+    },
+    legal: {
+      title: 'Documentos',
+      desc: 'Quem é o responsável, o que o app guarda sobre você, e as regras do serviço.',
+      privacy: 'Política de privacidade',
+      privacyDesc: 'Que dados o app guarda, por quê, com quem, e como apagar tudo.',
+      terms: 'Termos de uso',
+      termsDesc: 'O que o serviço promete — e o que ele não promete.',
+      imprint: 'Impressum',
+      imprintDesc: 'A identificação do responsável, como o § 5 DDG exige.',
+      open: 'Abrir ↗',
     },
     danger: {
       title: 'Zona de perigo',

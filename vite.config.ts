@@ -21,6 +21,10 @@ export default defineConfig({
       devOptions: { enabled: false },
       workbox: {
         navigateFallback: '/index.html',
+        // As páginas legais são HTML de verdade, não rotas do app: o fallback não pode
+        // engoli-las. Sem isto, /legal/privacidade.html abriria o Study Pets — inclusive
+        // pro console do Google, que precisa da URL da política respondendo de verdade.
+        navigateFallbackDenylist: [/^\/legal\//],
         // woff2 entra: as fontes agora são nossas (public/fonts/), e sem elas no
         // precache o app abriria offline com a tipografia do sistema.
         globPatterns: ['**/*.{js,css,html,png,webmanifest,woff2}'],
