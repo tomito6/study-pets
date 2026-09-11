@@ -104,6 +104,60 @@ describe('as três páginas legais', () => {
   });
 });
 
+describe('os dois documentos internos', () => {
+  // O registro do art. 30 e o plano de incidente não vão pro ar: são o que se mostra a uma
+  // autoridade que pergunte "que dados você trata" e "o que você faz num vazamento".
+  const INTERNOS = ['registro-tratamento', 'plano-de-incidente'] as const;
+  const md = Object.fromEntries(INTERNOS.map((d) => [d, ler(`docs/${d}.md`)])) as Record<
+    (typeof INTERNOS)[number],
+    string
+  >;
+
+  it('o registro do art. 30 tem as sete colunas que o artigo pede', () => {
+    const doc = md['registro-tratamento'];
+    for (const item of [
+      'Responsável',
+      'Finalidades',
+      'Categorias de titulares',
+      'Categorias de dados pessoais',
+      'Destinatários',
+      'Transferência internacional',
+      'Prazos de eliminação',
+      'Medidas técnicas e organizacionais',
+    ]) {
+      expect(doc, `o registro não tem a seção "${item}"`).toContain(item);
+    }
+  });
+
+  it('o plano de incidente tem o prazo, a autoridade e o modelo', () => {
+    const doc = md['plano-de-incidente'];
+    expect(doc, 'falta o prazo do art. 33').toContain('72 horas');
+    expect(doc, 'falta a autoridade competente').toContain('BayLDA');
+    expect(doc, 'falta a autoridade brasileira').toContain('ANPD');
+    expect(doc, 'falta o modelo de notificação').toMatch(/Modelo/);
+  });
+
+  it('os dois se apontam, e apontam pra política pública', () => {
+    expect(md['registro-tratamento']).toContain('plano-de-incidente.md');
+    expect(md['plano-de-incidente']).toContain('registro-tratamento.md');
+    expect(md['registro-tratamento']).toContain('privacidade.html');
+  });
+
+  it('interno e público estão no mesmo estado de preenchimento', () => {
+    // A armadilha real: preencher o endereço nas três páginas públicas e esquecer dos dois
+    // documentos internos (ou o contrário). São os MESMOS três fatos — endereço, e-mail e a
+    // região do Firestore — e eles não podem discordar entre si.
+    const publicoPendente = PAGINAS.some((p) => html[p].includes('class="falta"'));
+    const internoPendente = INTERNOS.some((d) => md[d].includes('[preencher:'));
+    expect(
+      internoPendente,
+      publicoPendente
+        ? 'as páginas públicas ainda têm campo por preencher, mas os documentos internos já foram preenchidos — eles vão discordar'
+        : 'as páginas públicas já foram preenchidas, mas os documentos internos ainda têm campo pendente',
+    ).toBe(publicoPendente);
+  });
+});
+
 describe('as páginas legais dentro do app', () => {
   it('a tela de login leva às três', () => {
     const login = ler('src/features/auth/LoginScreen.tsx');
