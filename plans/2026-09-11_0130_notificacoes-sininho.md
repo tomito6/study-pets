@@ -236,6 +236,14 @@ segundos depois. Pior: o id já estava gasto, então a linha certa nunca mais
 apareceria. O crédito passou pra depois da cobrança, e o teste reprova a ordem
 antiga (250 contra 200).
 
+Essa inversão tem um **efeito colateral no modo hardcore, e ele é o certo**: o pet
+deixa de ser creditado pelo bloco abandonado (o check já não existe quando o
+crédito roda). Na ordem antiga ele ganhava o XP do bloco pelo qual acabava de ser
+penalizado. Em troca, a cobrança do pet passa a ser limitada pelo XP que ele tinha
+**antes** do crédito do dia — que é o que ele de fato tinha no instante em que o
+bloco foi abandonado. Os dois lados estão pinados por teste; se o Tomi achar que a
+cobrança ficou leve demais nesse caso, o lugar de mexer é `quitCost`, não a ordem.
+
 Pelo mesmo motivo, a **linha do abandono entra antes da penalidade**:
 `applyPenalty` termina num `saveNow()` sem debounce ("quem fecha a aba logo depois
 não escapa da conta"), e a notificação precisa já estar no estado que ele

@@ -303,6 +303,10 @@ describe('a ordem do boot: a cobrança do abandono vem antes das linhas', () => 
     expect(state.checks[ONTEM]?.[abandonado.time]).toBeUndefined();
     const linha = notifications().find((n) => n.kind === 'dia')!;
     expect(linha.data.xp).toBe(200);
+    // Efeito colateral da ordem, e é o certo: o pet NÃO é creditado pelo bloco
+    // abandonado (o check já não existe quando o crédito roda). Na ordem antiga ele
+    // ganhava os 50 do bloco pelo qual foi penalizado, e ficava com 150.
+    expect(state.pets.owned[0]!.xp).toBe(200);
     // E o abandono também deixou a sua linha.
     expect(notifications().some((n) => n.kind === 'abandono')).toBe(true);
     // A linha do abandono entra ANTES da penalidade: `applyPenalty` termina num
