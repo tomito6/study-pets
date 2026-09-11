@@ -1,7 +1,7 @@
 {
   "name": "Study Pets",
   "short_name": "Study Pets",
-  "description": "Pomodoro com RPG: plano diário adaptável, XP, moedas e pets.",
+  "description": "Timer de foco com RPG: plano diário adaptável, XP, moedas e pets.",
   "lang": "pt-BR",
   "start_url": "/",
   "scope": "/",

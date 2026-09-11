@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Pomodoro com RPG — planejamento diário adaptável, XP, moedas e pets.",
+  "description": "Timer de foco com RPG — planejamento diário adaptável, XP, moedas e pets.",
   "engines": {
     "node": ">=20.19"
   },

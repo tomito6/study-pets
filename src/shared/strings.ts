@@ -35,7 +35,7 @@ export const strings = {
     title: ['STUDY', 'PETS'],
     sub: ['Transforme sua rotina de estudos', 'numa aventura. Suba de nível. Evolua.'],
     features: [
-      { icon: '⚡', label: ['Pomodoro', 'inteligente'] },
+      { icon: '⚡', label: ['Foco', 'inteligente'] },
       { icon: '📊', label: ['Analytics', 'pessoal'] },
       { icon: '🎮', label: ['XP &', 'Níveis'] },
     ],

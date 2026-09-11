@@ -5,7 +5,7 @@ describe('isValidEmail', () => {
   it('aceita formatos básicos válidos', () => {
     expect(isValidEmail('tomi@example.com')).toBe(true);
     expect(isValidEmail('  tomi@example.com  ')).toBe(true); // trim
-    expect(isValidEmail('t.spielmann+study@tum.de')).toBe(true);
+    expect(isValidEmail('nome.sobrenome+tag@exemplo.de')).toBe(true);
   });
 
   it('recusa formatos inválidos', () => {
