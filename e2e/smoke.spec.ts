@@ -1457,35 +1457,40 @@ test.describe('Study Pets — smoke', () => {
   });
 
   test.describe('num celular estreito', () => {
-    // 360px: é aqui que a barra do topo ainda quebra em duas linhas depois de o nome
-    // do nível sair do selo de XP (em 393px ela cabe numa linha só). Um iPhone SE.
+    // 360px, um iPhone SE: a largura em que tudo disputava espaço na barra do topo.
     test.use({ viewport: { width: 360, height: 850 } });
 
-    test('50. com a barra do topo em duas linhas, a barra do timer gruda abaixo dela', async ({ page }) => {
+    test('50. a barra do topo tem altura fixa, e a barra do timer gruda abaixo dela', async ({ page }) => {
       await abrirApp(page, '10:10');
       await page.locator('#tour-skip').click();
 
-      // O nome do nível ("Zero", "Mestre") não existe no celular: era ele que empurrava
-      // o conteúdo da direita pra segunda linha. Continua no Perfil e na Análise.
+      // O nome do nível ("Zero", "Mestre") não existe no celular. Continua no Perfil
+      // e na Análise; aqui ele só empurrava o conteúdo da direita.
       await expect(page.locator('#top-level')).toBeHidden();
       await expect(page.locator('#top-xp')).toBeVisible();
 
-      // Nesta largura a barra ainda quebra em duas linhas (o "Sair" desce).
-      // `--topbar-h` tem que ser a altura MEDIDA: com o 76px que estava cravado no
-      // CSS, a barra do timer subia pra debaixo dela.
       await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
       await page.locator('.focus-exit').click();
       await expect(page.locator('#timer-bar')).toHaveClass(/active/);
 
-      const m = await page.evaluate(() => {
+      const medir = () => page.evaluate(() => {
         const topo = document.querySelector('.topbar')!.getBoundingClientRect();
         const timer = document.querySelector('#timer-bar')!.getBoundingClientRect();
         const varH = document.getElementById('app')!.style.getPropertyValue('--topbar-h');
         return { base: Math.round(topo.bottom), topoTimer: Math.round(timer.top), altura: Math.round(topo.height), varH };
       });
-      expect(m.altura, 'em 360px a barra ainda é de duas linhas — é o caso que este teste existe pra cobrir').toBeGreaterThan(76);
-      expect(m.varH).toBe(`${m.altura}px`);
-      expect(m.topoTimer, 'a barra do timer some atrás da barra do topo').toBeGreaterThanOrEqual(m.base);
+
+      // `--topbar-h` é a altura MEDIDA: com o 76px que estava cravado no CSS, a barra
+      // do timer subia pra debaixo da do topo em qualquer tela estreita.
+      const antes = await medir();
+      expect(antes.varH).toBe(`${antes.altura}px`);
+      expect(antes.topoTimer, 'a barra do timer some atrás da barra do topo').toBeGreaterThanOrEqual(antes.base);
+
+      // E a altura não depende mais do tamanho do número: as abas têm faixa própria,
+      // então um XP de cinco dígitos não empurra mais nada pra uma linha a mais.
+      await page.evaluate(() => { document.querySelector('#top-xp')!.textContent = '12480 XP'; });
+      const depois = await medir();
+      expect(depois.altura, 'a barra mudou de altura por causa do número de XP').toBe(antes.altura);
     });
   });
 

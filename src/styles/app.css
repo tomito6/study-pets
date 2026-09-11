@@ -198,9 +198,21 @@
   /* TOPBAR — a altura vai em --topbar-h no #app: a barra do timer é sticky logo abaixo e precisa saber onde o topo acaba */
   #app{--topbar-h:76px;}
   .topbar{position:sticky;top:0;z-index:100;background:var(--bg-blur);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
-  .topbar-left h1{font-size:15px;font-weight:600;font-family:var(--font-title);}
-  .topbar-left .sub{font-size:11px;color:var(--muted);margin-top:1px;font-family:var(--font-mono);}
+  /* No celular a barra é empilhada (app/Header.tsx): a data e o estado em cima, as
+     abas numa faixa própria embaixo. Duas faixas SEMPRE — antes a altura mudava
+     conforme o número de XP crescia, porque tudo disputava uma linha só. */
+  .topbar-stacked{flex-direction:column;align-items:stretch;gap:9px;padding:11px 20px 9px;}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
+  .topbar-row .sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .topbar-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .topbar-stacked .topbar-right{flex:none;flex-wrap:nowrap;}
+  /* As abas ocupam a faixa inteira, num trilho: três alvos de 114x31 em vez de três
+     pílulas espremidas num canto, e o trilho é o que faz os três terços lerem como
+     um grupo (sem ele a ativa fica sendo um bloco verde e as outras duas, texto
+     solto). Tudo escopado no empilhado — no laptop as abas são texto centrado e não
+     podem esticar. */
+  .topbar-stacked .nav-tabs{gap:2px;margin:0;padding:3px;background:var(--track);border-radius:11px;}
+  .topbar-stacked .nav-tab{flex:1;padding:6px 0;text-align:center;border-radius:8px;}
   .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:var(--font-mono);display:flex;align-items:center;gap:6px;}
   /* O nome do nível só existe no laptop. No celular ele era o que empurrava o
      conteúdo da direita pra uma segunda linha — com o sininho até 412px, e sem ele

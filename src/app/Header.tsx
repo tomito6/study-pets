@@ -109,19 +109,25 @@ export function Header() {
     );
   }
 
+  // No celular a barra é empilhada: a data e o estado em cima, as abas numa faixa
+  // própria embaixo. Antes as abas dividiam a linha com o XP, o sininho e o Sair, e
+  // um número de XP de cinco dígitos empurrava o conteúdo da direita pra uma
+  // segunda linha — a barra mudava de altura conforme a conta crescia. Agora ela
+  // tem duas faixas sempre, em qualquer largura, e as abas ficam encostadas no
+  // conteúdo que elas trocam.
   return (
-    <div className="topbar" ref={barra}>
-      <div className="topbar-left">
-        {tabs}
+    <div className="topbar topbar-stacked" ref={barra}>
+      <div className="topbar-row">
         <div className="sub" id="today-label">{today}</div>
+        <div className="topbar-right">
+          {xp}
+          <NotificationBell />
+          <button className="icon-btn" onClick={() => void signOut()}>
+            {strings.header.sair}
+          </button>
+        </div>
       </div>
-      <div className="topbar-right">
-        {xp}
-        <NotificationBell />
-        <button className="icon-btn" onClick={() => void signOut()}>
-          {strings.header.sair}
-        </button>
-      </div>
+      {tabs}
     </div>
   );
 }

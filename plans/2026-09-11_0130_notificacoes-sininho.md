@@ -202,12 +202,27 @@ no hero do Perfil e no cartão da Análise. Medido depois da mudança (1 = uma l
 | 4 dígitos (`1240 XP`) | 2 | 2 | 2 | **1** | 1 |
 | 5 dígitos (`12480 XP`) | 2 | 2 | 2 | 2 | 1 |
 
-Ou seja: resolve o celular comum até a conta passar de mil XP. Daí em diante a barra volta a ter
-duas linhas abaixo de 430px, e **nenhum ajuste cosmético fecha isso** — medi três (selo de XP
-menor, abas mais juntas, "Sair" virando o avatar redondo do laptop) e nenhum leva o caso de 5
-dígitos a uma linha em 375px. O que fecharia é reestruturar o cabeçalho do celular (as abas numa
-faixa própria, por exemplo), que é decisão de desenho, não de CSS. Como a altura é medida, as duas
-linhas não quebram nada — só ocupam 16px a mais.
+Isso resolvia o celular comum só até a conta passar de mil XP: de lá em diante a barra voltava a
+ter duas linhas abaixo de 430px, e **nenhum ajuste cosmético fechava isso** — medi três (selo de XP
+menor, abas mais juntas, "Sair" virando o avatar redondo do laptop) e nenhum levava o caso de 5
+dígitos a uma linha em 375px.
+
+Então o Tomi pediu a saída estrutural: **as abas numa faixa própria** (`.topbar-stacked`). A barra
+do celular passou a ser duas faixas de propósito — a data e o estado (XP · sininho · Sair) em cima,
+as abas embaixo, num trilho, ocupando a largura inteira. Três ganhos, nessa ordem de importância:
+
+1. **A altura virou fixa.** 92px em qualquer largura e com qualquer número de XP (medido em 320,
+   360, 375, 393, 412 e 430, com 1, 4 e 5 dígitos). Antes ela variava de 76 a 109px conforme a
+   conta crescia — a barra do app mudava de tamanho com o uso. O e2e 50 cobra isso trocando o
+   texto do `#top-xp` por cinco dígitos e comparando a altura antes e depois.
+2. **Os alvos das abas triplicaram**: 114×31 contra 65×33 espremidos num canto.
+3. **As abas ficaram encostadas no conteúdo que elas trocam**, que é onde a mão já está.
+
+Quatro desenhos de aba foram renderizados lado a lado nos dois temas antes de escolher: pílulas
+espalhadas sem trilho (a ativa vira um bloco verde e as outras duas ficam de texto solto),
+pílulas à esquerda como eram, texto com traço como no laptop (a mais leve, 86px, mas alvo de
+43×27), e a escolhida — **segmentado com trilho**, que é o que faz os três terços lerem como um
+grupo. Em 320px a data trunca com reticências e o resto continua inteiro.
 
 ## Testes
 
