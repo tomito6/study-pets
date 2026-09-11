@@ -277,6 +277,11 @@ export const strings = {
   },
   session: {
     loadError: '⚠️ Erro ao carregar dados',
+    loadFailed: {
+      title: 'Não deu pra carregar seus dados',
+      text: 'A leitura falhou no meio do caminho. Seus dados continuam inteiros no servidor — e nada vai ser salvo por cima deles até o app conseguir ler o que já existe.',
+      reload: 'Tentar de novo',
+    },
   },
   sync: {
     updated: 'Atualizado de outro dispositivo',

@@ -81,6 +81,8 @@ export interface Derived {
   audio: AudioSettings;
   save: SaveStatus;
   authReady: boolean;
+  /** O documento não pôde ser lido neste boot. Trava a UI e, com ela, qualquer save. */
+  loadFailed: boolean;
   onboardingOpen: boolean;
   dayEnd: DayEndUi;
   /** A sequência hardcore em andamento (o foco não tem saída livre); null fora dela. */
@@ -117,6 +119,7 @@ export const derived: Derived = {
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,
+  loadFailed: false,
   onboardingOpen: false,
   dayEnd: { confirmOpen: false, promptOpen: false, promptLastEnd: '', summary: null },
   hardcore: null,

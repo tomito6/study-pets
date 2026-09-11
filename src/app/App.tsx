@@ -14,13 +14,42 @@ import { SaveIndicator } from '../features/shell/SaveIndicator';
 import { FocusOverlay } from '../features/timer/FocusOverlay';
 import { TimerBar } from '../features/timer/TimerBar';
 import { TourBalloon } from '../features/tutorial/TourBalloon';
+import { strings } from '../shared/strings';
 import { useWide } from '../shared/useWide';
 import { useAppState } from '../store/store';
 import { Header } from './Header';
 
 export function App() {
-  const { loggedIn, tab } = useAppState((s) => ({ loggedIn: !!s.user, tab: s.uiTab }));
+  const { loggedIn, tab, loadFailed } = useAppState((s, d) => ({
+    loggedIn: !!s.user,
+    tab: s.uiTab,
+    loadFailed: d.loadFailed,
+  }));
   const wide = useWide();
+
+  // A leitura do documento falhou. O app NÃO segue com a tela vazia: vazio é
+  // indistinguível de conta nova, e qualquer save a partir dali apaga o histórico
+  // de verdade (ver loadUserData). Aqui só dá pra recarregar — que é justamente
+  // tentar ler de novo.
+  if (loadFailed) {
+    const t = strings.session.loadFailed;
+    return (
+      <div id="load-failed-screen" className="error-screen" role="alert">
+        <div className="error-card">
+          <div className="error-title">{t.title}</div>
+          <p className="error-text">{t.text}</p>
+          <button
+            type="button"
+            className="error-reload"
+            id="load-failed-reload"
+            onClick={() => location.reload()}
+          >
+            {t.reload}
+          </button>
+        </div>
+      </div>
+    );
+  }
   // Escondido por classe, não por style: em tela grande o #app é um grid (CSS), e um display inline venceria.
   return (
     <>

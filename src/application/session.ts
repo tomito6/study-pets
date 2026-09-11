@@ -3,8 +3,7 @@
 
 import { AuthError, isValidEmail, isValidPassword } from '../domain/auth';
 import type { AuthErrorReason } from '../domain/auth';
-import { DEFAULT_CFG } from '../domain/config';
-import { emptyPersistedState, emptyPets, hydrateUserDoc } from '../domain/persistence';
+import { emptyPersistedState, hydrateUserDoc } from '../domain/persistence';
 import { auth, users } from '../infrastructure';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
@@ -76,9 +75,22 @@ export async function signOut(): Promise<void> {
   await auth.signOut();
 }
 
-/** Carrega o documento do usuário. Devolve `true` se é conta nova (doc não existe). */
-export async function loadUserData(uid: string, now: Date = new Date()): Promise<boolean> {
-  let isNew = false;
+/** Conta nova, documento lido, ou leitura que falhou — o boot trata os três diferente. */
+export type LoadOutcome = 'new' | 'loaded' | 'failed';
+
+/**
+ * Carrega o documento do usuário.
+ *
+ * O save é destravado AQUI, e só no caminho feliz. O motivo: `users.save` substitui
+ * o documento inteiro (setDoc sem merge), e antes desta função o `state` é o estado
+ * vazio do módulo — ou, num logout seguido de login, o que sobrou da conta anterior.
+ * Se a leitura falha e o app segue rodando, o primeiro `scheduleSave()` grava esse
+ * vazio por cima do histórico de verdade, com ack do servidor e sem desfazer. Havia
+ * até um caminho sem clique nenhum: `resumeHardcoreOnBoot` cobra a penalidade e
+ * chama `saveNow()` dentro do próprio boot.
+ */
+export async function loadUserData(uid: string, now: Date = new Date()): Promise<LoadOutcome> {
+  let outcome: LoadOutcome = 'loaded';
   try {
     const raw = await users.load(uid);
     rememberDoc(raw); // a primeira emissão do snapshot repete este doc — o sync ignora
@@ -86,16 +98,25 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
       // Qualquer formato antigo: a migração vive em src/domain/persistence.ts.
       Object.assign(state, hydrateUserDoc(raw));
     } else {
-      isNew = true;
+      outcome = 'new';
       Object.assign(state, emptyPersistedState());
     }
+    blockSaves(false); // o estado agora é o desta conta: pode escrever
   } catch (e) {
     console.error('Load failed:', e);
+    outcome = 'failed';
+    // Trava aqui também, e não só no boot: assim a garantia é da própria função —
+    // depois dela, ou o estado é o desta conta, ou ninguém escreve.
+    blockSaves(true);
+    // Estado vazio é sempre mais seguro que estado herdado: o que sobrou da conta
+    // anterior não pode viajar pro documento desta.
+    Object.assign(state, emptyPersistedState());
+    derived.loadFailed = true;
     showToast(strings.session.loadError);
   }
   rebuildWeeks(now);
   clearBlockCache();
-  return isNew;
+  return outcome;
 }
 
 /** O que acontece depois de carregar: dia visível, o que ficou no dispositivo, XP pendente. */
@@ -121,15 +142,14 @@ function resetToLoggedOut(): void {
   if (derived.timerPausedAt != null) stopTimer(); // idem a pausa aberta
   stopBlocking(); // saiu da conta: a extensão libera na hora
   state.user = null;
-  state.penalties = {};
-  state.pauses = {};
-  state.checks = {};
-  state.events = {};
-  state.closedDays = {};
-  state.config = { ...DEFAULT_CFG };
-  state.pets = emptyPets();
-  state.coinsSpent = 0;
-  state.notifications = [];
+  derived.loadFailed = false;
+  // O estado inteiro, não uma lista de campos. A lista existia e esquecia cinco:
+  // eventSeries, groups, windowOverrides, avatar e tutorialSeen ficavam com o
+  // conteúdo de quem saiu — e as séries são justamente onde moram as aulas e
+  // consultas importadas de um .ics. Num navegador compartilhado isso viajava
+  // pro documento da próxima pessoa. `emptyPersistedState` nunca esquece um campo
+  // novo, porque é a mesma função que define o que uma conta nova tem.
+  Object.assign(state, emptyPersistedState());
 }
 
 let started = false;
@@ -142,13 +162,18 @@ export function startSession(): void {
   watchExtension(); // a extensão pergunta o estado ao carregar, e confirma o que aplicou
   auth.onAuthStateChanged(async (user) => {
     if (user) {
-      blockSaves(false);
+      blockSaves(true); // travado até a leitura confirmar que o estado é o desta conta
+      derived.loadFailed = false;
       state.user = user;
       markAuthReady();
       notify();
-      const isNew = await loadUserData(user.uid);
+      const outcome = await loadUserData(user.uid);
+      if (outcome === 'failed') {
+        notify(); // a tela de falha assume a partir daqui; o boot não continua
+        return;
+      }
       initAfterLoad();
-      if (isNew) openOnboarding();
+      if (outcome === 'new') openOnboarding();
       subscribeRemote(user.uid); // depois do load: o que mudar no servidor daqui em diante entra sozinho
     } else {
       unsubscribeRemote();

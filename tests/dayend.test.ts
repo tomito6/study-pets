@@ -184,9 +184,9 @@ describe('onboarding e boot', () => {
   });
 
   it('carrega conta nova como nova, e uma existente com os dados dela', async () => {
-    expect(await loadUserData('novo')).toBe(true);
+    expect(await loadUserData('novo')).toBe('new');
     await users.save('antigo', { ...emptyPersistedState(), coinsSpent: 150, schemaVersion: 1 } as never);
-    expect(await loadUserData('antigo')).toBe(false);
+    expect(await loadUserData('antigo')).toBe('loaded');
     expect(state.coinsSpent).toBe(150);
   });
 
