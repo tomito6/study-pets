@@ -1,5 +1,6 @@
 // Entry do app: monta a árvore React e liga a sessão (auth → carregar dados → boot).
 
+import './styles/fonts.css';
 import './styles/app.css';
 import './styles/login.css';
 

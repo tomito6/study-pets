@@ -21,7 +21,9 @@ export default defineConfig({
       devOptions: { enabled: false },
       workbox: {
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,png,webmanifest}'],
+        // woff2 entra: as fontes agora são nossas (public/fonts/), e sem elas no
+        // precache o app abriria offline com a tipografia do sistema.
+        globPatterns: ['**/*.{js,css,html,png,webmanifest,woff2}'],
         runtimeCaching: [],
       },
     }),
