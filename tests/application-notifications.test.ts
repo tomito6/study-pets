@@ -10,6 +10,8 @@ import {
   unreadNotifications,
 } from '../src/application/notifications';
 import { startDayRollover, stopDayRollover } from '../src/application/dayRollover';
+import { initAfterLoad } from '../src/application/session';
+import { clearHardcoreSession, writeHardcoreSession } from '../src/infrastructure/hardcoreSession';
 import { applyPendingPetXP } from '../src/application/pets';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { cancelSession } from '../src/application/settings';
@@ -55,7 +57,7 @@ describe('encerrar o dia deixa o que aconteceu no sininho', () => {
     marcar(1);
     closeDay();
     const ids = notifications().map((n) => n.id);
-    expect(ids).toEqual(['dia:2026-09-02', 'pet-nivel:cat:2']); // a mais nova primeiro
+    expect(ids).toEqual(['dia:2026-09-02', 'pet-nivel:cat:2026-09-02:2']); // a mais nova primeiro
     expect(notifications()[0]!.data).toEqual({ dia: HOJE, xp: 50, mins: 25 });
     expect(unreadNotifications()).toBe(2);
   });
@@ -77,7 +79,7 @@ describe('encerrar o dia deixa o que aconteceu no sininho', () => {
   it('subir de nível entra por cima da linha do dia', () => {
     marcar(6); // 300 XP passa dos 250 do nível 2
     closeDay();
-    expect(notifications()[0]!.id).toBe('nivel:2');
+    expect(notifications()[0]!.id).toBe('nivel:2026-09-02:2');
     expect(notifications()[0]!.data).toMatchObject({ n: 2, nome: 'Iniciante' });
   });
 
@@ -105,7 +107,7 @@ describe('o que aconteceu com o app fechado', () => {
     applyPendingPetXP(new Date('2026-09-02T09:00:00'));
 
     expect(state.pets.owned[0]!.xp).toBe(50);
-    expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-01', 'pet-nivel:cat:2']);
+    expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-01', 'pet-nivel:cat:2026-09-01:2']);
     expect(notifications()[0]!.data).toEqual({ dia: ONTEM, xp: 50, mins: 25 });
   });
 
@@ -244,7 +246,7 @@ describe('a virada da meia-noite com o app ABERTO', () => {
     vi.advanceTimersByTime(2 * 60 * 60 * 1000 + 6000);
 
     expect(state.pets.owned[0]!.xp).toBe(50);
-    expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-02', 'pet-nivel:cat:2']);
+    expect(notifications().map((n) => n.id)).toEqual(['dia:2026-09-02', 'pet-nivel:cat:2026-09-02:2']);
     stopDayRollover();
   });
 
@@ -263,5 +265,45 @@ describe('a virada da meia-noite com o app ABERTO', () => {
     vi.setSystemTime(new Date('2026-09-03T00:00:05'));
     vi.advanceTimersByTime(3 * 60 * 60 * 1000);
     expect(notifications()).toEqual([]);
+  });
+});
+
+describe('a ordem do boot: a cobrança do abandono vem antes das linhas', () => {
+  beforeEach(() => {
+    resetAt('2026-09-02T09:00:00');
+    state.config.hardcore = { enabled: true };
+    state.pets.owned = [gato({ xp: 0 })];
+    state.pets.active = 'cat';
+    state.pets.xpProcessedUntil = '2026-08-31';
+    clearHardcoreSession('u');
+  });
+
+  it('o dia entrou na conta COM o desconto do abandono, não antes dele', () => {
+    // Ontem: quatro estudos marcados, e o app fechou no meio do quinto — em hardcore.
+    const estudos = blocksForDay(ONTEM).filter((b) => b.type === 'estudo');
+    state.checks[ONTEM] = Object.fromEntries(estudos.slice(0, 5).map((b) => [b.time, { pet: 'cat', bonus: 0 }]));
+    const abandonado = estudos[4]!;
+    writeHardcoreSession('u', {
+      dateKey: ONTEM,
+      time: abandonado.time,
+      endTime: abandonado.endTime,
+      type: 'estudo',
+      name: abandonado.name,
+      xp: abandonado.xp,
+      pet: 'cat',
+      startedAt: new Date(`${ONTEM}T${abandonado.time}:00`).getTime(),
+    });
+
+    initAfterLoad(new Date('2026-09-02T09:00:00'));
+
+    // O bloco abandonado perdeu o check e virou penalidade — e a linha do dia conta
+    // os quatro que sobraram (200 XP), não os cinco de antes da cobrança.
+    expect(state.penalties[ONTEM]).toHaveLength(1);
+    expect(state.checks[ONTEM]?.[abandonado.time]).toBeUndefined();
+    const linha = notifications().find((n) => n.kind === 'dia')!;
+    expect(linha.data.xp).toBe(200);
+    // E o abandono também deixou a sua linha.
+    expect(notifications().some((n) => n.kind === 'abandono')).toBe(true);
+    stopDayRollover();
   });
 });

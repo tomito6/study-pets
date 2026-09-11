@@ -2,42 +2,44 @@ import { describe, expect, it } from 'vitest';
 import { abandonNotice, creditedDaysNotices, hourMilestoneCrossed, isStreakMilestone, petNotices } from '../src/domain/progressNotices';
 import type { CreditContext, CreditedDay, PetProgress } from '../src/domain/progressNotices';
 
+const DIA = '2026-09-11';
+
 const pet = (over: Partial<PetProgress> = {}): PetProgress => ({ id: 'dog', name: 'Bolt', level: 3, canEvolve: false, ...over });
 
 describe('petNotices', () => {
   it('pet que subiu de nível vira uma linha, com o nível novo no id', () => {
-    const out = petNotices([pet({ level: 4 })], [pet({ level: 5 })]);
+    const out = petNotices([pet({ level: 4 })], [pet({ level: 5 })], DIA);
     expect(out).toHaveLength(1);
-    expect(out[0]!.id).toBe('pet-nivel:dog:5');
+    expect(out[0]!.id).toBe(`pet-nivel:dog:${DIA}:5`);
     expect(out[0]!.data).toEqual({ nome: 'Bolt', n: 5 });
   });
 
   it('pet parado não vira linha nenhuma', () => {
-    expect(petNotices([pet()], [pet()])).toEqual([]);
+    expect(petNotices([pet()], [pet()], DIA)).toEqual([]);
   });
 
   it('evolução destravada vira linha própria, e entra DEPOIS do nível (fica por cima na lista)', () => {
-    const out = petNotices([pet({ level: 4, canEvolve: false })], [pet({ level: 5, canEvolve: true })]);
+    const out = petNotices([pet({ level: 4, canEvolve: false })], [pet({ level: 5, canEvolve: true })], DIA);
     expect(out.map((n) => n.kind)).toEqual(['pet-nivel', 'pet-evolucao']);
   });
 
   it('evolução que já estava disponível antes não vira linha de novo', () => {
-    const out = petNotices([pet({ canEvolve: true })], [pet({ canEvolve: true })]);
+    const out = petNotices([pet({ canEvolve: true })], [pet({ canEvolve: true })], DIA);
     expect(out).toEqual([]);
   });
 
   it('pet adotado agora (não existia antes) não "subiu" de nada', () => {
-    expect(petNotices([], [pet({ level: 1 })])).toEqual([]);
+    expect(petNotices([], [pet({ level: 1 })], DIA)).toEqual([]);
   });
 
   it('pet que perdeu XP (penalidade do hardcore) não vira linha', () => {
-    expect(petNotices([pet({ level: 5 })], [pet({ level: 3 })])).toEqual([]);
+    expect(petNotices([pet({ level: 5 })], [pet({ level: 3 })], DIA)).toEqual([]);
   });
 
   it('dois pets avançam: duas linhas, uma por pet', () => {
     const antes = [pet({ id: 'dog', level: 1 }), pet({ id: 'cat', name: 'Nina', level: 1 })];
     const depois = [pet({ id: 'dog', level: 2 }), pet({ id: 'cat', name: 'Nina', level: 2 })];
-    expect(petNotices(antes, depois).map((n) => n.id)).toEqual(['pet-nivel:dog:2', 'pet-nivel:cat:2']);
+    expect(petNotices(antes, depois, DIA).map((n) => n.id)).toEqual([`pet-nivel:dog:${DIA}:2`, `pet-nivel:cat:${DIA}:2`]);
   });
 });
 
@@ -91,7 +93,7 @@ describe('creditedDaysNotices', () => {
   it('subir de nível entra por último, pra ficar por cima na lista', () => {
     // 320 XP de ganho num total de 800: antes eram 480 (nível 2), agora é o 3.
     const out = creditedDaysNotices([dia()], ctx({ totalXP: 800 }));
-    expect(out[out.length - 1]!.id).toBe('nivel:3');
+    expect(out[out.length - 1]!.id).toBe('nivel:2026-09-11:3');
     expect(out[out.length - 1]!.data).toEqual({ n: 3, nome: 'Focado' });
   });
 
@@ -103,15 +105,13 @@ describe('creditedDaysNotices', () => {
     expect(niveis[0]!.data!.n).toBe(4); // 1600 XP
   });
 
-  it('a penalidade do hardcore dentro do lote não inventa um nível que a pessoa já tinha', () => {
-    // A desistência já saiu do `totalXP` na hora em que aconteceu — mas ela não
-    // estava no "antes". Sem `penaltyInBatch`, o XP de antes sai 200 mais baixo e
-    // atravessa o degrau de 750 de mentira.
-    const d = [dia({ dia: '2026-09-11', xp: 100, coins: 0 })];
-    const semConta = creditedDaysNotices(d, ctx({ totalXP: 800, penaltyInBatch: 0 }));
-    expect(semConta.some((n) => n.kind === 'nivel')).toBe(true); // 700 -> 800 atravessa os 750
-    const comConta = creditedDaysNotices(d, ctx({ totalXP: 800, penaltyInBatch: 200 }));
-    expect(comConta.some((n) => n.kind === 'nivel')).toBe(false); // antes eram 900: já estava no nível
+  it('a penalidade do hardcore JÁ está no total de antes — não se soma de volta', () => {
+    // `computeStats` conta `penalties[key]` fora da guarda de `isPast` e desconta no
+    // fim, então uma desistência num dia do lote já estava no total que a pessoa via
+    // ontem. Subtrair só o ganho do lote é a conta certa; somar a penalidade de volta
+    // engoliria este "subiu de nível" verdadeiro.
+    const out = creditedDaysNotices([dia({ dia: '2026-09-11', xp: 100, coins: 0, mins: 50 })], ctx({ totalXP: 800 }));
+    expect(out.some((n) => n.kind === 'nivel')).toBe(true); // 700 -> 800 atravessa os 750
   });
 
   it('o recorde é uma MARCA na linha do dia, não uma linha própria', () => {

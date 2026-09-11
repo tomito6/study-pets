@@ -98,9 +98,8 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
   return isNew;
 }
 
-/** O que acontece depois de carregar: XP pendente, prompt de fim de dia, dia visível. */
+/** O que acontece depois de carregar: dia visível, o que ficou no dispositivo, XP pendente. */
 export function initAfterLoad(now: Date = new Date()): void {
-  applyPendingPetXP(now);
   setTimeout(() => scheduleEndOfDayPrompt(), 600);
   state.uiWeek = findWeek(now);
   const week = derived.weeks[state.uiWeek - 1];
@@ -108,6 +107,11 @@ export function initAfterLoad(now: Date = new Date()): void {
   notify();
   resumeHardcoreOnBoot(now); // a sessão hardcore que ficou neste dispositivo: volta pro foco, ou cobra o abandono
   resumePauseOnBoot(now); // a pausa que ficou aberta neste dispositivo: o timer volta pausado
+  // DEPOIS da penalidade do abandono, nunca antes: ela apaga o check do bloco e
+  // desconta XP do usuário e do pet. Creditando primeiro, o sininho anunciaria o
+  // ganho e o nível de um dia que a cobrança desfaz segundos depois — e os ids
+  // queimados impediriam a linha certa de aparecer pra sempre.
+  applyPendingPetXP(now);
   startDayRollover(now); // o app aberto atravessando a meia-noite: o dia entra na conta e o sininho conta
 }
 

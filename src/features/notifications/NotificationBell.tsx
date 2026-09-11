@@ -9,7 +9,7 @@
 // coisa que você não viu", não é uma caixa de tarefas pra esvaziar — e ele é da
 // cor do accent, não vermelho: aqui não chega nada urgente nem nada que cobre você.
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { markNotificationsRead, clearNotifications, notifications, unreadNotifications } from '../../application/notifications';
 import { ageOf } from '../../domain/notifications';
 import type { Notification } from '../../domain/notifications';
@@ -39,6 +39,24 @@ const DESTINO: Record<Notification['kind'], Tab | null> = {
   abandono: null,
 };
 
+/**
+ * Onde o painel começa, no celular. A `.topbar` é o teto de sempre, mas com um
+ * bloco rodando a `.timer-bar` gruda logo abaixo dela e faz parte do mesmo teto
+ * fixo — sem isto o painel cobria o relógio do estudo em andamento.
+ */
+function topoDoPainel(): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const barras = ['.timer-bar.active', '.topbar'];
+  for (const sel of barras) {
+    const el = document.querySelector(sel);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0) return `${Math.round(r.bottom) + 6}px`;
+    }
+  }
+  return undefined;
+}
+
 function Item({ n, now, onGo }: { n: Notification; now: number; onGo: (tab: Tab) => void }) {
   const t = strings.notifications;
   const head = t.text[n.kind]?.(n.data) ?? '';
@@ -56,22 +74,15 @@ function Item({ n, now, onGo }: { n: Notification; now: number; onGo: (tab: Tab)
     </>
   );
   const cls = 'notif-item' + (n.read ? '' : ' unread') + (destino ? ' clickable' : '');
-  if (!destino) return <li className={cls} data-kind={n.kind}>{conteudo}</li>;
+  // O papel de botão vai no <button> de dentro, nunca no <li>: `role="button"` num
+  // item de lista apaga o `listitem`, e o leitor de tela anuncia uma lista vazia.
   return (
-    <li
-      className={cls}
-      data-kind={n.kind}
-      role="button"
-      tabIndex={0}
-      onClick={() => onGo(destino)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onGo(destino);
-        }
-      }}
-    >
-      {conteudo}
+    <li className="notif-row" data-kind={n.kind}>
+      {destino ? (
+        <button type="button" className={cls} onClick={() => onGo(destino)}>{conteudo}</button>
+      ) : (
+        <div className={cls}>{conteudo}</div>
+      )}
     </li>
   );
 }
@@ -79,14 +90,27 @@ function Item({ n, now, onGo }: { n: Notification; now: number; onGo: (tab: Tab)
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(0);
+  const [topo, setTopo] = useState<string | undefined>(undefined);
   const { lista, naoLidas } = useAppState(() => ({ lista: notifications(), naoLidas: unreadNotifications() }));
-  // Ao fechar: o que estava na tela passa a contar como visto.
+  const botao = useRef<HTMLButtonElement>(null);
+  const painel = useRef<HTMLDivElement>(null);
+
+  // Ao fechar: o que estava na tela passa a contar como visto, e o foco volta pro
+  // sininho se ele estava dentro do painel (senão ele cairia no <body>).
   const fechar = useCallback(() => {
+    const dentro = painel.current?.contains(document.activeElement);
     setOpen(false);
     markNotificationsRead();
+    if (dentro) botao.current?.focus();
   }, []);
   const ref = useDismiss<HTMLDivElement>(open, fechar);
   const t = strings.notifications;
+
+  // Abrir move o foco pro painel: um `role="dialog"` que não recebe foco é um
+  // diálogo que o leitor de tela nunca anuncia.
+  useEffect(() => {
+    if (open) painel.current?.focus();
+  }, [open]);
 
   // Nada de mexer no store dentro do updater do useState: React roda o updater
   // durante a renderização, e um `notify()` ali é atualizar o app no meio do render.
@@ -98,6 +122,7 @@ export function NotificationBell() {
     // `now` congela na abertura: sem tick por segundo, e "há 5 min" não muda
     // debaixo do olho de quem está lendo.
     setNow(Date.now());
+    setTopo(topoDoPainel());
     setOpen(true);
   };
 
@@ -111,6 +136,7 @@ export function NotificationBell() {
       <button
         className="notif-btn"
         id="notif-btn"
+        ref={botao}
         onClick={alternar}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -121,11 +147,19 @@ export function NotificationBell() {
         {naoLidas > 0 && <span className="notif-badge" id="notif-badge">{t.badge(naoLidas)}</span>}
       </button>
       {open && (
-        <div className="notif-panel" id="notif-panel" role="dialog" aria-label={t.title}>
+        <div
+          className="notif-panel"
+          id="notif-panel"
+          role="dialog"
+          aria-label={t.title}
+          ref={painel}
+          tabIndex={-1}
+          style={topo ? ({ '--notif-top': topo } as React.CSSProperties) : undefined}
+        >
           <div className="notif-panel-head">
             <span>{t.title}</span>
             {lista.length > 0 && (
-              <button className="notif-clear" id="notif-clear" onClick={clearNotifications}>{t.clear}</button>
+              <button type="button" className="notif-clear" id="notif-clear" onClick={clearNotifications}>{t.clear}</button>
             )}
           </div>
           {lista.length === 0 ? (

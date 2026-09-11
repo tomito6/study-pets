@@ -92,15 +92,11 @@ export function applyPendingPetXP(now: Date = new Date()): void {
     .reduce((m, [, xp]) => Math.max(m, xp), 0);
   pushNotifications(
     [
-      ...petNotices(antes, petProgress()),
+      ...petNotices(antes, petProgress(), pending.processedUntil),
       ...creditedDaysNotices(dias, {
         totalXP: stats.totalXP,
         bestDayXPBefore: melhorAntes,
         studyMinsAfter: stats.studyMins,
-        penaltyInBatch: dias.reduce(
-          (n, d) => n + (state.penalties?.[d.dia] ?? []).reduce((m, p) => m + (p.xp || 0), 0),
-          0,
-        ),
       }),
     ],
     now,

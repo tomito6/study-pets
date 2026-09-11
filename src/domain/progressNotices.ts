@@ -26,18 +26,26 @@ export interface PetProgress {
  * nos dois —, e é por isso que o pet que subiu de nível enquanto o app estava
  * fechado não passa em branco.
  */
-export function petNotices(before: readonly PetProgress[], after: readonly PetProgress[]): NewNotification[] {
+export function petNotices(
+  before: readonly PetProgress[],
+  after: readonly PetProgress[],
+  /** O dia a que este crédito se refere — entra no id. */
+  dia: DateKey,
+): NewNotification[] {
   const out: NewNotification[] = [];
   for (const a of after) {
     const b = before.find((p) => p.id === a.id);
     if (!b) continue; // pet adotado agora: não "subiu" de nada
+    // O DIA entra no id: nível não é um caminho de mão única. A desistência do modo
+    // hardcore desconta XP do pet na hora e pode derrubá-lo de nível — sem o dia,
+    // `pet-nivel:dog:5` já estaria gasto e a subida de volta nunca apareceria.
     if (a.level > b.level) {
-      out.push({ id: `pet-nivel:${a.id}:${a.level}`, kind: 'pet-nivel', data: { nome: a.name, n: a.level } });
+      out.push({ id: `pet-nivel:${a.id}:${dia}:${a.level}`, kind: 'pet-nivel', data: { nome: a.name, n: a.level } });
     }
     // A evolução vem depois do nível de propósito: entra na lista por cima dele,
     // que é a ordem em que a notícia importa.
     if (a.canEvolve && !b.canEvolve) {
-      out.push({ id: `pet-evolucao:${a.id}:${a.level}`, kind: 'pet-evolucao', data: { nome: a.name, n: a.level } });
+      out.push({ id: `pet-evolucao:${a.id}:${dia}:${a.level}`, kind: 'pet-evolucao', data: { nome: a.name, n: a.level } });
     }
   }
   return out;
@@ -72,13 +80,6 @@ export interface CreditContext {
   bestDayXPBefore: number;
   /** Minutos de estudo acumulados DEPOIS de os dias entrarem (`stats.studyMins`). */
   studyMinsAfter: number;
-  /**
-   * XP que as desistências do modo hardcore tiraram NOS dias do lote. A penalidade
-   * é a única coisa que sai do total sem esperar o dia fechar, então ela já está
-   * descontada em `totalXP` — mas não estava no "antes", e sem isto o XP de antes
-   * sairia baixo demais e o app anunciaria um nível que a pessoa já tinha.
-   */
-  penaltyInBatch?: number;
   /** Quantas linhas de "dia encerrado" no máximo (as mais recentes). */
   maxDias?: number;
 }
@@ -126,7 +127,11 @@ export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditCon
 
   const xpDosDias = comGanho.reduce((n, d) => n + d.xp, 0);
   const minsDosDias = comGanho.reduce((n, d) => n + d.mins, 0);
-  const xpAntes = Math.max(0, ctx.totalXP - xpDosDias + (ctx.penaltyInBatch ?? 0));
+  // `computeStats` soma as penalidades FORA da guarda de `isPast` e desconta no
+  // fim, então uma desistência num dia do lote já estava no total que a pessoa via
+  // antes — subtrair só o ganho do lote é a conta certa. (Uma versão desta branch
+  // somava a penalidade de volta aqui e engolia um "subiu de nível" verdadeiro.)
+  const xpAntes = Math.max(0, ctx.totalXP - xpDosDias);
   let melhorDia = ctx.bestDayXPBefore;
 
   for (const d of comGanho) {
@@ -163,7 +168,10 @@ export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditCon
   const idxAntes = getLevelIdx(xpAntes);
   const idxDepois = getLevelIdx(ctx.totalXP);
   if (idxDepois > idxAntes) {
-    out.push({ id: `nivel:${idxDepois + 1}`, kind: 'nivel', data: { n: idxDepois + 1, nome: LEVELS[idxDepois]?.[1] ?? '' } });
+    // O dia entra no id pelo mesmo motivo do pet: a penalidade do hardcore pode
+    // derrubar o nível, e a subida de volta merece ser contada de novo.
+    const ultimo = comGanho[comGanho.length - 1]!.dia;
+    out.push({ id: `nivel:${ultimo}:${idxDepois + 1}`, kind: 'nivel', data: { n: idxDepois + 1, nome: LEVELS[idxDepois]?.[1] ?? '' } });
   }
 
   return out;

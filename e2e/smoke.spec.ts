@@ -862,6 +862,46 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#notif-list .notif-item')).toHaveCount(2);
   });
 
+  test('52. o sininho responde ao teclado, e o painel não cobre a barra do timer', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+
+    // Um bloco rodando: a barra do timer gruda abaixo da barra do topo, e o painel
+    // tem que começar ABAIXO dela — senão o relógio do estudo some atrás dele.
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-bar')).toHaveClass(/active/);
+    await checksDeEstudo(page).first().click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+
+    await page.locator('#notif-btn').click();
+    const geo = await page.evaluate(() => ({
+      painel: Math.round(document.querySelector('#notif-panel')!.getBoundingClientRect().top),
+      timer: Math.round(document.querySelector('#timer-bar')!.getBoundingClientRect().bottom),
+      larg: Math.round(document.querySelector('#notif-panel')!.getBoundingClientRect().width),
+    }));
+    expect(geo.painel, 'o painel cobre a barra do timer').toBeGreaterThanOrEqual(geo.timer);
+    expect(geo.larg, 'o painel não pode esticar além de 340px').toBeLessThanOrEqual(340);
+
+    // A lista é uma lista de verdade: o papel de botão vai no <button> de dentro,
+    // porque `role="button"` no <li> apaga o `listitem` do leitor de tela.
+    const estrutura = await page.evaluate(() => {
+      const li = document.querySelector('#notif-list')!.firstElementChild!;
+      return { tag: li.tagName, role: li.getAttribute('role'), filho: li.firstElementChild!.tagName };
+    });
+    expect(estrutura).toEqual({ tag: 'LI', role: null, filho: 'BUTTON' });
+
+    // Teclado: Tab entra no painel e Esc devolve o foco pro sininho (e não pro <body>).
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#notif-list .notif-item').first()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#notif-panel')).toHaveCount(0);
+    await expect(page.locator('#notif-btn')).toBeFocused();
+  });
+
   test('34. a aba Análise mostra, nas quatro sub-abas, o que o dia encerrado deixou', async ({ page }) => {
     test.slow(); // 7 checks, fechar o dia e percorrer as quatro vistas
     await abrirApp(page);
