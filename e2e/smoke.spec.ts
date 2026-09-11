@@ -17,7 +17,10 @@ async function passarOnboarding(page: Page) {
   await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
   await expect(page.locator('#starter-name')).not.toHaveValue('');
   await page.locator('#onb-next').click();
-  await page.getByRole('button', { name: 'Começar' }).click();
+  // A declaração de idade destrava o botão que cria a conta (ver "Idade mínima" no CLAUDE.md).
+  await expect(page.locator('#onb-begin')).toBeDisabled();
+  await page.locator('#onb-age').check();
+  await page.locator('#onb-begin').click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
 }
 
@@ -125,6 +128,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#starter-grid .starter-card[data-species="snake"]')).toHaveClass(/selected/);
     await page.locator('#starter-name').fill('Sibila');
     await page.locator('#onb-next').click();
+    await page.locator('#onb-age').check(); // a declaração de idade destrava o botão
     await page.getByRole('button', { name: 'Começar' }).click();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
 
@@ -1555,6 +1559,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#onb-windows .sw-row').nth(1).locator('.swc-start').fill('09:00');
     await page.locator('#onb-windows .sw-row').nth(1).locator('.swc-end').fill('11:00');
 
+    await page.locator('#onb-age').check(); // a declaração de idade destrava o botão
     await page.getByRole('button', { name: 'Começar' }).click();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
 
@@ -1637,6 +1642,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#onb-avatar-next').click();
     await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
     await page.locator('#onb-next').click();
+    await page.locator('#onb-age').check(); // a declaração de idade destrava o botão
     await page.getByRole('button', { name: 'Começar' }).click();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
 

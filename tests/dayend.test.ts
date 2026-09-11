@@ -139,11 +139,14 @@ describe('onboarding e boot', () => {
 
   it('onboarding grava as janelas e fecha; recusa janela inválida; sem pet, exige o inicial', () => {
     derived.onboardingOpen = true;
-    const base = { studyWindows: [{ start: '19:00', end: '22:00' }], skipWeekends: true };
+    const base = { studyWindows: [{ start: '19:00', end: '22:00' }], skipWeekends: true, ageConfirmed: true };
     expect(finishOnboarding({ ...base, studyWindows: [] })).toEqual({ ok: false, reason: 'empty' });
     expect(finishOnboarding({ ...base, studyWindows: [{ start: '19:00', end: '18:00' }] })).toEqual({ ok: false, reason: 'invalid-window' });
     expect(finishOnboarding({ ...base, studyWindows: [{ start: '09:00', end: '12:00' }, { start: '11:00', end: '14:00' }] })).toEqual({ ok: false, reason: 'overlap' });
     expect(finishOnboarding(base)).toEqual({ ok: false, reason: 'no-starter' });
+    // A declaração de idade é pré-requisito, e vem antes de qualquer mudança de estado.
+    expect(finishOnboarding({ ...base, ageConfirmed: false })).toEqual({ ok: false, reason: 'age-unconfirmed' });
+    expect(state.ageConfirmed, 'a recusa mexeu no estado').toBe(false);
     expect(finishOnboarding({ ...base, starter: { species: 'dragao', name: 'X' } })).toEqual({ ok: false, reason: 'unknown-species' });
     expect(finishOnboarding({ ...base, starter: { species: 'snake', name: '  ' } })).toEqual({ ok: false, reason: 'invalid-name' });
     expect(derived.onboardingOpen).toBe(true);
@@ -166,7 +169,7 @@ describe('onboarding e boot', () => {
 
   it('duas janelas no mesmo dia — quem estuda de manhã e de noite', () => {
     derived.onboardingOpen = true;
-    const r = finishOnboarding({
+    const r = finishOnboarding({ ageConfirmed: true,
       studyWindows: [{ start: '09:00', end: '12:00' }, { start: '19:00', end: '22:00' }],
       skipWeekends: false,
       starter: { species: 'dog', name: 'Bolt' },
@@ -179,7 +182,7 @@ describe('onboarding e boot', () => {
   it('quem já tem pet não passa pelo pet inicial (o starter é ignorado)', () => {
     derived.onboardingOpen = true;
     state.pets.owned = [{ id: 'cat', species: 'cat', name: 'Mia', xp: 0, path: null, stage: 0, skill: null, skillActivatedAt: 0, adoptedAt: 0 }];
-    expect(finishOnboarding({ studyWindows: [{ start: '09:00', end: '18:00' }], skipWeekends: false, starter: { species: 'dog', name: 'Bolt' } })).toEqual({ ok: true });
+    expect(finishOnboarding({ ageConfirmed: true, studyWindows: [{ start: '09:00', end: '18:00' }], skipWeekends: false, starter: { species: 'dog', name: 'Bolt' } })).toEqual({ ok: true });
     expect(state.pets.owned).toHaveLength(1);
   });
 

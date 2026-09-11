@@ -309,6 +309,8 @@ export const strings = {
     windowsPreview: (pomos: number, dur: string) => `Dá ${pomos} pomodoros · ${dur} de estudo`,
     windowsPreviewNone: 'Essa combinação não gera nenhum bloco ainda.',
     skipWeekends: 'Pular finais de semana (sáb e dom)',
+    ageConfirm: 'Tenho 16 anos ou mais',
+    ageWhy: 'É a idade mínima pra criar conta. O porquê está em:',
     begin: 'Começar',
     windowsInvalid: '⚠️ Confira as faixas: o fim tem que vir depois do início.',
     windowsOverlap: '⚠️ Duas faixas se sobrepõem.',

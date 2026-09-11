@@ -109,6 +109,8 @@ export function OnboardingModal() {
   const [name, setName] = useState('');
   const [windows, setWindows] = useState<StudyWindow[]>([]);
   const [skip, setSkip] = useState(false);
+  /** A declaração de idade do último passo. Destrava o botão que cria a conta. */
+  const [idade, setIdade] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -148,9 +150,11 @@ export function OnboardingModal() {
       skipWeekends: skip,
       starter: species ? { species: species.id, name } : null,
       avatar: starterNeeded ? avatar : null,
+      ageConfirmed: idade,
     });
     if (r.ok) return;
-    if (r.reason === 'empty') showToast(t.windowsEmpty);
+    if (r.reason === 'age-unconfirmed') showToast(t.ageConfirm);
+    else if (r.reason === 'empty') showToast(t.windowsEmpty);
     else if (r.reason === 'overlap') showToast(t.windowsOverlap);
     else if (r.reason === 'invalid-window') showToast(t.windowsInvalid);
     else {
@@ -191,11 +195,26 @@ export function OnboardingModal() {
                 <label htmlFor="onb-skip-weekends" style={{ fontSize: 13 }}>{t.skipWeekends}</label>
               </div>
             </div>
+            {/* A declaração de idade. Fica no último passo, colada no botão que cria a
+                conta, porque é aí que ela vale — e o "por quê" vem junto, com link, em vez
+                de uma caixa seca que ninguém entende. */}
+            <div className="field-group">
+              <div className="checkbox-row">
+                <input type="checkbox" id="onb-age" checked={idade} onChange={(e) => setIdade(e.target.checked)} />
+                <label htmlFor="onb-age" style={{ fontSize: 13 }}>{t.ageConfirm}</label>
+              </div>
+              <div className="onb-age-why">
+                {t.ageWhy}{' '}
+                <a href="/legal/privacidade.html" target="_blank" rel="noreferrer">{strings.login.legal.privacy}</a>
+                {' · '}
+                <a href="/legal/termos.html" target="_blank" rel="noreferrer">{strings.login.legal.terms}</a>
+              </div>
+            </div>
             {starterNeeded && (
               <button type="button" className="onb-back" onClick={() => setStep('starter')}>{t.back}</button>
             )}
             <div className="btn-row">
-              <button className="save-btn" onClick={begin} style={{ width: '100%' }}>{t.begin}</button>
+              <button className="save-btn" id="onb-begin" onClick={begin} disabled={!idade} style={{ width: '100%' }}>{t.begin}</button>
             </div>
           </>
         )}

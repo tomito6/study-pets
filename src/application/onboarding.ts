@@ -42,6 +42,8 @@ export interface OnboardingInput {
   starter?: StarterChoice | null;
   /** A aparência montada no primeiro passo. Ausente = fica a que já estava. */
   avatar?: AvatarConfig | null;
+  /** A declaração de idade mínima do último passo. Sem ela o onboarding não fecha. */
+  ageConfirmed?: boolean;
 }
 
 export type OnboardingRefusal =
@@ -50,7 +52,8 @@ export type OnboardingRefusal =
   | 'overlap'
   | 'no-starter'
   | 'unknown-species'
-  | 'invalid-name';
+  | 'invalid-name'
+  | 'age-unconfirmed';
 export type OnboardingResult = { ok: true } | { ok: false; reason: OnboardingRefusal };
 
 /**
@@ -62,6 +65,11 @@ export type OnboardingResult = { ok: true } | { ok: false; reason: OnboardingRef
 export function finishOnboarding(input: OnboardingInput, now: Date = new Date()): OnboardingResult {
   const janelas = validateDayWindows(input.studyWindows ?? []);
   if (!janelas.ok) return { ok: false, reason: janelas.reason };
+
+  // A política de privacidade e os termos dizem "16 anos ou mais". Dizer sem nunca
+  // perguntar seria meia regra — e é justamente a declaração que o art. 8 do GDPR
+  // espera de um serviço deste porte, não uma verificação documental.
+  if (!input.ageConfirmed && !state.ageConfirmed) return { ok: false, reason: 'age-unconfirmed' };
 
   const starter = needsStarter() ? input.starter ?? null : null;
   if (needsStarter()) {
@@ -78,6 +86,7 @@ export function finishOnboarding(input: OnboardingInput, now: Date = new Date())
     if (!state.eventSeries.some((s) => s.id === LUNCH_SERIES_ID)) state.eventSeries.push(mealSeries('13:00', 60));
   }
   if (input.avatar) state.avatar = normalizeAvatar(input.avatar);
+  if (input.ageConfirmed) state.ageConfirmed = true;
   const studyWindows = input.studyWindows.map((w) => ({ start: w.start, end: w.end }));
   state.config = {
     ...state.config,

@@ -404,6 +404,11 @@
   .st-legal-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:4px 0;}
   .st-legal-link{flex:none;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);white-space:nowrap;}
   .st-legal-link:hover{border-color:var(--accent);}
+
+  /* O porquê da caixa de idade, logo abaixo dela: caixa obrigatória sem explicação é
+     atrito; com uma linha e dois links, é informação. */
+  .onb-age-why{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:6px;padding-left:26px;}
+  .onb-age-why a{color:var(--accent);}
   .ghost-btn{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px;font-size:13px;cursor:pointer;font-family:var(--font-ui);}
   .ghost-btn:hover{border-color:var(--accent);color:var(--accent);}
   .empty-day{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border);}

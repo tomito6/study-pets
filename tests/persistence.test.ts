@@ -342,4 +342,18 @@ describe('ida e volta', () => {
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
   });
+
+  it('documento sem a declaração de idade abre como "nunca foi perguntado"', () => {
+    // Campo novo (2026-09-11). Conta que já existia nunca viu a pergunta, e `false` é
+    // literalmente isso — não é uma afirmação sobre a idade de ninguém.
+    const antigo = hydrateUserDoc({ schemaVersion: 4, checks: {} });
+    expect(antigo.ageConfirmed).toBe(false);
+    expect(hydrateUserDoc({ ageConfirmed: true }).ageConfirmed).toBe(true);
+    // Só o booleano true conta: string, número ou objeto não viram declaração.
+    for (const lixo of ['true', 1, {}, null]) {
+      expect(hydrateUserDoc({ ageConfirmed: lixo }).ageConfirmed, `${JSON.stringify(lixo)} virou declaração`).toBe(false);
+    }
+    // E o que sai no save é o mesmo booleano, nunca uma idade.
+    expect(serializeState({ ...emptyPersistedState(), ageConfirmed: true }).ageConfirmed).toBe(true);
+  });
 });

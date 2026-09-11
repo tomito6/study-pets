@@ -70,6 +70,13 @@ export interface PersistedState {
   windowOverrides: WindowOverrides;
   /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
   tutorialSeen: TutorialSeen;
+  /**
+   * A pessoa declarou ter a idade mínima ao criar a conta. Guarda só o `true`, nunca a
+   * idade nem a data de nascimento — é o registro de que a pergunta foi feita e respondida,
+   * que é o que o art. 8 do GDPR (16 anos, na escolha alemã) pede de um serviço deste porte.
+   * `false` num documento antigo quer dizer "nunca foi perguntado", e é a verdade.
+   */
+  ageConfirmed: boolean;
   /** Desistências no modo hardcore, por dia (ver domain/hardcore.ts). */
   penalties: PenaltiesByDate;
   /** Pausas do timer por dia: o bloco que contém cada uma fica mais longo e o resto do dia desliza (ver domain/pauses.ts). */
@@ -132,6 +139,7 @@ export function emptyPersistedState(): PersistedState {
     groups: {},
     windowOverrides: {},
     tutorialSeen: {},
+    ageConfirmed: false,
     penalties: {},
     pauses: {},
     notifications: [],
@@ -271,6 +279,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
+    // Documento anterior à pergunta: false, que é literalmente "não declarou".
+    ageConfirmed: d.ageConfirmed === true,
     avatar: normalizeAvatar(d.avatar),
     penalties: normalizePenalties(d.penalties),
     // Doc de antes de pausar existir: sem pausa nenhuma.
@@ -301,6 +311,7 @@ export function serializeState(s: PersistedState): UserDoc {
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
     tutorialSeen: s.tutorialSeen || {},
+    ageConfirmed: s.ageConfirmed === true,
     avatar: normalizeAvatar(s.avatar),
     penalties: s.penalties || {},
     pauses: s.pauses || {},
