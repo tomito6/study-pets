@@ -1064,6 +1064,11 @@
   .error-detail{font-family:var(--font-mono);font-size:11px;color:var(--orange);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;margin-bottom:16px;}
   .error-reload{width:100%;padding:12px 16px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:var(--on-accent);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-ui);}
   .error-reload:hover{filter:var(--lift-hover);}
+  /* A saída secundária da tela de falha de carregamento: discreta, porque recarregar
+     é a ação certa na maioria das vezes — mas quem cai numa falha permanente precisa
+     conseguir sair, e o botão Sair mora no cabeçalho, que essa tela substituiu. */
+  .error-leave{width:100%;margin-top:8px;padding:10px 16px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;font-family:var(--font-ui);}
+  .error-leave:hover{border-color:var(--border-strong);color:var(--text);}
 
   /* JANELAS DO DIA — botão na barra do dia e o modal #day-windows-panel (features/plan/DayWindowsPanel.tsx). */
   .day-events-bar{flex-wrap:wrap;}

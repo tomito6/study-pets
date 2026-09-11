@@ -75,8 +75,22 @@ export async function signOut(): Promise<void> {
   await auth.signOut();
 }
 
-/** Conta nova, documento lido, ou leitura que falhou — o boot trata os três diferente. */
-export type LoadOutcome = 'new' | 'loaded' | 'failed';
+/**
+ * Conta nova, documento lido, leitura que falhou — ou 'stale': a resposta chegou
+ * depois de a sessão já ser de outra pessoa (ou de outra tentativa), e não manda
+ * em nada.
+ */
+export type LoadOutcome = 'new' | 'loaded' | 'failed' | 'stale';
+
+/**
+ * Cada disparo do auth abre uma geração. `users.load` é um await sobre a rede, e
+ * nesse intervalo o app inteiro já está na tela com o botão Sair: dá tempo de sair,
+ * entrar com outra conta, e o load antigo voltar depois. Sem esta marca, a resposta
+ * atrasada da conta A caía por cima da sessão da conta B — e como o save substitui
+ * o documento inteiro, o primeiro check de B gravava o histórico de A no documento
+ * de B. Quem chega atrasado sai de fininho.
+ */
+let geracao = 0;
 
 /**
  * Carrega o documento do usuário.
@@ -90,9 +104,13 @@ export type LoadOutcome = 'new' | 'loaded' | 'failed';
  * chama `saveNow()` dentro do próprio boot.
  */
 export async function loadUserData(uid: string, now: Date = new Date()): Promise<LoadOutcome> {
+  const minha = ++geracao;
+  /** Esta resposta ainda é a da sessão que está na tela? */
+  const atual = () => minha === geracao && state.user?.uid === uid;
   let outcome: LoadOutcome = 'loaded';
   try {
     const raw = await users.load(uid);
+    if (!atual()) return 'stale';
     rememberDoc(raw); // a primeira emissão do snapshot repete este doc — o sync ignora
     if (raw) {
       // Qualquer formato antigo: a migração vive em src/domain/persistence.ts.
@@ -101,8 +119,10 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
       outcome = 'new';
       Object.assign(state, emptyPersistedState());
     }
+    derived.loadFailed = false;
     blockSaves(false); // o estado agora é o desta conta: pode escrever
   } catch (e) {
+    if (!atual()) return 'stale'; // a falha é de uma sessão que já não existe
     console.error('Load failed:', e);
     outcome = 'failed';
     // Trava aqui também, e não só no boot: assim a garantia é da própria função —
@@ -143,6 +163,7 @@ function resetToLoggedOut(): void {
   stopBlocking(); // saiu da conta: a extensão libera na hora
   state.user = null;
   derived.loadFailed = false;
+  derived.booting = false;
   // O estado inteiro, não uma lista de campos. A lista existia e esquecia cinco:
   // eventSeries, groups, windowOverrides, avatar e tutorialSeen ficavam com o
   // conteúdo de quem saiu — e as séries são justamente onde moram as aulas e
@@ -164,10 +185,13 @@ export function startSession(): void {
     if (user) {
       blockSaves(true); // travado até a leitura confirmar que o estado é o desta conta
       derived.loadFailed = false;
+      derived.booting = true; // o app não fica clicável antes de o documento chegar
       state.user = user;
       markAuthReady();
       notify();
       const outcome = await loadUserData(user.uid);
+      if (outcome === 'stale') return; // outra geração assumiu enquanto esta carregava
+      derived.booting = false;
       if (outcome === 'failed') {
         notify(); // a tela de falha assume a partir daqui; o boot não continua
         return;

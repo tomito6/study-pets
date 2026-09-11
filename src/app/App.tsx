@@ -14,16 +14,18 @@ import { SaveIndicator } from '../features/shell/SaveIndicator';
 import { FocusOverlay } from '../features/timer/FocusOverlay';
 import { TimerBar } from '../features/timer/TimerBar';
 import { TourBalloon } from '../features/tutorial/TourBalloon';
+import { signOut } from '../application/session';
 import { strings } from '../shared/strings';
 import { useWide } from '../shared/useWide';
 import { useAppState } from '../store/store';
 import { Header } from './Header';
 
 export function App() {
-  const { loggedIn, tab, loadFailed } = useAppState((s, d) => ({
+  const { loggedIn, tab, loadFailed, booting } = useAppState((s, d) => ({
     loggedIn: !!s.user,
     tab: s.uiTab,
     loadFailed: d.loadFailed,
+    booting: d.booting,
   }));
   const wide = useWide();
 
@@ -46,6 +48,27 @@ export function App() {
           >
             {t.reload}
           </button>
+          {/* A saída: sem isto, quem cai numa falha permanente (uma regra do Firestore
+              negando, por exemplo) fica preso recarregando, porque o botão Sair mora
+              no cabeçalho, que esta tela substituiu. */}
+          <button type="button" className="error-leave" id="load-failed-leave" onClick={() => void signOut()}>
+            {t.leave}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Logado, documento a caminho. Antes o #app aparecia aqui, gerado a partir da
+  // config padrão e totalmente clicável: marcar um estudo nesse intervalo dava som,
+  // XP flutuante e ripple, e o check era jogado fora sem uma palavra assim que o
+  // documento chegava (o save está travado até lá, de propósito).
+  if (loggedIn && booting) {
+    return (
+      <div id="boot-screen" className="error-screen" role="status" aria-live="polite">
+        <div className="error-card">
+          <div className="error-title">{strings.session.booting.title}</div>
+          <p className="error-text">{strings.session.booting.text}</p>
         </div>
       </div>
     );

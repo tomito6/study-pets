@@ -72,6 +72,8 @@ describe('loadUserData quando a leitura falha', () => {
       coinsSpent: 999,
     });
 
+    // É o que o boot faz: state.user já é quem está entrando quando o load começa.
+    state.user = { uid: 'pessoa-b', displayName: null, email: null };
     vi.spyOn(users, 'load').mockRejectedValueOnce(new Error('offline'));
     await loadUserData('pessoa-b', AGORA);
 
@@ -82,9 +84,61 @@ describe('loadUserData quando a leitura falha', () => {
   });
 });
 
+describe('o load que volta atrasado', () => {
+  // O await de users.load é uma janela de rede, e nela o app já está na tela com o
+  // botão Sair. Dá tempo de sair, entrar com outra conta, e a resposta antiga voltar
+  // depois. Como o save substitui o documento inteiro, sem esta guarda o primeiro
+  // check da segunda pessoa gravava o histórico da primeira no documento dela.
+  it('não escreve no estado quando a sessão já é de outra pessoa', async () => {
+    let entregarA: (doc: unknown) => void = () => {};
+    vi.spyOn(users, 'load').mockImplementationOnce(
+      () => new Promise((resolve) => { entregarA = resolve; }),
+    );
+    const carregandoA = loadUserData('pessoa-a', AGORA);
+
+    // A pessoa B assume a sessão enquanto o load de A está pendurado.
+    await users.save('pessoa-b', { ...docDeVerdade, coinsSpent: 42 } as never);
+    state.user = { uid: 'pessoa-b', displayName: null, email: null };
+    expect(await loadUserData('pessoa-b', AGORA)).toBe('loaded');
+    expect(state.coinsSpent).toBe(42);
+
+    // Só agora a resposta de A chega.
+    entregarA({ ...docDeVerdade, coinsSpent: 150 });
+    expect(await carregandoA).toBe('stale');
+    expect(state.coinsSpent, 'o documento de A entrou na sessão de B').toBe(42);
+
+    // E o save de B continua livre — o load de A não podia travá-lo.
+    const escrever = vi.spyOn(users, 'save');
+    await saveNow();
+    expect(escrever).toHaveBeenCalledWith('pessoa-b', expect.objectContaining({ coinsSpent: 42 }));
+  });
+
+  it('uma falha atrasada não derruba a sessão de quem carregou direito', async () => {
+    let derrubarA: (e: unknown) => void = () => {};
+    vi.spyOn(users, 'load').mockImplementationOnce(
+      () => new Promise((_, reject) => { derrubarA = reject; }),
+    );
+    const carregandoA = loadUserData('pessoa-a', AGORA);
+
+    await users.save('pessoa-b', { ...docDeVerdade, coinsSpent: 42 } as never);
+    state.user = { uid: 'pessoa-b', displayName: null, email: null };
+    await loadUserData('pessoa-b', AGORA);
+
+    derrubarA(new Error('offline'));
+    expect(await carregandoA).toBe('stale');
+    expect(derived.loadFailed, 'a falha de A jogou B na tela de erro').toBe(false);
+    expect(state.coinsSpent).toBe(42);
+
+    const escrever = vi.spyOn(users, 'save');
+    await saveNow();
+    expect(escrever, 'a falha de A travou o save de B').toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('loadUserData no caminho feliz', () => {
   it('destrava o save — conta nova e conta existente', async () => {
     blockSaves(true);
+    state.user = { uid: 'conta-nova', displayName: null, email: null };
     expect(await loadUserData('conta-nova', AGORA)).toBe('new');
     const escrever = vi.spyOn(users, 'save');
     await saveNow();
@@ -92,6 +146,7 @@ describe('loadUserData no caminho feliz', () => {
 
     await users.save('tomi', docDeVerdade as never);
     blockSaves(true);
+    state.user = { uid: 'tomi', displayName: null, email: null };
     expect(await loadUserData('tomi', AGORA)).toBe('loaded');
     expect(state.coinsSpent).toBe(150);
     expect(derived.loadFailed).toBe(false);

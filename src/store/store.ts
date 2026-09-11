@@ -83,6 +83,8 @@ export interface Derived {
   authReady: boolean;
   /** O documento não pôde ser lido neste boot. Trava a UI e, com ela, qualquer save. */
   loadFailed: boolean;
+  /** Logado, documento a caminho. O app não é operável até ele chegar. */
+  booting: boolean;
   onboardingOpen: boolean;
   dayEnd: DayEndUi;
   /** A sequência hardcore em andamento (o foco não tem saída livre); null fora dela. */
@@ -120,6 +122,7 @@ export const derived: Derived = {
   save: { text: '', visible: false },
   authReady: false,
   loadFailed: false,
+  booting: false,
   onboardingOpen: false,
   dayEnd: { confirmOpen: false, promptOpen: false, promptLastEnd: '', summary: null },
   hardcore: null,

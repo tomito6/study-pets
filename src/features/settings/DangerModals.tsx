@@ -12,6 +12,7 @@ import { Modal } from '../shell/Modal';
 
 const tc = strings.settings.cancel;
 const td = strings.settings.deleteAccount;
+const td2 = strings.settings.data;
 
 interface CancelProps {
   open: boolean;
@@ -52,8 +53,12 @@ export function CancelSessionModal({ open, onClose, onDone }: CancelProps) {
  * usuário é ele ter lembrado de baixar antes de abrir a Zona de perigo.
  */
 function ExportFirst({ id }: { id: string }) {
+  // O mesmo retorno que o "Baixar (JSON)" das Configurações já usa: um botão de
+  // backup que não confirma o backup é pior que nenhum, porque dá a sensação de
+  // cuidado tomado logo antes do botão que não tem volta.
+  const baixar = () => showToast(exportMyData() ? td2.done : td2.failed);
   return (
-    <button type="button" className="reset-btn danger-export" id={id} onClick={() => exportMyData()}>
+    <button type="button" className="reset-btn danger-export" id={id} onClick={baixar}>
       {tc.exportFirst}
     </button>
   );

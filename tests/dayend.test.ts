@@ -184,8 +184,12 @@ describe('onboarding e boot', () => {
   });
 
   it('carrega conta nova como nova, e uma existente com os dados dela', async () => {
+    // O boot já preencheu state.user quando chama loadUserData — um load cujo uid
+    // não bate com o da sessão é resposta atrasada, e agora é descartado.
+    state.user = { uid: 'novo', displayName: null, email: null };
     expect(await loadUserData('novo')).toBe('new');
     await users.save('antigo', { ...emptyPersistedState(), coinsSpent: 150, schemaVersion: 1 } as never);
+    state.user = { uid: 'antigo', displayName: null, email: null };
     expect(await loadUserData('antigo')).toBe('loaded');
     expect(state.coinsSpent).toBe(150);
   });

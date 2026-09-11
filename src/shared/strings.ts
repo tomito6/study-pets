@@ -279,8 +279,15 @@ export const strings = {
     loadError: '⚠️ Erro ao carregar dados',
     loadFailed: {
       title: 'Não deu pra carregar seus dados',
-      text: 'A leitura falhou no meio do caminho. Seus dados continuam inteiros no servidor — e nada vai ser salvo por cima deles até o app conseguir ler o que já existe.',
+      // Não afirma que existe histórico guardado: quem acabou de criar a conta e abre
+      // sem rede cai aqui também, e ainda não tem documento nenhum no servidor.
+      text: 'A leitura falhou no meio do caminho — provavelmente a conexão. Nada vai ser salvo enquanto o app não conseguir ler o que já existe, então o que estiver no servidor continua intacto.',
       reload: 'Tentar de novo',
+      leave: 'Sair da conta',
+    },
+    booting: {
+      title: 'Carregando seus dados…',
+      text: 'Buscando seu plano, seus pets e seu histórico.',
     },
   },
   sync: {
@@ -542,8 +549,8 @@ export const strings = {
       desc: 'O intervalo em que você quer ganhar XP e acompanhar seu progresso.',
       start: 'Início',
       end: 'Fim',
-      startFixed: 'O início da sessão é fixo. Use Cancelar sessão pra recomeçar.',
-      hint: 'O início é fixo — só muda cancelando a sessão.',
+      startFixed: 'O início é fixo. Use "Apagar todo o histórico" pra recomeçar.',
+      hint: 'O início é fixo — só muda apagando todo o histórico.',
       clearEnd: 'Usar sem data de fim',
       skipWeekends: 'Pular finais de semana',
       skipWeekendsSub: 'Sábado e domingo ficam livres, sem blocos e sem cobrança de meta. Num fim de semana específico dá pra abrir uma janela em 🕘 Janelas do dia.',
@@ -570,7 +577,7 @@ export const strings = {
       hair: 'Cor do cabelo',
       style: 'Cabelo',
       body: 'Corpo',
-      hint: 'Cancelar sessão não mexe nisto — o personagem é seu, não do plano.',
+      hint: 'Apagar o histórico não mexe nisto — o personagem é seu, não do plano.',
     },
     tema: {
       title: 'Aparência do app',
@@ -630,7 +637,7 @@ export const strings = {
       introRest: ', não só a sessão:',
       items: ['Todo o histórico de checks, XP e moedas', 'Eventos e séries recorrentes (refeições incluídas)', 'Pets adotados e skills', 'Seu acesso — você será desconectado'],
       outro: 'Nada disso pode ser recuperado. Se você só quer recomeçar do zero mantendo a conta, use ',
-      outroStrong: 'Cancelar sessão',
+      outroStrong: 'Apagar todo o histórico',
       typeToConfirm: ['Digite ', 'APAGAR', ' pra confirmar'],
       keyword: 'APAGAR',
       passwordLabel: 'Confirme sua senha pra apagar a conta',
