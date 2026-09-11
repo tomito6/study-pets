@@ -97,6 +97,10 @@ export function applyPendingPetXP(now: Date = new Date()): void {
         bestDayXPBefore: melhorAntes,
         balanceAfter: coinBalanceOf(stats.coins, state.coinsSpent),
         cheapestPet: cheapestPetPrice(),
+        penaltyInBatch: dias.reduce(
+          (n, d) => n + (state.penalties?.[d.dia] ?? []).reduce((m, p) => m + (p.xp || 0), 0),
+          0,
+        ),
       }),
     ],
     now,

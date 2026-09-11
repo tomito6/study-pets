@@ -79,6 +79,12 @@ Três detalhes que não são acidente:
 - **Voltar de muitos dias fora não enche o painel.** No máximo três linhas de "dia encerrado"
   (`MAX_DIAS_NO_LOTE`), as mais recentes — mas os marcos do período inteiro entram, e dois níveis
   num lote só viram **uma** linha, do nível efetivamente alcançado.
+- **A penalidade do hardcore precisa entrar na conta do "antes"** (`penaltyInBatch`). Ela é a
+  única coisa que sai do total sem esperar o dia fechar, então já está descontada no `totalXP` —
+  mas não estava no XP de antes. Sem isso, uma desistência dentro do lote faz o "antes" sair
+  baixo demais e o app anuncia um nível que a pessoa já tinha. `tests/stats.test.ts` cobra a
+  invariante que sustenta tudo isto: **a soma do `dayXP` menos as penalidades é exatamente o
+  `totalXP`**, e a soma do `dayCoins` é exatamente `coins` — senão a linha "+390 XP" mente.
 
 ### As que ficaram de fora
 

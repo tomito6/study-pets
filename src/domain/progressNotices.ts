@@ -70,6 +70,13 @@ export interface CreditContext {
   bestDayXPBefore: number;
   /** Saldo de moedas DEPOIS de os dias entrarem. */
   balanceAfter: number;
+  /**
+   * XP que as desistências do modo hardcore tiraram NOS dias do lote. A penalidade
+   * é a única coisa que sai do total sem esperar o dia fechar, então ela já está
+   * descontada em `totalXP` — mas não estava no "antes", e sem isto o XP de antes
+   * sairia baixo demais e o app anunciaria um nível que a pessoa já tinha.
+   */
+  penaltyInBatch?: number;
   /** Preço do pet mais barato da loja. */
   cheapestPet: number;
   /** Quantas linhas de "dia encerrado" no máximo (as mais recentes). */
@@ -102,7 +109,7 @@ export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditCon
 
   const xpDosDias = comGanho.reduce((n, d) => n + d.xp, 0);
   const moedasDosDias = comGanho.reduce((n, d) => n + d.coins, 0);
-  const xpAntes = Math.max(0, ctx.totalXP - xpDosDias);
+  const xpAntes = Math.max(0, ctx.totalXP - xpDosDias + (ctx.penaltyInBatch ?? 0));
   let saldo = Math.max(0, ctx.balanceAfter - moedasDosDias);
   let melhorDia = ctx.bestDayXPBefore;
 

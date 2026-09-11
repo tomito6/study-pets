@@ -104,6 +104,17 @@ describe('creditedDaysNotices', () => {
     expect(niveis[0]!.data!.n).toBe(4); // 1600 XP
   });
 
+  it('a penalidade do hardcore dentro do lote não inventa um nível que a pessoa já tinha', () => {
+    // A desistência já saiu do `totalXP` na hora em que aconteceu — mas ela não
+    // estava no "antes". Sem `penaltyInBatch`, o XP de antes sai 200 mais baixo e
+    // atravessa o degrau de 750 de mentira.
+    const d = [dia({ dia: '2026-09-11', xp: 100, coins: 0 })];
+    const semConta = creditedDaysNotices(d, ctx({ totalXP: 800, penaltyInBatch: 0 }));
+    expect(semConta.some((n) => n.kind === 'nivel')).toBe(true); // 700 -> 800 atravessa os 750
+    const comConta = creditedDaysNotices(d, ctx({ totalXP: 800, penaltyInBatch: 200 }));
+    expect(comConta.some((n) => n.kind === 'nivel')).toBe(false); // antes eram 900: já estava no nível
+  });
+
   it('recorde só quando bate um dia anterior de verdade', () => {
     expect(creditedDaysNotices([dia({ xp: 520 })], ctx({ bestDayXPBefore: 400 })).some((n) => n.kind === 'recorde-dia')).toBe(true);
     expect(creditedDaysNotices([dia()], ctx({ bestDayXPBefore: 0 })).some((n) => n.kind === 'recorde-dia')).toBe(false);

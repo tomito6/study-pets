@@ -301,3 +301,51 @@ describe('calcStreaks', () => {
     expect(calcStreaks(mins, dias, HOJE, 30).cur).toBe(3);
   });
 });
+
+describe('dayXP / dayCoins — o recorte por dia tem que fechar com os totais', () => {
+  // É disto que sai a linha "Dia encerrado · +390 XP · +200 🪙" do sininho. Se a
+  // soma não bater com o total, a notificação mente sobre o que entrou na conta.
+  const soma = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
+
+  it('a soma do dayXP é o XP que entrou nos totais, e a do dayCoins são as moedas', () => {
+    const checks: ChecksByDate = {
+      [ANTEONTEM]: { '09:00': true, '09:35': true },
+      [ONTEM]: { '09:00': true },
+      [HOJE]: { '09:00': true }, // hoje aberto: não entra em nada
+    };
+    const s = computeStats(entrada({ days: [dia(ANTEONTEM), dia(ONTEM), dia(HOJE)], checks }));
+    expect(soma(s.dayXP)).toBe(s.totalXP);
+    expect(soma(s.dayCoins)).toBe(s.coins);
+    expect(s.dayXP[HOJE]).toBe(0); // dia aberto não colocou nada na conta
+    expect(s.dayCoins[HOJE]).toBe(0);
+  });
+
+  it('o dia encerrado à mão entra nos dois', () => {
+    const checks: ChecksByDate = { [HOJE]: { '09:00': true } };
+    const s = computeStats(entrada({ checks, dayClosed: (k) => k === HOJE }));
+    expect(s.dayXP[HOJE]).toBe(60); // estudo de 30 min
+    expect(s.dayCoins[HOJE]).toBe(30);
+    expect(soma(s.dayXP)).toBe(s.totalXP);
+    expect(soma(s.dayCoins)).toBe(s.coins);
+  });
+
+  it('o bônus de moedas da sequência entra no dia em que foi ganho', () => {
+    // Dois dias seguidos batendo a meta de 60 min (dois estudos de 30).
+    const cheio: Record<string, true> = { '09:00': true, '09:35': true };
+    const s = computeStats(entrada({ days: [dia(ANTEONTEM), dia(ONTEM)], checks: { [ANTEONTEM]: cheio, [ONTEM]: cheio }, todayKey: HOJE }));
+    expect(soma(s.dayCoins)).toBe(s.coins);
+    // 60 moedas de bloco + 5 do bônus do 1º dia; 60 + 8 do 2º (faixa de 3 dias começa no 3º)
+    expect(s.dayCoins[ANTEONTEM]).toBe(65);
+    expect(s.dayCoins[ONTEM]).toBe(65);
+  });
+
+  it('com penalidade do hardcore, a soma do dayXP é o total ANTES do desconto', () => {
+    const checks: ChecksByDate = { [ONTEM]: { '09:00': true } };
+    const s = computeStats(entrada({
+      checks,
+      penalties: { [ONTEM]: [{ time: '10:00', endTime: '10:30', name: 'Estudo', xp: 20, pet: null, petXp: 0, at: 0, reason: 'quit' }] },
+    }));
+    expect(s.penaltyXP).toBe(20);
+    expect(soma(s.dayXP) - s.penaltyXP).toBe(s.totalXP);
+  });
+});
