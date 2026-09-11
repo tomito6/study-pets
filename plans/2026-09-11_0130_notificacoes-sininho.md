@@ -189,11 +189,25 @@ Com uma conta antiga ("12480 XP · Mestre") são 109px, e some 33px. Ninguém ti
 e2e roda em 480px.
 
 Agora a altura é **medida** (`app/useTopbarHeight.ts`, `ResizeObserver`), o que fecha o caso em
-qualquer largura. O sininho estende a quebra até 412px — o mesmo desenho que 360px já tinha. Se
-o Tomi quiser uma linha só nessas larguras, há duas saídas limpas, nenhuma delas minha decisão:
-esconder o nome do nível ("Zero", "Mestre") no selo de XP abaixo de 420px, ou trocar o botão
-"Sair" do celular pelo mesmo menu de avatar do laptop. `flex-wrap:nowrap` foi testado e
-**descartado**: em 360px o selo de XP quebra por dentro ("0 / XP") e o "Sair" sai da tela.
+qualquer largura. `flex-wrap:nowrap` foi testado e **descartado**: em 360px o selo de XP quebra
+por dentro ("0 / XP") e o "Sair" sai da tela.
+
+E o **nome do nível saiu do selo de XP no celular** (a pedido do Tomi): ele só existe a partir de
+1100px. Era ele o que empurrava o conteúdo da direita, e no celular era enfeite — o nível continua
+no hero do Perfil e no cartão da Análise. Medido depois da mudança (1 = uma linha):
+
+| XP na barra | 360px | 375px | 393px | 412px | 430px |
+|---|---|---|---|---|---|
+| conta nova (`0 XP`) | 2 | 2 | **1** | **1** | 1 |
+| 4 dígitos (`1240 XP`) | 2 | 2 | 2 | **1** | 1 |
+| 5 dígitos (`12480 XP`) | 2 | 2 | 2 | 2 | 1 |
+
+Ou seja: resolve o celular comum até a conta passar de mil XP. Daí em diante a barra volta a ter
+duas linhas abaixo de 430px, e **nenhum ajuste cosmético fecha isso** — medi três (selo de XP
+menor, abas mais juntas, "Sair" virando o avatar redondo do laptop) e nenhum leva o caso de 5
+dígitos a uma linha em 375px. O que fecharia é reestruturar o cabeçalho do celular (as abas numa
+faixa própria, por exemplo), que é decisão de desenho, não de CSS. Como a altura é medida, as duas
+linhas não quebram nada — só ocupam 16px a mais.
 
 ## Testes
 
