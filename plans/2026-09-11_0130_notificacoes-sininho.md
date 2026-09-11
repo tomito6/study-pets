@@ -205,7 +205,9 @@ esconder o nome do nível ("Zero", "Mestre") no selo de XP abaixo de 420px, ou t
 - `tests/progress-notices.test.ts` (30) — as regras: quem vira linha e quem não vira, o recorde
   como marca, os degraus de hora (inclusive cruzar dois de uma vez), e que o id não depende do
   relógio.
-- `tests/application-notifications.test.ts` (21) — o app de verdade: encerrar o dia, encerrar
+- `tests/application-notifications.test.ts` (21) — o app de verdade: a ordem do boot
+  (o teste reprova a ordem antiga com 250 contra 200, e cobra que o documento gravado
+  pelo `saveNow()` da penalidade já tenha a linha do abandono), encerrar o dia, encerrar
   duas vezes, pet que sobe de nível com o app fechado, **a virada da meia-noite com o app aberto**,
   voltar de uma semana fora, três dias seguidos virando marco, o cruzamento das moedas acontecendo
   uma vez só, cancelar sessão zerando.
@@ -219,6 +221,57 @@ esconder o nome do nível ("Zero", "Mestre") no selo de XP abaixo de 420px, ou t
 - e2e **51** — o caso principal de ponta a ponta: marcar um estudo, **não** encerrar o dia, virar
   o relógio pro dia seguinte, recarregar — e achar "Dia encerrado · +50 XP" no sininho; e o boot
   seguinte não recriando as mesmas linhas.
+- e2e **52** — o teclado (Tab entra, Esc devolve o foco pro sininho), a estrutura da lista
+  (`<li>` sem papel, `<button>` dentro) e as duas geometrias: o painel abaixo da barra do timer, e
+  o teto de 340px.
+
+## A ordem do boot, que era o bug de verdade
+
+`initAfterLoad` creditava o XP pendente — e emitia as linhas — **antes** de
+`resumeHardcoreOnBoot` cobrar o abandono. E a cobrança apaga o check do bloco
+(`applyPenalty` faz `delete checks[time]`) e desconta XP do usuário e do pet. Quem
+fechou o app no meio de um estudo hardcore via, no boot seguinte, "Dia encerrado ·
++250 XP" e às vezes um "você chegou no nível N" — números que a cobrança desfazia
+segundos depois. Pior: o id já estava gasto, então a linha certa nunca mais
+apareceria. O crédito passou pra depois da cobrança, e o teste reprova a ordem
+antiga (250 contra 200).
+
+Pelo mesmo motivo, a **linha do abandono entra antes da penalidade**:
+`applyPenalty` termina num `saveNow()` sem debounce ("quem fecha a aba logo depois
+não escapa da conta"), e a notificação precisa já estar no estado que ele
+serializa. Emitida depois, ela ficaria 800 ms na fila com a penalidade já gravada
+— e quem fechasse a aba nessa janela a perderia pra sempre, porque no boot
+seguinte o bloco já está abandonado e a guarda `!isForfeited` pula o ramo inteiro.
+
+E os ids de `nivel` e `pet-nivel` passaram a carregar o dia, como `sequencia` já
+fazia: **nível não é caminho de mão única**. A desistência do hardcore derruba
+nível na hora; sem o dia, `pet-nivel:dog:5` já estaria gasto e a subida de volta
+nunca apareceria.
+
+## O erro que eu mesmo introduzi no caminho
+
+Uma versão intermediária desta branch somava as penalidades do lote de volta no XP
+de "antes" (`penaltyInBatch`), com o raciocínio de que a desistência já estava
+descontada no `totalXP` mas não no antes. **Está invertido**: `computeStats` soma
+`penalties[key]` **fora** da guarda de `isPast`, então uma desistência num dia do
+lote já estava no total que a pessoa via ontem. Somar de volta inflava o antes e
+engolia um "subiu de nível" verdadeiro. Revertido, com o teste explicando a razão.
+
+Fica um resíduo conhecido e pequeno: a penalidade cobrada **no próprio boot** não
+estava no total de antes, então o XP de antes sai baixo demais e pode aparecer um
+"você chegou no nível N" pra um nível que a pessoa já tinha. Acontece só quando
+uma desistência por abandono cai exatamente em cima de um degrau de `LEVELS`.
+
+## As seis da UI, medidas no navegador
+
+| o que | antes | agora |
+|---|---|---|
+| largura do painel entre 768 e 1099px | esticava até 744px numa tela de app de 480 | teto de 340px em qualquer largura |
+| alvo de toque do "Limpar" (que apaga tudo) | 36×11 | 52×25 (WCAG 2.5.8 pede 24×24) |
+| foco do teclado ao fechar | caía no `<body>` | volta pro `#notif-btn` |
+| árvore de acessibilidade | `role="button"` no `<li>` apagava o `listitem` | o papel foi pro `<button>` de dentro |
+| contraste do "há N min" (escuro, 10px) | 3,35:1 | 5,00:1 |
+| painel × barra do timer (celular) | cobria o relógio do estudo em andamento | começa abaixo dela |
 
 ## Como isso foi checado
 
@@ -238,7 +291,13 @@ o chamava); a penalidade do hardcore fora da conta do "antes"; as três linhas d
 saindo idênticas depois de uma ausência (a data entrou no texto); e a falta de uma rede que
 cobrasse texto pra cada `NotifKind`.
 
-A síntese final desse mesmo painel cortou duas linhas e acrescentou uma: o **recorde** virou marca
+Depois disso, uma **revisão adversarial** atacou o código já commitado por cinco
+dimensões (idempotência, os números, ordem de boot, UI/acessibilidade, regressão),
+com cada achado passando por um verificador cuja tarefa era refutá-lo. Foi ela que
+encontrou a ordem do boot, o `penaltyInBatch` invertido, os ids sem o dia e as seis
+da UI — todas reproduzidas antes de virar conserto, e as refutadas descartadas.
+
+A síntese do painel de desenho cortou duas linhas e acrescentou uma: o **recorde** virou marca
 dentro da linha do dia, **`moedas` saiu** (ver o catálogo) e entrou o marco de **horas estudadas**,
 que é a única linha que fala do total em vez de um dia — e a que mais casa com o que o app diz de
 si mesmo. Um dia de estudo passou a se anunciar em tempo, não em moedas.

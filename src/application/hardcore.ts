@@ -107,11 +107,17 @@ export function resumeHardcoreOnBoot(now: Date = new Date()): BootResolution {
     // O bloco já acabou: a conta é a de um estudo rodando (nunca "em espera").
     const cost = quitCost({ block: session, now, userTotalXP: computeStatsNow(now).totalXP, petXP: pet ? pet.xp || 0 : null, phase: 'running' });
     if (!cost.free) {
-      applyPenalty(session, cost, 'abandon', now);
-      showToast(strings.hardcore.toast.abandoned(session.name, cost, pet?.name ?? null));
+      // A linha ANTES da penalidade, de propósito: `applyPenalty` termina em
+      // `saveNow()` — sem debounce, porque quem fecha a aba em seguida não pode
+      // escapar da conta. Se a notificação entrasse depois, ela ficaria 800ms na
+      // fila enquanto a penalidade já estaria gravada, e quem fechasse a aba nessa
+      // janela perderia a linha PRA SEMPRE: no boot seguinte o bloco já está
+      // abandonado e a guarda `!isForfeited` pula o ramo inteiro.
       // O toast do boot passa por cima de quem ainda está abrindo o app; a conta
       // cobrada sem ninguém ver é justamente o que o sininho existe pra guardar.
       pushNotifications([abandonNotice(session.dateKey, session, cost, pet?.name ?? null)], now);
+      applyPenalty(session, cost, 'abandon', now);
+      showToast(strings.hardcore.toast.abandoned(session.name, cost, pet?.name ?? null));
       notify();
     }
     return 'abandoned';

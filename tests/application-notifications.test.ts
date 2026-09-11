@@ -17,6 +17,7 @@ import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/
 import { cancelSession } from '../src/application/settings';
 import { emptyPersistedState } from '../src/domain/persistence';
 import type { PetInstance } from '../src/domain/types';
+import { users } from '../src/infrastructure';
 import { derived, state } from '../src/store/store';
 
 const HOJE = '2026-09-02';
@@ -278,7 +279,7 @@ describe('a ordem do boot: a cobrança do abandono vem antes das linhas', () => 
     clearHardcoreSession('u');
   });
 
-  it('o dia entrou na conta COM o desconto do abandono, não antes dele', () => {
+  it('o dia entrou na conta COM o desconto do abandono, não antes dele', async () => {
     // Ontem: quatro estudos marcados, e o app fechou no meio do quinto — em hardcore.
     const estudos = blocksForDay(ONTEM).filter((b) => b.type === 'estudo');
     state.checks[ONTEM] = Object.fromEntries(estudos.slice(0, 5).map((b) => [b.time, { pet: 'cat', bonus: 0 }]));
@@ -304,6 +305,12 @@ describe('a ordem do boot: a cobrança do abandono vem antes das linhas', () => 
     expect(linha.data.xp).toBe(200);
     // E o abandono também deixou a sua linha.
     expect(notifications().some((n) => n.kind === 'abandono')).toBe(true);
+    // A linha do abandono entra ANTES da penalidade: `applyPenalty` termina num
+    // `saveNow()` sem debounce, e o documento gravado ali precisa já ter a linha —
+    // senão quem fecha a aba na janela de 800ms a perde pra sempre (no boot
+    // seguinte o bloco já está abandonado e o ramo inteiro é pulado).
+    const doc = await users.load('u');
+    expect((doc as { notifications?: { kind: string }[] }).notifications?.some((n) => n.kind === 'abandono')).toBe(true);
     stopDayRollover();
   });
 });
