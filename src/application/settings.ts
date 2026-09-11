@@ -1,5 +1,6 @@
 // Casos de uso da tela de Configurações.
 
+import { takeSafetyNet } from './backup';
 import { DEFAULT_CFG } from '../domain/config';
 import { emptyPets } from '../domain/persistence';
 import { hasMissingNumbers, normalizeConfig } from '../domain/settings';
@@ -38,7 +39,10 @@ export function saveSettings(draft: ConfigDraft): SaveSettingsResult {
 }
 
 /** Zera tudo e reabre o onboarding — a única forma de redefinir o `periodStart`. */
-export function cancelSession(): void {
+export function cancelSession(now: Date = new Date()): void {
+  // A foto vem primeiro, e de tudo — inclusive do que este caso de uso preserva. Se um dia
+  // alguém acrescentar um campo aqui e esquecer de zerá-lo, a rede continua correta.
+  const rede = takeSafetyNet(now);
   state.checks = {};
   state.events = {};
   state.eventSeries = [];
@@ -54,6 +58,8 @@ export function cancelSession(): void {
   // acabaram de deixar de existir — mantê-las seria guardar um diário de mentira.
   state.notifications = [];
   // `avatar` e `tutorialSeen` ficam: o personagem é identidade e quem cancelou já conhece o app.
+  // E a marcha a ré fica guardada por 30 dias: apagar o histórico deixou de ser definitivo.
+  state.safetyNet = rede;
   rebuildWeeks();
   clearBlockCache();
   scheduleSave();

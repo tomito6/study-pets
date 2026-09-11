@@ -6,6 +6,8 @@
 // ids/classes do markup antigo — CSS e smoke test dependem deles.
 
 import { useEffect, useRef, useState } from 'react';
+import { activeSafetyNet, discardSafetyNet, importBackupFile, restoreSafetyNet } from '../../application/backup';
+import { safetyNetDaysLeft } from '../../domain/backup';
 import { exportMyData } from '../../application/export';
 import { clearSettingsRequest, saveSettings } from '../../application/settings';
 import { restartTour } from '../../application/tutorial';
@@ -98,6 +100,23 @@ export function SettingsPage() {
 
   const exportData = () => {
     showToast(exportMyData() ? t.data.done : t.data.failed);
+  };
+
+  // A rede de segurança do "Apagar todo o histórico": enquanto ela existe, o apagamento
+  // não é definitivo. Lida a cada render porque o prazo corre — e some sozinha aos 30 dias.
+  const rede = useAppState(() => activeSafetyNet());
+  const arquivo = useRef<HTMLInputElement>(null);
+
+  const escolherArquivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    e.target.value = ''; // permite escolher o MESMO arquivo de novo depois de um erro
+    const r = await importBackupFile(f);
+    showToast(r.ok ? t.data.restoreDone : t.data.restoreErrors[r.reason]);
+  };
+
+  const desfazer = () => {
+    const r = restoreSafetyNet();
+    showToast(r.ok ? t.data.restoreDone : t.data.restoreErrors[r.reason]);
   };
 
   const cfgPreview = normalizeConfig(draft, state.config.periodStart);
@@ -270,6 +289,53 @@ export function SettingsPage() {
                     </div>
                     <button type="button" className="st-action-btn" id="export-data-btn" onClick={exportData}>{t.data.button}</button>
                   </div>
+                  <div className="st-divider" />
+                  <div className="st-action-row">
+                    <div>
+                      <div className="ar-title">{t.data.restoreTitle}</div>
+                      <div className="ar-desc">{t.data.restoreDesc}</div>
+                    </div>
+                    <button type="button" className="st-action-btn" id="import-data-btn" onClick={() => arquivo.current?.click()}>
+                      {t.data.restoreButton}
+                    </button>
+                    <input
+                      ref={arquivo}
+                      id="import-data-file"
+                      type="file"
+                      accept="application/json,.json"
+                      hidden
+                      onChange={(e) => void escolherArquivo(e)}
+                    />
+                  </div>
+                  {rede && (
+                    <>
+                      <div className="st-divider" />
+                      <div className="st-net-row" id="safety-net">
+                        <div>
+                          <div className="ar-title">{t.data.netTitle}</div>
+                          <div className="ar-desc">
+                            {t.data.netDesc(
+                              new Date(rede.at).toLocaleDateString('pt-BR'),
+                              safetyNetDaysLeft(rede, new Date()),
+                            )}
+                          </div>
+                        </div>
+                        <div className="st-net-actions">
+                          <button type="button" className="st-action-btn primary" id="safety-net-restore" onClick={desfazer}>
+                            {t.data.netRestore}
+                          </button>
+                          <button
+                            type="button"
+                            className="st-action-btn"
+                            id="safety-net-discard"
+                            onClick={() => { discardSafetyNet(); showToast(t.data.netDiscarded); }}
+                          >
+                            {t.data.netDiscard}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

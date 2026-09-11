@@ -356,4 +356,16 @@ describe('ida e volta', () => {
     // E o que sai no save é o mesmo booleano, nunca uma idade.
     expect(serializeState({ ...emptyPersistedState(), ageConfirmed: true }).ageConfirmed).toBe(true);
   });
+
+  it('documento sem a rede de segurança abre sem nada a desfazer', () => {
+    expect(hydrateUserDoc({ schemaVersion: 4, checks: {} }).safetyNet).toBeNull();
+    // Forma inválida é descartada: sem `at`, sem `doc`, ou com lixo no lugar.
+    for (const lixo of [{ at: 0, doc: {} }, { at: 123 }, { doc: {} }, 'sim', 7, []]) {
+      expect(hydrateUserDoc({ safetyNet: lixo }).safetyNet, `${JSON.stringify(lixo)} virou rede`).toBeNull();
+    }
+    const valida = { at: 1_757_000_000_000, doc: { schemaVersion: 4, coinsSpent: 9 } };
+    expect(hydrateUserDoc({ safetyNet: valida }).safetyNet).toEqual(valida);
+    // E o que sai no save é o mesmo objeto — o prazo é conferido na aplicação, com relógio.
+    expect(serializeState({ ...emptyPersistedState(), safetyNet: valida as never }).safetyNet).toEqual(valida);
+  });
 });

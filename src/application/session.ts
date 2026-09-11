@@ -15,6 +15,7 @@ import { endHardcoreSession } from './hardcoreRuntime';
 import { resumePauseOnBoot } from './pause';
 import { stopBlocking, watchExtension } from './siteBlock';
 import { openOnboarding } from './onboarding';
+import { dropExpiredSafetyNet } from './backup';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
 import { blockSaves } from './save';
@@ -141,6 +142,7 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
 
 /** O que acontece depois de carregar: dia visível, o que ficou no dispositivo, XP pendente. */
 export function initAfterLoad(now: Date = new Date()): void {
+  dropExpiredSafetyNet(now); // a cópia do histórico apagado que passou dos 30 dias some aqui
   setTimeout(() => scheduleEndOfDayPrompt(), 600);
   state.uiWeek = findWeek(now);
   const week = derived.weeks[state.uiWeek - 1];

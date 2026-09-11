@@ -18,8 +18,11 @@ async function passarOnboarding(page: Page) {
   await expect(page.locator('#starter-name')).not.toHaveValue('');
   await page.locator('#onb-next').click();
   // A declaração de idade destrava o botão que cria a conta (ver "Idade mínima" no CLAUDE.md).
-  await expect(page.locator('#onb-begin')).toBeDisabled();
-  await page.locator('#onb-age').check();
+  // Já vem marcada pra quem declarou antes — quem apagou o histórico não é interrogado de novo.
+  if (!(await page.locator('#onb-age').isChecked())) {
+    await expect(page.locator('#onb-begin')).toBeDisabled();
+    await page.locator('#onb-age').check();
+  }
   await page.locator('#onb-begin').click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
 }
@@ -489,6 +492,36 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: /Voltar/ }).click();
     await expect(page.locator('.block-row', { hasText: 'Análise II' })).toHaveCount(1);
     await expect(page.locator('.block-row', { hasText: 'Dentista' })).toHaveCount(1);
+  });
+
+  test('50. apagar o histórico deixou de ser definitivo: a rede de segurança traz tudo de volta', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await checksDeEstudo(page).first().click();
+    const marcados = () => page.locator('.block-row:not(.pausa-row) .check.checked').count();
+    await expect.poll(marcados).toBeGreaterThan(0);
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Apagar todo o histórico' }).click();
+    await expect(page.locator('#cancel-confirm-panel')).toBeVisible();
+    // O modal agora promete a marcha a ré em vez de dizer que não dá pra desfazer.
+    await expect(page.locator('#cancel-confirm-panel')).toContainText('30 dias');
+    await page.locator('#cancel-confirm-panel').getByRole('button', { name: 'Sim, apagar tudo' }).click();
+
+    // Apagou mesmo: o onboarding volta, como numa conta nova.
+    await expect(page.locator('#onboarding-panel')).toBeVisible();
+    await passarOnboarding(page);
+    await expect.poll(marcados).toBe(0);
+
+    // E dá pra voltar atrás.
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
+    await expect(page.locator('#safety-net')).toBeVisible();
+    await page.locator('#safety-net-restore').click();
+    await expect(page.locator('#safety-net')).toBeHidden(); // restaurar consome a rede
+    await page.locator('#settings-panel').getByRole('button', { name: '← Voltar' }).click();
+    await expect.poll(marcados).toBeGreaterThan(0);
   });
 
   test('35. apagar a conta só destrava depois de digitar APAGAR, e leva os dados junto', async ({ page }) => {

@@ -109,8 +109,16 @@ export function OnboardingModal() {
   const [name, setName] = useState('');
   const [windows, setWindows] = useState<StudyWindow[]>([]);
   const [skip, setSkip] = useState(false);
-  /** A declaração de idade do último passo. Destrava o botão que cria a conta. */
-  const [idade, setIdade] = useState(false);
+  /**
+   * A declaração de idade do último passo. Destrava o botão que cria a conta.
+   *
+   * Começa marcada pra quem já declarou antes — o caso de quem apagou o histórico e caiu
+   * de novo no onboarding. A declaração é sobre a pessoa, não sobre o histórico, e
+   * `finishOnboarding` já aceita quem tem `state.ageConfirmed`: sem isto a caixa aparecia
+   * vazia com o botão liberado, que é a UI dizendo duas coisas diferentes.
+   */
+  const jaDeclarou = useAppState((s) => s.ageConfirmed);
+  const [idade, setIdade] = useState(jaDeclarou);
 
   useEffect(() => {
     if (!open) return;

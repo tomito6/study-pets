@@ -13,6 +13,8 @@
 // de sites de dentro do hardcore (`config.hardcore.{mode,sites}`) e a pôs em
 // `config.siteBlock`, que vale com ou sem hardcore. Todos são lidos.
 
+import { parseSafetyNet } from './backup';
+import type { SafetyNet } from './backup';
 import { DEFAULT_AVATAR, normalizeAvatar } from './avatar';
 import type { AvatarConfig } from './avatar';
 import { DEFAULT_CFG, migrateConfig } from './config';
@@ -70,6 +72,14 @@ export interface PersistedState {
   windowOverrides: WindowOverrides;
   /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
   tutorialSeen: TutorialSeen;
+  /**
+   * O estado de antes de "Apagar todo o histórico", guardado por 30 dias pra dar
+   * marcha a ré. Fica no próprio documento: quando o histórico é apagado, o que
+   * sobra no doc é praticamente só esta cópia, então o tamanho não dobra. `null`
+   * quando não há nada a desfazer. NÃO existe rede para apagar a CONTA — ver
+   * domain/backup.ts.
+   */
+  safetyNet: SafetyNet | null;
   /**
    * A pessoa declarou ter a idade mínima ao criar a conta. Guarda só o `true`, nunca a
    * idade nem a data de nascimento — é o registro de que a pergunta foi feita e respondida,
@@ -139,6 +149,7 @@ export function emptyPersistedState(): PersistedState {
     groups: {},
     windowOverrides: {},
     tutorialSeen: {},
+    safetyNet: null,
     ageConfirmed: false,
     penalties: {},
     pauses: {},
@@ -279,6 +290,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
+    // Só a forma; o prazo de 30 dias é conferido em application/backup.ts, que tem o relógio.
+    safetyNet: parseSafetyNet(d.safetyNet),
     // Documento anterior à pergunta: false, que é literalmente "não declarou".
     ageConfirmed: d.ageConfirmed === true,
     avatar: normalizeAvatar(d.avatar),
@@ -311,6 +324,7 @@ export function serializeState(s: PersistedState): UserDoc {
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
     tutorialSeen: s.tutorialSeen || {},
+    safetyNet: s.safetyNet ?? null,
     ageConfirmed: s.ageConfirmed === true,
     avatar: normalizeAvatar(s.avatar),
     penalties: s.penalties || {},

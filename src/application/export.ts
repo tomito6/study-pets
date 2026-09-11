@@ -19,7 +19,9 @@ export const exportFilename = (now: Date): string => `study-pets-${dk(now)}.json
 
 /** Monta o arquivo (puro em relação ao DOM) — o que o download entrega. */
 export function buildExport(now: Date = new Date()): ExportedData {
-  return { ...serializeState(state), exportedAt: now.toISOString() };
+  // `safetyNet` fica de fora: é o buffer de desfazer do "Apagar todo o histórico", não faz
+  // parte do plano de estudo, e incluí-lo dobraria o tamanho do arquivo com uma cópia.
+  return { ...serializeState(state), safetyNet: null, exportedAt: now.toISOString() };
 }
 
 /** Dispara o download. Devolve `false` se o ambiente não tem como baixar. */

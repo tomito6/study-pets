@@ -1197,6 +1197,16 @@
   .st-action-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .st-action-row .ar-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
   .st-action-row .ar-desc{font-size:11.5px;color:var(--muted);line-height:1.5;}
+
+  /* A rede de segurança do "Apagar todo o histórico". Mesma anatomia da .st-action-row,
+     mas com duas ações e um destaque: enquanto ela está na tela, o apagamento não é
+     definitivo — e essa é a informação mais importante da seção. */
+  .st-net-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--accent-wash);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px 14px;margin:2px -2px;}
+  .st-net-row .ar-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .st-net-row .ar-desc{font-size:11.5px;color:var(--muted);line-height:1.5;}
+  .st-net-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .st-action-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+  .st-action-btn.primary:hover{filter:var(--lift-hover);}
   .st-action-btn{flex:none;padding:8px 14px;font-size:12px;white-space:nowrap;color:var(--accent);background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font-ui);font-weight:500;transition:background .15s;}
   .st-action-btn:hover{background:var(--accent-bg);}
   @media (max-width:520px){ .st-action-btn{width:100%;} }
