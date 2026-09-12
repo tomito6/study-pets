@@ -12,12 +12,16 @@
 //
 // A pausa aberta fica no dispositivo (application/timer.ts grava): recarregar a
 // página volta o timer pausado, na barra, com "Retomar" e "Parar".
+//
+// O relógio volta de onde parou, no segundo: o plano só sabe esticar em minutos
+// cheios (e arredonda pra cima, a favor de quem pausou), então quem manda no
+// relógio depois de retomar é `derived.timerEndsAt` — ver `timerEnd`.
 
 import { isDayClosed } from '../domain/checks';
 import { addPause, parsePauseSession, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
 import { planDelta, planDeltaParts } from '../domain/planDelta';
 import { dk } from '../domain/time';
-import { timerProgress } from '../domain/timer';
+import { timerEnd, timerProgress } from '../domain/timer';
 import type { StudyBlock } from '../domain/types';
 import { clearPauseSession, readPauseSession } from '../infrastructure/pauseSession';
 import { strings } from '../shared/strings';
@@ -41,7 +45,7 @@ export function pauseTimer(now: Date = new Date()): PauseResult {
   if (!block) return { ok: false, reason: 'no-timer' };
   if (derived.hardcore) return { ok: false, reason: 'hardcore' };
   if (derived.timerPausedAt != null) return { ok: true }; // já está
-  if (timerProgress(block, now).phase !== 'running') return { ok: false, reason: 'not-running' };
+  if (timerProgress(block, now, null, derived.timerEndsAt).phase !== 'running') return { ok: false, reason: 'not-running' };
   if (isDayClosed(state.closedDays, dk(now))) return { ok: false, reason: 'day-closed' };
   pauseRuntime(now);
   return { ok: true };
@@ -65,6 +69,11 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
     return 'ended';
   }
 
+  // O relógio volta de onde parou: o fim anda a duração REAL da parada, enquanto o plano
+  // anda em minutos cheios (pra cima). Sem isso, pausar 10s devolvia o bloco 50s mais gordo.
+  // `timerEnd` corta no fim do plano, então um bloco sem pra onde crescer encurta mesmo.
+  const endsAt = timerEnd(block, now, derived.timerEndsAt).getTime() + (now.getTime() - pausedAt);
+
   const record = pauseRecordFor(new Date(pausedAt), now);
   const before = blocksForDay(todayKey);
   state.pauses[todayKey] = addPause(state.pauses[todayKey], record);
@@ -86,7 +95,7 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
   rescheduleEndOfDayPrompt(now); // o último estudo de hoje mudou (ou sumiu)
 
   const regenerated = after.find((b) => isPomodoroPart(b) && b.time === block.time) ?? null;
-  if (!regenerated || timerProgress(regenerated, now).done) {
+  if (!regenerated || timerProgress(regenerated, now, null, endsAt).done) {
     // A pausa atravessou o fim do bloco (um evento fixo, o fim da janela): para sem marcar — quem quiser marca à mão.
     derived.timerPausedAt = null;
     if (regenerated) derived.timerBlock = regenerated;
@@ -94,7 +103,7 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
     showToast(strings.timer.pauseEnded);
     return 'ended';
   }
-  resumeRuntime(regenerated, now);
+  resumeRuntime(regenerated, now, endsAt);
   showToast(strings.timer.pauseRecorded(record.mins, planDeltaParts(planDelta(before, after)), dropped));
   return 'resumed';
 }

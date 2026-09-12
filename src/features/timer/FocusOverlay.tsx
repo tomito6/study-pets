@@ -47,12 +47,13 @@ const CYCLE_BANNER_MS = 6500;
 const cycleNameOf = (n: number): string => strings.plan.cycles[n % NUM_CYCLES] ?? strings.plan.cycleFallback;
 
 export function FocusOverlay() {
-  const { block, open, completed, hardcore, pausedAt } = useAppState((_, d) => ({
+  const { block, open, completed, hardcore, pausedAt, endsAt } = useAppState((_, d) => ({
     block: d.timerBlock,
     open: d.focusOpen,
     completed: d.timerCompleted,
     hardcore: d.hardcore,
     pausedAt: d.timerPausedAt,
+    endsAt: d.timerEndsAt,
   }));
   const showing = open && !!block;
   useSecondTick(showing);
@@ -89,7 +90,7 @@ export function FocusOverlay() {
   const durMin = blockDurationMin(block);
   const coins = block.type === 'estudo' ? coinsForStudyBlock(durMin) : 0;
   const next = nextBlockAfter(dayBlocks, block);
-  const p = timerProgress(block, now, pausedAt);
+  const p = timerProgress(block, now, pausedAt, endsAt);
   const waiting = p.phase === 'waiting';
   const paused = p.phase === 'paused';
   const th = strings.hardcore.focus;

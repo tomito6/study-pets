@@ -45,6 +45,7 @@ beforeEach(() => {
   Object.assign(state, emptyPersistedState(), { user: { uid: 'u', displayName: null, email: null }, uiWeek: 1, uiDay: 2 });
   derived.timerBlock = null;
   derived.timerPausedAt = null;
+  derived.timerEndsAt = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
   derived.hardcore = null;
@@ -176,6 +177,57 @@ describe('retomar', () => {
     expect(derived.timerBlock).toBeNull();
     expect(derived.focusOpen).toBe(false);
     expect(state.checks[HOJE]).toBeUndefined();
+  });
+
+  // O plano só guarda a pausa em minutos cheios, e arredonda pra cima. Sem o fim ajustado
+  // (`derived.timerEndsAt`), esse arredondamento aparecia no relógio: pausar 10s devolvia
+  // o bloco ~50s mais gordo do que o número que ficou congelado na tela.
+  it('o relógio volta exatamente de onde parou, mesmo com o plano arredondando a pausa pra cima', () => {
+    startTimer(estudo3, AGORA);
+    pauseTimer(AGORA);
+    const congelado = timerProgress(estudo3, AGORA, AGORA.getTime()).display;
+    expect(congelado).toBe('15:00');
+
+    vi.setSystemTime(em('10:10:10')); // 10 segundos de pausa
+    expect(resumeTimer(em('10:10:10'))).toBe('resumed');
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 1 }]); // o plano ganha o minuto cheio
+    const bloco = derived.timerBlock!;
+    expect(bloco).toMatchObject({ endTime: '10:26', paused: 1 });
+    expect(timerProgress(bloco, em('10:10:10'), null, derived.timerEndsAt).display).toBe(congelado);
+
+    // E o bloco termina onde o relógio termina: 10:25:10, não no 10:26 do plano.
+    relogioEm('10:25:08'); // 10:25:09 — ainda falta 1s
+    expect(derived.timerBlock).toBe(bloco);
+    relogioEm('10:25:09'); // 10:25:10, o fim ajustado
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(true);
+    expect(derived.timerBlock).toMatchObject({ type: 'pausa', time: '10:26' }); // a emenda é pelo plano
+  });
+
+  it('duas pausas seguidas: a segunda congela o relógio já ajustado pela primeira', () => {
+    startTimer(estudo3, AGORA);
+    pauseTimer(AGORA);
+    vi.setSystemTime(em('10:10:10'));
+    resumeTimer(em('10:10:10')); // volta com 15:00
+
+    vi.setSystemTime(em('10:11:10'));
+    expect(pauseTimer(em('10:11:10'))).toEqual({ ok: true });
+    const congelado = timerProgress(derived.timerBlock!, em('10:11:10'), em('10:11:10').getTime(), derived.timerEndsAt).display;
+    expect(congelado).toBe('14:00');
+    vi.setSystemTime(em('10:11:30'));
+    resumeTimer(em('10:11:30'));
+    expect(timerProgress(derived.timerBlock!, em('10:11:30'), null, derived.timerEndsAt).display).toBe(congelado);
+  });
+
+  it('o bloco sem pra onde crescer encurta mesmo: o relógio volta menor, e é verdade', () => {
+    state.events[HOJE] = [{ name: '👥 Reunião', start: '10:25', end: '11:00', countsAsStudy: false }];
+    clearBlockCache();
+    startTimer(blocksForDay(HOJE).find((b) => b.time === '10:00')!, AGORA);
+    pauseTimer(AGORA);
+    vi.setSystemTime(em('10:13:00')); // 3 min parado, e a reunião às 10:25 não sai do lugar
+    expect(resumeTimer(em('10:13:00'))).toBe('resumed');
+    const bloco = derived.timerBlock!;
+    expect(bloco).toMatchObject({ endTime: '10:25', paused: 3 }); // o fim é o mesmo: o estudo é que encolheu
+    expect(timerProgress(bloco, em('10:13:00'), null, derived.timerEndsAt).display).toBe('12:00'); // não 15:00
   });
 
   it('com o foco fechado (só a barra) a pausa funciona igual', () => {

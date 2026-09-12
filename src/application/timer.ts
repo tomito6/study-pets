@@ -61,9 +61,10 @@ function startWatcher(): void {
 
 const uid = (): string | null => state.user?.uid ?? null;
 
-/** Esquece a pausa em andamento (runtime e dispositivo). */
+/** Esquece a pausa em andamento (runtime e dispositivo) e o ajuste de relógio que ela deixou. */
 function clearPause(): void {
   derived.timerPausedAt = null;
+  derived.timerEndsAt = null;
   const u = uid();
   if (u) clearPauseSession(u);
 }
@@ -99,7 +100,7 @@ export function reconcileTimer(now: Date = new Date()): void {
     return;
   }
   let guard = 0;
-  while (derived.timerBlock && timerProgress(derived.timerBlock, now).done && guard++ < 100) finishTimer(now);
+  while (derived.timerBlock && timerProgress(derived.timerBlock, now, null, derived.timerEndsAt).done && guard++ < 100) finishTimer(now);
   syncBlocking(now); // "em espera" virou "rodando" (ou o bloco acabou): a extensão acompanha
 }
 
@@ -117,9 +118,14 @@ export function pauseRuntime(now: Date): void {
   notify();
 }
 
-/** Retomou: o bloco em andamento passa a ser o regenerado (fim novo) e o relógio volta a correr. */
-export function resumeRuntime(block: StudyBlock, now: Date): void {
+/**
+ * Retomou: o bloco em andamento passa a ser o regenerado (fim novo) e o relógio volta
+ * a correr de onde parou — `endsAt` é o fim ajustado pela pausa real (ver `timerEnd`),
+ * porque o plano só estica em minutos cheios.
+ */
+export function resumeRuntime(block: StudyBlock, now: Date, endsAt: number | null = null): void {
   clearPause();
+  derived.timerEndsAt = endsAt;
   derived.timerBlock = block;
   startWatcher();
   if (derived.focusOpen) void requestWakeLock();
@@ -131,6 +137,7 @@ export function resumeRuntime(block: StudyBlock, now: Date): void {
 export function adoptPausedBlock(block: StudyBlock, pausedAt: number): void {
   derived.timerBlock = block;
   derived.timerPausedAt = pausedAt;
+  derived.timerEndsAt = null; // o ajuste de uma pausa anterior morreu com a carga da página: vale o fim do plano
   derived.focusOpen = false;
   derived.timerCompleted = null;
   startWatcher();
@@ -222,6 +229,7 @@ function finishTimer(now: Date = new Date()): void {
   }
   if (derived.hardcore) endHardcoreSession(); // a sequência acabou por conta própria: nada a cobrar
   derived.timerBlock = null;
+  derived.timerEndsAt = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
   releaseWakeLock();

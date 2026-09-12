@@ -7,7 +7,9 @@
 //
 // Pausado (`pausedAt`): o restante é `fim − pausedAt`, congelado; o bloco não
 // termina enquanto a pausa durar. Quem estica o `endTime` do bloco ao retomar é
-// o gerador, com o registro da pausa (ver domain/pauses.ts).
+// o gerador, com o registro da pausa (ver domain/pauses.ts) — mas em minutos
+// cheios, arredondados pra cima. Por isso o "fim" do relógio não é sempre o do
+// plano: ver `timerEnd`.
 
 import { blockMins, dk } from './time';
 import type { DateKey, StudyBlock } from './types';
@@ -24,6 +26,27 @@ export function todayAt(time: string, now: Date): Date {
   const d = new Date(now);
   d.setHours(h as number, m as number, 0, 0);
   return d;
+}
+
+/**
+ * O instante em que o relógio do bloco termina. Normalmente é o fim do plano —
+ * mas depois de uma pausa é o fim **ajustado** (`endsAtMs`), que retomar empurra
+ * pela duração real da parada. O plano registra a pausa em minutos cheios,
+ * arredondados pra cima, então o `endTime` do bloco regenerado quase nunca cai no
+ * mesmo segundo em que o relógio congelou: sem este ajuste, pausar 10 segundos
+ * devolvia o relógio 50 segundos adiantado.
+ *
+ * Nunca passa do fim do plano: um bloco espremido contra um evento fixo ou contra
+ * o fim da janela não tem esses minutos pra dar, e aí o relógio encurta mesmo —
+ * é verdade, e é o que o toast de retomar conta.
+ */
+export function timerEnd(
+  block: Pick<StudyBlock, 'endTime'>,
+  now: Date,
+  endsAtMs: number | null = null,
+): Date {
+  const planned = todayAt(block.endTime, now);
+  return endsAtMs == null ? planned : new Date(Math.min(endsAtMs, planned.getTime()));
 }
 
 export const formatMMSS = (sec: number): string =>
@@ -71,14 +94,18 @@ export interface TimerProgress {
  * fica em `paused` até retomar, mesmo que o relógio de parede já tenha passado do
  * fim. O total é a duração que vale (sem o tempo já pausado, que o `endTime` inclui),
  * então o anel drena sobre os minutos de estudo, não sobre a parede.
+ *
+ * `endsAtMs` é o fim ajustado por uma pausa já retomada (ver `timerEnd`); sem ele,
+ * vale o fim do plano.
  */
 export function timerProgress(
   block: Pick<StudyBlock, 'time' | 'endTime'> & { paused?: number | undefined },
   now: Date,
   pausedAt: number | null = null,
+  endsAtMs: number | null = null,
 ): TimerProgress {
   const start = todayAt(block.time, now);
-  const end = todayAt(block.endTime, now);
+  const end = timerEnd(block, now, endsAtMs);
   const totalSec = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 1000) - (block.paused ?? 0) * 60);
   const paused = pausedAt != null && pausedAt >= start.getTime() && pausedAt < end.getTime();
   const ref = paused ? new Date(pausedAt) : now;

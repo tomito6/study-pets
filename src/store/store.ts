@@ -71,6 +71,12 @@ export interface Derived {
   timerBlock: StudyBlock | null;
   /** ms de quando o bloco em andamento foi pausado; null rodando. O registro no doc só nasce ao retomar. */
   timerPausedAt: number | null;
+  /**
+   * ms do fim ajustado do bloco em andamento: retomar empurra o relógio pela duração
+   * real da pausa, que o plano só sabe guardar em minutos cheios (ver `timerEnd`).
+   * null = vale o fim do plano. Runtime: um reload volta ao fim do plano.
+   */
+  timerEndsAt: number | null;
   focusOpen: boolean;
   /** Preenchido quando o foco emenda de um bloco no seguinte; limpo ao parar/iniciar. */
   timerCompleted: CompletedBlock | null;
@@ -114,6 +120,7 @@ export const derived: Derived = {
   weeks: [],
   timerBlock: null,
   timerPausedAt: null,
+  timerEndsAt: null,
   focusOpen: false,
   timerCompleted: null,
   startRequest: null,

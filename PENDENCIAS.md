@@ -100,26 +100,7 @@ numa barra que no celular já tem quatro), ou tocar na linha do bloco em andamen
 de reiniciar? As duas não se excluem — e a segunda precisa da guarda que hoje falta, senão continua
 comendo a pausa.
 
-## 11. Bug: o relógio não retoma de onde parou
-
-Relatado em 2026-09-12: pausa, retoma, e o número não é o que estava congelado. Há dois mecanismos no
-código que produzem isso, e o primeiro passo é descobrir **qual** apareceu:
-
-**(a) o arredondamento.** `pauseRecordFor` arredonda o início pra baixo e a duração pra cima (mínimo
-1 min); o gerador estica o bloco em minutos inteiros; e o restante ao retomar é `fim − agora`. Então o
-relógio volta até 59s **maior** do que o congelado — pausar 10 segundos devolve o bloco quase um minuto
-mais gordo. É "a favor de quem pausou" por design, mas na tela lê como número pulando.
-
-**(b) a perda.** Se o bloco esticado esbarra num evento fixo ou no fim da janela, o gerador corta — e o
-restante volta **menor** (no limite, o bloco termina durante a pausa, que já tem toast próprio).
-Acontece pausando perto da refeição ou do fim do dia.
-
-**Decidir depois de reproduzir** (o e2e 38 cobre só o caminho feliz): se for (a), a correção é congelar
-o restante em segundos ao pausar e devolver exatamente ele ao retomar, em vez de derivar do `endTime`
-arredondado — o registro do dia continua em minutos, que é o que o histórico precisa. Se for (b), a
-decisão é o que a UI diz quando o dia não tem pra onde esticar.
-
-## 12. Modo tracker, ao lado do modo planner
+## 11. Modo tracker, ao lado do modo planner
 
 O app hoje é **planner**: você monta a rotina antes, o dia nasce pronto e você vai marcando. O pedido
 (2026-09-12) é o modo **tracker**: você chega, escolhe o ritmo do pomodoro do dia e aperta um botão só
@@ -140,7 +121,7 @@ segunda mantém a regra "nada de plano é salvo" e reaproveita tudo, mas precisa
 representar "parei às 15h e voltei às 17h"; (c) o que a aba Plano mostra durante um dia de tracker: a
 lista crescendo bloco a bloco, ou o foco como tela principal?
 
-## 13. O vocabulário (e o nome) presumem estudo
+## 12. O vocabulário (e o nome) presumem estudo
 
 "Janelas de estudo", "Estudo 3", "Encaixar estudo", "meta diária de estudo", `studyWindows`,
 `dailyStudyMin` — e "Study Pets". Quem usa pomodoro pra trabalhar não se vê em nada disso, e o pedido

@@ -30,12 +30,13 @@ function agoraBlock(now: Date): StudyBlock | null {
 }
 
 export function TimerBar() {
-  const { block, tab, audio, hardcore, pausedAt } = useAppState((s, d) => ({
+  const { block, tab, audio, hardcore, pausedAt, endsAt } = useAppState((s, d) => ({
     block: d.timerBlock,
     tab: s.uiTab,
     audio: d.audio,
     hardcore: !!d.hardcore,
     pausedAt: d.timerPausedAt,
+    endsAt: d.timerEndsAt,
   }));
   const wide = useWide();
   const active = !!block && tab === 'plano';
@@ -43,7 +44,7 @@ export function TimerBar() {
   useMinuteTick(); // o "Agora / Próximo" acompanha o relógio
 
   const now = new Date();
-  const progress = block ? timerProgress(block, now, pausedAt) : null;
+  const progress = block ? timerProgress(block, now, pausedAt, endsAt) : null;
   const waiting = progress?.phase === 'waiting';
   const paused = progress?.phase === 'paused';
   const t = strings.timer;
