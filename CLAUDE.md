@@ -161,7 +161,7 @@ Falar português brasileiro com o usuário. Direto, com leveza, sem formalidade 
 - `public/manifest.webmanifest` e `public/icons/` — o manifest do PWA (estático) e os ícones 192/512/512-maskable/apple-touch
 - `scripts/character-sprites.mjs` — os PNGs do personagem padrão em `public/idle/user/` (o app desenha o dele na hora; estes servem ao `app-icon.mjs`). `--ascii` mostra os penteados no terminal
 - `scripts/png.mjs` — o encoder de PNG RGBA sem dependência (zlib do Node + CRC32), compartilhado por `pixel-sprites.mjs` e `character-sprites.mjs`
-- `scripts/bestiary.mjs` + `docs/bestiario.html` — o **bestiário**: gera a página do elenco inteiro a partir do catálogo (ver "Bestiário")
+- `scripts/bestiary.mjs` + `bestiario.html` (na raiz, pra abrir com dois cliques) — o **bestiário**: gera a página do elenco inteiro a partir do catálogo (ver "Bestiário")
 - `docs/registro-tratamento.md` e `docs/plano-de-incidente.md` — os dois documentos **internos** de proteção de dados (não vão pro ar): o registro do art. 30 do GDPR e o procedimento das 72 horas. Ver "Os documentos legais"
 - `public/legal/` — os **três documentos** (`privacidade.html`, `termos.html`, `impressum.html`) e o `legal.css` deles. HTML estático, fora do app — ver "Os documentos legais"
 - `docs/juridico.html` — a **revisão jurídica e o plano de abertura**: os 91 achados separados em jurídico / contratual / produto, e as quatro fases pra abrir o app pro público. Página autocontida (abre offline, sem build), escrita à mão — não há script que a gere. Vale enquanto o app for gratuito e sem anúncio; **entrar dinheiro muda a Fase 3 inteira** e pede advogado de verdade
@@ -373,7 +373,7 @@ Adicionar um pet novo:
 | Pomba | Solar | Pássaro de fogo | Fênix |
 | Pomba | Rapina | Falcão | Águia |
 
-Regra das skills ao longo do caminho — **a escada é 1 → 2 → 3**: a espécie nasce com **uma** skill, a **escolha** do Lv. 5 tem **duas** e o **avanço** do Lv. 15 tem **três**. A escolha pode **trocar** a da base (o lobo larga a Fiel — o selvagem é transformação); o avanço **nunca tira**, só acrescenta. **Nenhuma forma repete o conjunto de skills de outra**: escolher caminho é escolher um jeito de estudar, não um sprite. Os três são teste (`tests/pets.test.ts`). Ver a tabela em "Sistema de skills" e o [bestiário](docs/bestiario.html). UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills, e a linha `.evo-path-next` "depois: Tigre · Lv. 15" com o sprite do segundo estágio — `EvolutionOption.next`); no Lv. 15 o mesmo modal mostra só o próximo estágio (`advance`); "Evolui no Lv. N" enquanto trancado.
+Regra das skills ao longo do caminho — **a escada é 1 → 2 → 3**: a espécie nasce com **uma** skill, a **escolha** do Lv. 5 tem **duas** e o **avanço** do Lv. 15 tem **três**. A escolha pode **trocar** a da base (o lobo larga a Fiel — o selvagem é transformação); o avanço **nunca tira**, só acrescenta. **Nenhuma forma repete o conjunto de skills de outra**: escolher caminho é escolher um jeito de estudar, não um sprite. Os três são teste (`tests/pets.test.ts`). Ver a tabela em "Sistema de skills" e o [bestiário](bestiario.html). UI: botão "✨ Evoluir" no card em "Meus pets" abre `#pet-evolve-panel` com um card por caminho (sprite, nome da forma, descrição, skills, e a linha `.evo-path-next` "depois: Tigre · Lv. 15" com o sprite do segundo estágio — `EvolutionOption.next`); no Lv. 15 o mesmo modal mostra só o próximo estágio (`advance`); "Evolui no Lv. N" enquanto trancado.
 
 A **loja de pets** vive num modal próprio (`#pets-shop-panel`), aberto pelo botão "🛒 Loja de pets" no perfil. Grid de 2 colunas, card vertical (imagem/emoji + nome + preço + botão). Os cards são `ShopPetCard` (espécie, com preço) e `OwnedPetCard` (instância, em "Meus pets").
 
@@ -419,7 +419,7 @@ Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPrompt
 
 ## Sistema de skills
 
-Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, tier, rule }`. `desc` guarda **só a condição** ("em estudos que começam a partir das 18h"); o texto que o usuário vê vem de `skillDesc(skill, nível)`, que põe o "+X% XP" na frente. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma. **O bestiário (`docs/bestiario.html`) desenha tudo isto** — ver "Bestiário" abaixo.
+Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, tier, rule }`. `desc` guarda **só a condição** ("em estudos que começam a partir das 18h"); o texto que o usuário vê vem de `skillDesc(skill, nível)`, que põe o "+X% XP" na frente. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma. **O bestiário (`bestiario.html`) desenha tudo isto** — ver "Bestiário" abaixo.
 
 **O equilíbrio é o ponto (rebalanceado em 2026-09-09).** A regra que rege o catálogo:
 
@@ -461,7 +461,7 @@ Se elegível, `toggleBlockCheck` grava no check o bônus **do nível do pet veze
 
 ## Bestiário
 
-`docs/bestiario.html` — uma página só com o elenco inteiro: as árvores de evolução com os sprites animados, as 17 skills por tier, o gráfico do equilíbrio, um editor e as instruções de manutenção. Gerado por:
+`bestiario.html` (na raiz) — uma página só com o elenco inteiro: as árvores de evolução com os sprites animados, as 17 skills por tier, o gráfico do equilíbrio, um editor e as instruções de manutenção. Gerado por:
 
 ```
 node --import ./scripts/ts-loader.mjs scripts/bestiary.mjs

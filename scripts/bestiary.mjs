@@ -3,7 +3,7 @@
 //   node --import ./scripts/ts-loader.mjs scripts/bestiary.mjs
 //
 // Lê o catálogo DIRETO do domínio (`src/domain/pets.ts` e `progression.ts`) e os
-// sprites de `public/idle/pets/`, e escreve `docs/bestiario.html` — um arquivo só,
+// sprites de `public/idle/pets/`, e escreve `bestiario.html` na raiz — um arquivo só,
 // sem rede, com os sprites embutidos em base64. Mudou o catálogo? Roda de novo.
 //
 // É por isso que a página não envelhece: ela não tem dados próprios. O que ela
@@ -24,7 +24,7 @@ import {
 } from '../src/domain/progression.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'docs', 'bestiario.html');
+const OUT = join(ROOT, 'bestiario.html');
 
 // ---------------------------------------------------------------- dados
 
