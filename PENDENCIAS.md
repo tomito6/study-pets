@@ -149,6 +149,46 @@ cabe na regra, mas é desenho novo, não redefinição; (c) a exploração tamb�
 noite vira loft) ou continua escolha manual em Configurações → Aparência? Automático soa bonito e é
 exatamente o tipo de coisa que irrita quando erra.
 
+## 13. O laço de emenda marca o dia inteiro se o app ficar aberto
+
+Achado em 2026-09-12, enquanto eu desenhava o modo tracker — mas **não é do tracker: acontece hoje, no
+modo rotina**, e o commit de ontem aumentou a exposição.
+
+`reconcileTimer` termina o bloco em andamento num laço (`while (… .done && guard++ < 100) finishTimer(now)`,
+`src/application/timer.ts`), e `finishTimer` **com o foco aberto** marca o bloco sozinho e emenda no
+seguinte. Isso é o certo pro caso pra que o laço existe: aba em segundo plano ou celular travado por
+alguns minutos. Mas o `onVisible` chama o mesmo caminho depois de um intervalo de qualquer tamanho, e aí
+cada bloco que "passou" cai no `done` de novo, em cascata, num único acerto de relógio.
+
+Medido nesta branch, config padrão (09:00–18:00, pomo 25 / pausa 5 / longa 15), começando no primeiro
+bloco com o foco aberto:
+
+| Tempo fora | Blocos marcados sozinhos | Minutos inventados |
+|---|---|---|
+| 30 min | 2 | 30 |
+| 1h30 | 6 | 90 |
+| 2h | 7 | 115 |
+| o dia todo (09:00 → 18:00) | **32 (o plano inteiro)** | **540** — e +960 XP, +425 🪙 |
+
+Com o **foco fechado** dá 0: o check automático mora dentro do `if (derived.focusOpen)`. E é exatamente aí
+que está o agravante — desde 2026-09-12 o `closeFocus` **recusa** fechar enquanto o relógio corre, então
+foco aberto deixou de ser escolha e virou o estado normal de qualquer bloco em andamento. Antes dava pra
+"Sair do foco" e o laço não marcava nada; agora não dá.
+
+Não é dado inventado que se conserta depois: o XP e as moedas entram na virada do dia, o pet recebe,
+"melhor dia" e a sequência mudam, e o heatmap fica verde num dia em que ninguém estudou. O app inteiro é
+construído sobre "o plano é o registro do que aconteceu".
+
+Ponta solta menor, medida junto: voltar **no dia seguinte** não marca nada — mas o bloco "teleporta" pro
+mesmo horário do dia novo e o timer fica em espera até lá.
+
+**Decidir:** (a) a emenda só acontece se o fim do bloco foi detectado há pouco (5 min?), e fora disso o
+timer encerra no bloco que estava rodando **sem marcar nada** — perde no máximo um bloco que a pessoa
+talvez tenha terminado, e ela marca à mão; (b) perguntar na volta ("o timer ficou rodando desde as 09:00 —
+até onde você foi?"), mais preciso e mais fricção numa hora em que ninguém quer decidir; (c) marcar só o
+bloco que estava rodando e parar ali, que ainda inventa até um pomodoro; (d) não mexer, porque na prática
+o Wake Lock segura a tela e ninguém deixa o app aberto sem usar — é a hipótese que eu não consegui testar.
+
 ---
 
 ## Como esse arquivo deve crescer
