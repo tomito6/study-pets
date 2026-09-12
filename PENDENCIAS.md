@@ -44,6 +44,12 @@ ou o override daquele dia passa a carregar ritmo próprio? A segunda opção é 
 "interessante" (ritmo por janela, ou até por grupo), e ela esbarra na regra "grupo nunca entra no
 `generateBlocks`".
 
+**Repetido em 2026-09-12**, com uma saída mais barata junto: o problema real é que o ritmo do pomodoro
+mora em Configurações → Estrutura do dia, e ninguém acha. Ou ele sobe pro "🕘 Janelas do dia" (que é o
+botão que a pessoa já aperta pra mexer no dia), ou **o tour passa a mostrar onde ele fica**. A segunda
+não responde nenhuma das perguntas acima e cabe num balão a mais em `TOUR_STEPS` — **decidir** se
+resolve, ou se é só adiar a primeira.
+
 ## 5. A Semana no celular
 
 Continua em aberto desde 2026-09-06. Já está descartado: grid de sete colunas rolando de lado. Já foi
@@ -77,6 +83,77 @@ degrau?
 Sem lembrete de e-mail não verificado no perfil, e sem vincular Google + e-mail/senha
 (`linkWithCredential`) — quem cria conta com um e-mail que já entrou pelo Google recebe "use o Google".
 Ambos foram adiados conscientemente enquanto o app é de um usuário só. **Decidir:** ainda podem esperar?
+
+## 10. Pausar te deixa fora do foco, sem porta de volta
+
+Fora do hardcore o foco tem "← Sair do foco" (que só fecha o overlay — o timer continua) e "⏸ Pausar".
+A volta não existe em lugar nenhum: a `timer-bar` tem Retomar, Parar e o volume, e **nenhum botão
+reabre o `#focus-overlay`**. Quem pausa e sai — ou recarrega a página, porque `adoptPausedBlock` volta
+com `focusOpen = false` de propósito — fica na tela normal sem caminho de volta.
+
+E o caminho que parece óbvio é uma armadilha: tocar de novo na linha do bloco chama `tryStartTimer` →
+`runBlock`, que começa com `clearPause()`. O foco reabre, mas **a pausa aberta é descartada sem virar
+registro** — os minutos parados somem, o bloco não estica e o resto do dia não anda.
+
+**Decidir:** um botão "↗ Voltar ao foco" na `timer-bar` sempre que houver timer (é mais um elemento
+numa barra que no celular já tem quatro), ou tocar na linha do bloco em andamento reabre o foco em vez
+de reiniciar? As duas não se excluem — e a segunda precisa da guarda que hoje falta, senão continua
+comendo a pausa.
+
+## 11. Bug: o relógio não retoma de onde parou
+
+Relatado em 2026-09-12: pausa, retoma, e o número não é o que estava congelado. Há dois mecanismos no
+código que produzem isso, e o primeiro passo é descobrir **qual** apareceu:
+
+**(a) o arredondamento.** `pauseRecordFor` arredonda o início pra baixo e a duração pra cima (mínimo
+1 min); o gerador estica o bloco em minutos inteiros; e o restante ao retomar é `fim − agora`. Então o
+relógio volta até 59s **maior** do que o congelado — pausar 10 segundos devolve o bloco quase um minuto
+mais gordo. É "a favor de quem pausou" por design, mas na tela lê como número pulando.
+
+**(b) a perda.** Se o bloco esticado esbarra num evento fixo ou no fim da janela, o gerador corta — e o
+restante volta **menor** (no limite, o bloco termina durante a pausa, que já tem toast próprio).
+Acontece pausando perto da refeição ou do fim do dia.
+
+**Decidir depois de reproduzir** (o e2e 38 cobre só o caminho feliz): se for (a), a correção é congelar
+o restante em segundos ao pausar e devolver exatamente ele ao retomar, em vez de derivar do `endTime`
+arredondado — o registro do dia continua em minutos, que é o que o histórico precisa. Se for (b), a
+decisão é o que a UI diz quando o dia não tem pra onde esticar.
+
+## 12. Modo tracker, ao lado do modo planner
+
+O app hoje é **planner**: você monta a rotina antes, o dia nasce pronto e você vai marcando. O pedido
+(2026-09-12) é o modo **tracker**: você chega, escolhe o ritmo do pomodoro do dia e aperta um botão só
+— "Começar". Daí ele emenda pomodoro atrás de pomodoro sozinho, sem plano nenhum, até você dizer que
+vai almoçar, que tem um evento, ou parar. O plano vira consequência do que aconteceu, não premissa.
+
+Boa parte já existe: a emenda automática (`chainedBlockAfter`), o foco, a pausa, o check por horário, o
+registro de pausas. O que não existe é o chão: hoje **todo** bloco sai de `generateBlocks(config,
+eventos, pausas)` e nada de plano é salvo — o histórico é regenerado a cada leitura. Um dia de tracker
+não tem rotina que o regenere.
+
+**Decidir, nesta ordem:** (a) é um modo do app inteiro (escolhido no onboarding, trocável nas
+Configurações) ou um modo **do dia**, que convive com uma rotina de planner no resto da semana? (b) como
+o dia de tracker sobrevive ao reload — uma lista de blocos gravada no doc (a primeira vez que o app
+guardaria plano, e mexe em `computeStats`, XP do pet, Análise e aderência), ou um `windowOverride` que
+o gerador consiga reproduzir (a janela começa quando você apertou e termina quando você parou)? A
+segunda mantém a regra "nada de plano é salvo" e reaproveita tudo, mas precisa de duas janelas pra
+representar "parei às 15h e voltei às 17h"; (c) o que a aba Plano mostra durante um dia de tracker: a
+lista crescendo bloco a bloco, ou o foco como tela principal?
+
+## 13. O vocabulário (e o nome) presumem estudo
+
+"Janelas de estudo", "Estudo 3", "Encaixar estudo", "meta diária de estudo", `studyWindows`,
+`dailyStudyMin` — e "Study Pets". Quem usa pomodoro pra trabalhar não se vê em nada disso, e o pedido
+(2026-09-12) é abrir.
+
+**Decidir:** (a) troca só o que o usuário lê e o código mantém `study*` (barato, nenhum schema muda), ou
+o vocabulário vai fundo até o documento do Firestore (caro, pede `schemaVersion` novo — e ganha o quê,
+já que ninguém lê o doc)? (b) qual palavra: "Estudo" é quente e específica; "Sessão" está ocupada (é a
+conta inteira, desde o rename dos ciclos); "Bloco" é o nome interno e é frio. **"Foco"** é o melhor
+candidato e já é o nome do overlay; (c) o nome do app muda junto? Aí é domínio, ícone, PWA e os três
+documentos legais — e o CLAUDE.md pede pra **não** renomear o projeto na Vercel, porque o domínio muda e
+o Authorized domain do Firebase Auth quebra o login com Google. Se mudar, vale plan próprio.
+
 
 ---
 
