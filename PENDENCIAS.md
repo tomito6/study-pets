@@ -84,23 +84,7 @@ Sem lembrete de e-mail não verificado no perfil, e sem vincular Google + e-mail
 (`linkWithCredential`) — quem cria conta com um e-mail que já entrou pelo Google recebe "use o Google".
 Ambos foram adiados conscientemente enquanto o app é de um usuário só. **Decidir:** ainda podem esperar?
 
-## 10. Pausar te deixa fora do foco, sem porta de volta
-
-Fora do hardcore o foco tem "← Sair do foco" (que só fecha o overlay — o timer continua) e "⏸ Pausar".
-A volta não existe em lugar nenhum: a `timer-bar` tem Retomar, Parar e o volume, e **nenhum botão
-reabre o `#focus-overlay`**. Quem pausa e sai — ou recarrega a página, porque `adoptPausedBlock` volta
-com `focusOpen = false` de propósito — fica na tela normal sem caminho de volta.
-
-E o caminho que parece óbvio é uma armadilha: tocar de novo na linha do bloco chama `tryStartTimer` →
-`runBlock`, que começa com `clearPause()`. O foco reabre, mas **a pausa aberta é descartada sem virar
-registro** — os minutos parados somem, o bloco não estica e o resto do dia não anda.
-
-**Decidir:** um botão "↗ Voltar ao foco" na `timer-bar` sempre que houver timer (é mais um elemento
-numa barra que no celular já tem quatro), ou tocar na linha do bloco em andamento reabre o foco em vez
-de reiniciar? As duas não se excluem — e a segunda precisa da guarda que hoje falta, senão continua
-comendo a pausa.
-
-## 11. Modo tracker, ao lado do modo planner
+## 10. Modo tracker, ao lado do modo planner
 
 O app hoje é **planner**: você monta a rotina antes, o dia nasce pronto e você vai marcando. O pedido
 (2026-09-12) é o modo **tracker**: você chega, escolhe o ritmo do pomodoro do dia e aperta um botão só
@@ -121,7 +105,7 @@ segunda mantém a regra "nada de plano é salvo" e reaproveita tudo, mas precisa
 representar "parei às 15h e voltei às 17h"; (c) o que a aba Plano mostra durante um dia de tracker: a
 lista crescendo bloco a bloco, ou o foco como tela principal?
 
-## 12. O vocabulário (e o nome) presumem estudo
+## 11. O vocabulário (e o nome) presumem estudo
 
 "Janelas de estudo", "Estudo 3", "Encaixar estudo", "meta diária de estudo", `studyWindows`,
 `dailyStudyMin` — e "Study Pets". Quem usa pomodoro pra trabalhar não se vê em nada disso, e o pedido

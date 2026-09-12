@@ -365,6 +365,14 @@
   /* "⏸ 7 min": o timer ficou pausado dentro do bloco (o fim inclui a pausa; o XP não). */
   .block-paused{font-size:10px;font-family:var(--font-mono);color:var(--muted);white-space:nowrap;}
   .block-xp{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:99px;white-space:nowrap;}
+  /* O botão da linha de agora (Iniciar / Continuar): o mesmo peso nos dois estados — é a
+     mesma porta, e "voltar" não pode parecer menos importante que "começar". Fica no lugar
+     do selo de XP, senão o nome do bloco quebra em três linhas num celular de 375px. */
+  .block-action{font:600 11px/1 var(--font-ui);padding:7px 12px;border-radius:99px;white-space:nowrap;
+    cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);flex-shrink:0;}
+  .block-action:hover{filter:brightness(1.06);}
+  .block-action:active{transform:translateY(1px);}
+  .block-action:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .block-xp.almoco-xp{color:var(--muted);background:var(--bg3);}
   .block-xp.event-xp{color:var(--orange);background:var(--orange-bg);}
 
@@ -1379,6 +1387,7 @@
     .block-row.almoco-row{border-bottom-style:dashed !important;}
     .block-row.almoco-row .block-name{color:var(--muted);}
     .block-time{font-size:max(11px,calc(12 * var(--s)));min-width:calc(100 * var(--s));}
+    .block-action{font-size:calc(11 * var(--s));padding:calc(7 * var(--s)) calc(12 * var(--s));}
     .block-name{font-size:max(12.5px,calc(14 * var(--s)));}
     .block-xp{background:transparent !important;color:var(--muted) !important;padding:0;font-size:calc(11 * var(--s));}
     .block-row.now-block{filter:none;background:var(--accent-wash) !important;border-bottom-color:transparent !important;box-shadow:inset 3px 0 0 var(--accent);}
@@ -1410,8 +1419,16 @@
     .volume-wrap{order:2;margin-top:calc(6 * var(--s));}
     .vol-btn{font-size:calc(16 * var(--s));}
     .vol-slider{width:calc(60 * var(--s));}
-    .timer-pause{order:3;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
-    .timer-stop{order:4;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
+    /* Com o foco fechado (só dá pra estar assim pausado), o cartão repete o botão do
+       "Agora · Iniciar": a volta tem o mesmo peso da ida. */
+    .timer-continue{order:3;display:flex;align-items:center;justify-content:center;gap:calc(8 * var(--s));
+      width:100%;margin:calc(10 * var(--s)) 0 calc(4 * var(--s));min-height:calc(46 * var(--s));
+      padding:calc(12 * var(--s)) calc(18 * var(--s));border-radius:calc(10 * var(--s));
+      border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);
+      font:500 calc(15 * var(--s))/1.4 var(--font-ui);cursor:pointer;}
+    .timer-continue:hover{filter:brightness(1.06);} .timer-continue:active{transform:translateY(1px);}
+    .timer-pause{order:4;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
+    .timer-stop{order:5;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
     .timer-stop:hover,.timer-pause:hover{color:var(--text);}
     .block-paused{font-size:calc(10 * var(--s));}
     /* a coluna é um painel da altura da janela: Hoje/Meta e o quarto em cima (rolam por dentro se não couberem,

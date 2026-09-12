@@ -703,6 +703,11 @@ export const strings = {
     pause: '⏸ Pausar',
     resume: '▶ Retomar',
     stop: '✕ Parar',
+    /** O botão da linha do bloco de agora: a mesma porta pra ir e pra voltar. */
+    startBlock: '▶ Iniciar',
+    continueBlock: '▶ Continuar',
+    /** O sufixo do rótulo da linha: "10:00 às 10:25, Estudo 3, Continuar" (o nome já veio antes). */
+    actionLabel: { iniciar: 'Iniciar', continuar: 'Continuar' } as Record<'iniciar' | 'continuar', string>,
     mute: 'Silenciar',
     /** Ao retomar: quanto durou e o que mudou no plano (os pedaços vêm de `planDeltaParts`). */
     pauseRecorded: (mins: number, parts: string[], droppedChecks: number) =>
@@ -710,6 +715,8 @@ export const strings = {
       (parts.length ? ` · ${parts.join(' · ')}` : '') +
       (droppedChecks > 0 ? ` · ${droppedChecks === 1 ? '1 check ficou sem bloco' : `${droppedChecks} checks ficaram sem bloco`}` : ''),
     pauseEnded: 'O bloco terminou durante a pausa — marque à mão se quiser ✓',
+    /** Começar outro bloco larga a pausa aberta: a mesma regra do "✕ Parar", mas dita em voz alta. */
+    pauseDropped: '⏸ Pausa descartada: você começou outro bloco',
     pauseMidnight: 'A pausa atravessou a meia-noite: o timer foi encerrado 🌙',
     pauseRefusal: (r: { reason: 'no-timer' } | { reason: 'hardcore' } | { reason: 'not-running' } | { reason: 'day-closed' }) =>
       r.reason === 'hardcore' ? 'No modo hardcore não tem pausa 🔥'
@@ -732,6 +739,8 @@ export const strings = {
     },
     focus: {
       exit: '← Sair do foco',
+      /** Em espera (aberto antes da hora) não há o que pausar: a saída é desarmar o timer. */
+      cancel: '✕ Cancelar',
       chip: (cycle: string) => cycle,
       pomodoroOf: (min: number) => `Pomodoro de ${min} min`,
       breakOf: (min: number) => `Pausa de ${min} min`,

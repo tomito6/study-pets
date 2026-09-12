@@ -5,7 +5,7 @@
 // Em tela grande (layout B7), sem timer rodando ela vira o cartão "Agora · Iniciar": o bloco de hoje
 // que está acontecendo (ou o próximo) e um botão pra entrar nele — a mesma porta do clique na lista.
 
-import { pauseTimer, resumeTimer } from '../../application/pause';
+import { continueBlock, pauseTimer, resumeTimer } from '../../application/pause';
 import { blocksForDay } from '../../application/plan';
 import { requestStartBlock, setVolume, startContextFor, stopTimer, toggleMute } from '../../application/timer';
 import { blockDurationMin, canStartBlock, cleanBlockName, timerProgress } from '../../domain/timer';
@@ -30,8 +30,9 @@ function agoraBlock(now: Date): StudyBlock | null {
 }
 
 export function TimerBar() {
-  const { block, tab, audio, hardcore, pausedAt, endsAt } = useAppState((s, d) => ({
+  const { block, tab, audio, hardcore, pausedAt, endsAt, focusOpen } = useAppState((s, d) => ({
     block: d.timerBlock,
+    focusOpen: d.focusOpen,
     tab: s.uiTab,
     audio: d.audio,
     hardcore: !!d.hardcore,
@@ -48,6 +49,9 @@ export function TimerBar() {
   const waiting = progress?.phase === 'waiting';
   const paused = progress?.phase === 'paused';
   const t = strings.timer;
+  // A porta de volta pro foco no laptop: o mesmo peso do "Iniciar" do cartão Agora. No celular
+  // quem carrega esse botão é a linha do bloco, que tem folga — a barra não tem.
+  const mostraContinuar = wide && !hardcore && !focusOpen && !!block;
   const togglePause = () => {
     if (paused) {
       resumeTimer();
@@ -104,8 +108,16 @@ export function TimerBar() {
           onChange={(e) => setVolume(parseFloat(e.target.value))}
         />
       </div>
+      {mostraContinuar && (
+        <button className="timer-continue" id="timer-continue" onClick={() => continueBlock()}>
+          {t.continueBlock}
+        </button>
+      )}
       {/* No hardcore o foco cobre tudo, e nem "Pausar" nem "Parar" existem — a saída é "Desistir" lá dentro. */}
-      {!hardcore && progress && !waiting && (
+      {/* Com o "Continuar" na tela, "Retomar" seria o mesmo botão duas vezes: retomar reabre o
+          foco desde 2026-09-12. No celular ele fica — é a saída de quem está olhando outro dia,
+          onde a linha do bloco não existe. */}
+      {!hardcore && progress && !waiting && !mostraContinuar && (
         <button className="timer-pause" id="timer-pause" onClick={togglePause}>{paused ? t.resume : t.pause}</button>
       )}
       {!hardcore && <button className="timer-stop" onClick={stopTimer}>{t.stop}</button>}

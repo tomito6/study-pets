@@ -30,7 +30,7 @@ import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from './plan';
 import { saveNow } from './save';
-import { adoptPausedBlock, pauseRuntime, resumeRuntime, stopTimer } from './timer';
+import { adoptPausedBlock, pauseRuntime, reopenFocus, resumeRuntime, stopTimer } from './timer';
 
 export type PauseRefusal = 'no-timer' | 'hardcore' | 'not-running' | 'day-closed';
 export type PauseResult = { ok: true } | { ok: false; reason: PauseRefusal };
@@ -105,6 +105,19 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
   }
   resumeRuntime(regenerated, now, endsAt);
   showToast(strings.timer.pauseRecorded(record.mins, planDeltaParts(planDelta(before, after)), dropped));
+  return 'resumed';
+}
+
+/**
+ * "▶ Continuar": a porta de volta pro bloco em andamento — a mesma da linha do plano e do
+ * cartão do laptop. Pausado, retomar já reabre o foco (`resumeRuntime`); rodando (só dá
+ * pra estar fora do foco assim num estado de boot antigo), só reabre. Nunca passa por
+ * `runBlock`, que reiniciaria o bloco e comeria a pausa.
+ */
+export function continueBlock(now: Date = new Date()): ResumeOutcome {
+  if (!derived.timerBlock) return 'none';
+  if (derived.timerPausedAt != null) return resumeTimer(now);
+  reopenFocus();
   return 'resumed';
 }
 

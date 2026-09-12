@@ -246,7 +246,9 @@ test('ext-2. estudo sem hardcore bloqueia, redireciona a aba já aberta, e "✕ 
   await expect(aberta.page.locator('#hint')).toContainText('pare o estudo lá no app');
   await aberta.page.close();
 
-  // "Sair do foco" só fecha o overlay: o estudo continua, o bloqueio também.
+  // Pausar e sair do foco não libera o site: estudo pausado continua bloqueando (e sair
+  // do foco só existe pausado, desde 2026-09-12).
+  await page.locator('#focus-pause').click();
   await page.locator('.focus-exit').click();
   await expect(page.locator('#timer-bar')).toHaveClass(/active/);
   expect(await contarRegras(sw)).toBe(1);

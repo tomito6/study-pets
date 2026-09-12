@@ -8,7 +8,8 @@ import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
-import { clearStartRequest, startContextFor, tryStartTimer } from '../../application/timer';
+import { continueBlock } from '../../application/pause';
+import { clearStartRequest, isTimerBlock, startContextFor, tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
@@ -260,6 +261,19 @@ export function PlanTab() {
 
   // Tocar num estudo/pausa: com o hardcore ligado, o consentimento vem antes; senão, o foco abre direto.
   const startBlock = (b: StudyBlock, at: Date) => {
+    // Já é o bloco em andamento? Então isto é "▶ Continuar", não "começar de novo" — e a
+    // diferença não é cosmética: o caminho de começar passa por `runBlock`, que descartava
+    // uma pausa aberta sem registrar (os minutos parados sumiam e o dia não deslizava).
+    // Vem antes de tudo: antes da recusa (um bloco pausado além do fim do plano é recusado
+    // com `ended`) e antes do consentimento (que converteria em hardcore no meio da corrida).
+    // `viewKey === hoje` porque `isTimerBlock` compara só horário: a linha 10:00–10:25 de um
+    // dia passado é outro bloco, e clicar nela não pode mexer no timer de hoje.
+    if (viewKey === dk(at) && isTimerBlock(b)) {
+      // Sem o `at` do render, de propósito: ele é do último re-render (a lista vira no minuto),
+      // e retomar com um relógio velho encurtaria a pausa registrada — minutos que o dia perde.
+      continueBlock();
+      return;
+    }
     // A recusa vem ANTES do consentimento: abrir "sair antes do fim custa XP" pra um
     // bloco que nem pode começar (dia encerrado, já terminou) é pedir compromisso com nada.
     const can = canStartBlock(b, viewKey, at, startContextFor(b, viewKey));

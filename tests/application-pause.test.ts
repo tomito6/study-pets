@@ -11,7 +11,7 @@ import { closeDay, initialDayEnd, resetEndOfDayPrompt } from '../src/application
 import { addGroup } from '../src/application/groups';
 import { startHardcore } from '../src/application/hardcore';
 import { endHardcoreSession } from '../src/application/hardcoreRuntime';
-import { pauseTimer, resumePauseOnBoot, resumeTimer, timerPaused } from '../src/application/pause';
+import { continueBlock, pauseTimer, resumePauseOnBoot, resumeTimer, timerPaused } from '../src/application/pause';
 import { blocksForDay, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
 import { closeFocus, reconcileTimer, startTimer, stopTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
@@ -230,15 +230,34 @@ describe('retomar', () => {
     expect(timerProgress(bloco, em('10:13:00'), null, derived.timerEndsAt).display).toBe('12:00'); // não 15:00
   });
 
-  it('com o foco fechado (só a barra) a pausa funciona igual', () => {
+  // Sair do foco só existe pausado (2026-09-12), e retomar traz o foco de volta: o relógio
+  // correndo implica foco aberto. A pausa em si funciona igual dos dois lados.
+  it('dá pra sair do foco pausado; retomar reabre o foco e a pausa vira registro igual', () => {
     startTimer(estudo3, AGORA);
-    closeFocus();
     pauseTimer(AGORA);
+    closeFocus();
+    expect(derived.focusOpen).toBe(false);
+    expect(wakeLockWanted()).toBe(false); // pausado, a tela pode dormir
     vi.setSystemTime(em('10:12:00'));
     resumeTimer(em('10:12:00'));
-    expect(derived.focusOpen).toBe(false);
-    expect(wakeLockWanted()).toBe(false);
+    expect(derived.focusOpen).toBe(true);
+    expect(wakeLockWanted()).toBe(true);
     expect(derived.timerBlock).toMatchObject({ endTime: '10:27', paused: 2 });
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 2 }]);
+  });
+
+  // O bug que o botão novo mata: tocar de novo na linha caía em `runBlock`, que começa com
+  // `clearPause()` — a pausa aberta sumia sem virar registro, e o dia não deslizava.
+  it('"▶ Continuar" reabre o foco e registra a pausa, em vez de reiniciar o bloco', () => {
+    startTimer(estudo3, AGORA);
+    pauseTimer(AGORA);
+    closeFocus();
+    vi.setSystemTime(em('10:17:00'));
+    expect(continueBlock(em('10:17:00'))).toBe('resumed');
+    expect(derived.focusOpen).toBe(true);
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 7 }]); // a pausa foi registrada, não jogada fora
+    expect(derived.timerBlock).toMatchObject({ time: '10:00', endTime: '10:32', paused: 7 });
+    expect(readPauseSession('u')).toBeNull();
   });
 
   it('encerrar o dia com o timer pausado para o timer; a pausa não vira registro', () => {

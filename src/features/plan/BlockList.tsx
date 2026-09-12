@@ -149,6 +149,19 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
     }
   };
 
+  // O botão da linha — a mesma porta pra ir e pra voltar (2026-09-12). "Iniciar" no bloco
+  // que está acontecendo agora, enquanto nada roda: sem ele, a única entrada era descobrir
+  // sozinho que a linha inteira é clicável. "Continuar" no bloco que É o timer: com o foco
+  // fechado (só se pausa), é como se volta — sem passar por `runBlock`, que reiniciaria.
+  const podeAgir = (isE || isP) && isToday && !closed && !future && !forfeited;
+  const acao: 'iniciar' | 'continuar' | null = !podeAgir
+    ? null
+    : timerActive
+      ? 'continuar'
+      : !timerBlock && isNow
+        ? 'iniciar'
+        : null;
+
   let xpLabel: ReactNode;
   if (forfeited) xpLabel = <span className="block-xp forfeited-xp">{strings.hardcore.plan.forfeited}</span>;
   else if (isE || isP) xpLabel = <span className="block-xp cycle-xp">{t.xpGain(b.xp)}</span>;
@@ -161,7 +174,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   // um bloco pelo teclado, nem saber pelo leitor de tela o que cada linha é. O
   // `#active-pet-card` já fazia certo (role=button, Enter/Espaço) — é o mesmo padrão.
   const acionavel = clickable || isE || isP;
-  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}`;
+  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}` + (acao ? `, ${strings.timer.actionLabel[acao]}` : '');
   const onRowKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -209,7 +222,32 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
       <span className="block-name">{b.name}</span>
       {/* O timer ficou pausado dentro deste bloco: o fim inclui a pausa, o XP não — a etiqueta é o que fecha a conta. */}
       {b.paused ? <span className="block-paused" title={t.pausedTitle(b.paused)}>{t.pausedTag(b.paused)}</span> : null}
-      {xpLabel}
+      {/* O botão ocupa o lugar do selo de XP: medido a 375px, os dois juntos espremem o nome
+          do bloco a 44px e ele quebra em três linhas. O ganho deste bloco está no foco, que é
+          pra onde o botão leva ("+50 XP · +25 🪙 ao concluir"). */}
+      {acao ? (
+        <button
+          type="button"
+          className="block-action"
+          data-action={acao}
+          /* O mesmo caminho do clique na linha: o botão não pode furar a seleção de grupo
+             (tocar nele com "Agrupar" armado escolhia a linha... e abria o foco), nem o
+             clique que fecha um arrasto, nem as recusas de dia. */
+          onClick={(e) => {
+            e.stopPropagation(); // senão o clique sobe pra linha e a ação roda duas vezes
+            onRowClick(e as unknown as MouseEvent<HTMLDivElement>);
+          }}
+          /* `role="button"` na linha torna os filhos apresentacionais: o leitor de tela nunca
+             anunciaria este rótulo. Quem carrega a ação pro teclado é a linha, cujo
+             `aria-label` já diz "…, Continuar Estudo 3". */
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          {acao === 'continuar' ? strings.timer.continueBlock : strings.timer.startBlock}
+        </button>
+      ) : (
+        xpLabel
+      )}
       {drag && clickable && (
         <span className="ev-grip" title={t.dragTitle} aria-hidden="true" {...drag.handleProps(source, true)}>
           ⠿

@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkBlock, toggleBlockCheck } from '../src/application/checks';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { mealSeries } from '../src/domain/eventPresets';
-import { closeFocus, reconcileTimer, setVolume, startTimer, stopTimer, toggleMute, tryStartTimer } from '../src/application/timer';
+import { pauseTimer, resumeTimer } from '../src/application/pause';
+import { closeFocus, reconcileTimer, reopenFocus, setVolume, startTimer, stopTimer, toggleMute, tryStartTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
 import { emptyPersistedState } from '../src/domain/persistence';
 import type { StudyBlock } from '../src/domain/types';
@@ -29,6 +30,8 @@ beforeEach(() => {
   vi.setSystemTime(AGORA);
   Object.assign(state, emptyPersistedState(), { uiWeek: 1, uiDay: 2 });
   derived.timerBlock = null;
+  derived.timerPausedAt = null;
+  derived.timerEndsAt = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
   derived.audio = { volume: 0.7, muted: false };
@@ -102,9 +105,11 @@ describe('fim do bloco no modo foco', () => {
     expect(derived.timerCompleted).toMatchObject({ name: 'Estudo 3', xp: 0, coins: 0 }); // nada a creditar de novo
   });
 
-  it('com o foco fechado, o fim é como sempre: sem check, e o timer some', () => {
+  // Sair do foco com o relógio correndo deixou de existir (2026-09-12), então este estado
+  // só se alcança pelo que o app não fecha: o dia encerrado à mão com um bloco rodando.
+  it('com o dia encerrado no meio do bloco, o fim é o de sempre: sem check, e o timer some', () => {
     startTimer(bloco);
-    closeFocus();
+    state.closedDays[HOJE] = true;
     relogioEm('10:24:59');
     expect(state.checks[HOJE]).toBeUndefined();
     expect(derived.timerBlock).toBeNull();
@@ -174,9 +179,9 @@ describe('reconcileTimer — ao voltar pra aba com o intervalo congelado', () =>
     expect(state.checks[HOJE]).toBeUndefined();
   });
 
-  it('com o foco fechado, o bloco terminado some sem check — o fim de sempre', () => {
+  it('com o dia encerrado, o bloco terminado some sem check — o fim de sempre', () => {
     startTimer(bloco);
-    closeFocus();
+    state.closedDays[HOJE] = true;
     const volta = new Date(`${HOJE}T11:00:00`);
     vi.setSystemTime(volta);
     reconcileTimer(volta);
@@ -194,8 +199,13 @@ describe('wake lock — só enquanto o foco está aberto', () => {
   it('quer a tela ligada ao abrir o foco; solta ao sair do foco, parar ou terminar', () => {
     startTimer(bloco);
     expect(wakeLockWanted()).toBe(true);
+    pauseTimer(AGORA); // a tela já pode dormir na pausa
+    expect(wakeLockWanted()).toBe(false);
     closeFocus();
     expect(wakeLockWanted()).toBe(false);
+    resumeTimer(AGORA); // voltar a correr reabre o foco e re-pede a tela
+    expect(derived.focusOpen).toBe(true);
+    expect(wakeLockWanted()).toBe(true);
 
     startTimer(bloco);
     expect(wakeLockWanted()).toBe(true);
@@ -245,11 +255,31 @@ describe('ciclo de vida', () => {
     expect(derived.timerBlock).toBeNull();
   });
 
-  it('sair do foco mantém o timer rodando', () => {
+  // A regra de 2026-09-12: enquanto o relógio corre, o foco é o compromisso. Quem precisa
+  // mexer no plano pausa antes — e a pausa é honesta (vira registro, o dia desliza).
+  it('sair do foco é recusado com o relógio correndo, e permitido pausado', () => {
     startTimer(bloco);
     closeFocus();
-    expect(derived.focusOpen).toBe(false);
+    expect(derived.focusOpen).toBe(true); // no-op: o bloco está rodando
     expect(derived.timerBlock).toBe(bloco);
+
+    pauseTimer(AGORA);
+    closeFocus();
+    expect(derived.focusOpen).toBe(false);
+    expect(derived.timerBlock).toBe(bloco); // o timer continua, pausado, na barra
+  });
+
+  it('voltar pro foco não mexe no bloco, na pausa aberta nem no ajuste do relógio', () => {
+    startTimer(bloco);
+    pauseTimer(AGORA);
+    closeFocus();
+    const pausadoEm = derived.timerPausedAt;
+    reopenFocus();
+    expect(derived.focusOpen).toBe(true);
+    expect(derived.timerBlock).toBe(bloco);
+    expect(derived.timerPausedAt).toBe(pausadoEm); // a pausa segue aberta: reabrir não é recomeçar
+    expect(state.pauses).toEqual({}); // e nada foi registrado ainda
+    expect(wakeLockWanted()).toBe(false); // pausado, a tela pode dormir
   });
 
   it('iniciar outro bloco substitui o anterior sem deixar watcher duplicado', () => {

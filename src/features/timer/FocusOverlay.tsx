@@ -19,7 +19,9 @@ import { quitHardcore } from '../../application/hardcore';
 import { pauseTimer, resumeTimer } from '../../application/pause';
 import { activePet, petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
-import { closeFocus } from '../../application/timer';
+import { isDayClosed } from '../../domain/checks';
+import { dk } from '../../domain/time';
+import { closeFocus, stopTimer } from '../../application/timer';
 import { petForm } from '../../domain/pets';
 import { coinsForStudyBlock } from '../../domain/progression';
 import { formatCompact } from '../../domain/settings';
@@ -32,7 +34,7 @@ import {
 } from '../../domain/timer';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
-import { useAppState } from '../../store/store';
+import { state, useAppState } from '../../store/store';
 import { HardcoreQuitModal } from './HardcoreModals';
 import { SiteBlockBadge } from './SiteBlockBadge';
 import { useSecondTick } from './useSecondTick';
@@ -94,6 +96,9 @@ export function FocusOverlay() {
   const waiting = p.phase === 'waiting';
   const paused = p.phase === 'paused';
   const th = strings.hardcore.focus;
+  // O dia pode ter sido encerrado por baixo (outro dispositivo): aí pausar é recusado, e sem
+  // isto não sobraria porta nenhuma — o "✕ Parar" está debaixo do overlay.
+  const travado = isDayClosed(state.closedDays, dk(now));
   const hcPet = hardcore ? petById(hardcore.pet) : null;
   const togglePause = () => {
     if (paused) {
@@ -111,9 +116,10 @@ export function FocusOverlay() {
           <span id="focus-clock">{formatClock(now)}</span>
           {hardcore ? (
             <span className="focus-hc-chip" id="focus-hardcore">{th.chip}</span>
-          ) : (
-            <button className="focus-exit" onClick={closeFocus}>{t.exit}</button>
-          )}
+          ) : paused ? (
+            /* Sair só existe PAUSADO: com o relógio correndo, o foco é o compromisso (ver `closeFocus`). */
+            <button className="focus-exit" onClick={() => closeFocus()}>{t.exit}</button>
+          ) : null}
         </div>
         {completed && now.getTime() - completed.at < (completed.cycle ? CYCLE_BANNER_MS : COMPLETED_BANNER_MS) && (
           completed.cycle ? (
@@ -178,11 +184,18 @@ export function FocusOverlay() {
           <div className="focus-next-name" id="focus-next-name">{next ? cleanBlockName(next.name) : t.endOfDay}</div>
           <div className="focus-next-dur" id="focus-next-dur">{next ? t.minutes(blockDurationMin(next)) : '—'}</div>
         </div>
-        {!hardcore && !waiting && (
+        {!hardcore && (
           <div className="focus-actions">
-            <button type="button" className="focus-pause" id="focus-pause" onClick={togglePause}>
-              {paused ? strings.timer.resume : strings.timer.pause}
-            </button>
+            {waiting || travado ? (
+              /* Antes da hora não há o que congelar: a saída desarma o timer, de graça. */
+              <button type="button" className="focus-pause" id="focus-cancel" onClick={() => stopTimer()}>
+                {t.cancel}
+              </button>
+            ) : (
+              <button type="button" className="focus-pause" id="focus-pause" onClick={togglePause}>
+                {paused ? strings.timer.resume : strings.timer.pause}
+              </button>
+            )}
           </div>
         )}
         {hardcore && (

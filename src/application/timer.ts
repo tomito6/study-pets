@@ -121,14 +121,16 @@ export function pauseRuntime(now: Date): void {
 /**
  * Retomou: o bloco em andamento passa a ser o regenerado (fim novo) e o relógio volta
  * a correr de onde parou — `endsAt` é o fim ajustado pela pausa real (ver `timerEnd`),
- * porque o plano só estica em minutos cheios.
+ * porque o plano só estica em minutos cheios. O foco volta junto: relógio correndo
+ * implica foco aberto (ver `closeFocus`).
  */
 export function resumeRuntime(block: StudyBlock, now: Date, endsAt: number | null = null): void {
   clearPause();
   derived.timerEndsAt = endsAt;
   derived.timerBlock = block;
+  derived.focusOpen = true;
   startWatcher();
-  if (derived.focusOpen) void requestWakeLock();
+  void requestWakeLock();
   syncBlocking(now);
   notify();
 }
@@ -157,6 +159,10 @@ export function watchVisibility(): void {
 
 /** Inicia o timer no bloco (sem validar — use `tryStartTimer` a partir da UI). */
 export function startTimer(block: StudyBlock, now: Date = new Date()): void {
+  // Começar OUTRO bloco com uma pausa aberta larga a pausa: registro é só de bloco que
+  // continuou (a mesma regra do "✕ Parar"). Silencioso, porém, isso some do histórico sem
+  // ninguém ver — e desde que o foco só se fecha pausado, é o estado normal da lista.
+  if (derived.timerPausedAt != null && derived.timerBlock) showToast(strings.timer.pauseDropped);
   derived.timerCompleted = null;
   runBlock(block);
   syncBlocking(now);
@@ -266,11 +272,39 @@ export function stopTimer(): void {
   notify();
 }
 
-/** "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo). No hardcore não existe. */
-export function closeFocus(): void {
+/**
+ * "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo).
+ *
+ * **Só pausado** (2026-09-12). Enquanto o relógio corre, o foco É o compromisso — sair
+ * dali não servia a nada que a própria tela não mostre (o próximo bloco, o ganho, o
+ * relógio), e servia a tudo que o app pede pra fazer de olhos abertos: mexer no plano no
+ * meio de um estudo. Quem precisa mexer pausa antes, e a pausa é honesta — vira registro
+ * e o dia desliza. Em espera a saída é "✕ Cancelar" (`stopTimer`), que desarma o timer:
+ * não há o que congelar antes da hora. No hardcore nada disso existe.
+ */
+export function closeFocus(now: Date = new Date()): void {
   if (!derived.focusOpen || derived.hardcore) return;
+  const block = derived.timerBlock;
+  if (block && timerProgress(block, now, derived.timerPausedAt, derived.timerEndsAt).phase !== 'paused') return;
   derived.focusOpen = false;
   releaseWakeLock();
+  notify();
+}
+
+/** O bloco em andamento é este? Por horário, como todo o resto do app (o objeto é outro a cada geração). */
+export const isTimerBlock = (b: Pick<StudyBlock, 'time' | 'endTime'>): boolean =>
+  !!derived.timerBlock && derived.timerBlock.time === b.time && derived.timerBlock.endTime === b.endTime;
+
+/**
+ * O foco volta, e só isso: não toca no bloco, na pausa aberta, no ajuste do relógio nem
+ * no watcher. É o espelho de `closeFocus` — e existe porque o caminho que parecia óbvio
+ * (tocar de novo na linha) passa por `runBlock`, que começa com `clearPause()` e jogava
+ * a pausa fora sem registrar. Pausado, o Wake Lock fica solto: a tela pode dormir.
+ */
+export function reopenFocus(): void {
+  if (!derived.timerBlock || derived.focusOpen) return;
+  derived.focusOpen = true;
+  if (derived.timerPausedAt == null) void requestWakeLock();
   notify();
 }
 

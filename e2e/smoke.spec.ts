@@ -574,6 +574,9 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).toHaveClass(/active/);
     await expect(page.locator('#timer-display')).toHaveText(/^1[45]:\d\d$/); // ~15 min restantes
 
+    // Sair do foco só existe PAUSADO (2026-09-12): com o relógio correndo, o foco é o compromisso.
+    await expect(page.locator('.focus-exit')).toHaveCount(0);
+    await page.locator('#focus-pause').click();
     await page.locator('.focus-exit').click();
     await expect(page.locator('#focus-overlay')).toBeHidden();
     await expect(page.locator('#timer-bar')).toHaveClass(/active/); // sair do foco não para o timer
@@ -609,9 +612,11 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-done')).toHaveText('✓ Estudo 3 concluído · +50 XP · +25 🪙');
     await expect(page.locator('#focus-overlay')).toBeVisible();
 
+    await page.locator('#focus-pause').click(); // pra sair do foco, pausa antes
     await page.locator('.focus-exit').click();
     await expect(estudo3.locator('.check')).toHaveClass(/checked/);
-    await expect(page.locator('#timer-bar')).toContainText('Pausa');
+    // No nome do bloco, não na barra inteira: "Pausado · 00:00" também contém "Pausa".
+    await expect(page.locator('#timer-block-name')).toHaveText('Pausa');
   });
 
   test('38. pausar o bloco congela o relógio; retomar estica o bloco, empurra o dia, e sobrevive a um reload', async ({ page }) => {
@@ -634,22 +639,28 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-time-sub')).toContainText('concluído');
     await expect(page.locator('#focus-time-big')).toHaveText('15:00');
     await expect(page.locator('#toast')).toContainText('Pausa de 3 min');
+    await expect(page.locator('.focus-scene-xp')).toHaveText('+50 XP'); // esticar pela pausa não muda o que o bloco vale
+
+    // Pra ver o plano é preciso pausar: rodando não há saída do foco (2026-09-12). Pausar de
+    // novo às 10:15 não registra nada por si — só retomar registra —, então a conta segue igual.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:15:00`));
+    await expect(page.locator('.focus-exit')).toHaveCount(0);
+    await page.locator('#focus-pause').click();
     await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-bar')).toContainText('Pausado');
     const esticado = page.locator('.block-row', { hasText: '10:00–10:28' });
     await expect(esticado).toBeVisible();
     await expect(esticado.locator('.block-paused')).toHaveText('⏸ 3 min');
-    await expect(esticado.locator('.block-xp')).toHaveText('+50 XP');
+    // O XP deste bloco vive no foco enquanto ele é o bloco do timer (a linha mostra o botão
+    // no lugar do selo): esticar pela pausa não muda o que ele vale.
+    await expect(esticado.locator('.block-action')).toHaveText('▶ Continuar');
     await expect(page.locator('.block-row', { hasText: '10:28–10:33' })).toContainText('Pausa');
-    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
 
     await expect
       .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
       .toEqual([{ at: '10:10', mins: 3 }]); // salvo na hora, sem debounce
 
-    // Pausar de novo pela barra e recarregar: a pausa fica no dispositivo, o timer volta pausado.
-    await page.clock.setFixedTime(new Date(`${DIA}T10:15:00`));
-    await page.locator('#timer-pause').click();
-    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    // Recarregar com a pausa aberta: ela fica no dispositivo, e o timer volta pausado na barra.
     await page.clock.setFixedTime(new Date(`${DIA}T10:20:00`));
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
@@ -658,11 +669,44 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).toContainText('Pausado · 05:00');
     await expect(page.locator('#timer-display')).toHaveText('13:00');
     await page.locator('#timer-pause').click(); // ▶ Retomar: mais 5 min no bloco, que agora vai até 10:33
-    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
+    // Retomar traz o foco de volta — relógio correndo implica foco aberto.
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await page.locator('#focus-pause').click(); // pausa de novo (sem retomar, nada é registrado) pra ver a lista
+    await page.locator('.focus-exit').click();
     await expect(page.locator('.block-row', { hasText: '10:00–10:33' }).locator('.block-paused')).toHaveText('⏸ 8 min');
     await expect
       .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
       .toEqual([{ at: '10:10', mins: 3 }, { at: '10:15', mins: 5 }]);
+  });
+
+  test('53. o botão da linha: "Iniciar" leva pro foco e "Continuar" traz de volta, sem comer a pausa', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+
+    // A ida deixou de ser segredo: o bloco de agora mostra o botão, em vez de só ser clicável.
+    const agora = page.locator('.block-row', { hasText: '10:00–10:25' });
+    const botao = agora.locator('.block-action');
+    await expect(botao).toHaveText('▶ Iniciar');
+    await expect(botao).toHaveAttribute('data-action', 'iniciar');
+    await botao.click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    // Pausar e sair: o mesmo botão, no mesmo lugar, vira a volta.
+    await page.locator('#focus-pause').click();
+    await page.locator('.focus-exit').click();
+    await expect(botao).toHaveText('▶ Continuar');
+    await expect(botao).toHaveAttribute('data-action', 'continuar');
+    await expect(agora.locator('.block-xp')).toHaveCount(0); // o botão fica no lugar do selo de XP
+
+    // E "Continuar" registra a pausa em vez de reiniciar o bloco (que a jogaria fora).
+    await page.clock.setFixedTime(new Date(`${DIA}T10:14:00`));
+    await botao.click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#toast')).toContainText('Pausa de 4 min');
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
+      .toEqual([{ at: '10:10', mins: 4 }]);
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // o relógio voltou de onde parou
   });
 
   /**
@@ -713,6 +757,9 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-hardcore')).toBeVisible();
+    // `.focus-exit` some em qualquer foco não pausado desde 2026-09-12 — o que distingue o
+    // hardcore é não ter NEM pausa NEM parar: a saída é só "Desistir…", e custa.
+    await expect(page.locator('#focus-pause')).toHaveCount(0); // sem "Pausar"
     await expect(page.locator('.focus-exit')).toHaveCount(0); // sem "Sair do foco"
     await expect(page.locator('#timer-bar .timer-stop')).toHaveCount(0); // nem "Parar"
 
@@ -903,15 +950,22 @@ test.describe('Study Pets — smoke', () => {
     await abrirApp(page, '10:10');
     await page.locator('#tour-skip').click();
 
-    // Um bloco rodando: a barra do timer gruda abaixo da barra do topo, e o painel
-    // tem que começar ABAIXO dela — senão o relógio do estudo some atrás dele.
-    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
-    await page.locator('.focus-exit').click();
-    await expect(page.locator('#timer-bar')).toHaveClass(/active/);
+    // O sininho precisa de linhas (o dia de ontem) E da barra do timer na tela — e encerrar
+    // o dia para um timer pausado, então o bloco vem depois, no dia seguinte.
     await checksDeEstudo(page).first().click();
     await page.locator('.finish-day-btn').click();
     await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+    await page.clock.setFixedTime(new Date('2026-09-03T09:10:00'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+
+    // Um bloco na barra: ela gruda abaixo da barra do topo, e o painel tem que começar
+    // ABAIXO dela — senão o relógio do estudo some atrás dele.
+    await page.locator('.block-row', { hasText: '09:00–09:25' }).locator('.block-name').click();
+    await page.locator('#focus-pause').click(); // sair do foco só existe pausado
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-bar')).toHaveClass(/active/);
 
     await page.locator('#notif-btn').click();
     const geo = await page.evaluate(() => ({
@@ -1507,6 +1561,7 @@ test.describe('Study Pets — smoke', () => {
       await expect(page.locator('#top-xp')).toBeVisible();
 
       await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+      await page.locator('#focus-pause').click(); // sair do foco só existe pausado
       await page.locator('.focus-exit').click();
       await expect(page.locator('#timer-bar')).toHaveClass(/active/);
 
