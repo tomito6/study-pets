@@ -136,6 +136,28 @@ documentos legais — e o CLAUDE.md pede pra **não** renomear o projeto na Verc
 o Authorized domain do Firebase Auth quebra o login com Google. Se mudar, vale plan próprio.
 
 
+## 13. O modo escuro vira o "Loft noturno"
+
+Pedido de 2026-09-12. O escuro de hoje é o tema original do app, herdado da primeira versão — nunca
+foi desenhado. A exploração das oito direções
+(`study-pets-cafe-de-casa/referencias/exploracao-8-estilos.html`) tem a **07 · Loft noturno** — "azul
+noite, chá verde e âmbar", "a cidade descansa lá fora" — e é essa que deve virar **a versão de estudar
+de noite**. Os valores já estão escritos lá, em `#sp-product.sp-loft`: fundo `#1b2632`, painel
+`#23313e`, texto `#e4eae6`, apagado `#adbbb9`, linha `#374753`, accent `#a8c9bc`, tinta sobre o accent
+`#1e322a`, âmbar `#d4ac83`, raio 16px.
+
+O caminho está aberto: nenhuma cor solta sobrou no CSS (tudo é token no `:root`) e um tema é só
+`:root[data-theme=…]` redefinindo tokens — o Café de casa provou isso.
+
+**Decidir:** (a) o loft **substitui** o escuro de hoje, ou entra como um terceiro tema e o herdado
+fica? (b) o quarto (`.room-card`, tokens `--room-*`) e o habitat do pet (`[data-habitat="campo"]`)
+ganham noite — lua e cidade no lugar de sol e morros? É cor dentro dos tokens que já existem, então
+cabe na regra, mas é desenho novo, não redefinição; (c) a exploração também mexia em **geometria**
+(timer de 72px, a cena atravessando as duas colunas, a agenda em duas colunas) — e a regra dos temas é
+"nunca geometria". Fica só a cor, ou o loft justifica a exceção? (d) entra sozinho pelo horário (de
+noite vira loft) ou continua escolha manual em Configurações → Aparência? Automático soa bonito e é
+exatamente o tipo de coisa que irrita quando erra.
+
 ---
 
 ## Como esse arquivo deve crescer
