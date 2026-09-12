@@ -1,0 +1,98 @@
+{
+  "repository": "https://github.com/tomito6/study-pets",
+  "commit": "e2904b55b450bef707ff086f7dbbfb3f95f151eb",
+  "resources": {
+    "assets/user.png": {
+      "url": "https://cdn.jsdelivr.net/gh/tomito6/study-pets@e2904b55b450bef707ff086f7dbbfb3f95f151eb/public/idle/user/0.png",
+      "sha256": "b341bacdaf1eae9b2d96e3790cb4b86491de3e99493fe9fb5813c3709b09d111"
+    },
+    "assets/cat.png": {
+      "url": "https://cdn.jsdelivr.net/gh/tomito6/study-pets@e2904b55b450bef707ff086f7dbbfb3f95f151eb/public/idle/pets/cat/0.png",
+      "sha256": "31fd91bc50067d2367b11133c6e748df1eefd5ac6d2405c248e1aa55edf792b2"
+    },
+    "assets/dog.png": {
+      "url": "https://cdn.jsdelivr.net/gh/tomito6/study-pets@e2904b55b450bef707ff086f7dbbfb3f95f151eb/public/idle/pets/dog/0.png",
+      "sha256": "7f33ea86d6f1bfa974abfe6b5a39fdf7fd092c7788fbd27fd99aa13ffb28ed6b"
+    },
+    "assets/dove.png": {
+      "url": "https://cdn.jsdelivr.net/gh/tomito6/study-pets@e2904b55b450bef707ff086f7dbbfb3f95f151eb/public/idle/pets/dove/0.png",
+      "sha256": "8663d219834583e4c09ad2cf971bf67267884a04067dcfb61f93ead18440b86b"
+    },
+    "fontes/713ca32c3c8b.woff2": {
+      "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2",
+      "sha256": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543"
+    },
+    "fontes/ebd7f0a79e32.woff2": {
+      "url": "https://fonts.gstatic.com/s/lora/v37/0QIvMX1D_JOuMwr7Iw.woff2",
+      "sha256": "ddb8c66035104e233fc024669183aad3738b6daa16deee2ebb1241bd0f98ace1"
+    },
+    "assets/floating-ui.core.umd.min.js": {
+      "url": "https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js",
+      "sha256": "6985ce661153c01d97f6be9babb6a9566f923c716c2b7fbead48fbb09f419ba8"
+    },
+    "assets/floating-ui.dom.umd.min.js": {
+      "url": "https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js",
+      "sha256": "b8199f76adccb9b17b3ab57124c42585dc19197127d1a5d19307d1983f80bd89"
+    },
+    "assets/lucide.js": {
+      "url": "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js",
+      "sha256": "aaf7d15ac9d1761b57d499578be3170f66c71641dd1b27470efd8ff74d6228a5"
+    },
+    "fontes/54a123c13be8.woff2": {
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBA.woff2",
+      "sha256": "e1896b13b2b1bb112fac2f9571bd6c40e118746e77a4511edbf43fbb41bf3e1e"
+    },
+    "fontes/37479ee61710.woff2": {
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbQ.woff2",
+      "sha256": "9964608a849396bd00c4bfd7034afe03486469dcf20b4f6b8cbdfdd310369951"
+    },
+    "fontes/16838be1ea21.woff2": {
+      "url": "https://fonts.gstatic.com/s/nunitosans/v19/pe0TMImSLYBIv1o4X1M8ce2xCx3yop4tQpF_MeTm0lfGWVpNn64CL7U8upHZIbMV51Q42ptCp7t1R-s.woff2",
+      "sha256": "29e3890496844a9ea81975c52771c587c872b4eb317026422d1995b88d21b57d"
+    },
+    "fontes/7a443241a287.woff2": {
+      "url": "https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2",
+      "sha256": "afec86997fdaf54af1f59358fa2c1e2a0f1d04146edad18e5cd141d0384a7548"
+    },
+    "fontes/98a0d4ac28a1.woff2": {
+      "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2",
+      "sha256": "0640890476fc1198ab4de571fb658de443c4d85b66466ec09534a8737ab1ce9d"
+    },
+    "fontes/LICENSE-dmsans.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/dmsans/OFL.txt",
+      "sha256": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1"
+    },
+    "fontes/LICENSE-lora.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/lora/OFL.txt",
+      "sha256": "1d9a970809ac804b582a6ce7f0ebc4e7fefcbfd7ff6299cad35ee656a21be716"
+    },
+    "fontes/LICENSE-dmmono.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/dmmono/OFL.txt",
+      "sha256": "2bada5ea45c3c63b7f1ea1f88ce9672c9e4f0c42b2c3b7378949084fe55a3066"
+    },
+    "fontes/LICENSE-nunitosans.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/nunitosans/OFL.txt",
+      "sha256": "efbb0c9e864cef973982d9a17567e6be5c3d1759695574586f3f18c7ecca064b"
+    },
+    "fontes/LICENSE-spacegrotesk.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/OFL.txt",
+      "sha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72"
+    },
+    "fontes/LICENSE-pressstart2p.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/pressstart2p/OFL.txt",
+      "sha256": "705960c3281a5765ecc0b59bd4ed7ca59eed165748076bc2fc3e8fdbfeb944b0"
+    },
+    "assets/LICENSE-lucide.txt": {
+      "url": "https://unpkg.com/lucide@1.17.0/LICENSE",
+      "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+    },
+    "assets/LICENSE-floating-ui-core.txt": {
+      "url": "https://unpkg.com/@floating-ui/core@1.7.3/LICENSE",
+      "sha256": "0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce"
+    },
+    "assets/LICENSE-floating-ui-dom.txt": {
+      "url": "https://unpkg.com/@floating-ui/dom@1.7.4/LICENSE",
+      "sha256": "0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce"
+    }
+  }
+}

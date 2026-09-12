@@ -1,0 +1,58 @@
+<div id="cp-cafe" aria-label="Café de casa: interação revisada">
+  <header class="cp-header">
+    <div class="cp-logo"><i data-lucide="paw-print" aria-hidden="true"></i> study pets<span>.</span></div>
+    <nav class="cp-nav" aria-label="Navegação principal">
+      <button type="button" data-page="day" aria-current="page"><i data-lucide="calendar-days" aria-hidden="true"></i>Meu dia</button>
+      <button type="button" data-page="pets"><i data-lucide="paw-print" aria-hidden="true"></i>Meus pets</button>
+      <button type="button" data-page="progress"><i data-lucide="chart-no-axes-column" aria-hidden="true"></i>Progresso</button>
+    </nav>
+    <span class="cp-xp"><i data-lucide="sparkles" aria-hidden="true"></i>1.240 XP</span>
+  </header>
+  <div class="cp-feedback" id="cp-feedback" role="status" hidden><span id="cp-feedback-text"></span><button type="button" id="cp-undo" hidden>Desfazer</button></div>
+  <div class="cp-live-session" id="cp-session-banner" hidden><span><b id="cp-banner-name">Pomodoro 2</b><span id="cp-banner-clock">25:00</span></span><button type="button" id="cp-return-focus">Voltar ao foco <i data-lucide="arrow-right" aria-hidden="true"></i></button></div>
+  <main class="cp-content">
+    <section id="cp-day" aria-label="Meu dia">
+      <div class="cp-welcome"><div><p class="cp-kicker">CAFÉ DE CASA</p><h2>Seu dia, do seu jeito.</h2></div><span class="cp-streak"><i data-lucide="flame" aria-hidden="true"></i>5 dias de constância</span></div>
+      <div class="cp-layout">
+        <div class="cp-work" id="cp-work" aria-label="Ordem da agenda e do próximo estudo">
+          <section class="cp-agenda" aria-label="Agenda do dia">
+            <div class="cp-section-heading"><h3>Organize seu dia</h3><button type="button" class="cp-primary" id="cp-add"><i data-lucide="plus" aria-hidden="true"></i>Nova atividade</button></div>
+            <div class="cp-datebar"><button type="button" class="cp-icon-button" id="cp-prev" aria-label="Dia anterior"><i data-lucide="chevron-left" aria-hidden="true"></i></button><span id="cp-date-label" aria-live="polite">Segunda, 7 de setembro</span><button type="button" class="cp-icon-button" id="cp-next-day" aria-label="Próximo dia"><i data-lucide="chevron-right" aria-hidden="true"></i></button></div>
+            <p id="cp-plan-overview" class="cp-plan-overview">3 pomodoros · 2 compromissos · 1 pausa</p>
+            <form id="cp-editor" class="cp-editor" hidden>
+              <h4 id="cp-editor-title">Nova atividade</h4>
+              <label class="cp-field cp-field-wide">Tipo<select id="cp-kind"><option value="study">Pomodoro</option><option value="event">Compromisso</option><option value="break">Pausa</option></select></label>
+              <label id="cp-name-field" class="cp-field cp-field-wide" hidden>Nome do compromisso<input id="cp-name" type="text" maxlength="60" placeholder="Ex.: Almoço, aula..."></label>
+              <label class="cp-field">Horário<input id="cp-time" type="time" required value="10:30"></label>
+              <label class="cp-field">Duração<select id="cp-duration"><option value="5">5 minutos</option><option value="15">15 minutos</option><option value="25" selected>25 minutos</option><option value="30">30 minutos</option><option value="45">45 minutos</option><option value="50">50 minutos</option><option value="60">60 minutos</option></select></label>
+              <p id="cp-form-error" class="cp-form-error" role="alert" hidden></p>
+              <div class="cp-form-actions"><button type="button" class="cp-primary" id="cp-save">Salvar atividade</button><button type="button" class="cp-secondary" id="cp-cancel-edit">Cancelar</button><button type="button" class="cp-remove" id="cp-remove" hidden>Remover</button></div>
+            </form>
+            <div id="cp-activities" class="cp-activities"></div>
+            <p id="cp-day-summary" class="cp-day-summary">1 de 3 pomodoros concluídos</p>
+          </section>
+        </div>
+        <div class="cp-side">
+          <section class="cp-next" aria-label="Próximo Pomodoro">
+            <div class="cp-next-copy"><p class="cp-kicker" id="cp-next-label">PRÓXIMO POMODORO · 09:30</p><h3 id="cp-next-name">Pomodoro 2</h3><p class="cp-next-duration" id="cp-next-duration"><i data-lucide="clock-3" aria-hidden="true"></i><span>25 min de estudo</span></p></div>
+            <button type="button" class="cp-primary cp-start" id="cp-start"><i data-lucide="play" aria-hidden="true"></i><span>Iniciar Pomodoro</span><i data-lucide="arrow-right" aria-hidden="true"></i></button>
+          </section>
+        <aside class="cp-companion" aria-label="Seu companheiro de estudo">
+          <div class="cp-room" role="img" aria-label="Personagem e pet em um cantinho com janela, planta e café">
+            <div class="cp-window"><div></div></div><div class="cp-room-floor"></div><div class="cp-rug"></div>
+            <div class="cp-room-plant"><b></b><b></b><b></b><span></span></div><div class="cp-table"><span class="cp-books"></span><span class="cp-mug"></span></div>
+            <img class="cp-person" src="assets/user.png" width="90" height="90" alt="">
+            <img class="cp-room-pet" id="cp-room-pet" src="assets/cat.png" width="70" height="70" alt="">
+          </div>
+          <div class="cp-pet-copy"><div class="cp-pet-heading"><h3 id="cp-pet-name">Mochi</h3><span id="cp-pet-level">Nível 4</span></div><p>Boa companhia para o seu próximo passo.</p><button type="button" class="cp-secondary cp-pet-link" data-go-pets>Ver meus pets <i data-lucide="arrow-right" aria-hidden="true"></i></button></div>
+          <p class="cp-gentle">Um café. Um bloco de estudo.<br>Um pouquinho de cada vez.</p>
+        </aside>
+        </div>
+      </div>
+    </section>
+    <section id="cp-pets" class="cp-other-page" aria-label="Meus pets" hidden><p class="cp-kicker">BOA COMPANHIA</p><h2>Quem estuda com você?</h2><p class="cp-page-sub">Escolha um companheiro para o seu cantinho.</p><div class="cp-pet-grid" id="cp-pet-grid"></div><button type="button" class="cp-secondary cp-back-day" data-go-day><i data-lucide="arrow-left" aria-hidden="true"></i>Voltar ao meu dia</button></section>
+    <section id="cp-progress" class="cp-other-page" aria-label="Progresso" hidden><p class="cp-kicker">CADA PASSO CONTA</p><h2>Você está construindo um hábito.</h2><p class="cp-page-sub">5 dias de constância. Continue no seu ritmo.</p><div class="cp-progress-paper"><h3>Seu dia em números</h3><div class="cp-progress-values"><div><strong id="cp-progress-blocks">1 de 3</strong><span>pomodoros concluídos</span></div><div><strong id="cp-progress-minutes">25 min</strong><span>de estudo concluído</span></div></div><p id="cp-progress-message">Pomodoro 1 concluído. Cada bloco é um avanço.</p></div><button type="button" class="cp-secondary cp-back-day" data-go-day><i data-lucide="arrow-left" aria-hidden="true"></i>Voltar ao meu dia</button></section>
+    <section id="cp-focus" class="cp-focus-page" aria-label="Pomodoro em andamento" hidden><div class="cp-focus-top"><span><span class="cp-live-dot"></span><span id="cp-focus-kind">Pomodoro em andamento</span></span><button type="button" class="cp-secondary" id="cp-exit-focus"><i data-lucide="arrow-left" aria-hidden="true"></i>Voltar à agenda</button></div><p class="cp-kicker">UMA COISA DE CADA VEZ</p><h2 id="cp-focus-name">Pomodoro 2</h2><div id="cp-focus-clock" class="cp-focus-clock" role="timer" aria-label="Tempo restante">25:00</div><p class="cp-focus-note">Seu pet está aqui com você.</p><img id="cp-focus-pet" src="assets/cat.png" alt="Seu companheiro de estudo" width="100" height="100"><p class="cp-focus-next" id="cp-focus-next">Depois: uma pausa de 5 minutos.</p></section>
+  </main>
+</div>
+<div class="cp-preview-caption">Café de casa · prévia interativa com dados de exemplo</div>
