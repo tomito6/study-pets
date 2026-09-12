@@ -105,6 +105,14 @@ segunda mantém a regra "nada de plano é salvo" e reaproveita tudo, mas precisa
 representar "parei às 15h e voltei às 17h"; (c) o que a aba Plano mostra durante um dia de tracker: a
 lista crescendo bloco a bloco, ou o foco como tela principal?
 
+**Desenhado em 2026-09-12** (branch `feat/modo-tracker`): as três perguntas estão respondidas em
+`plans/2026-09-12_1830_modo-tracker.md`, com o protótipo em `prototypes/modo-tracker.html`. Resumo: modo
+**do dia** (não do app), o dia sobrevive **pelas janelas** com a marca e o ritmo na própria janela, e a aba
+Plano mostra a lista de sempre — mas a tela principal do modo é o **foco**. A saída (b) que este item chamava
+de barata **não funciona sozinha**: medido no gerador, ela reproduz o dia em 41% dos instantes de parada e em
+57% faz sumir um bloco que a pessoa marcou. Precisa de quatro desligamentos no `planner.ts`, que só correm
+numa janela marcada. **Sobraram sete perguntas pro Tomi** — estão no fim do protótipo e no fim do plan.
+
 ## 11. O vocabulário (e o nome) presumem estudo
 
 "Janelas de estudo", "Estudo 3", "Encaixar estudo", "meta diária de estudo", `studyWindows`,
