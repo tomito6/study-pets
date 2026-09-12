@@ -9,6 +9,11 @@
   adversarial encarregado de derrubar os próprios achados, mais um crítico de
   completude. 91 achados, 4 refutados, 71 ajustados — quase todos pra baixo.
 
+  Atualizado em 2026-09-12: a Fase 0 e a Fase 1 foram executadas (10 commits na main).
+  As ações feitas estão marcadas com .feito, as que dependem do Tomás com .sua, e a seção
+  "O que falta" no topo é a lista viva de pendências DESTE trabalho — ela existe aqui, e não
+  no PENDENCIAS.md, pra não brigar com o que outras conversas escrevem naquele arquivo.
+
   Como atualizar: editar este arquivo à mão. Os 91 achados vivem no
   <script type="application/json" id="dados"> no fim do arquivo, cada um com
   tipo (juridico | contratual | produto), gravidade, quando aplica e esforço.
@@ -155,6 +160,31 @@ section > h2{font-size:26px;letter-spacing:-.01em;margin-bottom:12px}
 .chk b{display:block;font-weight:500;font-size:15.5px;margin-bottom:4px}
 .chk span{font-size:14.5px;color:var(--muted);line-height:1.5}
 
+/* ---------- o estado de cada ação ---------- */
+/* Uma ação feita não some: ela vira prova de que o caminho anda. O que muda é o peso —
+   quem abre a página tem que enxergar em dois segundos o que ainda depende dele. */
+.acao.feito{opacity:.55}
+.acao.feito .acao-t{text-decoration:line-through;text-decoration-color:var(--line-strong);text-decoration-thickness:1px}
+.acao.feito .acao-t::before{content:"✓ ";text-decoration:none;color:var(--accent);font-weight:700;display:inline-block}
+.acao.feito .custo{color:var(--accent)}
+.acao.sua{background:var(--sev-medio-bg);margin:0 -14px;padding-left:14px;padding-right:14px;border-radius:2px;border-bottom-color:transparent}
+.acao.sua .acao-t{color:var(--sev-medio)}
+.acao.sua .acao-t::before{content:"● ";color:var(--sev-medio)}
+.acao.sua .custo{color:var(--sev-medio);font-weight:500}
+.fase.pronta .bolha{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:500}
+
+/* ---------- o que falta ---------- */
+.falta-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:24px}
+.falta-card{background:var(--bg2);border:1px solid var(--line);border-top:3px solid var(--fc);border-radius:4px;padding:16px 18px 18px;box-shadow:var(--shadow)}
+.f-sua{--fc:var(--sev-medio)} .f-codigo{--fc:var(--accent)} .f-espera{--fc:var(--muted)}
+.falta-card h3{font-family:var(--font-title);font-size:16px;margin:0 0 4px}
+.falta-card .quem{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fc);font-weight:500;margin-bottom:10px}
+.falta-card ol,.falta-card ul{margin:0;padding-left:18px}
+.falta-card li{font-size:14px;line-height:1.55;color:var(--ink-soft);margin-bottom:8px}
+.falta-card li:last-child{margin-bottom:0}
+.falta-card li b{color:var(--ink);font-weight:500}
+.falta-card li code{font-family:var(--font-mono);font-size:12px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--ink)}
+
 /* ---------- os três tipos ---------- */
 .tipos{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:24px}
 .tipo-card{background:var(--bg2);border:1px solid var(--line);border-top:3px solid var(--tc);
@@ -231,12 +261,12 @@ footer b{color:var(--ink-soft);font-weight:500}
       Study Pets · revisão jurídica
     </div>
     <h1>Do seu app para o app de outras pessoas</h1>
-    <p class="dek">Noventa e um achados, nove áreas do direito, um cético encarregado de derrubar cada um. E a conclusão honesta é que <em>quase nada aqui é encrenca jurídica</em>: dos sete achados graves, quatro são bugs, e os outros três são a mesma página que falta.</p>
+    <p class="dek">Noventa e um achados, nove áreas do direito, um cético encarregado de derrubar cada um — e, um dia depois, a Fase 0 e a Fase 1 feitas. <em>Dos sete achados graves, cinco estão resolvidos.</em> O que sobrou cabe nesta página, e a maior parte depende de três informações que só você tem.</p>
     <div class="numeros">
-      <div class="num destaque"><b>4</b><span>bugs graves — é aqui que dói primeiro</span></div>
-      <div class="num"><b>3</b><span>graves de lei e contrato, e os três são a mesma página faltando</span></div>
-      <div class="num"><b>50</b><span>achados que se resolvem em minutos</span></div>
-      <div class="num"><b>1</b><span>que pede advogado de verdade</span></div>
+      <div class="num destaque"><b>3</b><span>informações que só você tem — e que destravam o resto</span></div>
+      <div class="num"><b>5</b><span>dos 7 achados graves, resolvidos e com teste</span></div>
+      <div class="num"><b>2</b><span>que sobraram, os dois de produto: backup e o teto de 100 do login</span></div>
+      <div class="num"><b>10</b><span>commits, 938 testes e 53 de ponta a ponta, verdes</span></div>
       <div class="num"><b>0</b><span>que te expõem hoje, com um usuário só</span></div>
     </div>
   </div>
@@ -245,12 +275,64 @@ footer b{color:var(--ink-soft);font-weight:500}
 <main>
 <div class="wrap">
 
+  <section id="falta">
+    <div class="eyebrow">Atualizado em 12 de setembro de 2026</div>
+    <h2>O que falta — e de quem depende</h2>
+    <p class="intro">A Fase 0 e a Fase 1 foram feitas em 11 de setembro: dez commits, tudo na <code>main</code> e no ar. As três páginas legais respondem em <code>/legal/</code>, o app parou de mandar o IP de quem abre pro Google, e apagar o histórico deixou de ser definitivo. <strong>O gargalo agora não é trabalho — são três informações que só você tem.</strong></p>
+    <div class="falta-grid">
+
+      <div class="falta-card f-sua">
+        <div class="quem">Só você pode</div>
+        <h3>As três informações, e dois cliques</h3>
+        <ol>
+          <li><b>O endereço postal.</b> É o <i lang="de">ladungsfähige Anschrift</i> do § 5 DDG — onde você pode ser notificado. Caixa postal não vale. Aparece em <code>privacidade.html</code> e <code>impressum.html</code>.</li>
+          <li><b>Um e-mail de contato do projeto.</b> Não o da TUM, que morre três meses depois da formatura. Ele fecha também o canal do art. 12 do GDPR — hoje não existe um único <code>mailto:</code> no app.</li>
+          <li><b>A região do Firestore.</b> Um clique: Firebase Console → Firestore Database, o nome aparece no topo. Se for a padrão <code>us-central</code>, seus dados moram nos EUA e a política precisa dizer isso.</li>
+        </ol>
+        <ul style="margin-top:12px">
+          <li><b>Publicar a tela OAuth</b> (Google Cloud Console → Google Auth Platform). Enquanto estiver em “Testing”, o usuário de número 101 não entra. Faça depois de preencher os três acima, porque o console pede a URL da política.</li>
+          <li><b>Trocar o <code>git config user.email</code></b>, que ainda assina 190 commits com o seu Kennung da TUM.</li>
+          <li><b>Ler a frase da Auflage</b> do seu cartão de residência. Decide a conversa inteira de monetização, e leva dois minutos.</li>
+        </ul>
+      </div>
+
+      <div class="falta-card f-codigo">
+        <div class="quem">Dá pra fazer no código</div>
+        <h3>Oito coisas, quase todas de minutos</h3>
+        <ol>
+          <li><b>A política diz que o app não apaga nada sozinho</b> — mas a rede de segurança guarda o histórico apagado por 30 dias. É retenção não declarada, num documento publicado.</li>
+          <li><b>A política diz que a extensão não envia nada</b> — e a tela de bloqueio busca o sprite do pet no seu servidor a cada 250 ms. Mandar os PNGs como <code>data:</code> no payload faz a frase virar verdade.</li>
+          <li><b>O cache local do Firestore não é limpo</b> ao sair nem ao apagar a conta: num computador compartilhado, o próximo lê tudo pelo DevTools. É o maior buraco do art. 17 que sobrou.</li>
+          <li><b>As páginas legais pedem indexação</b> (<code>robots: index, follow</code>) estando com a tarja de rascunho — e não existe <code>robots.txt</code>.</li>
+          <li><b>“Restaurar de um arquivo” troca a conta inteira</b> sem confirmar e sem tirar foto antes. Um backup válido porém antigo entra direto.</li>
+          <li><b>O “Baixar meus dados” não inclui</b> o que o Firebase Auth guarda (e-mail, identificador).</li>
+          <li><b>A extensão aceita <code>until</code> sem teto</b> e não confere quem manda o comando.</li>
+          <li><b>Quatro textos ainda dizem que o app não importa</b> — inclusive o registro do art. 30, que é documento de conformidade.</li>
+        </ol>
+      </div>
+
+      <div class="falta-card f-espera">
+        <div class="quem">Espera cartão ou gente usando</div>
+        <h3>Nada aqui é urgente hoje</h3>
+        <ul>
+          <li><b>Firebase Blaze</b>, com orçamento e alerta, e o <b>backup agendado do Firestore</b>. É o único item que fecha o buraco de verdade — a rede de segurança e a importação vivem as duas do lado do cliente, e nenhuma sobrevive à perda do documento no Google.</li>
+          <li><b>Vercel Pro</b>, pelo contrato de operador do art. 28 (o DPA não cobre o Hobby, que além disso é declaradamente não comercial).</li>
+          <li><b>A extensão na Chrome Web Store</b>: conta de desenvolvedor paga, verificação de identidade, e reduzir as permissões antes.</li>
+          <li><b>Prazo de retenção pra conta abandonada.</b> A proposta está escrita no registro do art. 30 e <b>não</b> foi para a política, porque o código ainda não faz.</li>
+          <li><b>Reduzir as escritas de baixo valor</b> no Firestore. 20 mil por dia é o teto real de usuários.</li>
+        </ul>
+      </div>
+
+    </div>
+    <p class="intro" style="margin-top:20px">Fora dessas, sobram miudezas com prazo próprio: créditos de licença do Firebase e do React, o logo do Google redesenhado à mão, as sugestões de nome de pet que são personagens de obras conhecidas, e a revisão do calendário que vem com tudo pré-marcado. E uma que não é do app: <strong>esta página está versionada num repositório público</strong> e discute seu título de residência, sua apólice e sua exposição patrimonial — vale decidir se o repositório vira privado ou se ela sai do git.</p>
+  </section>
+
   <section id="hoje">
     <div class="eyebrow">Onde você está</div>
-    <h2>Você não está num projeto privado. Está num limbo.</h2>
-    <p class="intro">A proteção que você tem hoje é uma só: existe um usuário, e ele é você. Isso é o que mantém o GDPR fora da conversa — a exceção de atividade puramente pessoal. É uma proteção real e vale bastante.</p>
-    <p class="intro">Só que ela não está na sua mão. O app está no ar, sem <code style="font-family:var(--font-mono);font-size:13px">robots.txt</code> e sem <code style="font-family:var(--font-mono);font-size:13px">noindex</code>, indexável por buscador, e não existe filtro nenhum de quem cria conta — nem lista de e-mail, nem convite, nada. <strong>No minuto em que um estranho clicar em “Criar conta”, a exceção acaba e você descobre depois.</strong> Hoje você tem o ônus de um app pessoal e o risco de um app público.</p>
-    <p class="intro">O que este plano propõe é sair do limbo pelo lado bom: fechar as quatro ou cinco coisas que faltam e abrir de propósito, sabendo o dia.</p>
+    <h2>Saiu do limbo pela metade</h2>
+    <p class="intro">A proteção que você tem hoje continua sendo uma só: existe um usuário, e ele é você — a exceção de atividade puramente pessoal do GDPR. Ela vale bastante, e não está na sua mão: o app segue no ar, indexável, e qualquer pessoa com o link cria conta. <strong>No minuto em que um estranho clicar em “Criar conta”, a exceção acaba e você descobre depois.</strong></p>
+    <p class="intro">A diferença em relação a ontem é que agora existe o que mostrar a esse estranho. Política, termos e identificação estão publicadas — <em>com a tarja dizendo que estão incompletas</em>, o que é honesto e temporário. Preenchidos os três campos, some a tarja e o portão está aberto de verdade.</p>
+    <p class="intro">O que este plano continua propondo: abrir <strong>de propósito, sabendo o dia</strong>, em vez de descobrir depois.</p>
   </section>
 
   <section id="tipos">
@@ -280,86 +362,86 @@ footer b{color:var(--ink-soft);font-weight:500}
 
     <div class="trilha">
 
-      <div class="fase agora">
+      <div class="fase pronta">
         <div class="marca-fase"><div class="bolha">0</div><div class="quando-fase">este<br>fim de semana</div></div>
         <div class="corpo-fase">
           <h3>Proteger o que já existe</h3>
           <p class="destrava"><b>Destrava:</b> nada jurídico. Destrava você não perder o Study Pets inteiro num dia ruim de rede — que é, honestamente, o risco mais provável desta lista toda.</p>
           <div class="acoes">
-            <div class="acao trava">
+            <div class="acao trava feito">
               <div class="acao-t">Travar o save quando o carregamento falha</div>
               <div class="acao-c">Hoje, se o <code>users.load</code> lançar erro, o <code>catch</code> em <code>session.ts:88</code> só faz um <code>console.error</code> e um toast de 2,5 s. O app renderiza vazio, sem abrir o onboarding, e qualquer um dos 26 <code>scheduleSave()</code> grava esse vazio por cima do seu histórico — com <code>setDoc</code> sem merge. Existe até um caminho com zero cliques: o <code>resumeHardcoreOnBoot</code> aplica penalidade e chama <code>saveNow()</code>. A trava já está escrita: chame <code>blockSaves(true)</code> no catch e <code>blockSaves(false)</code> só depois de um hydrate bem-sucedido. E mova o <code>subscribeRemote</code> pra antes do <code>initAfterLoad</code>, pro snapshot poder te resgatar.</div>
-              <div class="custo">~5 linhas</div>
+              <div class="custo">feito</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Completar o <code style="font-family:var(--font-mono);font-size:13px">resetToLoggedOut</code></div>
               <div class="acao-c">Ele limpa checks, events, config, pets e pausas — mas deixa <code>eventSeries</code>, <code>groups</code>, <code>windowOverrides</code>, <code>avatar</code> e <code>tutorialSeen</code> com o conteúdo do usuário anterior (<code>session.ts:127</code>). Num navegador compartilhado, com o load do segundo usuário falhando, as aulas e consultas que vieram do <code>.ics</code> de uma pessoa são gravadas no documento de outra. Deixa de ser durabilidade e vira confidencialidade.</div>
-              <div class="custo">1 linha</div>
+              <div class="custo">feito</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Baixar seus dados hoje — e virar rotina</div>
               <div class="acao-c">Não existe backup: o PITR e o backup agendado do Firestore exigem faturamento ativo, e você está no Spark. O botão “Baixar (JSON)” já existe em Configurações → Geral. Enquanto a Fase 2 não chega, ele é o backup.</div>
-              <div class="custo">2 min</div>
+              <div class="custo">virou automático</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Desarmar o “Cancelar sessão”</div>
               <div class="acao-c">Um clique apaga meses, sem palavra digitada, com um nome que em qualquer outro app significa fazer logout. Em <code>DangerModals.tsx</code>: oferecer o <code>exportMyData()</code> logo acima do botão, e renomear pra “Apagar todo o histórico”.</div>
-              <div class="custo">minutos</div>
+              <div class="custo">feito</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Auto-hospedar as quatro fontes</div>
               <div class="acao-c">O <code>index.html</code> puxa DM Sans, DM Mono, Lora e Press Start 2P do CDN do Google, com <code>preconnect</code>, antes de qualquer tela — e manda o IP de todo visitante pro Google. É o caso do LG München I (3 O 17493/20). As quatro são SIL OFL: baixe os <code>.woff2</code> pra <code>public/fonts/</code>, escreva os <code>@font-face</code> e apague os três links. Mata o assunto e ainda tira dois handshakes TLS da primeira pintura.</div>
-              <div class="custo">~1 hora</div>
+              <div class="custo">feito</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Tirar “Pomodoro” da vitrine</div>
               <div class="acao-c">A marca da UE nº 011903242 sobreviveu ao processo de caducidade justamente na classe 9, para <i>downloadable application software</i> — confirmado pelo Tribunal Geral em 19/01/2022 (T-76/21). Você está limpo nos três gatilhos duros (o app não se chama Pomodoro, o domínio não tem, não há tomate nenhum), mas a palavra está no chip da tela de login (<code>strings.ts:24</code>) e na <code>description</code> do manifest — que é exatamente o campo que virou descrição de loja no caso do “Pomodoro One”, obrigado a virar “Tomato One”.</div>
-              <div class="custo">5 min</div>
+              <div class="custo">feito</div>
             </div>
-            <div class="acao">
+            <div class="acao sua">
               <div class="acao-t">Parar de assinar commits com a TUM</div>
               <div class="acao-c">Os 177 commits do repositório público estão assinados com <code>ge37yoh@mytum.de</code> — seu Kennung, que é o login de todos os serviços da universidade. Não é senha, mas é metade de uma credencial, exposta pra sempre. Há também um <code>t.spielmann+study@tum.de</code> em <code>tests/auth.test.ts:8</code>. Troque o <code>git config user.email</code> para o endereço de contato do projeto — e lembre que o mytum morre três meses depois da formatura.</div>
-              <div class="custo">2 min</div>
+              <div class="custo">você · 2 min</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="fase">
+      <div class="fase pronta">
         <div class="marca-fase"><div class="bolha">1</div><div class="quando-fase">antes de<br>mandar o link</div></div>
         <div class="corpo-fase">
           <h3>O portão</h3>
           <p class="destrava"><b>Destrava:</b> tudo. Uma página de privacidade sozinha resolve cinco obrigações diferentes — e sem ela você não publica a extensão, não publica a tela do Google e não pode, honestamente, mandar o link pra ninguém.</p>
           <div class="acoes">
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Política de privacidade em <code style="font-family:var(--font-mono);font-size:13px">/privacidade</code></div>
               <div class="acao-c">Não é só a lei: você já está debaixo de dois contratos que exigem. O <b>GCP ToS §3.2</b> joga em você o dever de avisar e obter consentimento — o Firestore e o Auth caem nele. E o <b>Google APIs ToS §3(d)</b>, aceito só por carregar as fontes do CDN, exige política de privacidade com essas palavras. Diga o que é guardado (e-mail e nome pelo Auth; checks, eventos importados, nomes de pets, grupos, config no Firestore), quem processa e como apagar — e cite os botões “Baixar meus dados” e “Apagar conta”, que já existem e são um ponto forte seu.</div>
-              <div class="custo">algumas horas</div>
+              <div class="custo">falta preencher</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Termos de uso curtos</div>
               <div class="acao-c">Serviço gratuito também é contrato. O que interessa: dizer que o app não garante disponibilidade nem preservação de dado, e cobrir o §2(a) do Google APIs ToS, que exige que você repasse obrigações aos seus usuários. Existem limites que nem o termo mais bem escrito afasta — dolo e culpa grave —, e tudo bem.</div>
-              <div class="custo">algumas horas</div>
+              <div class="custo">falta preencher</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Identificação do responsável (Impressum)</div>
               <div class="acao-c">Alemanha, § 5 DDG: nome completo, endereço postal onde você possa ser notificado, e-mail. O incômodo real é publicar o endereço de Munique — é isso que <i>ladungsfähige Anschrift</i> quer dizer. O mesmo bloco serve de canal de contato do Art. 12 do GDPR, então são dois deveres numa página.</div>
-              <div class="custo">30 min</div>
+              <div class="custo">falta preencher</div>
             </div>
-            <div class="acao">
+            <div class="acao sua">
               <div class="acao-t">Publicar a tela de consentimento do Google</div>
               <div class="acao-c">Todo projeto OAuth nasce em “Testing”, com teto rígido de 100 usuários listados um a um. Se estiver assim, o amigo de número 101 recebe <code>access_denied</code> e você descobre pelo “não consigo entrar”. Com escopos básicos (nome, e-mail, perfil) publica na hora, sem revisão do Google. É console, não código.</div>
-              <div class="custo">10 min</div>
+              <div class="custo">você · 10 min</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Perguntar a idade no onboarding</div>
               <div class="acao-c">Hoje nada pergunta, e o público natural de um app de estudo inclui gente de 15 e 16 anos. Na Alemanha o corte do Art. 8 do GDPR é 16; no Brasil, o ECA e a LGPD tratam criança e adolescente em regime próprio. Um campo no primeiro passo resolve, e cabe bem no tom do onboarding que você já tem.</div>
-              <div class="custo">1 hora</div>
+              <div class="custo">feito</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Um <code style="font-family:var(--font-mono);font-size:13px">LICENSE</code> no repositório</div>
               <div class="acao-c">Repositório público sem licença significa, por padrão, que ninguém pode usar nada — e que você não pode aceitar contribuição com segurança. Se a ideia é “ajudar outros estudantes”, escolher a licença é parte disso. MIT se quiser que qualquer um use; AGPL se quiser que melhorias voltem.</div>
-              <div class="custo">5 min</div>
+              <div class="custo">decidido: sem licença</div>
             </div>
           </div>
         </div>
@@ -371,25 +453,25 @@ footer b{color:var(--ink-soft);font-weight:500}
           <h3>Quando virar de verdade</h3>
           <p class="destrava"><b>Destrava:</b> o app não travar no dia em que der certo. Nada aqui é urgente com dez usuários; tudo aqui dói com quinhentos.</p>
           <div class="acoes">
-            <div class="acao">
+            <div class="acao sua">
               <div class="acao-t">Firebase Blaze, com orçamento e alerta</div>
               <div class="acao-c">A cota gratuita de 20 mil escritas por dia é o teto real de usuários. Estourou, o Firestore devolve <code>RESOURCE_EXHAUSTED</code> e o app vira local-only até a meia-noite do Pacífico — quem trocar de aparelho nesse intervalo perde o dia. O Blaze não tem limite de gasto automático, então o alerta de orçamento é o que existe. Antes disso: pare de salvar na hora o que não precisa (<code>tutorialSeen</code>, <code>avatar</code>, notificações).</div>
-              <div class="custo">1 hora</div>
+              <div class="custo">você · cartão</div>
             </div>
-            <div class="acao">
+            <div class="acao sua">
               <div class="acao-t">Backup agendado do Firestore</div>
               <div class="acao-c">Só existe com faturamento ativo — ou seja, vem de graça junto com o Blaze. Recuperação a ponto no tempo, janela de 7 dias. É o que substitui o snippet do DevTools.</div>
-              <div class="custo">20 min</div>
+              <div class="custo">você · cartão</div>
             </div>
-            <div class="acao">
+            <div class="acao sua">
               <div class="acao-t">Vercel Pro</div>
               <div class="acao-c">Resolve duas coisas de uma vez: o DPA da Vercel (o contrato de operador do Art. 28) só vale para Pro e Enterprise, e o plano Hobby é declaradamente para uso não comercial. A transferência em si já está coberta — a Vercel é certificada no EU-US Data Privacy Framework. Falta o contrato, não a garantia.</div>
-              <div class="custo">minutos + assinatura</div>
+              <div class="custo">você · cartão</div>
             </div>
-            <div class="acao">
+            <div class="acao feito">
               <div class="acao-t">Duas páginas pra você mesmo</div>
               <div class="acao-c">O registro do Art. 30 (que dado você trata, por quê, com quem, por quanto tempo) e um procedimento de incidente (como você percebe, o que faz nas 72 horas, como avisa). Ninguém vai te pedir amanhã. Mas se pedirem um dia, escrever na hora é impossível — e escrever agora leva uma tarde.</div>
-              <div class="custo">uma tarde</div>
+              <div class="custo">feito</div>
             </div>
             <div class="acao">
               <div class="acao-t">Extensão na Chrome Web Store</div>
