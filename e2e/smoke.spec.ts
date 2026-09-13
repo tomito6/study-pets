@@ -1978,4 +1978,54 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row', { hasText: '10:00–10:12' })).toBeVisible();
     await expect(page.locator('#today-xp-val')).toContainText('+24 XP');
   });
+
+  // O modo AO VIVO (2026-09-13): o dia começa quando você aperta Começar, e um pomodoro
+  // emenda no outro. Nada é montado antes.
+  test('55. modo ao vivo: o dia nasce vazio, Começar abre a corrida e a emenda cresce sozinha', async ({ page }) => {
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+    // Dia de rotina: o plano vem montado.
+    await expect(page.locator('.block-row').first()).toBeVisible();
+
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+
+    // O dia ao vivo nasce SEM plano — e não pode dizer "Dia livre", que é folga.
+    await expect(page.locator('.block-row')).toHaveCount(0);
+    await expect(page.locator('.empty-day')).toHaveCount(0);
+    await expect(page.locator('#live-start')).toBeVisible();
+    await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo');
+    await expect(page.locator('#live-rhythm')).toContainText('25 · 5');
+
+    // Começar abre a corrida: um bloco só, do minuto de agora até o fim do pomodoro.
+    // (a lista continua no DOM, atrás do overlay)
+    await page.locator('#live-start-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toContainText('Estudo 1');
+    await expect(page.locator('.block-row', { hasText: '09:12–09:37' })).toHaveCount(1);
+    // E nada de estudo além dele: o resto do dia não aconteceu. A refeição das 13h fica,
+    // porque é um compromisso de verdade: o gerador emite bloqueios que caem depois da janela.
+    await expect(page.locator('.block-row')).toHaveCount(2);
+    await expect(page.locator('.block-row', { hasText: 'Almoço' })).toHaveCount(1);
+  });
+
+  test('55b. voltar pra rotina devolve o resto do dia, e a corrida fica', async ({ page }) => {
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+    await page.locator('#live-start-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    // Para no meio: o bloco entra com os minutos que passaram (aqui, o primeiro minuto).
+    await page.locator('#focus-stop').click();
+    await page.locator('#stop-here-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-rotina').click();
+    // O dia volta a ter plano, e o começo continua sendo o da corrida.
+    await expect(page.locator('#day-windows-btn')).not.toContainText('Ao vivo');
+    expect(await page.locator('.block-row').count()).toBeGreaterThan(1);
+  });
 });

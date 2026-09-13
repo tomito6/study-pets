@@ -371,6 +371,32 @@
   .stop-door .sd-s{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;}
   .stop-back{justify-content:center;}
   .stop-back-btn{background:none;border:0;color:var(--accent);font-size:13px;font-family:var(--font-ui);cursor:pointer;padding:4px;}
+
+  /* ── o modo do dia ─────────────────────────────────────────────────── */
+  /* Os dois chips no topo do modal: é aqui que o app já decide as outras coisas do dia. */
+  .dw-mode{display:flex;gap:6px;margin:0 0 8px;}
+  .dm-btn{flex:1;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);
+    color:var(--muted);font-size:12.5px;padding:8px 4px;font-family:var(--font-ui);cursor:pointer;}
+  .dm-btn.on{background:var(--accent-wash);border-color:var(--accent-border);color:var(--accent);font-weight:600;}
+  .dw-mode-sub{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 14px;}
+  /* O botão da barra do dia num dia ao vivo. Mais curto que os dois de rotina: medido,
+     "⏱ Ao vivo" tem 73px contra 130px de "🕘 Janelas · editado". */
+  .add-event-btn.live{border-color:var(--accent-border);color:var(--accent);background:var(--accent-wash);font-weight:600;}
+
+  /* ── o cartão Começar ──────────────────────────────────────────────── */
+  /* Sem tracejado de propósito: pontilhado lê como ausência, e isto é um começo. */
+  .live-start{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);
+    padding:26px 22px;margin:10px 0 0;text-align:center;}
+  .ls-kicker{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .ls-title{font-family:var(--font-title);font-size:22px;font-weight:600;margin:7px 0 16px;line-height:1.25;}
+  .ls-rhythm{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hairline);
+    border-bottom:1px solid var(--hairline);padding:11px 2px;margin-bottom:16px;}
+  .ls-rk{font-size:12px;color:var(--muted);}
+  .ls-rv{font-family:var(--font-mono);font-size:14.5px;color:var(--text);}
+  .ls-btn{width:100%;height:48px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+    font-size:14px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+  .ls-btn:hover{opacity:.92;}
+  .ls-note{font-size:12px;color:var(--muted);line-height:1.5;margin:13px 0 0;}
   .check svg{width:10px;height:10px;display:none;}
   .check.checked svg{display:block;}
   .block-time{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:95px;}

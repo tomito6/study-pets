@@ -7,7 +7,7 @@ import { canMoveEvents, findEventEditTarget, moveEvent, moveNeedsScope } from '.
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { hardcoreEnabled } from '../../application/hardcore';
-import { blocksForDay, computeStatsNow, dateForWeekDay } from '../../application/plan';
+import { blocksForDay, computeStatsNow, dateForWeekDay, dayModeOf } from '../../application/plan';
 import { continueBlock } from '../../application/pause';
 import { clearStartRequest, isTimerBlock, startContextFor, tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
@@ -36,6 +36,7 @@ import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { EventDragGhost } from './EventDragGhost';
+import { LiveStartCard, showLiveStart } from './LiveStartCard';
 import { useMinuteTick } from './useMinuteTick';
 import { WeekView } from './WeekView';
 
@@ -194,6 +195,9 @@ export function PlanTab() {
   const canWindows = loaded && canEditDayWindows(viewKey, now).ok;
   const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
   const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
+  const aoVivo = loaded && dayModeOf(viewKey) === 'live';
+  // O cartão só aparece com nada rodando: com o relógio correndo quem está na frente é o foco.
+  const mostrarComecar = aoVivo && showLiveStart('live', viewKey, timerBlock, now);
 
   // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
   const selection = useGroupSelection({
@@ -300,6 +304,11 @@ export function PlanTab() {
 
   if (!loaded) return null;
 
+  // Num dia ao vivo o cartão Começar ocupa o lugar da frase — e "🌴 Dia livre" ali diria
+  // a coisa errada: o dia não é folga, é um dia que ainda não começou.
+  const vazio = mostrarComecar
+    ? null
+    : { label: rest === 'weekend' ? t.freeWeekend : t.freeDay, hint: canWindows ? t.freeDayHint : null };
   const stats = computeStatsNow(now);
   const { eD, eT, pD, pT } = dayProgress(viewKey, blocks);
 
@@ -352,11 +361,11 @@ export function PlanTab() {
           <>
             {canWindows && (
               <button
-                className={'add-event-btn' + (windowsEdited ? ' edited' : '')}
+                className={'add-event-btn' + (aoVivo ? ' live' : windowsEdited ? ' edited' : '')}
                 id="day-windows-btn"
                 onClick={() => setModal({ kind: 'windows', dateKey: viewKey })}
               >
-                {windowsEdited ? t.dayWindowsEdited : t.dayWindows}
+                {aoVivo ? t.dayLive : windowsEdited ? t.dayWindowsEdited : t.dayWindows}
               </button>
             )}
             {canGroup && (
@@ -375,7 +384,7 @@ export function PlanTab() {
           drag={dayDrag}
           now={now}
           timerBlock={timerBlock}
-          empty={{ label: rest === 'weekend' ? t.freeWeekend : t.freeDay, hint: canWindows ? t.freeDayHint : null }}
+          empty={vazio}
           onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
           onEditGroup={openEditGroup}
           onStartBlock={startBlock}
@@ -383,6 +392,7 @@ export function PlanTab() {
         <SelectionRect range={selection.range} listId="blocks-list" />
         <EventDragGhost preview={drag.preview} listId="blocks-list" />
       </div>
+      {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startBlock} />}
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
         </>
       )}

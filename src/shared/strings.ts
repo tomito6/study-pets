@@ -105,6 +105,27 @@ export const strings = {
     },
     addEvent: '+ Evento',
     dayWindows: '🕘 Janelas do dia',
+    /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */
+    dayLive: '⏱ Ao vivo',
+    /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
+    liveStart: {
+      kicker: 'Hoje',
+      title: 'Pronto quando você estiver.',
+      /** Depois de uma parada, o cartão conta o que já rolou e convida a voltar. */
+      kickerDone: (pomos: number, dur: string) => `Hoje · ${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
+      titleBack: (at: string) => `Você parou às ${at}.`,
+      rhythm: 'Ritmo de hoje',
+      rhythmValue: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
+      start: '▶ Começar',
+      back: '▶ Voltar',
+      note: 'Um pomodoro emenda no outro sozinho. Você diz quando parar.',
+      noteBack: 'O dia continua de onde você quiser.',
+      refusal: (r: 'not-live' | 'closed' | 'past' | 'busy' | 'no-room') =>
+        r === 'busy' ? 'Já tem um bloco rodando ⏱'
+        : r === 'closed' ? 'Dia encerrado 🔒'
+        : r === 'no-room' ? 'Tem um compromisso bem agora 📅'
+        : 'Só dá pra começar hoje 📅',
+    },
     dayWindowsEdited: '🕘 Janelas · editado',
     freeDay: '🌴 Dia livre',
     xpGain: (xp: number) => `+${xp} XP`,
@@ -247,6 +268,17 @@ export const strings = {
     },
   },
   dayWindows: {
+    /** O seletor de modo, no topo do modal — é aqui que o app já decide o dia. */
+    mode: {
+      rotina: '📋 Pela rotina',
+      live: '⏱ Ao vivo',
+      /** Uma linha por modo — curtas de propósito. */
+      rotinaSub: 'O dia vem montado pelas suas janelas.',
+      liveSub: 'O dia começa quando você começa.',
+      /** Num dia que já tem corrida, o modal conta desde quando. */
+      liveSince: (at: string) => `Ao vivo desde as ${at}. Antes disso, pela rotina.`,
+      changed: 'Modo do dia trocado',
+    },
     title: '🕘 Janelas do dia',
     intro: 'Só pra este dia. A rotina em Configurações continua igual.',
     windowsLabel: 'Janelas de estudo',

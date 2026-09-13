@@ -302,11 +302,13 @@ interface ListProps extends BlockActions {
   now: Date;
   timerBlock: StudyBlock | null;
   /** Dia sem blocos: o título (dia livre / fim de semana) e, se o dia é editável, como estudar mesmo assim. */
-  empty: { label: string; hint: string | null };
+  /** A frase do dia sem blocos. `null` quando outra coisa ocupa o lugar (o cartão do modo ao vivo). */
+  empty: { label: string; hint: string | null } | null;
 }
 
 export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
   if (blocks.length === 0) {
+    if (!empty) return null;
     return (
       <div className="empty-day">
         <div>{empty.label}</div>

@@ -8,12 +8,15 @@ import {
   dayWindowsOverride,
   effectiveWindows,
   restKindKey,
+  setDayMode,
   setDayOff,
   setDayWindows,
   startNow,
 } from '../../application/dayWindows';
 import type { DayWindowsRefusal } from '../../application/dayWindows';
+import { dayModeOf } from '../../application/plan';
 import { dk } from '../../domain/time';
+import { state } from '../../store/store';
 import type { DateKey, StudyWindow } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
@@ -73,6 +76,20 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     showToast(t.dayOffSet);
     onClose();
   };
+  const modo = key ? dayModeOf(key) : 'rotina';
+  // Num dia que já tem corrida, a primeira delas diz desde quando o dia é ao vivo — é a
+  // linha que uma barra de dois botões nunca poderia carregar.
+  const desde = key ? (state.windowOverrides[key]?.studyWindows.find((w) => w.live)?.start ?? null) : null;
+  const trocarModo = (m: 'rotina' | 'live') => {
+    if (!key || m === modo) return;
+    const r = setDayMode(key, m);
+    if (!r.ok) {
+      refuse(r.reason);
+      return;
+    }
+    showToast(t.mode.changed);
+    onClose();
+  };
   const restore = () => {
     const r = clearDayWindows(key);
     if (!r.ok) {
@@ -86,6 +103,20 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   return (
     <Modal id="day-windows-panel" open={!!dateKey} title={t.title} onClose={onClose}>
       <p className="dw-intro">{t.intro}</p>
+      {/* O seletor de modo mora AQUI e não numa barra própria: este modal já é onde o app
+          decide as outras coisas de um dia só, e num dia misto a pergunta "e a manhã?"
+          cabe numa linha de texto — numa barra de dois botões, não caberia. */}
+      <div className="dw-mode" id="day-mode">
+        <button type="button" className={'dm-btn' + (modo === 'rotina' ? ' on' : '')} id="day-mode-rotina" onClick={() => trocarModo('rotina')}>
+          {t.mode.rotina}
+        </button>
+        <button type="button" className={'dm-btn' + (modo === 'live' ? ' on' : '')} id="day-mode-live" onClick={() => trocarModo('live')}>
+          {t.mode.live}
+        </button>
+      </div>
+      <p className="dw-mode-sub" id="day-mode-sub">
+        {modo === 'live' ? (desde ? t.mode.liveSince(desde) : t.mode.liveSub) : t.mode.rotinaSub}
+      </p>
       {windows.length > 0 ? (
         <div className="field-group">
           <div className="dw-head">
