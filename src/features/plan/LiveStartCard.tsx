@@ -26,7 +26,13 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
   const { pomo, shortBreak, longBreak } = useAppState((s) => s.config);
   const blocos = blocksForDay(dateKey);
   const estudos = blocos.filter((b) => b.type === 'estudo');
-  const parouAs = blocos.length > 0 ? blocos[blocos.length - 1]!.endTime : null;
+  // O dia já teve corrida? A régua é ESTUDO, não "tem bloco": desde que o dia ao vivo
+  // mostra os compromissos antes de começar (a refeição das 13h, que toda conta tem),
+  // `blocos.length > 0` é verdade num dia que nunca começou — e o cartão dizia
+  // "▶ Voltar" e "0 pomodoros" pra quem ainda não tinha apertado nada.
+  // A hora em que parou não é dita aqui: ela é o fim do último bloco da lista, logo
+  // acima do cartão, e repetir seria contar duas vezes.
+  const jaRodou = estudos.length > 0;
   const minutos = estudos.reduce((soma, b) => soma + blockMins(b), 0);
 
   const comecar = (): void => {
@@ -41,16 +47,12 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
 
   return (
     <div className="live-start" id="live-start">
-      <div className="ls-kicker">{parouAs ? t.kickerDone(estudos.length, formatCompact(minutos)) : t.kicker}</div>
-      <div className="ls-title">{parouAs ? t.titleBack(parouAs) : t.title}</div>
-      <div className="ls-rhythm" id="live-rhythm">
-        <span className="ls-rk">{t.rhythm}</span>
-        <span className="ls-rv">{t.rhythmValue(pomo, shortBreak, longBreak)}</span>
-      </div>
+      <div className="ls-kicker">{jaRodou ? t.kickerDone(estudos.length, formatCompact(minutos)) : t.kicker}</div>
+      <div className="ls-title">{t.title}</div>
       <button type="button" className="ls-btn" id="live-start-btn" onClick={comecar}>
-        {parouAs ? t.back : t.start}
+        {jaRodou ? t.back : t.start}
       </button>
-      <p className="ls-note">{parouAs ? t.noteBack : t.note}</p>
+      <p className="ls-rhythm" id="live-rhythm">{t.rhythmValue(pomo, shortBreak, longBreak)}</p>
     </div>
   );
 }

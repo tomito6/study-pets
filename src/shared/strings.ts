@@ -117,15 +117,12 @@ export const strings = {
     liveStart: {
       kicker: 'Hoje',
       title: 'Pronto quando você estiver.',
-      /** Depois de uma parada, o cartão conta o que já rolou e convida a voltar. */
+      /** Depois de uma parada, o kicker conta o que já rolou — o QUANTO, não o quando:
+       *  a hora em que parou é o fim do último bloco da lista, logo acima do cartão. */
       kickerDone: (pomos: number, dur: string) => `Hoje · ${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
-      titleBack: (at: string) => `Você parou às ${at}.`,
-      rhythm: 'Ritmo de hoje',
       rhythmValue: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
       start: '▶ Começar',
       back: '▶ Voltar',
-      note: 'Um pomodoro emenda no outro sozinho. Você diz quando parar.',
-      noteBack: 'O dia continua de onde você quiser.',
       refusal: (r: 'not-live' | 'closed' | 'past' | 'busy' | 'no-room') =>
         r === 'busy' ? 'Já tem um bloco rodando ⏱'
         : r === 'closed' ? 'Dia encerrado 🔒'

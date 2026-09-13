@@ -2000,6 +2000,11 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#live-start')).toBeVisible();
     await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo');
     await expect(page.locator('#live-rhythm')).toContainText('25 · 5');
+    // O dia NÃO começou: o convite é "Começar", e o kicker não conta pomodoro nenhum.
+    // A refeição das 13h existe aqui (é compromisso, não corrida) e já fez o cartão
+    // dizer "▶ Voltar · 0 pomodoros" quando a régua era "tem bloco" em vez de "tem estudo".
+    await expect(page.locator('#live-start-btn')).toContainText('Começar');
+    await expect(page.locator('#live-start .ls-kicker')).toHaveText('Hoje');
 
     // Começar abre a corrida: um bloco só, do minuto de agora até o fim do pomodoro.
     // (a lista continua no DOM, atrás do overlay)

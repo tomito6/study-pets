@@ -1,0 +1,220 @@
+<meta charset="utf-8">
+<title>O modo na barra do dia</title>
+<!--
+  Pedido do Tomi (2026-09-13): tirar a troca de modo de dentro do modal "Janelas do
+  dia" e pôr na barra dos botões, como o toggle Dia/Semana do laptop — e bem à
+  esquerda.
+
+  A barra de verdade é `justify-content:flex-end` (tudo colado à direita), e o
+  `.view-mode` do Dia/Semana só existe acima de 1100px: no celular esse componente
+  nem é montado. Então a pergunta não é estética, é de espaço.
+
+  Tokens, fontes e medidas reais (src/styles/app.css, src/styles/themes/cafe.css).
+  As larguras abaixo são MEDIDAS no navegador.
+-->
+<style>
+@font-face{font-family:'DM Sans';src:url('../public/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap;}
+@font-face{font-family:'Lora';src:url('../public/fonts/lora-latin.woff2') format('woff2');font-weight:400 700;font-display:swap;}
+:root{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9;
+  --text:#40382e; --muted:#6e6455; --border:#d8cdbb; --hairline:rgba(64,56,46,.08);
+  --accent:#486244; --accent2:#4e6b48; --on-accent:#fffdf6;
+  --accent-wash:rgba(72,98,68,.10); --accent-border:rgba(72,98,68,.45); --accent-bg:rgba(72,98,68,.07);
+  --surface-hover-solid:#eee7d7;
+  --radius-sm:8px; --radius-md:10px; --radius-xl:16px;
+  --font-ui:'DM Sans',sans-serif; --font-title:'Lora',Georgia,serif;
+  --novo:#c2703f; --ruim:#b4442f;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);padding:28px 20px 70px;}
+h1{font-family:var(--font-title);font-size:25px;font-weight:600;margin:0 0 6px;}
+.lede{color:var(--muted);font-size:14px;line-height:1.6;max-width:780px;margin:0 0 6px;}
+h2{font-family:var(--font-title);font-size:19px;font-weight:600;margin:34px 0 4px;}
+h2 .tag{font-family:var(--font-ui);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  border-radius:99px;padding:2px 8px;margin-left:9px;vertical-align:3px;color:var(--novo);border:1px solid var(--novo);}
+h2 .tag.no{color:var(--ruim);border-color:var(--ruim);}
+.why{color:var(--muted);font-size:13.5px;line-height:1.65;max-width:780px;margin:0 0 14px;}
+.row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.phone{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);padding:12px;}
+.p375{width:375px;} .p393{width:393px;}
+.cap{font-size:11px;color:var(--muted);margin:0 0 8px;letter-spacing:.04em;text-transform:uppercase;}
+.meas{font-family:var(--font-ui);font-size:12px;font-weight:600;margin:8px 0 0;color:var(--novo);}
+.meas.ok{color:var(--accent);} .meas.no{color:var(--ruim);}
+
+/* ── a barra de verdade ── */
+.day-events-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;}
+.add-event-btn{font-size:12px;color:var(--accent);background:transparent;border:1px solid var(--accent2);
+  border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-family:var(--font-ui);white-space:nowrap;}
+.add-event-btn.live{border-color:var(--accent-border);color:var(--accent);background:var(--accent-wash);font-weight:600;}
+
+/* ── o toggle, no desenho do .view-mode do laptop, trazido pro celular ── */
+.view-mode{display:inline-flex;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:2px;flex-shrink:0;margin-right:auto;}
+.vm-btn{background:none;border:0;border-radius:var(--radius-sm);padding:5px 12px;font-size:12px;font-weight:600;
+  color:var(--muted);cursor:pointer;font-family:var(--font-ui);white-space:nowrap;}
+.vm-btn.on{background:var(--surface-hover-solid);color:var(--text);}
+.vm-btn.icon{padding:5px 10px;font-size:13px;}
+
+.blk{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:9px 10px;margin-top:6px;font-size:12.5px;}
+.blk i{width:15px;height:15px;border:1.5px solid var(--border);border-radius:5px;flex:none;}
+.ctx{opacity:.45;pointer-events:none;}
+table{border-collapse:collapse;margin:14px 0 0;font-size:13.5px;}
+th,td{text-align:left;padding:7px 16px 7px 0;border-bottom:1px solid var(--hairline);}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.note{background:var(--bg3);border-radius:var(--radius-md);padding:13px 15px;font-size:13.5px;
+  line-height:1.65;color:var(--muted);max-width:780px;margin:14px 0 0;}
+.note b{color:var(--text);}
+</style>
+
+<h1>O modo na barra do dia</h1>
+<p class="lede">Hoje a troca de modo mora dentro do modal “🕘 Janelas do dia”. A ideia é tirar de lá e
+pôr na barra, bem à esquerda, no desenho do toggle Dia/Semana. O problema não é gosto — é
+<b>largura</b>: a barra já carrega três botões e é alinhada à direita. As medidas abaixo são do
+navegador, a 375px (iPhone SE/13 mini) e 393px (iPhone 14/15).</p>
+
+<h2>Hoje</h2>
+<p class="why">Três botões colados à direita. O modo aparece como <i>estado</i> do primeiro — ele troca
+de “🕘 Janelas do dia” pra “⏱ Ao vivo” —, e trocar exige abrir o modal.</p>
+<div class="row">
+  <div class="phone p375"><p class="cap">375px · dia ao vivo</p>
+    <div class="day-events-bar" id="m-hoje">
+      <button class="add-event-btn live">⏱ Ao vivo</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-hoje"></p>
+  </div>
+</div>
+
+<h2>A · Toggle com palavras<span class="tag no">não cabe</span></h2>
+<p class="why">“Rotina | Ao vivo” à esquerda, e os outros três à direita. O botão das janelas volta ao
+nome normal, porque o modo deixa de ser estado dele.</p>
+<div class="row">
+  <div class="phone p375"><p class="cap">375px</p>
+    <div class="day-events-bar" id="m-a">
+      <div class="view-mode"><button class="vm-btn">Rotina</button><button class="vm-btn on">Ao vivo</button></div>
+      <button class="add-event-btn">🕘 Janelas do dia</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-a"></p>
+  </div>
+  <div class="phone p393"><p class="cap">393px</p>
+    <div class="day-events-bar" id="m-a2">
+      <div class="view-mode"><button class="vm-btn">Rotina</button><button class="vm-btn on">Ao vivo</button></div>
+      <button class="add-event-btn">🕘 Janelas do dia</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-a2"></p>
+  </div>
+</div>
+
+<h2>B · Toggle com palavras, “Janelas” vira ícone<span class="tag">cabe</span></h2>
+<p class="why">O mesmo toggle, mas o botão das janelas encolhe pro relógio sozinho. É o candidato a
+caber sem quebrar linha — e o relógio 🕘 já é o ícone daquele botão hoje, então não é símbolo novo.</p>
+<div class="row">
+  <div class="phone p375"><p class="cap">375px</p>
+    <div class="day-events-bar" id="m-b">
+      <div class="view-mode"><button class="vm-btn">Rotina</button><button class="vm-btn on">Ao vivo</button></div>
+      <button class="add-event-btn">🕘</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-b"></p>
+    <div class="ctx">
+      <div class="blk"><i></i><span>13:00–14:00 · 🍽️ Almoço</span></div>
+    </div>
+  </div>
+  <div class="phone p393"><p class="cap">393px</p>
+    <div class="day-events-bar" id="m-b2">
+      <div class="view-mode"><button class="vm-btn">Rotina</button><button class="vm-btn on">Ao vivo</button></div>
+      <button class="add-event-btn">🕘</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-b2"></p>
+  </div>
+</div>
+
+<h2>C · Toggle só com ícones<span class="tag">cabe raspando</span></h2>
+<p class="why">📋 e ⏱, sem palavra. Cabe — mas por <b>1px</b> a 375px, o que não é caber, é ter sorte: um rótulo
+mais longo em qualquer um dos outros botões já quebra a linha. E ícone sem rótulo é
+adivinhação, e este toggle decide como o dia inteiro se comporta. Só vale se ele ganhar o tour ou um
+rótulo em cima.</p>
+<div class="row">
+  <div class="phone p375"><p class="cap">375px</p>
+    <div class="day-events-bar" id="m-c">
+      <div class="view-mode"><button class="vm-btn icon">📋</button><button class="vm-btn icon on">⏱</button></div>
+      <button class="add-event-btn">🕘 Janelas do dia</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-c"></p>
+  </div>
+</div>
+
+<h2>D · Toggle na linha de cima, com a semana<span class="tag">cabe</span></h2>
+<p class="why">Sai da barra dos botões e vai pra linha do seletor de semana — que é exatamente onde o
+Dia/Semana mora no laptop. É a posição mais à esquerda que existe na tela, a linha tem espaço sobrando,
+e a barra de baixo não muda uma vírgula. (Na tabela ela aparece como 349 de 349 porque o
+seletor de semana é elástico e ocupa o que sobra — não é aperto, é a linha preenchida.)</p>
+<div class="row">
+  <div class="phone p375"><p class="cap">375px</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;" id="m-d">
+      <div class="view-mode" style="margin-right:0;"><button class="vm-btn">Rotina</button><button class="vm-btn on">Ao vivo</button></div>
+      <select style="flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:12.5px;font-family:var(--font-ui);color:var(--text);">
+        <option>Semana 1 · 07/09 – 13/09</option></select>
+    </div>
+    <div class="day-events-bar">
+      <button class="add-event-btn">🕘 Janelas do dia</button>
+      <button class="add-event-btn">Agrupar</button>
+      <button class="add-event-btn">+ Evento</button>
+    </div>
+    <p class="meas" data-for="m-d"></p>
+  </div>
+</div>
+
+<h2>As larguras, medidas</h2>
+<table id="tab"><tr><th>Opção</th><th>Largura do conteúdo</th><th>Espaço disponível</th><th>Cabe?</th></tr></table>
+
+<div class="note">
+<b>O que a medida diz:</b> com as palavras “Rotina | Ao vivo” à esquerda, a barra <b>estoura</b> a 375px
+e a 393px — a régua de verdade é que `.day-events-bar` tem `flex-wrap:wrap` no celular, então ela não
+corta: ela <b>quebra em duas linhas</b>, e a barra do dia dobra de altura em todo dia, de rotina ou não.
+<br><br>
+<b>Eu ficaria com a D.</b> Ela põe o toggle no lugar mais à esquerda que a tela tem, usa a linha que já
+existe e que tem folga, e é literalmente onde o Dia/Semana mora no laptop — então é a mesma ideia que
+você teve, no lugar onde ela cabe. A <b>B</b> é a que cabe dentro da barra, mas ao custo de o
+“🕘 Janelas do dia” virar um relógio sem nome, e esse botão é a porta de “acordei tarde, hoje começo
+às 10” — não é um botão que dá pra esconder.
+</div>
+
+<script>
+  const larguras = {};
+  for (const el of document.querySelectorAll('.meas')) {
+    const bar = document.getElementById(el.dataset.for);
+    const filhos = [...bar.children];
+    const gap = parseFloat(getComputedStyle(bar).gap) || 0;
+    const preciso = filhos.reduce((s, c) => s + c.getBoundingClientRect().width, 0) + gap * (filhos.length - 1);
+    const tem = bar.getBoundingClientRect().width;
+    const cabe = preciso <= tem + 0.5;
+    larguras[el.dataset.for] = { preciso: Math.round(preciso), tem: Math.round(tem), cabe };
+    el.textContent = cabe
+      ? `cabe — ${Math.round(preciso)}px de ${Math.round(tem)}px (sobram ${Math.round(tem - preciso)}px)`
+      : `NÃO cabe — precisa de ${Math.round(preciso)}px e só tem ${Math.round(tem)}px (faltam ${Math.round(preciso - tem)}px) → quebra em duas linhas`;
+    el.className = 'meas ' + (cabe ? 'ok' : 'no');
+  }
+  const linhas = [['Hoje','m-hoje','375px'],['A · palavras','m-a','375px'],['A · palavras','m-a2','393px'],
+    ['B · janelas como ícone','m-b','375px'],['C · só ícones','m-c','375px'],['D · na linha da semana','m-d','375px']];
+  const tab = document.getElementById('tab');
+  for (const [nome, id, larg] of linhas) {
+    const w = larguras[id];
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + nome + ' <span style="color:var(--muted)">(' + larg + ')</span></td><td>' + w.preciso
+      + 'px</td><td>' + w.tem + 'px</td><td style="color:' + (w.cabe ? 'var(--accent)' : 'var(--ruim)') + '">'
+      + (w.cabe ? 'sim' : 'não — quebra linha') + '</td>';
+    tab.appendChild(tr);
+  }
+</script>
