@@ -880,8 +880,12 @@ export const strings = {
         stop: '■ Parar teste',
         hint: 'Arma o bloqueio por um minuto com a lista acima — sem salvar, sem esperar um estudo.',
         running: (sec: number) => `Abra um dos sites: ele vira a tela do pet. Acaba em ${sec}s.`,
-        noSites: 'Escreva pelo menos um site pra testar.',
-        noExt: 'Extensão não encontrada neste navegador.',
+        refusal: {
+          'no-sites': 'Escreva pelo menos um site pra testar.',
+          'no-extension': 'Extensão não encontrada neste navegador.',
+          /** Recarregou no meio de um estudo: o teste passaria por cima do bloqueio que está valendo. */
+          'blocking-now': 'Tem bloqueio valendo agora — o teste passaria por cima dele.',
+        },
       },
     },
     /** A linha discreta na barra do timer e no foco, enquanto a extensão confirma o bloqueio. */

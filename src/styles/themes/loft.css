@@ -47,7 +47,11 @@
   --text:#e4eae6; --text-soft:#c6d1cd; --muted:#adbbb9;
   --text-dim:#95a4a5; --text-dim-alt:#95a4a5; --text-faint:#8d9c9e; --text-ghost:#63737a;
   --on-accent:#1e322a; --on-accent-alt:#1e322a; --on-accent-login:#1e322a;
-  --on-orange:#2b2016; --on-gold:#2b2016; --on-cycle:#17222d; --on-danger:#f2e9e4;
+  --on-orange:#2b2016; --on-gold:#2b2016; --on-cycle:#17222d;
+  /* tinta ESCURA sobre o vermelho, como no orange e no gold: o danger do loft é um salmão
+     claro (#e0857a), e a tinta quase branca que veio junto dava 2,25:1 — o texto do botão
+     "Começar" do hardcore sumia dentro do próprio botão. Assim são 6,18:1. */
+  --on-danger:#2b1a16;
 
   /* ação */
   --accent:#a8c9bc; --accent-rgb:168,201,188; --accent2:#8bb2a1; --accent-bg:#2a413e;

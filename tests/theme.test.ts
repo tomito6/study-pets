@@ -138,6 +138,20 @@ describe('qual tema vale', () => {
     expect(guardado.get('sp-theme')).toBe('loft');
   });
 
+  it('nome de método do Object não vira tema: ?tema=toString cai no padrão', () => {
+    // O mapa de apelidos é um objeto literal, então carrega o Object.prototype: `ALIASES['toString']`
+    // devolvia uma FUNÇÃO, que seguia como se fosse um tema e ainda era gravada por cima da escolha.
+    for (const lixo of ['toString', 'constructor', 'valueOf', 'hasOwnProperty']) {
+      guardado.set('sp-theme', 'loft');
+      comURL(`?tema=${lixo}`);
+      expect(readTheme(), lixo).toBe('loft'); // a escolha guardada continua valendo
+      expect(guardado.get('sp-theme')).toBe('loft');
+    }
+    comURL('');
+    guardado.set('sp-theme', 'toString');
+    expect(readTheme()).toBe('cafe');
+  });
+
   it('lixo no localStorage não emperra o app no nada: cai no padrão', () => {
     guardado.set('sp-theme', 'noturno'); // tema apagado em 2026-09-07
     expect(readTheme()).toBe('cafe');

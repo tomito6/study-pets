@@ -10,11 +10,25 @@ import { TEMAS } from '../src/shared/theme';
 const raiz = new URL('../', import.meta.url);
 const ler = (rel: string): string => readFileSync(new URL(rel, raiz), 'utf8');
 
-/** Os tokens do `:root` de app.css — a base que todo tema herda. */
+/**
+ * Os tokens do `:root` de app.css — a base que todo tema herda.
+ *
+ * O recorte conta chaves em vez de procurar um `\n}`: o app.css é indentado do
+ * começo ao fim e não tem UMA chave de fechamento na coluna 0, então o `indexOf`
+ * devolvia -1 e o `slice(0, -1)` entregava o arquivo inteiro — a "base" virava
+ * todo token declarado em qualquer regra, e a rede ficava frouxa sem avisar.
+ */
 function tokensDaBase(): Set<string> {
   const css = ler('src/styles/app.css');
-  const i = css.indexOf(':root {');
-  const bloco = css.slice(i, css.indexOf('\n}', i));
+  const abre = css.indexOf('{', css.indexOf(':root'));
+  let nivel = 1;
+  let i = abre + 1;
+  while (i < css.length && nivel > 0) {
+    if (css[i] === '{') nivel++;
+    else if (css[i] === '}') nivel--;
+    i++;
+  }
+  const bloco = css.slice(abre + 1, i - 1);
   return new Set([...bloco.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]!));
 }
 
@@ -41,7 +55,10 @@ describe('os arquivos de tema', () => {
 
   it('todo token que um tema declara ou existe na base, ou é usado ali mesmo (pega erro de digitação)', () => {
     const base = tokensDaBase();
+    // O número é exato de propósito: se o recorte do `:root` quebrar de novo, ele
+    // passa a contar o arquivo inteiro e este teste avisa em vez de afrouxar calado.
     expect(base.size).toBeGreaterThan(200);
+    expect(base.size).toBeLessThan(300);
     for (const { caminho, css } of arquivosDeTema()) {
       const declarados = [...new Set([...css.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]!))];
       const usados = new Set([...css.matchAll(/var\((--[a-z0-9-]+)/g)].map((m) => m[1]!));

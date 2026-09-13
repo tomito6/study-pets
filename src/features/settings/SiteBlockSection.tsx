@@ -48,7 +48,7 @@ export function SiteBlockSection({ draft, patch }: Props) {
       return;
     }
     const r = startSiteBlockTest(draft.siteBlockMode, parsed.sites);
-    if (!r.ok) showToast(r.reason === 'no-extension' ? t.test.noExt : t.test.noSites);
+    if (!r.ok) showToast(t.test.refusal[r.reason]);
   };
 
   return (

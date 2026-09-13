@@ -200,6 +200,31 @@ describe('sair da conta não é o fim do estudo', () => {
     abandonBlocking();
     expect(ultimo()).toEqual({ v: 2, active: false, reason: 'stopped' });
   });
+
+  it('e o ack fica: o bloqueio que segue de pé continua sendo verdade na tela', () => {
+    // Apagar o ack aqui fazia as Configurações e a barra dizerem "nada bloqueado"
+    // enquanto a extensão seguia bloqueando até o alarme.
+    watchExtension();
+    startTimer(estudo, AGORA);
+    win.dispatchEvent(new CustomEvent(EXT_ACK_EVENT, { detail: JSON.stringify({ applied: true, until: AGORA.getTime() + 900_000, sites: 2, mode: 'blacklist', test: false }) }));
+    expect(blockingNow(AGORA)).toMatchObject({ sites: 2 });
+    abandonBlocking();
+    expect(blockingNow(AGORA)).toMatchObject({ sites: 2 });
+  });
+
+  it('e o "Testar por 1 min" não passa por cima de um bloqueio que esta carga não armou', () => {
+    // Era a última porta do "recarregar não é escapar": depois do F5 o teste publicava a
+    // lista do rascunho por cima do estudo e, ao fim do minuto, mandava `stopped`.
+    watchExtension();
+    startTimer(estudo, AGORA);
+    win.dispatchEvent(new CustomEvent(EXT_ACK_EVENT, { detail: JSON.stringify({ applied: true, until: AGORA.getTime() + 900_000, sites: 2, mode: 'blacklist', test: false }) }));
+    resetBlockingForTests(); // = recarregou a página
+    watchExtension();
+    win.dispatchEvent(new CustomEvent(EXT_ACK_EVENT, { detail: JSON.stringify({ applied: true, until: AGORA.getTime() + 900_000, sites: 2, mode: 'blacklist', test: false }) }));
+    publicados.length = 0;
+    expect(startSiteBlockTest('blacklist', ['chess.com'], AGORA)).toEqual({ ok: false, reason: 'blocking-now' });
+    expect(publicados).toHaveLength(0);
+  });
 });
 
 describe('▶ Testar por 1 min', () => {

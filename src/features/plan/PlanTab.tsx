@@ -143,7 +143,7 @@ function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode, todayKe
             return (
               <button
                 key={label}
-                className={'day-tab' + (i === day ? ' active' : '') + (done > 0 ? ' has-progress' : '') + (dk(d) === todayKey ? ' today' : '')}
+                className={'day-tab' + (i === day ? ' active' : '') + (done > 0 ? ' has-progress' : '') + (current && dk(d) === todayKey ? ' today' : '')}
                 onClick={() => setDay(i)}
               >
                 {label}

@@ -444,6 +444,10 @@
   :root[data-theme="cafe"] .day-tab:hover{border-color:var(--border-strong);color:var(--text);}
   /* o dia ativo: a regra genérica acima (papel) vence o .day-tab.active do app.css por especificidade — repõe o verde com tinta creme */
   :root[data-theme="cafe"] .day-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+  /* e a marca de HOJE: `.day-tab.today:not(.active)` do app.css empata em especificidade
+     com a regra genérica acima, e empate é decidido por ordem de import — que o tema ganha.
+     Sem esta linha, a marca depende de uma ordem que ninguém prometeu. */
+  :root[data-theme="cafe"] .day-tab.today:not(.active){border-color:var(--accent-border);color:var(--text);}
   :root[data-theme="cafe"] .add-event-btn{border-color:var(--sage-line-2);background:var(--bg2);}
   :root[data-theme="cafe"] .add-event-btn:hover{background:var(--accent-bg);border-color:var(--accent);}
   :root[data-theme="cafe"] .add-event-btn.edited{border-color:var(--clay-bar);}

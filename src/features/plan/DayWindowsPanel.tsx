@@ -48,6 +48,11 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   const off = rest !== null;
   const edited = key ? dayWindowsOverride(key) !== null : false;
   const refuse = (reason: DayWindowsRefusal) => showToast(t.refusal[reason]);
+  /** O editor tem mudança não salva? (mesma comparação que o `useEffect` usa pra preencher.) */
+  const sujo =
+    key !== '' &&
+    JSON.stringify(windows.map((w) => [w.start, w.end])) !==
+      JSON.stringify(effectiveWindows(key).map((w) => [w.start, w.end]));
 
   const save = () => {
     const r = setDayWindows(key, windows);
@@ -101,9 +106,24 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
 
-  // Fecha ANTES de pedir, como o goImport do EventPanel: dois modais abertos ao mesmo tempo
-  // deixariam o overlay do dia por cima da página que acabou de abrir.
+  /**
+   * A porta pro ritmo. Fecha ANTES de pedir, como o goImport do EventPanel: dois modais
+   * abertos ao mesmo tempo deixariam o overlay do dia por cima da página que acabou de abrir.
+   *
+   * E **salva o que o editor tem**, se tiver mudado: o botão fica logo abaixo de
+   * Cancelar/Salvar, e quem mexeu no horário e tocou nele perdia o que fez, calado. Salvar
+   * aqui é o que a pessoa faria no clique anterior, e o toast de sempre diz que salvou; se as
+   * janelas estiverem inválidas, a recusa aparece e ninguém sai do lugar.
+   */
   const goRhythm = () => {
+    if (sujo) {
+      const r = setDayWindows(key, windows);
+      if (!r.ok) {
+        refuse(r.reason);
+        return;
+      }
+      showToast(t.saved);
+    }
     onClose();
     requestSettings('ritmo');
   };

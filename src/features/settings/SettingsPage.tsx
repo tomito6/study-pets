@@ -61,7 +61,13 @@ export function SettingsPage() {
     setStab('general'); // abre no Geral — a primeira aba; "Estrutura do dia" é a segunda
     setOpen(true);
   };
-  const close = () => setOpen(false);
+  // `setFocus(null)` junto: o timeout de 2,4 s que apaga o destaque é cancelado quando a
+  // página fecha antes dele, e o `focus` ficava preso — a abertura seguinte, pelo ⚙️, já
+  // nascia com a seção acesa e rolava pra lá sem ninguém ter pedido.
+  const close = () => {
+    setOpen(false);
+    setFocus(null);
+  };
   // A barra do laptop (engrenagem, menu do avatar) pede pra abrir pelo store: atende com o mesmo openSettings.
   // O padrão do modo é lido e escrito DIRETO, fora do rascunho: `normalizeConfig` monta a
   // config campo a campo, então um campo novo lá sumiria no primeiro Salvar — em silêncio.

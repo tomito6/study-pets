@@ -48,7 +48,10 @@ export function isThemeId(v: unknown): v is ThemeId {
 /** O id que vale pra um valor lido de fora (storage, querystring), traduzindo os antigos. */
 function normalize(v: unknown): ThemeId | null {
   if (isThemeId(v)) return v;
-  return typeof v === 'string' ? ALIASES[v] ?? null : null;
+  // `Object.hasOwn` e não `ALIASES[v]`: o objeto literal carrega o Object.prototype, então
+  // `?tema=toString` (ou `constructor`, `valueOf`, `__proto__`) devolvia uma FUNÇÃO daqui —
+  // que seguia como se fosse tema, era gravada no localStorage e apagava a escolha de verdade.
+  return typeof v === 'string' && Object.hasOwn(ALIASES, v) ? ALIASES[v]! : null;
 }
 
 export function themeInfo(id: ThemeId): ThemeInfo {

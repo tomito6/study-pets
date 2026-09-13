@@ -171,7 +171,9 @@ export function abandonBlocking(): void {
     return;
   }
   published = null;
-  setAck(null);
+  // O ack NÃO é apagado: ele é a última informação verdadeira que o app tem sobre um
+  // bloqueio que ele deliberadamente deixou de pé, e ele vence sozinho no `until`. Apagar
+  // aqui fazia as Configurações e a barra dizerem "nada bloqueado" enquanto estava.
 }
 
 /**
@@ -214,7 +216,7 @@ function clearTest(): void {
   derived.siteBlock.test = null;
 }
 
-export type TestRefusal = 'no-extension' | 'no-sites';
+export type TestRefusal = 'no-extension' | 'no-sites' | 'blocking-now';
 
 /**
  * "▶ Testar por 1 min": publica a lista **do rascunho** (dá pra testar antes de
@@ -223,6 +225,10 @@ export type TestRefusal = 'no-extension' | 'no-sites';
 export function startSiteBlockTest(mode: SiteBlockMode, sites: string[], now: Date = new Date()): { ok: true } | { ok: false; reason: TestRefusal } {
   if (!extensionDetected()) return { ok: false, reason: 'no-extension' };
   if (mode === 'blacklist' && sites.length === 0) return { ok: false, reason: 'no-sites' };
+  // Esta carga da página não armou nada e a extensão diz que tem bloqueio valendo: o teste
+  // publicaria a lista do rascunho POR CIMA dele e, ao acabar o minuto, mandaria `stopped` —
+  // liberando um estudo que ninguém encerrou. Era a última porta do "recarregar não é escapar".
+  if (published === null && blockingNow(now)) return { ok: false, reason: 'blocking-now' };
   clearTest();
   derived.siteBlock.test = { until: now.getTime() + TEST_MS, mode, sites };
   testTimer = setTimeout(() => stopSiteBlockTest(), TEST_MS);
