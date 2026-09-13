@@ -13,6 +13,7 @@
 import { isDayClosed } from '../domain/checks';
 import { routineAfter, startNowWindows, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
+import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, StudyBlock, StudyWindow, TimeString } from '../domain/types';
@@ -87,13 +88,17 @@ export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date
     } else {
       delete state.windowOverrides[dateKey];
     }
-    delete state.dayModes[dateKey];
   } else {
     // Ao vivo: o que já foi vivido fica; o resto do dia deixa de vir montado.
     if (corridas.length > 0) state.windowOverrides[dateKey] = { studyWindows: corridas };
     else delete state.windowOverrides[dateKey];
-    state.dayModes[dateKey] = 'live';
   }
+  // A escolha do dia só pode ser APAGADA quando o padrão já diz a mesma coisa —
+  // apagar é literalmente "siga o padrão". Com um padrão "ao vivo" em vigor, o
+  // `delete` devolvia o dia pro ao vivo: o chip dizia "Modo do dia trocado",
+  // fechava o modal, e o dia continuava vazio. Dizia que tinha funcionado sem ter.
+  if (modeForDay(dateKey, undefined, state.dayModeDefault) === mode) delete state.dayModes[dateKey];
+  else state.dayModes[dateKey] = mode;
   commit(dateKey, before, now);
   return { ok: true };
 }

@@ -1,0 +1,247 @@
+<meta charset="utf-8">
+<title>O cartão Começar, menor</title>
+<!--
+  O cartão "▶ Começar" do modo ao vivo (#live-start) está grande demais — ele ocupa
+  o lugar da lista inteira, que é muito palco pra um botão.
+
+  Tokens, fontes e medidas são os de verdade (src/styles/themes/cafe.css e
+  src/styles/app.css). As alturas são MEDIDAS no navegador, não estimadas.
+  Larguras de telefone: 393px.
+-->
+<style>
+@font-face{font-family:'DM Sans';src:url('../public/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap;}
+@font-face{font-family:'Lora';src:url('../public/fonts/lora-latin.woff2') format('woff2');font-weight:400 700;font-display:swap;}
+
+:root{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9;
+  --text:#40382e; --muted:#6e6455;
+  --border:#d8cdbb; --hairline:rgba(64,56,46,.08);
+  --accent:#486244; --on-accent:#fffdf6;
+  --radius-md:10px; --radius-xl:16px;
+  --font-ui:'DM Sans',sans-serif; --font-mono:'DM Sans',sans-serif; --font-title:'Lora',Georgia,serif;
+  --novo:#c2703f;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);padding:28px 20px 70px;}
+h1{font-family:var(--font-title);font-size:25px;font-weight:600;margin:0 0 6px;}
+.lede{color:var(--muted);font-size:14px;line-height:1.6;max-width:760px;margin:0 0 6px;}
+h2{font-family:var(--font-title);font-size:19px;font-weight:600;margin:36px 0 4px;}
+h2 .tag{font-family:var(--font-ui);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--novo);border:1px solid var(--novo);border-radius:99px;padding:2px 8px;margin-left:9px;vertical-align:3px;}
+.why{color:var(--muted);font-size:13.5px;line-height:1.65;max-width:760px;margin:0 0 14px;}
+.row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;}
+.phone{width:393px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);
+  padding:14px;box-shadow:0 1px 2px rgba(64,56,46,.05);}
+.phone-cap{font-size:11px;color:var(--muted);margin:0 0 9px;letter-spacing:.04em;text-transform:uppercase;}
+.meas{font-family:var(--font-mono);font-size:12px;color:var(--novo);font-weight:600;margin:9px 0 0;}
+.ctx{opacity:.42;pointer-events:none;}
+/* ── a barra do dia e uma linha de bloco, só pra dar contexto de escala ── */
+.bar{display:flex;gap:7px;margin:0 0 9px;}
+.bar b{font-weight:500;font-size:11.5px;border:1px solid var(--border);border-radius:99px;padding:5px 10px;background:var(--bg2);}
+.blk{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:10px 11px;margin-top:7px;font-size:12.5px;}
+.blk i{width:15px;height:15px;border:1.5px solid var(--border);border-radius:5px;flex:none;}
+
+/* ══ HOJE — réplica exata de .live-start em src/styles/app.css ══ */
+.live-start{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);
+  padding:26px 22px;margin:10px 0 0;text-align:center;}
+.ls-kicker{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+.ls-title{font-family:var(--font-title);font-size:22px;font-weight:600;margin:7px 0 16px;line-height:1.25;}
+.ls-rhythm{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--hairline);
+  border-bottom:1px solid var(--hairline);padding:11px 2px;margin-bottom:16px;}
+.ls-rk{font-size:12px;color:var(--muted);}
+.ls-rv{font-family:var(--font-mono);font-size:14.5px;color:var(--text);}
+.ls-btn{width:100%;height:48px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+  font-size:14px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+.ls-note{font-size:12px;color:var(--muted);line-height:1.5;margin:13px 0 0;}
+
+/* ══ A — Compacto: a mesma ideia, sem o palco ══ */
+.a{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);
+  padding:16px 16px 15px;margin:10px 0 0;text-align:center;}
+.a .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+.a .t{font-family:var(--font-title);font-size:17px;font-weight:600;margin:4px 0 12px;line-height:1.3;}
+.a .b{width:100%;height:42px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+  font-size:14px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+.a .r{font-size:11.5px;color:var(--muted);margin:9px 0 0;}
+
+/* ══ B — Linha: o convite é uma faixa, não um cartaz ══ */
+.b2{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:12px 12px 12px 15px;margin:10px 0 0;}
+.b2 .l{flex:1;min-width:0;text-align:left;}
+.b2 .t{font-family:var(--font-title);font-size:15.5px;font-weight:600;line-height:1.25;}
+.b2 .r{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.b2 .b{flex:none;height:40px;padding:0 18px;border:0;border-radius:99px;background:var(--accent);
+  color:var(--on-accent);font-size:13.5px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+
+/* ══ C — Só o botão ══ */
+.c{margin:10px 0 0;text-align:center;}
+.c .b{width:100%;height:46px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+  font-size:14.5px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+.c .r{font-size:11.5px;color:var(--muted);margin:8px 0 0;}
+
+table{border-collapse:collapse;margin:16px 0 0;font-size:13.5px;}
+th,td{text-align:left;padding:7px 15px 7px 0;border-bottom:1px solid var(--hairline);}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+td b{font-family:var(--font-mono);}
+.note{background:var(--bg3);border-radius:var(--radius-md);padding:13px 15px;font-size:13.5px;
+  line-height:1.65;color:var(--muted);max-width:760px;margin:14px 0 0;}
+.note b{color:var(--text);}
+</style>
+
+<h1>O cartão “Começar”, menor</h1>
+<p class="lede">O de hoje ocupa o lugar da lista inteira — muito palco pra um botão. Três caminhos, do
+mais conservador ao mais enxuto. Tudo com os tokens, as fontes e as medidas de verdade; as alturas
+abaixo são <b>medidas no navegador</b>, não estimadas.</p>
+
+<h2>Hoje</h2>
+<p class="why">Kicker, título em Lora de 22px, a faixa do ritmo entre dois fios, o botão de 48px e a
+nota de duas linhas. Cinco andares pra dizer “aperte aqui”.</p>
+<div class="row">
+  <div class="phone">
+    <p class="phone-cap">Dia que não começou</p>
+    <div class="ctx"><div class="bar"><b>⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div></div>
+    <div class="live-start" id="m-hoje">
+      <div class="ls-kicker">Hoje</div>
+      <div class="ls-title">Pronto quando você estiver.</div>
+      <div class="ls-rhythm"><span class="ls-rk">Ritmo de hoje</span><span class="ls-rv">25 · 5 · 15 min</span></div>
+      <button class="ls-btn">▶ Começar</button>
+      <p class="ls-note">Um pomodoro emenda no outro sozinho. Você diz quando parar.</p>
+    </div>
+    <p class="meas" data-for="m-hoje"></p>
+  </div>
+  <div class="phone">
+    <p class="phone-cap">Depois de uma parada</p>
+    <div class="live-start" id="m-hoje2">
+      <div class="ls-kicker">Hoje · 2 pomodoros · 50min</div>
+      <div class="ls-title">Você parou às 10:12.</div>
+      <div class="ls-rhythm"><span class="ls-rk">Ritmo de hoje</span><span class="ls-rv">25 · 5 · 15 min</span></div>
+      <button class="ls-btn">▶ Voltar</button>
+      <p class="ls-note">O dia continua de onde você quiser.</p>
+    </div>
+    <p class="meas" data-for="m-hoje2"></p>
+  </div>
+</div>
+
+<h2>A · Compacto<span class="tag">conservador</span></h2>
+<p class="why">A mesma estrutura, sem o palco: título de 17px, a faixa do ritmo vira uma linha embaixo
+do botão, e a nota sai. Continua sendo um cartão, continua centralizado — só para de gritar.</p>
+<div class="row">
+  <div class="phone">
+    <p class="phone-cap">Dia que não começou</p>
+    <div class="ctx"><div class="bar"><b>⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div></div>
+    <div class="a" id="m-a">
+      <div class="k">Hoje</div>
+      <div class="t">Pronto quando você estiver.</div>
+      <button class="b">▶ Começar</button>
+      <p class="r">25 · 5 · 15 min</p>
+    </div>
+    <p class="meas" data-for="m-a"></p>
+  </div>
+  <div class="phone">
+    <p class="phone-cap">Depois de uma parada</p>
+    <div class="a" id="m-a2">
+      <div class="k">Hoje · 2 pomodoros · 50min</div>
+      <div class="t">Você parou às 10:12.</div>
+      <button class="b">▶ Voltar</button>
+      <p class="r">25 · 5 · 15 min</p>
+    </div>
+    <p class="meas" data-for="m-a2"></p>
+  </div>
+</div>
+
+<h2>B · Linha<span class="tag">recomendado</span></h2>
+<p class="why">Deixa de ser cartaz e vira faixa: o texto à esquerda, o botão à direita, o ritmo como
+subtítulo. É a forma que a barra do timer já usa no app, então não inventa vocabulário visual — e
+sobra a tela inteira embaixo, que num dia ao vivo é onde os pomodoros vão aparecendo.
+<br><br>Detalhe medido: “Pronto quando você estiver.” quebra em duas linhas a 393px (82px de altura),
+e “Você parou às 10:12.” cabe em uma (66px). Dá pra encurtar a primeira frase se os 16px incomodarem —
+mas duas linhas numa faixa de 82px não são as cinco de um cartaz de 270px.</p>
+<div class="row">
+  <div class="phone">
+    <p class="phone-cap">Dia que não começou</p>
+    <div class="ctx"><div class="bar"><b>⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div></div>
+    <div class="b2" id="m-b">
+      <div class="l"><div class="t">Pronto quando você estiver.</div><div class="r">25 · 5 · 15 min</div></div>
+      <button class="b">▶ Começar</button>
+    </div>
+    <p class="meas" data-for="m-b"></p>
+  </div>
+  <div class="phone">
+    <p class="phone-cap">Depois de uma parada</p>
+    <div class="b2" id="m-b2">
+      <div class="l"><div class="t">Você parou às 10:12.</div><div class="r">2 pomodoros · 50min hoje</div></div>
+      <button class="b">▶ Voltar</button>
+    </div>
+    <p class="meas" data-for="m-b2"></p>
+    <div class="ctx">
+      <div class="blk"><i></i><span>09:12–09:37 · 📖 Pomodoro 1</span></div>
+      <div class="blk"><i></i><span>09:37–09:42 · ☕ Pausa</span></div>
+    </div>
+  </div>
+</div>
+
+<h2>C · Só o botão<span class="tag">enxuto</span></h2>
+<p class="why">Sem caixa nenhuma: o botão ocupa a largura e o ritmo vira um fio de texto embaixo. É o
+menor possível sem esconder o ritmo — mas perde a frase que diz o que vai acontecer, e num dia vazio
+a tela fica com um botão solto no meio do nada.</p>
+<div class="row">
+  <div class="phone">
+    <p class="phone-cap">Dia que não começou</p>
+    <div class="ctx"><div class="bar"><b>⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div></div>
+    <div class="c" id="m-c">
+      <button class="b">▶ Começar</button>
+      <p class="r">25 · 5 · 15 min · um pomodoro emenda no outro</p>
+    </div>
+    <p class="meas" data-for="m-c"></p>
+  </div>
+  <div class="phone">
+    <p class="phone-cap">Depois de uma parada</p>
+    <div class="c" id="m-c2">
+      <button class="b">▶ Voltar</button>
+      <p class="r">Você parou às 10:12 · 2 pomodoros · 50min</p>
+    </div>
+    <p class="meas" data-for="m-c2"></p>
+  </div>
+</div>
+
+<h2>As alturas, medidas</h2>
+<table id="tab">
+  <tr><th>Opção</th><th>Não começou</th><th>Depois da parada</th><th>vs. hoje</th></tr>
+</table>
+
+<div class="note">
+<b>O que eu recomendo:</b> a <b>B</b>. O tamanho de hoje não é só “grande demais” — ele promete que
+algo importante vai acontecer ali, e o que acontece é você apertar um botão e a tela virar o modo foco.
+A faixa diz a mesma coisa no tom certo e devolve a tela pro que interessa. A <b>A</b> é a escolha segura
+se você quiser mexer pouco; a <b>C</b> eu só faria se a frase não fizer falta depois que você já conhece
+o modo — e ela faz, no dia em que você volta depois de uma parada.
+<br><br>
+<b>A nota some nas três.</b> “Um pomodoro emenda no outro sozinho. Você diz quando parar.” já é dita
+pelo tour do modo ao vivo e pela linha dentro do foco (<b>#live-hint</b>) — aqui ela é o terceiro lugar
+a explicar a mesma coisa, e é ela que empilha mais altura no cartão.
+</div>
+
+<script>
+  const alturas = {};
+  for (const el of document.querySelectorAll('.meas')) {
+    const alvo = document.getElementById(el.dataset.for);
+    const h = Math.round(alvo.getBoundingClientRect().height * 10) / 10;
+    alturas[el.dataset.for] = h;
+    el.textContent = h + ' px de altura';
+  }
+  const linhas = [
+    ['Hoje', 'm-hoje', 'm-hoje2'],
+    ['A · Compacto', 'm-a', 'm-a2'],
+    ['B · Linha', 'm-b', 'm-b2'],
+    ['C · Só o botão', 'm-c', 'm-c2'],
+  ];
+  const base = alturas['m-hoje'];
+  const tab = document.getElementById('tab');
+  for (const [nome, a, b] of linhas) {
+    const tr = document.createElement('tr');
+    const pct = Math.round((1 - alturas[a] / base) * 100);
+    tr.innerHTML = '<td>' + nome + '</td><td><b>' + alturas[a] + 'px</b></td><td><b>' + alturas[b]
+      + 'px</b></td><td>' + (pct === 0 ? '—' : '−' + pct + '%') + '</td>';
+    tab.appendChild(tr);
+  }
+</script>

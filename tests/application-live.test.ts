@@ -3,7 +3,7 @@
 // Sem DOM: toast, Wake Lock e localStorage caem nos fallbacks em memória.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setDayMode } from '../src/application/dayWindows';
+import { clearDayWindows, setDayMode, setDefaultDayMode } from '../src/application/dayWindows';
 import { chainLive, startLive } from '../src/application/live';
 import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks } from '../src/application/plan';
 import { reconcileTimer, startTimer, stopTimer } from '../src/application/timer';
@@ -142,4 +142,41 @@ describe('o timer emenda sozinho num dia ao vivo', () => {
     expect(derived.timerBlock).toMatchObject({ time: '09:37', type: 'pausa' });
     expect(derived.focusOpen).toBe(true);
   });
+});
+
+// Achado pelo Tomi em 2026-09-13, usando o app: com o PADRÃO em "ao vivo", pôr um
+// dia de volta na rotina não fazia nada — o chip mostrava "Modo do dia trocado",
+// fechava o modal, e o dia continuava vazio. A causa é que apagar a escolha do dia
+// é literalmente "siga o padrão", e o padrão dizia ao vivo.
+describe('voltar pra rotina com um padrão "ao vivo" em vigor', () => {
+  const cheio = () => blocksForDay(HOJE).length;
+
+  it('o dia volta mesmo, e a escolha fica GRAVADA em vez de apagada', () => {
+    setDefaultDayMode('live', AGORA);
+    expect(dayModeOf(HOJE)).toBe('live');
+    expect(cheio()).toBe(0); // dia ao vivo que não começou
+
+    setDayMode(HOJE, 'rotina', AGORA);
+    expect(dayModeOf(HOJE)).toBe('rotina');
+    expect(cheio()).toBeGreaterThan(1); // o plano da rotina voltou
+    // apagar a chave devolveria o dia pro padrão; ela tem que existir dizendo "rotina"
+    expect(state.dayModes[HOJE]).toBe('rotina');
+  });
+
+  it('e continua valendo depois do "↺ Restaurar rotina"', () => {
+    setDefaultDayMode('live', AGORA);
+    setDayMode(HOJE, 'rotina', AGORA);
+    clearDayWindows(HOJE, AGORA);
+    expect(dayModeOf(HOJE)).toBe('rotina');
+    expect(cheio()).toBeGreaterThan(1);
+  });
+
+  it('com o padrão em "rotina", escolher rotina APAGA a chave — o dia volta a seguir o padrão', () => {
+    setDayMode(HOJE, 'live', AGORA);
+    expect(state.dayModes[HOJE]).toBe('live');
+    setDayMode(HOJE, 'rotina', AGORA);
+    expect(state.dayModes[HOJE]).toBeUndefined(); // sem entrada: segue o padrão, que é rotina
+    expect(dayModeOf(HOJE)).toBe('rotina');
+  });
+
 });
