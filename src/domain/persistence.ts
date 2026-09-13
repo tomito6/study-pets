@@ -40,6 +40,7 @@ import type {
   PetInstanceId,
   RecurringEventSeries,
   StudyEvent,
+  StudyWindow,
   UserConfig,
 } from './types';
 
@@ -236,9 +237,19 @@ function hydrateWindowOverrides(raw: unknown): WindowOverrides {
   const out: WindowOverrides = {};
   for (const [day, v] of Object.entries(raw)) {
     if (!isObj(v) || !Array.isArray(v.studyWindows)) continue;
-    const studyWindows = v.studyWindows
-      .filter(isObj)
-      .flatMap((w) => (typeof w.start === 'string' && typeof w.end === 'string' ? [{ start: w.start, end: w.end }] : []));
+    const studyWindows = v.studyWindows.filter(isObj).flatMap((w) => {
+      if (typeof w.start !== 'string' || typeof w.end !== 'string') return [];
+      const janela: StudyWindow = { start: w.start, end: w.end };
+      // O ritmo de uma corrida do modo ao vivo. Reconstruir a janela como `{start,end}`
+      // e pronto, que era o que esta função fazia, jogaria o `live` fora EM SILÊNCIO no
+      // reload seguinte — o dia voltaria como faixa de rotina e o gerador reescreveria
+      // as bordas dele.
+      const r = w.live;
+      if (isObj(r) && num(r.pomo) > 0 && num(r.shortBreak) > 0 && num(r.longBreak) > 0) {
+        janela.live = { pomo: num(r.pomo), shortBreak: num(r.shortBreak), longBreak: num(r.longBreak) };
+      }
+      return [janela];
+    });
     out[day] = { studyWindows };
   }
   return out;

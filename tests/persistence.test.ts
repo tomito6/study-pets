@@ -260,6 +260,36 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     expect(hydrateUserDoc({ windowOverrides: ['x'] }).windowOverrides).toEqual({});
   });
 
+  // Sem isto, a leitura reconstruía cada janela como `{start, end}` e jogava o ritmo da
+  // corrida fora EM SILÊNCIO no reload seguinte: o dia voltava como faixa de rotina e o
+  // gerador reescrevia as bordas dele.
+  it('windowOverrides: o ritmo de uma corrida (`live`) sobrevive à leitura', () => {
+    const raw = {
+      '2026-09-02': {
+        studyWindows: [
+          { start: '09:00', end: '12:35' },
+          { start: '14:02', end: '15:37', live: { pomo: 50, shortBreak: 10, longBreak: 20 } },
+        ],
+      },
+    };
+    expect(hydrateUserDoc({ windowOverrides: raw }).windowOverrides).toEqual({
+      '2026-09-02': {
+        studyWindows: [
+          { start: '09:00', end: '12:35' },
+          { start: '14:02', end: '15:37', live: { pomo: 50, shortBreak: 10, longBreak: 20 } },
+        ],
+      },
+    });
+  });
+
+  it('windowOverrides: `live` capenga é ignorado, e a janela continua valendo como rotina', () => {
+    const raw = { '2026-09-02': { studyWindows: [{ start: '09:00', end: '10:00', live: { pomo: 0, shortBreak: 5 } }] } };
+    expect(hydrateUserDoc({ windowOverrides: raw }).windowOverrides['2026-09-02']!.studyWindows[0]).toEqual({
+      start: '09:00',
+      end: '10:00',
+    });
+  });
+
   it('coinsSpent que não é número vira 0', () => {
     expect(hydrateUserDoc({ coinsSpent: '150' }).coinsSpent).toBe(0);
     expect(hydrateUserDoc({ coinsSpent: 150 }).coinsSpent).toBe(150);

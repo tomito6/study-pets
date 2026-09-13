@@ -467,3 +467,81 @@ describe('calcActualEnd', () => {
     expect(calcActualEnd(c)).toBe('12:00');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// A janela marcada como CORRIDA (modo ao vivo). O gerador foi escrito pra
+// "preencher a janela bonito" — mini-estudo, esticar o último, jogar fora a pausa
+// final —, e uma corrida tem sempre uma borda rasgada. São QUATRO desligamentos, e
+// eles só correm com `live` presente.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('generateBlocks — janela de corrida (`live`)', () => {
+  const R = { pomo: 25, shortBreak: 5, longBreak: 15 };
+  /** Uma janela só, como corrida, com o ritmo padrão dos exemplos. */
+  const corrida = (start: string, end: string, ritmo = R): PlannerConfig => ({
+    studyWindows: [{ start, end, live: ritmo }],
+    start,
+    end,
+    ...R,
+  });
+  const resumo = (bs: StudyBlock[]) => bs.map((b) => `${b.name.replace(/📖 |🧘 |☕ /g, '')} ${blockMins(b)}min ${b.xp}xp`);
+
+  it('parar no minuto exato do fim de um pomo devolve só o pomo', () => {
+    expect(resumo(generateBlocks(corrida('09:00', '09:25')))).toEqual(['Estudo 1 25min 50xp']);
+  });
+
+  it('DESLIGAMENTO 4: parar no meio de uma pausa é um fato — a pausa final não é descartada', () => {
+    // Em rotina isto vira um estudo de 30 min e 60 XP: a pausa some e o XP infla.
+    expect(resumo(generateBlocks(corrida('09:00', '09:30')))).toEqual(['Estudo 1 25min 50xp', 'Pausa 5min 5xp']);
+    const rotina = generateBlocks({ ...corrida('09:00', '09:30'), studyWindows: [{ start: '09:00', end: '09:30' }] });
+    expect(resumo(rotina)).toEqual(['Estudo 1 30min 60xp']);
+  });
+
+  it('DESLIGAMENTO 1 e 3: a sobra vira estudo da duração real, nunca mini nem esticando o anterior', () => {
+    expect(resumo(generateBlocks(corrida('09:00', '09:35')))).toEqual([
+      'Estudo 1 25min 50xp', 'Pausa 5min 5xp', 'Estudo 2 5min 10xp',
+    ]);
+    expect(generateBlocks(corrida('09:00', '09:35')).some((b) => b.mini)).toBe(false);
+  });
+
+  it('DESLIGAMENTO 2: sem ele, 09:00–09:40 comia 15 minutos — era pior que a rotina', () => {
+    // A guarda "cabe meio pomo depois da pausa?" reprova aqui (sobram 10 < 12,5), e sem
+    // desligá-la a pausa nem seria emitida.
+    expect(resumo(generateBlocks(corrida('09:00', '09:40')))).toEqual([
+      'Estudo 1 25min 50xp', 'Pausa 5min 5xp', 'Estudo 2 10min 20xp',
+    ]);
+  });
+
+  it('a pausa longa entra no ritmo da corrida e fecha a janela', () => {
+    expect(resumo(generateBlocks(corrida('09:00', '11:10')))).toEqual([
+      'Estudo 1 25min 50xp', 'Pausa 5min 5xp', 'Estudo 2 25min 50xp', 'Pausa 5min 5xp',
+      'Estudo 3 25min 50xp', 'Pausa 5min 5xp', 'Estudo 4 25min 50xp', 'Pausa longa 15min 15xp',
+    ]);
+  });
+
+  it('o ritmo é da JANELA: num dia misto a manhã de rotina não se deforma', () => {
+    const misto: PlannerConfig = {
+      studyWindows: [
+        { start: '09:00', end: '09:55' },
+        { start: '14:12', end: '15:37', live: { pomo: 50, shortBreak: 10, longBreak: 20 } },
+      ],
+      start: '09:00',
+      end: '15:37',
+      ...R,
+    };
+    const bs = generateBlocks(misto);
+    // A manhã continua em 25·5 — os checks dela não podem ficar órfãos.
+    expect(bs.slice(0, 3).map((b) => `${b.time}–${b.endTime}`)).toEqual(['09:00–09:25', '09:25–09:30', '09:30–09:55']);
+    // A tarde roda no ritmo dela.
+    expect(bs.slice(3).map((b) => `${b.time}–${b.endTime}`)).toEqual(['14:12–15:02', '15:02–15:12', '15:12–15:37']);
+    expect(blockMins(bs[3]!)).toBe(50);
+    expect(bs[3]!.xp).toBe(100);
+  });
+
+  it('sem `live`, nada muda — é o que garante que o passado não se mexe', () => {
+    const comLive = generateBlocks(corrida('09:00', '18:00'));
+    const semLive = generateBlocks({ ...corrida('09:00', '18:00'), studyWindows: [{ start: '09:00', end: '18:00' }] });
+    expect(JSON.stringify(comLive)).not.toBe(JSON.stringify(semLive)); // o ramo de fato corre
+    // e o dia de rotina é o de sempre: termina em estudo, com o mini no fim.
+    expect(semLive[semLive.length - 1]!.type).toBe('estudo');
+  });
+});

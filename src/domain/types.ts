@@ -11,10 +11,36 @@ export type DateKey = string;
 
 export type PetId = string;
 
+/**
+ * O ritmo com que uma corrida do modo ao vivo de fato rodou, congelado no fato.
+ *
+ * Mora na JANELA e não na config por uma razão medida: o app regenera o dia inteiro a
+ * cada leitura e a chave do check é o horário. Com o ritmo na config, trocar 25·5·15
+ * por 50·10·20 às 14h deformaria a manhã e deixaria os checks dela órfãos — o XP
+ * evaporaria em silêncio. Com o ritmo na janela, mudar o pomodoro em dezembro não
+ * mexe em setembro.
+ */
+export interface LiveRhythm {
+  pomo: number;
+  shortBreak: number;
+  longBreak: number;
+}
+
 /** Janela de estudo: um intervalo do dia em que o app gera pomodoros. */
 export interface StudyWindow {
   start: TimeString;
   end: TimeString;
+  /**
+   * Presente = esta janela é uma **corrida que aconteceu** (modo ao vivo), não uma
+   * faixa reservada pela rotina. O gerador para de "preencher a janela bonito" dentro
+   * dela: a sobra vira estudo da duração real em vez de mini ou de esticar o anterior,
+   * a pausa do pomodoro é emitida sempre que couber, e a pausa final não é descartada
+   * — parar no meio de uma pausa é um fato.
+   *
+   * Ausente = tudo como sempre foi. Nenhum dia que já existe tem a marca, então dia de
+   * rotina sai byte a byte igual — e isso é teste, não promessa.
+   */
+  live?: LiveRhythm;
 }
 
 /** Config do usuário, como salva em `users/{uid}.config`. */

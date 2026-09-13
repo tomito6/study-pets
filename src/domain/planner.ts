@@ -65,7 +65,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       : [{ start: cfg.start, end: cfg.end }];
   const windows = rawWindows
     .filter((w) => w && w.start && w.end)
-    .map((w) => ({ start: timeToMins(w.start), end: timeToMins(w.end) }))
+    .map((w) => ({ start: timeToMins(w.start), end: timeToMins(w.end), live: w.live }))
     .filter((w) => w.end > w.start)
     .sort((a, b) => a.start - b.start);
 
@@ -93,7 +93,6 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
 
   const blocks: StudyBlock[] = [];
   let cycleN = 0;
-  const half = cfg.pomo / 2;
 
   /**
    * Coloca um estudo/pausa de `len` minutos que valem a partir de `start`: cada pausa
@@ -206,6 +205,13 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
 
     let cur = win.start;
     const winEnd = win.end;
+    // O ritmo é da JANELA quando ela é uma corrida do modo ao vivo (ver `StudyWindow.live`);
+    // senão é o da config, como sempre. `half` desce pra cá junto, porque depende dele.
+    const live = win.live;
+    const pomo = live ? live.pomo : cfg.pomo;
+    const shortBreak = live ? live.shortBreak : cfg.shortBreak;
+    const longBreak = live ? live.longBreak : cfg.longBreak;
+    const half = pomo / 2;
     let pomoCount = 0;
     const MAX = 300;
     let iter = 0;
@@ -228,22 +234,29 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
 
       // Gap menor que pomo: mini ou stretch. Sobra pequena que não encosta em estudo
       // nenhum (logo depois de um bloqueio, ou no começo de uma janela) fica livre.
-      if (gap < cfg.pomo && gap > 0) {
-        const lastStudy = studyEndingAt(cur, win.start);
-        if (gap >= half) pushStudy(cur, gap, nextBlockStart, true);
-        else if (lastStudy) stretch(lastStudy, gap, nextBlockStart);
+      if (gap < pomo && gap > 0) {
+        if (live) {
+          // Numa corrida, a sobra É o que aconteceu: vira estudo da duração real. Nunca
+          // `mini` (que é uma categoria do plano, não um fato) e nunca `stretch`, que
+          // reescreveria um bloco que já foi vivido.
+          pushStudy(cur, gap, nextBlockStart, false);
+        } else {
+          const lastStudy = studyEndingAt(cur, win.start);
+          if (gap >= half) pushStudy(cur, gap, nextBlockStart, true);
+          else if (lastStudy) stretch(lastStudy, gap, nextBlockStart);
+        }
         cur = nextBlockStart;
         continue;
       }
 
       // Pomodoro normal
-      const study = pushStudy(cur, cfg.pomo, nextBlockStart, false);
+      const study = pushStudy(cur, pomo, nextBlockStart, false);
       cur = study.end;
       if (study.effective <= 0) continue; // a pausa registrada comeu o bloco inteiro: segue do corte
       pomoCount++;
 
       const isLong = pomoCount % 4 === 0;
-      const breakDur = isLong ? cfg.longBreak : cfg.shortBreak;
+      const breakDur = isLong ? longBreak : shortBreak;
       const breakName = isLong ? '☕ Pausa longa' : '🧘 Pausa';
       const afterBreak = cur + breakDur;
       // `>=`: um bloqueio que começa exatamente onde o pomo terminou também conta.
@@ -261,7 +274,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
           cur = ate;
           continue;
         }
-        if (afterBreak === ate || afterBreak + cfg.pomo <= ate) {
+        if (afterBreak === ate || afterBreak + pomo <= ate) {
           cur = pushBreak(cur, breakDur, ate, breakName).end;
         }
         continue;
@@ -278,8 +291,12 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       // sozinho num divisor só dele.
       // A conta é com `place` porque uma pausa registrada do timer que caia dentro da pausa do
       // pomodoro também a estica.
+      // DESLIGAMENTO 2 (corrida): a guarda abaixo existe pra não emitir uma pausa que
+      // seria o último bloco do dia e acabaria descartada. Numa corrida ela atrapalha: a
+      // pausa aconteceu, e sem isto uma janela 09:00–09:40 devolveria só o estudo de 25 e
+      // comeria os 15 minutos restantes — pior do que hoje.
       const fimDaPausa = place(cur, breakDur, winEnd).end;
-      if (winEnd - fimDaPausa >= half) {
+      if (live || winEnd - fimDaPausa >= half) {
         if (isLong) cycleN++;
         cur = pushBreak(cur, breakDur, winEnd, breakName).end;
         continue;
@@ -296,7 +313,9 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       // vazio — o tempo morreria de novo, um nível abaixo. `effective` é o que de fato vale.
       const sobra = place(cur, winEnd - cur, winEnd);
       const ultimo = studyEndingAt(cur, win.start);
-      if (sobra.effective >= half) pushStudy(cur, winEnd - cur, winEnd, true);
+      // DESLIGAMENTO 3 (corrida): mesma razão do 1 — o que sobrou é tempo que passou.
+      if (live) pushStudy(cur, winEnd - cur, winEnd, false);
+      else if (sobra.effective >= half) pushStudy(cur, winEnd - cur, winEnd, true);
       else if (ultimo) stretch(ultimo, winEnd - cur, winEnd);
       cur = winEnd;
     }
@@ -309,8 +328,14 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
   const lastWinEnd = windows[windows.length - 1]!.end;
   blocked.filter((b) => b.start >= lastWinEnd).forEach((b) => emitBlocked(b));
 
-  // Último bloco deve ser sempre um estudo (limpa pausas finais)
-  while (blocks.length > 0 && blocks[blocks.length - 1]!.type === 'pausa') {
+  // Último bloco deve ser sempre um estudo (limpa pausas finais).
+  //
+  // DESLIGAMENTO 4 (corrida): a última janela ser uma corrida muda isso. Parar no meio
+  // de uma pausa é um fato, e descartá-la apagaria minutos que aconteceram — além de
+  // fazer o plano discordar do que a pessoa viu na tela. A pergunta é sobre a ÚLTIMA
+  // janela porque os blocos saem em ordem: o último bloco é dela.
+  const ultimaAoVivo = !!windows[windows.length - 1]!.live;
+  while (!ultimaAoVivo && blocks.length > 0 && blocks[blocks.length - 1]!.type === 'pausa') {
     blocks.pop();
   }
 
