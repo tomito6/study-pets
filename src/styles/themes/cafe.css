@@ -815,4 +815,21 @@
   :root[data-theme="cafe"] .wv-hl{background:var(--border);opacity:.6;}
   :root[data-theme="cafe"] .wv-now{box-shadow:0 1px 0 var(--accent-glow-tight);}
 
+  /* O CHÃO DO HERO ENCOLHE E CENTRA. Ele nasceu de beirada a beirada, e no celular
+     isso dá 446px — 1,8 vezes o par de sprites, que é o que faz ele ler como chão.
+     No laptop o hero tem 978px a 1480px de janela e 1142px a 1728px: a faixa cresce
+     com a largura enquanto o personagem não cresce junto, e a 1920px são cinco pares
+     de sprite — uma linha dura atravessando o cartão na altura da cintura, com os dois
+     perdidos no meio. Os 300px são os mesmos do `.room-stage` da coluna (app.css:1334),
+     que já resolveu exatamente isto: o cenário é do tamanho de quem está nele, e o par
+     mede 244px fixos em qualquer janela. Só o recorte muda — gradiente, altura e a
+     régua de 4px continuam os de baixo de 1100px, onde nada aqui chega. */
+  :root[data-theme="cafe"] .profile-hero-stage::after{
+    left:50%;
+    right:auto;
+    width:300px;
+    transform:translateX(-50%);
+    border-radius:10px 10px 0 0;
+  }
+
 }

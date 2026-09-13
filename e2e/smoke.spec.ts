@@ -1545,6 +1545,28 @@ test.describe('Study Pets — smoke', () => {
       await page.locator('.brand').click();
       await expect(painel).toHaveCount(0);
     });
+
+    // PENDENCIAS 2: o chão que o tema café desenha sob os sprites do Perfil nasceu de
+    // beirada a beirada. No celular isso é 1,8 vezes o par de sprites e lê como chão;
+    // no laptop o hero tem ~980px e a faixa vira uma linha dura atravessando o cartão,
+    // com os dois personagens perdidos no meio. Agora ele é um pedestal de 300px
+    // centrado — os mesmos 300 do `.room-stage` da coluna, que já resolveu isto.
+    test('61. no laptop o chão do hero é do tamanho de quem está nele, não do cartão', async ({ page }) => {
+      await abrirApp(page);
+      await page.locator('#tour-skip').click();
+      await page.locator('#tab-perfil').click();
+
+      // Medido no MESMO sistema de coordenadas (o do elemento, antes do zoom da página):
+      // misturar com getBoundingClientRect dá uma razão constante e o teste passa sempre.
+      const m = await page.evaluate(() => {
+        const st = document.querySelector('.profile-hero-stage')!;
+        const chao = parseFloat(getComputedStyle(st, '::after').width);
+        const palco = parseFloat(getComputedStyle(st).width);
+        return { chao, palco };
+      });
+      expect(m.palco).toBeGreaterThan(600); // confere que a medida é a do laptop
+      expect(m.chao, 'o chão voltou a atravessar o cartão inteiro').toBeLessThan(m.palco * 0.6);
+    });
   });
 
   test.describe('num celular estreito', () => {
