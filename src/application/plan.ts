@@ -106,7 +106,7 @@ export function getEventsForDate(dateKey: DateKey): StudyEvent[] {
 }
 
 /** De que jeito este dia nasce: pela rotina (o padrão) ou ao vivo. */
-export const dayModeOf = (dateKey: DateKey): DayMode => modeForDay(dateKey, state.dayModes, null);
+export const dayModeOf = (dateKey: DateKey): DayMode => modeForDay(dateKey, state.dayModes, state.dayModeDefault);
 
 export function blocksForDay(dateKey: DateKey): StudyBlock[] {
   if (restKindOf(dateKey) !== null) return []; // fim de semana pausado (sem janelas do dia) ou dia livre

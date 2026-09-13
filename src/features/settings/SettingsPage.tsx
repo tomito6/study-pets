@@ -8,11 +8,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { activeSafetyNet, discardSafetyNet, importBackupFile, restoreSafetyNet } from '../../application/backup';
 import { safetyNetDaysLeft } from '../../domain/backup';
+import { setDefaultDayMode } from '../../application/dayWindows';
 import { exportMyData } from '../../application/export';
 import { clearSettingsRequest, saveSettings } from '../../application/settings';
 import { restartTour } from '../../application/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
+import type { DayMode } from '../../domain/dayMode';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state, useAppState } from '../../store/store';
@@ -39,6 +41,8 @@ function Switch({ id, checked, onChange }: { id: string; checked: boolean; onCha
   );
 }
 
+const tm = strings.settings.dayMode;
+
 export function SettingsPage() {
   const tab = useAppState((s) => s.uiTab);
   // Durante o onboarding a engrenagem aparecia verde e viva por cima do escurecido:
@@ -59,6 +63,15 @@ export function SettingsPage() {
   };
   const close = () => setOpen(false);
   // A barra do laptop (engrenagem, menu do avatar) pede pra abrir pelo store: atende com o mesmo openSettings.
+  // O padrão do modo é lido e escrito DIRETO, fora do rascunho: `normalizeConfig` monta a
+  // config campo a campo, então um campo novo lá sumiria no primeiro Salvar — em silêncio.
+  const padraoSalvo = useAppState((s) => s.dayModeDefault);
+  const padrao = padraoSalvo?.mode ?? 'rotina';
+  const escolherPadrao = (m: DayMode): void => {
+    if (m === padrao) return;
+    setDefaultDayMode(m);
+    showToast(tm.saved);
+  };
   const settingsRequest = useAppState((_s, d) => d.settingsRequest);
   // Qual seção foi pedida (o "importe de um calendário" do Novo evento manda 'calendar').
   // Vive aqui e não no store porque só esta página precisa saber onde rolar.
@@ -157,6 +170,39 @@ export function SettingsPage() {
           <div className="st-body">
             {/* ---------------- Estrutura do dia (id interno `day`, por compatibilidade) ---------------- */}
             <div className={'settings-tab-content' + (stab === 'day' ? ' active' : '')} data-tab-content="day">
+              {/* O modo vem primeiro: ele decide se as janelas abaixo valem pra um dia novo.
+                  Escreve DIRETO, fora do rascunho — `normalizeConfig` monta a config campo a
+                  campo e engoliria um campo novo no primeiro Salvar. É o arranjo do avatar. */}
+              <div className="st-section">
+                <div className="st-section-head"><div className="st-section-title">{tm.title}</div></div>
+                <div className="st-section-desc">{tm.desc}</div>
+                <div className="st-card">
+                  <div className="mode2" id="cfg-day-mode">
+                    <button
+                      type="button"
+                      className={'m' + (padrao === 'rotina' ? ' on' : '')}
+                      id="cfg-day-mode-rotina"
+                      onClick={() => escolherPadrao('rotina')}
+                    >
+                      {padrao === 'rotina' && <span className="tick">✓</span>}
+                      <span className="mt">{tm.rotina}</span>
+                      <span className="md">{tm.rotinaSub}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={'m' + (padrao === 'live' ? ' on' : '')}
+                      id="cfg-day-mode-live"
+                      onClick={() => escolherPadrao('live')}
+                    >
+                      {padrao === 'live' && <span className="tick">✓</span>}
+                      <span className="mt">{tm.live}</span>
+                      <span className="md">{tm.liveSub}</span>
+                    </button>
+                  </div>
+                  <p className="st-foot" id="cfg-day-mode-foot">{tm.foot}</p>
+                </div>
+              </div>
+
               <div className="st-section">
                 <div className="st-section-head">
                   <div className="st-section-title">{t.windows.title}</div>

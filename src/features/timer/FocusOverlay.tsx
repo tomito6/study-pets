@@ -20,6 +20,8 @@ import { pauseTimer, resumeTimer } from '../../application/pause';
 import { activePet, petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
 import { isDayClosed } from '../../domain/checks';
+import { dayModeOf } from '../../application/plan';
+import { finishTour } from '../../application/tutorial';
 import { dk } from '../../domain/time';
 import { closeFocus, stopTimer } from '../../application/timer';
 import { petForm } from '../../domain/pets';
@@ -62,6 +64,8 @@ export function FocusOverlay() {
   useSecondTick(showing);
   const [quitOpen, setQuitOpen] = useState(false);
   const [stopOpen, setStopOpen] = useState(false);
+  // Só num dia ao vivo, e só enquanto a área do tour não foi vista.
+  const dicaAoVivo = useAppState((s) => !s.tutorialSeen.live && dayModeOf(dk(new Date())) === 'live');
   useEffect(() => {
     if (!hardcore) setQuitOpen(false); // a sequência acabou (ou emendou): a confirmação não faz mais sentido
   }, [hardcore]);
@@ -186,6 +190,18 @@ export function FocusOverlay() {
           <div className="focus-next-name" id="focus-next-name">{next ? cleanBlockName(next.name) : t.endOfDay}</div>
           <div className="focus-next-dur" id="focus-next-dur">{next ? t.minutes(blockDurationMin(next)) : '—'}</div>
         </div>
+        {/* A linha do tour DENTRO do foco: nenhum balão renderiza aqui (z-index 80 contra os
+            300 do overlay), e no modo ao vivo é aqui que o modelo mora — quem aperta
+            Começar e fica uma hora nesta tela nunca veria os balões. O "Entendi" marca a
+            MESMA área que eles. */}
+        {dicaAoVivo && (
+          <div className="live-hint" id="live-hint">
+            <p>{strings.tutorial.liveHint}</p>
+            <button type="button" id="live-hint-ok" onClick={() => finishTour('live')}>
+              {strings.tutorial.done}
+            </button>
+          </div>
+        )}
         {!hardcore && (
           <div className="focus-actions">
             {waiting || travado ? (

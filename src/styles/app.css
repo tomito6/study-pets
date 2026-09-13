@@ -397,6 +397,23 @@
     font-size:14px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
   .ls-btn:hover{opacity:.92;}
   .ls-note{font-size:12px;color:var(--muted);line-height:1.5;margin:13px 0 0;}
+  /* Os dois cards do padrão, em Configurações → Estrutura do dia. */
+  .mode2{display:flex;gap:9px;}
+  .mode2 .m{flex:1;display:block;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:12px;background:var(--bg);position:relative;font-family:var(--font-ui);cursor:pointer;}
+  .mode2 .m.on{border-color:var(--accent);background:var(--accent-wash);}
+  .mode2 .m .mt{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;}
+  .mode2 .m .md{display:block;font-size:11.5px;color:var(--muted);line-height:1.45;}
+  .mode2 .m .tick{position:absolute;top:9px;right:10px;color:var(--accent);font-size:12px;}
+  .st-foot{font-size:11.5px;color:var(--text-faint);margin:10px 0 0;}
+  /* A linha do tour DENTRO do foco: nenhum balão renderiza lá (z 80 contra 300). */
+  .live-hint{display:flex;align-items:center;gap:11px;background:var(--accent-wash);border:1px solid var(--accent2);
+    border-radius:var(--radius-md);padding:11px 12px;margin-top:13px;text-align:left;}
+  .live-hint p{font-size:12px;color:var(--text);line-height:1.45;margin:0;flex:1;}
+  .live-hint button{background:none;border:0;color:var(--accent);font-size:12px;font-weight:600;
+    font-family:var(--font-ui);white-space:nowrap;cursor:pointer;}
+  /* O placar do dia, abaixo da lista num dia ao vivo. */
+  .live-tally{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);padding:6px 0 0;}
   .check svg{width:10px;height:10px;display:none;}
   .check.checked svg{display:block;}
   .block-time{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:95px;}

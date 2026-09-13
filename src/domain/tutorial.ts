@@ -6,13 +6,13 @@
 // fica na feature — este arquivo não sabe o que é um `getBoundingClientRect`,
 // só recebe retângulos e devolve coordenadas.
 
-export type TourArea = 'plan' | 'profile' | 'analytics';
-export const TOUR_AREAS: readonly TourArea[] = ['plan', 'profile', 'analytics'];
+export type TourArea = 'plan' | 'profile' | 'analytics' | 'live';
+export const TOUR_AREAS: readonly TourArea[] = ['plan', 'profile', 'analytics', 'live'];
 
 /** O que fica salvo: a área inteira vista (por "Entendi" no último balão ou "Pular"). */
 export type TutorialSeen = Partial<Record<TourArea, true>>;
 
-export type TourStepId = 'plan-blocks' | 'plan-events' | 'plan-finish' | 'profile-pet' | 'analytics-subnav';
+export type TourStepId = 'plan-blocks' | 'plan-events' | 'plan-finish' | 'profile-pet' | 'analytics-subnav' | 'live-start' | 'live-log';
 export type TourSide = 'above' | 'below';
 export type TourAlign = 'start' | 'center' | 'end';
 
@@ -45,13 +45,21 @@ export const TOUR_STEPS: readonly TourStep[] = [
   { id: 'plan-finish', area: 'plan', anchor: '#finish-day-wrap .finish-day-btn', side: 'above', align: 'center' },
   { id: 'profile-pet', area: 'profile', anchor: '#active-pet-card, #no-active-pet', side: 'above', align: 'start' },
   { id: 'analytics-subnav', area: 'analytics', anchor: '#an-subnav', side: 'below', align: 'start' },
+  // O modo ao vivo é área PRÓPRIA, não dois passos a mais no Plano: `TutorialSeen` guarda
+  // um booleano por ÁREA e "Entendi" marca a área inteira, então um balão empilhado em
+  // `plan` nasceria invisível pra quem já viu o tour do Plano — o que é toda conta que já
+  // existe. A âncora é única (não lista): `querySelector` com vírgula escolhe por ordem de
+  // DOCUMENTO, não da lista, e no laptop o cartão vive noutro lugar.
+  { id: 'live-start', area: 'live', anchor: '#live-start', side: 'above', align: 'start' },
+  { id: 'live-log', area: 'live', anchor: '#live-tally', side: 'above', align: 'center', highlight: '#blocks-list .block-row' },
 ];
 
 export const tourSteps = (area: TourArea): TourStep[] => TOUR_STEPS.filter((s) => s.area === area);
 
 /** Aba do app (id do store) → área do tour. Aba desconhecida não tem tour. */
-export function areaForTab(tab: string): TourArea | null {
-  if (tab === 'plano') return 'plan';
+export function areaForTab(tab: string, liveHoje = false): TourArea | null {
+  // Num dia ao vivo o tour do Plano não serve: ele fala de um plano que não existe ali.
+  if (tab === 'plano') return liveHoje ? 'live' : 'plan';
   if (tab === 'perfil') return 'profile';
   if (tab === 'analise') return 'analytics';
   return null;
@@ -62,13 +70,26 @@ export interface TourContext {
   onboardingOpen: boolean;
   /** Usuário logado e semanas montadas: antes disso não há elemento pra apontar. */
   loaded: boolean;
+  /**
+   * O dia VISÍVEL é hoje e está no modo ao vivo. As duas metades importam: sem "é hoje",
+   * abrir um dia ao vivo do mês passado acende o tour num lugar onde a âncora não existe,
+   * o balão vira cartão de rodapé e "Entendi" queima a área — a pessoa nunca mais o vê no
+   * dia em que ele serviria.
+   */
+  liveHoje?: boolean;
+  /** Nada rodando: com o relógio correndo o foco cobre a tela, e o balão nasceria atrás dele. */
+  idle?: boolean;
 }
 
 /** Qual área está com o tour na tela agora, ou null. Só a aba visível, e só se ainda não foi vista. */
 export function activeTourArea(seen: TutorialSeen, tab: string, ctx: TourContext): TourArea | null {
   if (ctx.onboardingOpen || !ctx.loaded) return null;
-  const area = areaForTab(tab);
+  const area = areaForTab(tab, ctx.liveHoje === true);
   if (!area || seen[area]) return null;
+  // O tour do ao vivo só com nada rodando: senão ele nasceria no segundo seguinte à troca
+  // de modo, atrás do foco, dizendo "aqui o dia começa quando você começa" num dia que já
+  // começou.
+  if (area === 'live' && ctx.idle === false) return null;
   return area;
 }
 

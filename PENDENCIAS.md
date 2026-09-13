@@ -117,8 +117,8 @@ numa janela marcada. **Sobraram sete perguntas pro Tomi** — estão no fim do p
 emenda; o gerador que aprende o que é uma corrida (`StudyWindow.live`, com a prova de que o passado não
 se mexe); o "■ Parar por aqui" com XP proporcional; e o modo em si — `dayModes`, os chips no modal do
 dia, o cartão `#live-start` e a emenda que **gera** o bloco seguinte. Ver o CLAUDE.md ("Modo ao vivo") e
-`plans/2026-09-12_1830_modo-tracker.md`. **Falta**: o padrão global (com `since`), o tour próprio do modo,
-e o item 11 abaixo. As três perguntas que mudam o app inteiro (drop-off por dias, o bloco em andamento
+`plans/2026-09-12_1830_modo-tracker.md`. O **padrão global** (com `since`) e o **tour próprio** entraram
+depois, na quinta etapa. **Falta**: o item 11 abaixo. As três perguntas que mudam o app inteiro (drop-off por dias, o bloco em andamento
 deixar de aceitar check manual, e os recordes por minuto) continuam abertas, com o custo medido no plan.
 
 ## 11. O dia ao vivo que ainda não começou esconde os eventos

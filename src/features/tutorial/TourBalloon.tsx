@@ -12,7 +12,8 @@
 
 import { useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { finishTour } from '../../application/tutorial';
-import { activeTourArea, nextTourStep, placeBalloon, scrollToShow, tourSteps } from '../../domain/tutorial';
+import { nextTourStep, placeBalloon, scrollToShow, tourSteps } from '../../domain/tutorial';
+import { currentTourArea } from '../../application/tutorial';
 import type { BalloonPlacement, Rect, TourViewport } from '../../domain/tutorial';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
@@ -79,10 +80,9 @@ function tourViewport(): TourViewport {
 }
 
 export function TourBalloon() {
-  const { area, seen } = useAppState((s, d) => ({
-    area: activeTourArea(s.tutorialSeen, s.uiTab, { onboardingOpen: d.onboardingOpen, loaded: !!s.user && d.weeks.length > 0 }),
-    seen: s.tutorialSeen,
-  }));
+  // Pelo caso de uso, e não pelo domínio direto: é ele que sabe do dia visível e do modo
+  // ao vivo, e componente não monta contexto de regra.
+  const { area, seen } = useAppState((s) => ({ area: currentTourArea(), seen: s.tutorialSeen }));
   const [index, setIndex] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<Pos | null>(null);

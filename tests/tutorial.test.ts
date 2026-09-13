@@ -23,11 +23,31 @@ import { derived, getVersion, state } from '../src/store/store';
 const ctx = { onboardingOpen: false, loaded: true };
 
 describe('os passos do tour', () => {
-  it('cinco balões: três no Plano, um no Perfil, um na Análise, nessa ordem', () => {
-    expect(TOUR_STEPS.map((s) => s.area)).toEqual(['plan', 'plan', 'plan', 'profile', 'analytics']);
+  it('sete balões: três no Plano, um no Perfil, um na Análise, dois no ao vivo, nessa ordem', () => {
+    expect(TOUR_STEPS.map((s) => s.area)).toEqual(['plan', 'plan', 'plan', 'profile', 'analytics', 'live', 'live']);
     expect(tourSteps('plan').map((s) => s.id)).toEqual(['plan-blocks', 'plan-events', 'plan-finish']);
     expect(tourSteps('profile')).toHaveLength(1);
     expect(tourSteps('analytics')).toHaveLength(1);
+    // Dois, não três: o terceiro do Plano explica que o XP entra ao encerrar o dia, e no
+    // modo ao vivo isso já está escrito na folha "Parar por aqui?", no segundo em que a
+    // pessoa vai decidir. Repetir num balão é tour explicando botão.
+    expect(tourSteps('live').map((s) => s.id)).toEqual(['live-start', 'live-log']);
+  });
+
+  it('o dia ao vivo troca a área do Plano, e não empilha balões nela', () => {
+    // `TutorialSeen` é um booleano por ÁREA: um balão a mais em `plan` nasceria invisível
+    // pra quem já viu o tour do Plano — que é toda conta que já existe.
+    expect(areaForTab('plano', false)).toBe('plan');
+    expect(areaForTab('plano', true)).toBe('live');
+    expect(areaForTab('perfil', true)).toBe('profile');
+  });
+
+  it('o tour do ao vivo não acende com o relógio correndo', () => {
+    const ctx = { onboardingOpen: false, loaded: true, liveHoje: true };
+    expect(activeTourArea({}, 'plano', { ...ctx, idle: true })).toBe('live');
+    expect(activeTourArea({}, 'plano', { ...ctx, idle: false })).toBeNull();
+    // e uma vez visto, não volta
+    expect(activeTourArea({ live: true }, 'plano', { ...ctx, idle: true })).toBeNull();
   });
 
   it('ids únicos, cada um com título e texto em strings.ts, e âncora em todos', () => {

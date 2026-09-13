@@ -98,6 +98,26 @@ export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date
   return { ok: true };
 }
 
+/**
+ * O padrão: de que jeito os dias NOVOS nascem. Vale **de hoje em diante** — o `since` é
+ * gravado com a data de agora, e `modeForDay` só o consulta pra dias a partir dela.
+ *
+ * Sem o `since`, virar a chave pra "ao vivo" leria o passado inteiro como ao vivo: todo
+ * dia sem janela editada (quase todos) devolveria plano vazio, e XP total, nível, moedas,
+ * sequência, melhor dia e o heatmap sumiriam da tela num clique. Com ele, o histórico não
+ * se mexe: quem olhar setembro vê setembro.
+ *
+ * Escolher "rotina" com um padrão de ao vivo em vigor não apaga o campo — grava rotina a
+ * partir de hoje, senão os dias entre o `since` antigo e hoje mudariam de modo pra trás.
+ */
+export function setDefaultDayMode(mode: DayMode, now: Date = new Date()): void {
+  state.dayModeDefault = { mode, since: dk(now) };
+  clearBlockCache();
+  rebuildWeeks(now);
+  scheduleSave();
+  notify();
+}
+
 export function setDayWindows(dateKey: DateKey, windows: StudyWindow[], now: Date = new Date()): DayWindowsResult {
   const can = canEditDayWindows(dateKey, now);
   if (!can.ok) return can;

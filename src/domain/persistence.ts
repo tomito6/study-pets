@@ -24,8 +24,8 @@ import { DEFAULT_AVATAR, normalizeAvatar } from './avatar';
 import type { AvatarConfig } from './avatar';
 import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
-import { normalizeDayModes } from './dayMode';
-import type { DayModes } from './dayMode';
+import { normalizeDayModeDefault, normalizeDayModes } from './dayMode';
+import type { DayModeDefault, DayModes } from './dayMode';
 import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
 import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
@@ -83,6 +83,19 @@ export interface PersistedState {
    * dias em que a pessoa escolheu explicitamente entram aqui — ver domain/dayMode.ts.
    */
   dayModes: DayModes;
+  /**
+   * O padrão de quem já decidiu: "prefiro o modo ao vivo, e vale pros meus dias".
+   *
+   * Fica FORA de `config` de propósito. `normalizeConfig` (`domain/settings.ts`) monta um
+   * objeto novo campo a campo, então um campo novo lá some no primeiro Salvar das
+   * Configurações — em silêncio. É o mesmo motivo pelo qual o avatar mora fora.
+   *
+   * E carrega `since`, que é o que impede o desastre: sem ele a leitura só poderia ser
+   * retroativa, todo dia passado sem janela editada viraria "ao vivo sem corrida", e XP
+   * total, nível, moedas, sequência, melhor dia e o heatmap inteiro sumiriam da tela num
+   * clique. `null` = nunca decidiu, e o app segue na rotina.
+   */
+  dayModeDefault: DayModeDefault | null;
   /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
   tutorialSeen: TutorialSeen;
   /**
@@ -162,6 +175,7 @@ export function emptyPersistedState(): PersistedState {
     groups: {},
     windowOverrides: {},
     dayModes: {},
+    dayModeDefault: null,
     tutorialSeen: {},
     safetyNet: null,
     ageConfirmed: false,
@@ -313,6 +327,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     groups: hydrateGroups(d.groups),
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     dayModes: normalizeDayModes(d.dayModes),
+    dayModeDefault: normalizeDayModeDefault(d.dayModeDefault),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
     // Só a forma; o prazo de 30 dias é conferido em application/backup.ts, que tem o relógio.
@@ -349,6 +364,7 @@ export function serializeState(s: PersistedState): UserDoc {
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
     dayModes: s.dayModes || {},
+    dayModeDefault: s.dayModeDefault ?? null,
     tutorialSeen: s.tutorialSeen || {},
     safetyNet: s.safetyNet ?? null,
     ageConfirmed: s.ageConfirmed === true,

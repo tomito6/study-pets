@@ -14,7 +14,8 @@ import { isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
-import { dk, timeToMins } from '../../domain/time';
+import { blockMins as blockMinsOf, dk, timeToMins } from '../../domain/time';
+import { formatCompact } from '../../domain/settings';
 import { canStartBlock } from '../../domain/timer';
 import type { Stats } from '../../domain/stats';
 import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
@@ -392,6 +393,16 @@ export function PlanTab() {
         <SelectionRect range={selection.range} listId="blocks-list" />
         <EventDragGhost preview={drag.preview} listId="blocks-list" />
       </div>
+      {/* O placar do dia: o que substitui, fora do foco, a lista que a pessoa não olha
+          enquanto o relógio corre. É também a âncora do segundo balão do tour. */}
+      {aoVivo && blocks.some((b) => b.type === 'estudo') && (
+        <div className="live-tally" id="live-tally">
+          {t.liveTally(
+            blocks.filter((b) => b.type === 'estudo').length,
+            formatCompact(blocks.filter((b) => b.type === 'estudo').reduce((soma, b) => soma + blockMinsOf(b), 0)),
+          )}
+        </div>
+      )}
       {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startBlock} />}
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
         </>

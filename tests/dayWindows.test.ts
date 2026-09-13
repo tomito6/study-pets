@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CFG } from '../src/domain/config';
 import { configForDay, isDayOff, roundUpToStep, routineAfter, startNowWindows, stopDayAt, validateDayWindows } from '../src/domain/dayWindows';
+import { modeForDay } from '../src/domain/dayMode';
 import { extendDayTo, extendWindowsTo } from '../src/domain/endOfDay';
 
 const at = (hm: string) => new Date(`2026-09-02T${hm}:00`);
@@ -153,5 +154,34 @@ describe('routineAfter — "Voltar ao padrão" não desfaz o que foi vivido', ()
   it('voltar antes do fim da corrida não sobrepõe: a rotina começa onde ela acabou', () => {
     const r = routineAfter(corrida, rotina, em('09:40'));
     expect(r.ok && r.windows[1]!.start).toBe('10:12');
+  });
+});
+
+describe('modeForDay — o padrão e a trava do `since`', () => {
+  const HOJE = '2026-09-13';
+  const ONTEM = '2026-09-12';
+  const AMANHA = '2026-09-14';
+
+  it('sem padrão nenhum, tudo é rotina — como o app sempre funcionou', () => {
+    expect(modeForDay(HOJE, {}, null)).toBe('rotina');
+    expect(modeForDay(ONTEM, {}, null)).toBe('rotina');
+  });
+
+  it('o padrão vale de `since` em diante, e NUNCA pra trás', () => {
+    const padrao = { mode: 'live' as const, since: HOJE };
+    expect(modeForDay(ONTEM, {}, padrao)).toBe('rotina'); // o passado não se mexe
+    expect(modeForDay(HOJE, {}, padrao)).toBe('live');
+    expect(modeForDay(AMANHA, {}, padrao)).toBe('live');
+  });
+
+  it('sem isso, virar a chave apagaria o histórico da tela', () => {
+    // Um dia de setembro sem janela editada continua devolvendo o plano da rotina — é o
+    // que mantém XP, nível, sequência e heatmap de pé depois de um clique.
+    expect(modeForDay('2026-09-01', {}, { mode: 'live', since: HOJE })).toBe('rotina');
+  });
+
+  it('a escolha de um dia vence o padrão, nos dois sentidos', () => {
+    expect(modeForDay(HOJE, { [HOJE]: 'rotina' }, { mode: 'live', since: HOJE })).toBe('rotina');
+    expect(modeForDay(HOJE, { [HOJE]: 'live' }, { mode: 'rotina', since: HOJE })).toBe('live');
   });
 });

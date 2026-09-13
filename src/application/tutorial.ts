@@ -4,14 +4,22 @@
 
 import { activeTourArea, markTourSeen } from '../domain/tutorial';
 import type { TourArea } from '../domain/tutorial';
+import { dk } from '../domain/time';
 import { derived, notify, state } from '../store/store';
+import { currentDayKey, dayModeOf } from './plan';
 import { scheduleSave } from './save';
 
 /** A área cujo tour está na tela agora (aba visível, ainda não vista, sem onboarding), ou null. */
-export function currentTourArea(): TourArea | null {
+export function currentTourArea(now: Date = new Date()): TourArea | null {
+  const hoje = dk(now);
   return activeTourArea(state.tutorialSeen, state.uiTab, {
     onboardingOpen: derived.onboardingOpen,
     loaded: !!state.user && derived.weeks.length > 0,
+    // O tour do modo ao vivo é do DIA VISÍVEL, e só quando ele é hoje: num dia ao vivo do
+    // mês passado a âncora nem existe, o balão viraria cartão de rodapé e "Entendi"
+    // queimaria a área — a pessoa nunca mais o veria no dia em que ele serve.
+    liveHoje: currentDayKey() === hoje && dayModeOf(hoje) === 'live',
+    idle: !derived.timerBlock,
   });
 }
 

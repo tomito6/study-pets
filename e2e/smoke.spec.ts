@@ -2028,4 +2028,50 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#day-windows-btn')).not.toContainText('Ao vivo');
     expect(await page.locator('.block-row').count()).toBeGreaterThan(1);
   });
+
+  test('56. o tour do modo ao vivo é área própria, e o do Plano não aparece lá', async ({ page }) => {
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click(); // pula o tour do Plano
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+
+    // O tour do ao vivo acende sozinho, porque é OUTRA área — se fosse balão empilhado no
+    // Plano, ele nasceria invisível pra quem já pulou aquele.
+    const balao = page.locator('#tour-balloon');
+    await expect(balao).toBeVisible();
+    await expect(balao).toContainText('Aqui o dia começa quando você começa');
+    await page.locator('#tour-next').click();
+    await expect(balao).toContainText('A lista é o que já aconteceu');
+    await page.locator('#tour-next').click(); // "Entendi" no último
+    await expect(balao).toBeHidden();
+
+    // Visto uma vez, não volta.
+    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.getByRole('button', { name: /Plano/ }).click();
+    await expect(balao).toBeHidden();
+  });
+
+  test('57. o padrão do modo vale de hoje em diante, e não reescreve o passado', async ({ page }) => {
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+    // Ontem tem plano (é o dia 01 da semana; o app abre na segunda).
+    await page.locator('#fab-config').click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Estrutura do dia' }).click();
+    await page.locator('#cfg-day-mode-live').click();
+    await page.locator('#settings-panel').getByRole('button', { name: '← Voltar' }).click();
+
+    // Hoje passou a ser ao vivo — o cartão Começar ocupa a tela.
+    await expect(page.locator('#live-start')).toBeVisible();
+    await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo');
+    // O tour do modo acende junto (é área nova); pula, senão ele cobre as abas dos dias.
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+
+    // E o dia ANTERIOR continua com o plano da rotina: o histórico não se mexe.
+    await page.locator('#day-tabs button').first().click();
+    await expect(page.locator('#live-start')).toHaveCount(0);
+    expect(await page.locator('.block-row').count()).toBeGreaterThan(1);
+  });
 });

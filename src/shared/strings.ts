@@ -107,6 +107,9 @@ export const strings = {
     dayWindows: '🕘 Janelas do dia',
     /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */
     dayLive: '⏱ Ao vivo',
+    /** O placar do dia, abaixo da lista num dia ao vivo — e a âncora do segundo balão. */
+    liveTally: (pomos: number, dur: string) =>
+      `Hoje · ${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
     liveStart: {
       kicker: 'Hoje',
@@ -362,6 +365,12 @@ export const strings = {
     done: 'Entendi',
     skip: 'Pular',
     counter: (i: number, n: number) => `${i}/${n}`,
+    /**
+     * A linha DENTRO do foco, no modo ao vivo. Nenhum balão do tour renderiza lá (z-index
+     * 80 contra os 300 do overlay), e é lá que o modelo do modo mora: quem aperta Começar
+     * e fica uma hora no foco nunca veria os balões.
+     */
+    liveHint: 'O próximo bloco emenda sozinho. Precisa parar? O botão está aqui embaixo.',
     /** Indexado pelo id do passo (`domain/tutorial.ts`). Duas linhas no máximo: explica o modelo, não o botão. */
     steps: {
       'plan-blocks': {
@@ -383,6 +392,14 @@ export const strings = {
       'analytics-subnav': {
         title: 'Tô fazendo o que planejei?',
         text: 'Cumprido contra planejado, meta diária e os horários em que você mais rende.',
+      },
+      'live-start': {
+        title: 'Aqui o dia começa quando você começa',
+        text: 'Escolha o ritmo e aperte Começar. Um pomodoro emenda no outro até você dizer que parou.',
+      },
+      'live-log': {
+        title: 'A lista é o que já aconteceu',
+        text: 'Nada é montado antes. O que você fez hoje vira o registro do dia, bloco por bloco.',
       },
     },
   },
@@ -530,6 +547,18 @@ export const strings = {
     daysCount: (n: number) => `${n} dias`,
   },
   settings: {
+    /** Configurações → Estrutura do dia → "Modo do dia": como um dia NOVO nasce. */
+    dayMode: {
+      title: 'Modo do dia',
+      desc: 'De que jeito um dia novo nasce. Cada dia dá pra trocar depois, no Plano.',
+      rotina: '📋 Rotina',
+      rotinaSub: 'O dia nasce montado pelas suas janelas. Você vai marcando o que fez.',
+      live: '⏱ Ao vivo',
+      liveSub: 'O dia começa quando você aperta Começar, e vai até onde você for.',
+      /** A frase que impede a leitura retroativa de virar susto. */
+      foot: 'Vale de hoje em diante. Os dias que já passaram não mudam.',
+      saved: 'Modo padrão salvo',
+    },
     fab: 'Configurações',
     back: '← Voltar',
     title: 'Configurações',
