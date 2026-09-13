@@ -1,14 +1,17 @@
-// O tema visual do app: o Café de casa (claro, o padrão desde 2026-09-07) e o escuro original.
+// O tema visual do app: o Café de casa (claro, o padrão desde 2026-09-07) e o Loft noturno
+// (escuro, desde 2026-09-14 — ele substituiu o escuro herdado da primeira versão, que nunca
+// tinha sido desenhado).
 //
 // Cada arquivo de tema só vale sob `:root[data-theme="<slug>"]`, então trocar de tema é
 // trocar um atributo no `<html>` — nenhum CSS é carregado ou descarregado, nada de geometria
-// muda. O escuro é a ausência do atributo (é o que `src/styles/app.css` pinta por padrão).
+// muda. Os DOIS põem o atributo: o `:root` de `src/styles/app.css` deixou de ser "o tema
+// escuro" e passou a ser a base que os dois herdam (e o fallback se o atributo faltar).
 //
 // Isolado de propósito: sem React, sem store, sem persistência na nuvem. O tema é uma
 // preferência DESTE dispositivo (localStorage), como a sessão hardcore — e a querystring
 // `?tema=<slug>` existe pra abrir num tema específico sem entrar em Configurações.
 
-export type ThemeId = 'cafe' | 'escuro';
+export type ThemeId = 'cafe' | 'loft';
 
 export type ThemeInfo = {
   id: ThemeId;
@@ -19,7 +22,7 @@ export type ThemeInfo = {
 /** O catálogo, na ordem em que aparece no seletor. `cafe` é o padrão e vem primeiro. */
 export const TEMAS: ThemeInfo[] = [
   { id: 'cafe', nome: 'Café de casa', descricao: 'Claro: papel creme, tinta marrom, verde sálvia.' },
-  { id: 'escuro', nome: 'Escuro', descricao: 'O escuro de sempre, com o verde-limão.' },
+  { id: 'loft', nome: 'Loft noturno', descricao: 'Escuro: azul noite, chá verde e âmbar.' },
 ];
 
 const STORAGE_KEY = 'sp-theme';
@@ -31,8 +34,21 @@ const LIGHT: ThemeId[] = ['cafe'];
 
 const IDS = TEMAS.map((t) => t.id);
 
+/**
+ * Slugs que já foram gravados e não existem mais. `escuro` é o tema herdado que o Loft
+ * substituiu: sem isto, quem tinha ele no `localStorage` (ou um link `?tema=escuro`)
+ * abriria no CLARO — trocar o tema de alguém pelo oposto, calado, na primeira abertura.
+ */
+const ALIASES: Record<string, ThemeId> = { escuro: 'loft' };
+
 export function isThemeId(v: unknown): v is ThemeId {
   return typeof v === 'string' && (IDS as string[]).includes(v);
+}
+
+/** O id que vale pra um valor lido de fora (storage, querystring), traduzindo os antigos. */
+function normalize(v: unknown): ThemeId | null {
+  if (isThemeId(v)) return v;
+  return typeof v === 'string' ? ALIASES[v] ?? null : null;
 }
 
 export function themeInfo(id: ThemeId): ThemeInfo {
@@ -42,7 +58,7 @@ export function themeInfo(id: ThemeId): ThemeInfo {
 function readStored(): ThemeId | null {
   try {
     const v = globalThis.localStorage?.getItem(STORAGE_KEY);
-    return isThemeId(v) ? v : null;
+    return normalize(v);
   } catch {
     return null;
   }
@@ -61,7 +77,7 @@ function readQuery(): ThemeId | null {
     const search = globalThis.location?.search;
     if (!search) return null;
     const v = new URLSearchParams(search).get(QUERY_KEY);
-    return isThemeId(v) ? v : null;
+    return normalize(v);
   } catch {
     return null;
   }
@@ -81,8 +97,7 @@ export function readTheme(): ThemeId {
 }
 
 /**
- * Aplica o tema: põe (ou tira, no caso do escuro) o `data-theme` no `<html>`, grava a
- * escolha e acerta o que vive fora do CSS — o `color-scheme` do documento e a
+ * Aplica o tema: põe o `data-theme` no `<html>`, grava a escolha e acerta o que vive fora do CSS — o `color-scheme` do documento e a
  * `<meta name="theme-color">` (a barra do navegador no celular / PWA), que passa a valer
  * o `--bg` computado depois da troca.
  */
@@ -90,8 +105,7 @@ export function applyTheme(id: ThemeId): void {
   const root = globalThis.document?.documentElement;
   if (!root) return;
 
-  if (id === 'escuro') root.removeAttribute('data-theme');
-  else root.setAttribute('data-theme', id);
+  root.setAttribute('data-theme', id);
 
   root.style.colorScheme = LIGHT.includes(id) ? 'light' : 'dark';
   store(id);

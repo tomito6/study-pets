@@ -1,0 +1,120 @@
+/* LOFT NOTURNO — a versão de estudar de noite.
+ *
+ * Vem da exploração das oito direções do pacote "Café de casa"
+ * (study-pets-cafe-de-casa/referencias/exploracao-8-estilos.html, 07 · Loft noturno:
+ * "azul noite, chá verde e âmbar", "a cidade descansa lá fora"). SUBSTITUI o escuro
+ * herdado da primeira versão do app, que nunca foi desenhado.
+ *
+ * Só tokens, nenhuma regra de forma — e é por isso que ele cabe num arquivo de uma
+ * declaração só: o Café de casa precisou de doze seções porque INVERTEU a luz (papel
+ * claro onde tudo era escuro); o loft é escuro como a base, então o que muda é a
+ * paleta inteira e nada da estrutura. Nenhum nome de token nasce aqui: todos existem
+ * no `:root` de app.css, e o que não está redefinido abaixo é herdado de propósito
+ * (as sombras derivam de --shadow-rgb, os --fade e os --lift valem porque o loft é
+ * escuro, e os --hero-floor só têm consumidor sob [data-theme="cafe"]).
+ *
+ * Contraste medido nos pares que carregam informação: text/bg 12,6:1 · muted/bg2
+ * 6,7:1 · accent/bg2 7,4:1 · a tinta sobre o accent 7,6:1 · cada cor de ciclo sobre
+ * o fundo dela entre 5,2 e 6,0:1. --accent-bg é #2a413e e não o #304a47 cru do
+ * pacote porque com o valor do pacote o selo de nível caía pra 4,09.
+ */
+
+:root[data-theme="loft"]{
+  /* superfície */
+  --bg:#1b2632; --bg-rgb:27,38,50;
+  --bg2:#23313e; --bg2-rgb:35,49,62;
+  --shadow-rgb:6,11,17;
+  --tint-rgb:228,234,230;
+  --bg3:#2a3a48; --track:#2a3a48; --surface-hover-solid:#2a3a48;
+  --bg-blur:rgba(var(--bg-rgb),.92); --bg-blur-strong:rgba(var(--bg-rgb),.94);
+  --surface-hover:rgba(var(--tint-rgb),.04); --surface-soft:rgba(var(--tint-rgb),.05);
+  --surface-strong:rgba(var(--tint-rgb),.14); --track-soft:rgba(var(--tint-rgb),.09);
+  --hairline:rgba(var(--tint-rgb),.07);
+  --surface-week:rgba(var(--bg2-rgb),.6); --surface-week-hover:rgba(var(--bg2-rgb),1);
+  --ring-track:#22313e; --overlay:rgba(var(--shadow-rgb),.72);
+  --hero-a:#2a3b4a; --hero-b:#202f3c;
+  --accent-surface-a:#304a47; --accent-surface-b:#273a38;
+  --gold-surface-a:#3d3323; --gold-surface-b:#2d2719;
+  --scene-floor:#31444e; --timeline-pause:#1b2632;
+  --hatch-a:#3d4e5c; --hatch-b:#2b3b48;
+  --login-bg:#16202a; --input-bg:rgba(var(--tint-rgb),.05); --input-border:rgba(var(--tint-rgb),.14);
+
+  /* linha */
+  --border:#374753; --border-rgb:55,71,83; --border-strong:#5a6d7b; --border-mid:#4a5c69;
+  --hairline-row:rgba(var(--border-rgb),.7); --rest-fill:rgba(var(--border-rgb),.45); --rest-fill-soft:rgba(var(--border-rgb),.35);
+
+  /* texto */
+  --text:#e4eae6; --text-soft:#c6d1cd; --muted:#adbbb9;
+  --text-dim:#95a4a5; --text-dim-alt:#95a4a5; --text-faint:#8d9c9e; --text-ghost:#63737a;
+  --on-accent:#1e322a; --on-accent-alt:#1e322a; --on-accent-login:#1e322a;
+  --on-orange:#2b2016; --on-gold:#2b2016; --on-cycle:#17222d; --on-danger:#f2e9e4;
+
+  /* ação */
+  --accent:#a8c9bc; --accent-rgb:168,201,188; --accent2:#8bb2a1; --accent-bg:#2a413e;
+  --accent-wash:rgba(var(--accent-rgb),.08); --accent-wash-soft:rgba(var(--accent-rgb),.07);
+  --accent-wash-soft2:rgba(var(--accent-rgb),.06); --accent-wash-2:rgba(var(--accent-rgb),.10);
+  --accent-bg-soft:rgba(var(--accent-rgb),.15); --accent-line:rgba(var(--accent-rgb),.16);
+  --accent-border:rgba(var(--accent-rgb),.38); --accent-border-soft:rgba(var(--accent-rgb),.26);
+  --accent-glow:rgba(var(--accent-rgb),.24); --accent-glow-ring:rgba(var(--accent-rgb),.18);
+  --accent-glow-soft:rgba(var(--accent-rgb),.14); --accent-glow-faint:rgba(var(--accent-rgb),.12);
+  --accent-glow-strong:rgba(var(--accent-rgb),.55); --accent-glow-tight:rgba(var(--accent-rgb),.6);
+  --accent-ripple:rgba(var(--accent-rgb),.5); --accent-halo:rgba(var(--accent-rgb),.07);
+  --accent-grid:rgba(var(--accent-rgb),.04); --accent-glow-mid:rgba(var(--accent-rgb),.45);
+  --accent-glow-text:rgba(var(--accent-rgb),.45); --accent-glow-title:rgba(var(--accent-rgb),.22);
+  --accent-deep:#1e322a; --accent-deep2:#2f5045; --knob:#e4eae6;
+  --google-btn-bg:#f2f5f3; --google-btn-fg:#1b2632;
+  --google-btn-ring:rgba(var(--tint-rgb),.12); --google-btn-ring-hover:rgba(var(--tint-rgb),.18);
+
+  /* semântica */
+  --blue:#8fb8cf; --blue-rgb:143,184,207; --blue-bg:#2a3f4e; --blue-soft:#b0cfe0; --blue-bg-soft:rgba(var(--blue-rgb),.18);
+  --orange:#d4ac83; --orange-rgb:212,172,131; --orange-bg:#3a2e22;
+  --orange-wash:rgba(var(--orange-rgb),.2); --orange-glow:rgba(var(--orange-rgb),.28);
+  --orange-glow-inset:rgba(var(--orange-rgb),.12); --orange-glow-flash:rgba(var(--orange-rgb),.5);
+  --orange-glow-strong:rgba(var(--orange-rgb),.55); --orange-glow-tight:rgba(var(--orange-rgb),.6);
+  --danger:#e0857a; --danger-rgb:224,133,122; --danger-strong:#c96b5f; --danger-soft:#eda096;
+  --danger-bg:rgba(var(--danger-rgb),.1); --danger-bg-2:rgba(var(--danger-rgb),.13);
+  --danger-border:rgba(var(--danger-rgb),.35); --danger-border-strong:rgba(var(--danger-rgb),.55);
+  --danger-outline:rgba(var(--danger-rgb),.5); --danger-check:rgba(var(--danger-rgb),.6); --danger-ring:rgba(var(--danger-rgb),.18);
+  --gold:#e6c07a; --gold-rgb:230,192,122; --gold-bright:#f0cd8b;
+  --gold-bg:rgba(var(--gold-rgb),.12); --gold-border:rgba(var(--gold-rgb),.35); --gold-border-soft:rgba(var(--gold-rgb),.25); --gold-muted:#a8926a;
+
+  /* ciclos: o accent e cinco pastéis na mesma luz */
+  --s0:#a8c9bc; --s0-bg:#2b423e; --s0-line:#7fa696;
+  --s1:#8fb8cf; --s1-bg:#2a3f4e; --s1-line:#6f9bb5;
+  --s2:#d49aae; --s2-bg:#43303a; --s2-line:#b57a8e;
+  --s3:#d4ac83; --s3-bg:#43362a; --s3-line:#b78e66;
+  --s4:#8fc7ae; --s4-bg:#2a4239; --s4-line:#6aa68c;
+  --s5:#b3a6d4; --s5-bg:#37334a; --s5-line:#9184b8;
+
+  /* grupos: frios e saturados de propósito — grupo é outra camada, não um ciclo */
+  --gc0-rgb:86,200,214; --gc0:rgb(var(--gc0-rgb));
+  --gc1-rgb:138,146,235; --gc1:rgb(var(--gc1-rgb));
+  --gc2-rgb:82,205,186; --gc2:rgb(var(--gc2-rgb));
+  --gc3-rgb:224,136,224; --gc3:rgb(var(--gc3-rgb));
+  --gc4-rgb:100,181,240; --gc4:rgb(var(--gc4-rgb));
+  --gc5-rgb:186,150,240; --gc5:rgb(var(--gc5-rgb));
+  --gc-a-border:.58; --gc-a-bg:.09; --gc-a-track:.18;
+
+  /* heatmap */
+  --heat1:#2f4a45; --heat2:#4b7267; --heat3:#7ba694; --heat4:#a8c9bc;
+
+  /* forma: o raio de 16 do pacote, na escada que o app já usa */
+  --radius:12px; --radius-sm:8px; --radius-lg:16px; --radius-md:10px; --radius-xl:14px; --radius-2xl:16px;
+
+  /* o ícone nativo do seletor de hora: o da base gira pro lima */
+  --picker-filter:invert(.85) sepia(.22) saturate(1.6) hue-rotate(118deg);
+
+  /* bloqueio de sites: o escudo continua azul, mais quente que o navy do fundo */
+  --sb-strong:#9ec9e8; --sb-line:#44607f; --sb-wash:rgba(158,201,232,.12);
+
+  /* arte: o quarto e o habitat de noite. Só cor — o sol do habitat vira lua porque
+     é o mesmo círculo no alto à direita pintado de âmbar sobre um céu escuro, e o
+     morro dentro da janela do quarto vira silhueta. Nenhum elemento novo: a cidade
+     da exploração seria JSX, e aí não é mais tema. */
+  --room-wall:#253541; --room-frame:#516374; --room-sky:#152232; --room-hill:#1e3040;
+  --room-floor:#31444e; --room-floor-line:#405362; --room-rug:#716759; --room-wood:#162631;
+  --room-leaf:#75917b; --room-pot:#6d5847; --room-mug:#d9dedb; --room-mug-line:#8aa09b;
+  --room-book-a:#4f6a58; --room-book-b:#d9dedb; --room-book-c:#9a6f52;
+  --hb-sky:#152232; --hb-sky-2:#1d2c3c; --hb-sun:#e0ccaa; --hb-hill:#24384a; --hb-hill-2:#1c2d3d;
+  --hb-leaf:#75917b; --hb-grass:#2b4150; --hb-grass-line:#3b5566;
+}

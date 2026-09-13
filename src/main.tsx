@@ -4,8 +4,10 @@ import './styles/fonts.css';
 import './styles/app.css';
 import './styles/login.css';
 
-// O tema Café de casa (o padrão). Só vale sob `:root[data-theme="cafe"]`; sem o atributo, o escuro.
+// Os dois temas. Cada um só vale sob o `data-theme` dele; o `:root` de app.css é a base
+// que os dois herdam (e o fallback se o atributo faltar).
 import './styles/themes/cafe.css';
+import './styles/themes/loft.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
