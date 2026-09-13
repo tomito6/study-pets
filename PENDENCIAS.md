@@ -119,8 +119,7 @@ candidato e já é o nome do overlay; (c) o nome do app muda junto? Aí é domí
 documentos legais — e o CLAUDE.md pede pra **não** renomear o projeto na Vercel, porque o domínio muda e
 o Authorized domain do Firebase Auth quebra o login com Google. Se mudar, vale plan próprio.
 
-
-## 13. O modo escuro vira o "Loft noturno"
+## 12. O modo escuro vira o "Loft noturno"
 
 Pedido de 2026-09-12. O escuro de hoje é o tema original do app, herdado da primeira versão — nunca
 foi desenhado. A exploração das oito direções
