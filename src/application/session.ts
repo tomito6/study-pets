@@ -13,7 +13,7 @@ import { startDayRollover, stopDayRollover } from './dayRollover';
 import { resumeHardcoreOnBoot } from './hardcore';
 import { endHardcoreSession } from './hardcoreRuntime';
 import { resumePauseOnBoot } from './pause';
-import { stopBlocking, watchExtension } from './siteBlock';
+import { abandonBlocking, watchExtension } from './siteBlock';
 import { openOnboarding } from './onboarding';
 import { dropExpiredSafetyNet } from './backup';
 import { applyPendingPetXP } from './pets';
@@ -159,8 +159,12 @@ export function initAfterLoad(now: Date = new Date()): void {
 function resetToLoggedOut(): void {
   stopDayRollover();
   if (derived.hardcore) endHardcoreSession(); // antes de perder o uid: limpa a sessão do dispositivo
-  if (derived.timerPausedAt != null) stopTimer(); // idem a pausa aberta
-  stopBlocking(); // saiu da conta: a extensão libera na hora
+  // Sair da conta NÃO é o fim do estudo: a extensão fica com o que tem até o alarme
+  // do `until` (no máximo o resto do pomodoro). Antes daqui saía um `stopped`, e
+  // "Sair · Entrar" era o desbloqueio de dois cliques que recarregar já não era.
+  // Vem ANTES de parar o timer: parar publica, e quem se afastou não publica mais.
+  abandonBlocking();
+  stopTimer(); // o timer não sobrevive à conta: sem isto ele seguia correndo sobre o estado zerado
   state.user = null;
   derived.loadFailed = false;
   derived.booting = false;

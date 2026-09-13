@@ -14,7 +14,7 @@ const doc = { documentElement: { dataset: {} as Record<string, string> } };
 Object.assign(globalThis, { window: win, document: doc, location: { origin: 'http://localhost:5174' } });
 
 const { EXT_ACK_EVENT, EXT_QUERY_EVENT, EXT_STATE_EVENT } = await import('../src/infrastructure/extensionBridge');
-const { blockingNow, resetBlockingForTests, startSiteBlockTest, stopSiteBlockTest, watchExtension } = await import('../src/application/siteBlock');
+const { abandonBlocking, blockingNow, resetBlockingForTests, startSiteBlockTest, stopSiteBlockTest, watchExtension } = await import('../src/application/siteBlock');
 const { startHardcore } = await import('../src/application/hardcore');
 const { rebuildWeeks } = await import('../src/application/plan');
 const { reconcileTimer, startTimer, stopTimer } = await import('../src/application/timer');
@@ -163,6 +163,42 @@ describe('recarregar não é escapar', () => {
   it('uma carga da página que nunca armou nada não manda parar (o tick do relógio não libera o site)', () => {
     reconcileTimer(AGORA);
     expect(publicados).toHaveLength(0);
+  });
+
+  it('nem o "✕ Parar" de uma carga que nunca armou nada — recarregar e parar era a mesma porta', () => {
+    startTimer(estudo, AGORA);
+    resetBlockingForTests(); // = recarregou a página: o app esquece o que publicou
+    stopTimer();
+    expect(publicados).toHaveLength(1); // só o de antes do "reload"; nenhum `stopped` saiu depois
+  });
+});
+
+describe('sair da conta não é o fim do estudo', () => {
+  it('se afastar não manda `stopped`: a extensão fica com o que tem até o alarme', () => {
+    startTimer(estudo, AGORA);
+    expect(ultimo()).toMatchObject({ active: true });
+    publicados.length = 0;
+    abandonBlocking();
+    expect(publicados).toHaveLength(0);
+  });
+
+  it('depois de se afastar, nem o tick nem a pergunta da extensão liberam', () => {
+    watchExtension();
+    startTimer(estudo, AGORA);
+    abandonBlocking();
+    stopTimer(); // é o que o logout faz em seguida — e ele não pode virar a porta de saída
+    Object.assign(state, emptyPersistedState()); // o logout zera o estado inteiro
+    publicados.length = 0;
+    reconcileTimer(new Date(`${HOJE}T10:12:00`));
+    expect(publicados).toHaveLength(0);
+    win.dispatchEvent(new CustomEvent(EXT_QUERY_EVENT));
+    expect(ultimo()).toEqual({ v: 2, active: false, reason: 'unknown' });
+  });
+
+  it('mas o teste de 1 min acaba junto — prévia não é compromisso', () => {
+    startSiteBlockTest('blacklist', ['chess.com'], AGORA);
+    abandonBlocking();
+    expect(ultimo()).toEqual({ v: 2, active: false, reason: 'stopped' });
   });
 });
 

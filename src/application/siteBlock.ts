@@ -14,7 +14,9 @@
 // runtime). Se ao carregar a página a gente dissesse "inativo", recarregar viraria
 // a porta de escape: some com o bloqueio no meio do estudo. Então:
 // - o app só diz `stopped` quando ELE encerrou (fim do bloco, ✕ Parar, desistir,
-//   fim do dia, logout) — e nesta carga da página ele precisa ter armado algo antes;
+//   fim do dia) — e nesta carga da página ele precisa ter armado algo antes;
+// - **sair da conta não encerra nada**: é o fim da sessão, não do estudo. Ali o app
+//   se afasta (`abandonBlocking`) e a extensão segue com o que tem até o alarme;
 // - à pergunta da extensão sem nada rodando, responde `unknown`, e a extensão
 //   mantém o que tinha até o alarme do `until` vencer. Um pomodoro de 25 min nunca
 //   deixa regra pendurada por mais que isso.
@@ -132,11 +134,43 @@ export function syncBlocking(now: Date = new Date()): void {
   if (!payload.active) setAck(null);
 }
 
-/** O app encerrou: pode liberar. É o único caminho que manda `stopped` sem rodeio. */
+/**
+ * O app encerrou o que estava bloqueando: pode liberar. Fim do bloco, "✕ Parar",
+ * desistir no hardcore, fim do dia.
+ *
+ * A guarda da autoridade vale aqui também: uma carga da página que nunca armou nada
+ * não manda parar. Sem ela, recarregar no meio do estudo e sair da conta liberava o
+ * site — dois cliques pra desfazer o que o próprio usuário pediu —, e era o mesmo
+ * buraco que o `syncBlocking` já fechava pro tique do relógio.
+ */
 export function stopBlocking(): void {
   clearTest();
+  if (published === null) return;
   if (published === JSON.stringify(STOPPED)) return;
   send(STOPPED);
+  setAck(null);
+}
+
+/**
+ * O app **se afasta** sem encerrar: sair da conta.
+ *
+ * Sair não é o fim do estudo — é o fim da sessão. Por isso nenhum `stopped` sai
+ * daqui: a extensão fica com o que tinha e o bloqueio morre sozinho no alarme do
+ * `until` (no máximo o resto do pomodoro). Esta carga da página perde a autoridade
+ * (`published = null`), então nem um tique atrasado do relógio manda parar depois.
+ *
+ * O teste de 1 min é a exceção, e por ser o que é: prévia, não compromisso. Ele acaba
+ * junto.
+ */
+export function abandonBlocking(): void {
+  const testava = derived.siteBlock.test !== null;
+  clearTest();
+  if (testava) {
+    send(STOPPED);
+    setAck(null);
+    return;
+  }
+  published = null;
   setAck(null);
 }
 

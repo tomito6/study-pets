@@ -166,4 +166,17 @@ describe('sair da conta', () => {
     const fim = corpo.indexOf('\n}');
     expect(corpo.slice(0, fim)).toContain('emptyPersistedState()');
   });
+
+  it('não manda a extensão liberar os sites: sair é o fim da sessão, não do estudo', () => {
+    // "Sair · Entrar" era o desbloqueio de dois cliques — exatamente a porta que o
+    // "recarregar não é escapar" fecha. Quem sai se afasta (`abandonBlocking`): a
+    // extensão fica com o que tem até o alarme do `until`, no máximo o resto do
+    // pomodoro. Este teste lê a fonte porque o caminho de verdade passa pelo
+    // `onAuthStateChanged` do Firebase, e o que importa é qual das duas portas ele usa.
+    const fonte = readFileSync(new URL('../src/application/session.ts', import.meta.url), 'utf8');
+    const corpo = fonte.slice(fonte.indexOf('function resetToLoggedOut'));
+    const sair = corpo.slice(0, corpo.indexOf('\n}'));
+    expect(sair).toContain('abandonBlocking()');
+    expect(sair).not.toContain('stopBlocking()');
+  });
 });
