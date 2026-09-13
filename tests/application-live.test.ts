@@ -41,6 +41,33 @@ describe('o dia ao vivo antes de começar', () => {
     expect(blocksForDay(HOJE)).toEqual([]);
   });
 
+  // Pendência 11, resolvida em 2026-09-13: sem isto a aula das 10h e a refeição das 13h
+  // ficavam invisíveis até a primeira corrida — e então APARECIAM, porque o gerador emite
+  // bloqueios que caem depois da janela. O compromisso piscava na tela.
+  it('mas mostra os compromissos do dia: eles existem, mesmo sem plano', () => {
+    state.events[HOJE] = [
+      { name: 'Aula', start: '10:00', end: '11:30' },
+      { name: '🍽️ Refeição', start: '13:00', end: '14:00', countsAsStudy: false },
+    ];
+    setDayMode(HOJE, 'live', AGORA);
+    const dia = blocksForDay(HOJE);
+    expect(dia.map((b) => `${b.time}–${b.endTime} ${b.name}`)).toEqual([
+      '10:00–11:30 📅 Aula',
+      '13:00–14:00 🍽️ Refeição', // nome que já traz ícone não ganha o 📅
+    ]);
+    expect(dia.every((b) => b.type !== 'estudo' && b.type !== 'pausa')).toBe(true);
+  });
+
+  it('e o compromisso continua lá depois de começar — não pisca', () => {
+    state.events[HOJE] = [{ name: '🍽️ Refeição', start: '13:00', end: '14:00', countsAsStudy: false }];
+    setDayMode(HOJE, 'live', AGORA);
+    const antes = blocksForDay(HOJE).filter((b) => b.type === 'intervalo');
+    const r = startLive(HOJE, AGORA);
+    expect(r.ok).toBe(true);
+    const depois = blocksForDay(HOJE).filter((b) => b.type === 'intervalo');
+    expect(JSON.stringify(depois)).toBe(JSON.stringify(antes));
+  });
+
   it('e NÃO é dia livre: a lista vazia aqui não pode virar folga', () => {
     setDayMode(HOJE, 'live', AGORA);
     // `windowOverrides` vazio seria lido como `isDayOff`; o modo mora noutro lugar.

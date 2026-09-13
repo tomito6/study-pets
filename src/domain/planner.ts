@@ -31,6 +31,56 @@ interface Placed {
 
 const isTime = (v: unknown): v is TimeString => typeof v === 'string' && /^\d{2}:\d{2}$/.test(v);
 
+/** Os eventos do dia como faixas bloqueadas, em minutos e em ordem. */
+function toSpans(events: StudyEvent[]): BlockedSpan[] {
+  const out: BlockedSpan[] = [];
+  for (const ev of events) {
+    const counts = ev.countsAsStudy !== false; // default true (retrocompat)
+    const entry: BlockedSpan = {
+      start: timeToMins(ev.start),
+      end: timeToMins(ev.end),
+      name: ev.name,
+      type: counts ? 'event' : 'intervalo',
+    };
+    if (ev._seriesId) entry._seriesId = ev._seriesId;
+    out.push(entry);
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+
+/**
+ * Um bloqueio como bloco do plano. Evento (e intervalo vindo de série) ganha 📅 na
+ * frente — a menos que o nome já traga o próprio ícone ("🍽️ Refeição"). Intervalo avulso
+ * fica com o nome cru (comportamento antigo).
+ */
+function blockFromSpan(b: BlockedSpan, cycle: number): StudyBlock {
+  const prefix = (b.type === 'event' || (b.type === 'intervalo' && b._seriesId)) && !startsWithEmoji(b.name);
+  const out: StudyBlock = {
+    time: minsToTime(b.start),
+    endTime: minsToTime(b.end),
+    name: prefix ? `📅 ${b.name}` : b.name,
+    type: b.type,
+    xp: b.type === 'event' ? calcXP(b.end - b.start) : 0,
+    cycle: b.type === 'event' ? cycle : undefined,
+  };
+  if (b._seriesId) out._seriesId = b._seriesId;
+  return out;
+}
+
+/**
+ * **Só os bloqueios** de um dia, sem plano nenhum em volta.
+ *
+ * É o dia no modo ao vivo antes de a pessoa apertar Começar: não existe plano (é o ponto
+ * do modo), mas a aula das 10h e a refeição das 13h existem e precisam aparecer. Sem
+ * isto elas ficavam invisíveis até a primeira corrida — e então **apareciam**, porque o
+ * gerador emite bloqueios que caem depois da janela. O compromisso piscava na tela.
+ *
+ * Todos no ciclo 0: sem estudo não há leva pra separar.
+ */
+export function blockagesOnly(events: StudyEvent[] = []): StudyBlock[] {
+  return toSpans(events).map((b) => blockFromSpan(b, 0));
+}
+
 /**
  * Gera os blocos de um dia.
  *
@@ -73,19 +123,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
   if (windows.length === 0) return [];
 
   // Bloqueios: eventos (countsAsStudy=true→'event', false→'intervalo').
-  const blocked: BlockedSpan[] = [];
-  for (const ev of events) {
-    const counts = ev.countsAsStudy !== false; // default true (retrocompat)
-    const entry: BlockedSpan = {
-      start: timeToMins(ev.start),
-      end: timeToMins(ev.end),
-      name: ev.name,
-      type: counts ? 'event' : 'intervalo',
-    };
-    if (ev._seriesId) entry._seriesId = ev._seriesId;
-    blocked.push(entry);
-  }
-  blocked.sort((a, b) => a.start - b.start);
+  const blocked = toSpans(events);
 
   const pauseSpans: PauseSpan[] = pauses
     .filter((p) => p && isTime(p.at) && Number.isInteger(p.secs) && p.secs >= 1)
@@ -193,22 +231,9 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     return timeToMins(last.time) >= winStart ? last : null;
   };
 
-  // Emite um bloqueio como block (evento/intervalo) preservando metadados úteis.
-  // Evento (e intervalo vindo de série) ganha 📅 na frente — a menos que o nome já traga o
-  // próprio ícone ("🍽️ Refeição"). Intervalo avulso fica com o nome cru (comportamento antigo).
-  function emitBlocked(b: BlockedSpan): void {
-    const prefix = (b.type === 'event' || (b.type === 'intervalo' && b._seriesId)) && !startsWithEmoji(b.name);
-    const out: StudyBlock = {
-      time: minsToTime(b.start),
-      endTime: minsToTime(b.end),
-      name: prefix ? `📅 ${b.name}` : b.name,
-      type: b.type,
-      xp: b.type === 'event' ? calcXP(b.end - b.start) : 0,
-      cycle: b.type === 'event' ? cycleN : undefined,
-    };
-    if (b._seriesId) out._seriesId = b._seriesId;
-    blocks.push(out);
-  }
+  const emitBlocked = (b: BlockedSpan): void => {
+    blocks.push(blockFromSpan(b, cycleN));
+  };
 
   // Pra cada janela, gera pomos+pausas e respeita bloqueios internos.
   // Antes de cada janela, emite bloqueios que estão entre a anterior e esta (ou antes da primeira).

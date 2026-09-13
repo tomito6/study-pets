@@ -6,7 +6,7 @@ import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
 import type { RestKind } from '../domain/dayWindows';
 import { expandEventsForDate } from '../domain/events';
-import { generateBlocks as generateBlocksPure } from '../domain/planner';
+import { blockagesOnly, generateBlocks as generateBlocksPure } from '../domain/planner';
 import { computeStats, calcStreaks } from '../domain/stats';
 import type { Stats } from '../domain/stats';
 import { dk, isWeekendKey } from '../domain/time';
@@ -111,12 +111,16 @@ export const dayModeOf = (dateKey: DateKey): DayMode => modeForDay(dateKey, stat
 export function blocksForDay(dateKey: DateKey): StudyBlock[] {
   if (restKindOf(dateKey) !== null) return []; // fim de semana pausado (sem janelas do dia) ou dia livre
   const windowOv = state.windowOverrides[dateKey];
-  // Dia ao vivo que ainda não começou não tem plano nenhum — é o ponto do modo. A linha
-  // é obrigatória, não higiene: `generateBlocks` com `studyWindows: []` cai no fallback
+  const events = getEventsForDate(dateKey);
+  // Dia ao vivo que ainda não começou não tem PLANO nenhum — é o ponto do modo —, mas
+  // tem os compromissos dele: a aula das 10h e a refeição das 13h existem, e precisam
+  // aparecer. Sem isso elas ficavam invisíveis até a primeira corrida e então apareciam
+  // (o gerador emite bloqueios que caem depois da janela): o compromisso piscava na tela.
+  //
+  // Não dá pra chamar o gerador aqui: com `studyWindows: []` ele cai no fallback
   // `cfg.start`/`cfg.end`, e `deriveStartEnd([])` devolve 09:00–18:00 — o dia que não
   // começou nasceria com o plano inteiro, 33 blocos que ninguém pediu.
-  if (!windowOv && dayModeOf(dateKey) === 'live') return [];
-  const events = getEventsForDate(dateKey);
+  if (!windowOv && dayModeOf(dateKey) === 'live') return blockagesOnly(events);
   const dayCfg = configForDay(state.config, windowOv); // as janelas só deste dia, se houver
   return generateBlocks(dayCfg, events, state.pauses?.[dateKey] ?? []); // e as pausas do timer daquele dia
 }

@@ -118,26 +118,13 @@ emenda; o gerador que aprende o que é uma corrida (`StudyWindow.live`, com a pr
 se mexe); o "■ Parar por aqui" com XP proporcional; e o modo em si — `dayModes`, os chips no modal do
 dia, o cartão `#live-start` e a emenda que **gera** o bloco seguinte. Ver o CLAUDE.md ("Modo ao vivo") e
 `plans/2026-09-12_1830_modo-tracker.md`. O **padrão global** (com `since`) e o **tour próprio** entraram
-depois, na quinta etapa. **Falta**: o item 11 abaixo. As três perguntas que mudam o app inteiro (drop-off por dias, o bloco em andamento
+depois, na quinta etapa, e os compromissos do dia que ainda não começou pararam de piscar na sexta.
+**Nada falta do modo em si** — o que resta são as três perguntas que mudam o app inteiro (o drop-off por
+dias, o bloco em andamento deixar de aceitar check manual, e os recordes por minuto), com o custo medido
+no plan. As três perguntas que mudam o app inteiro (drop-off por dias, o bloco em andamento
 deixar de aceitar check manual, e os recordes por minuto) continuam abertas, com o custo medido no plan.
 
-## 11. O dia ao vivo que ainda não começou esconde os eventos
-
-Nasceu com o modo ao vivo (2026-09-13). Num dia ao vivo sem corrida, `blocksForDay` devolve `[]` e o
-cartão `#live-start` ocupa a tela — então **a aula das 10h e o almoço das 13h não aparecem em lugar
-nenhum** até você apertar Começar. Eles continuam valendo (o gerador respeita o bloqueio quando a
-corrida chega lá), mas você não os vê.
-
-A linha que devolve `[]` é obrigatória: sem ela o dia nasceria com o plano inteiro. O que falta é
-mostrar **só os bloqueios** — e o caminho barato (chamar `generateBlocks` sem janela) não serve, porque
-ele sai `[]` antes de emitir qualquer coisa, e mexer nisso afetaria o "dia livre", que tem que continuar
-vazio.
-
-**Decidir:** (a) o cartão passa a conviver com uma lista só de eventos, acima ou abaixo dele; (b) o
-cartão ganha uma linha ("Hoje você tem: 🍽️ 13:00 · 👥 15:30"); ou (c) fica como está, porque a Semana
-mostra e o dia ao vivo é sobre agora.
-
-## 12. O vocabulário (e o nome) presumem estudo
+## 11. O vocabulário (e o nome) presumem estudo
 
 "Janelas de estudo", "Estudo 3", "Encaixar estudo", "meta diária de estudo", `studyWindows`,
 `dailyStudyMin` — e "Study Pets". Quem usa pomodoro pra trabalhar não se vê em nada disso, e o pedido
@@ -151,7 +138,7 @@ candidato e já é o nome do overlay; (c) o nome do app muda junto? Aí é domí
 documentos legais — e o CLAUDE.md pede pra **não** renomear o projeto na Vercel, porque o domínio muda e
 o Authorized domain do Firebase Auth quebra o login com Google. Se mudar, vale plan próprio.
 
-## 13. O modo escuro vira o "Loft noturno"
+## 12. O modo escuro vira o "Loft noturno"
 
 Pedido de 2026-09-12. O escuro de hoje é o tema original do app, herdado da primeira versão — nunca
 foi desenhado. A exploração das oito direções
@@ -173,7 +160,7 @@ cabe na regra, mas é desenho novo, não redefinição; (c) a exploração tamb�
 noite vira loft) ou continua escolha manual em Configurações → Aparência? Automático soa bonito e é
 exatamente o tipo de coisa que irrita quando erra.
 
-## 14. O dia visível não acompanha a virada da meia-noite
+## 13. O dia visível não acompanha a virada da meia-noite
 
 `state.uiWeek`/`state.uiDay` só são escritos no boot (`application/session.ts`, `initAfterLoad`) e
 por clique. Ninguém os recorrige quando o dia vira: `application/dayRollover.ts` cuida do XP do pet
@@ -186,7 +173,7 @@ que hoje é outro dia". **Decidir:** o `dayRollover` também reposiciona a seman
 eles estavam em cima do dia que acabou de virar (e não mexe se o usuário navegou de propósito)? Ou a
 aba Plano passa a ter um jeito de dizer "você está olhando outro dia" quando `viewKey !== hoje` —
 que resolveria os dois casos e também o de quem clicou numa aba antiga e esqueceu?
-## 15. O laço de emenda marca o dia inteiro se o app ficar aberto
+## 14. O laço de emenda marca o dia inteiro se o app ficar aberto
 
 Achado em 2026-09-12, enquanto eu desenhava o modo tracker — mas **não é do tracker: acontece hoje, no
 modo rotina**, e o commit de ontem aumentou a exposição.

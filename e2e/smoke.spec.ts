@@ -1991,8 +1991,12 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-mode-live').click();
 
     // O dia ao vivo nasce SEM plano — e não pode dizer "Dia livre", que é folga.
-    await expect(page.locator('.block-row')).toHaveCount(0);
+    // Mas os compromissos ficam: a refeição das 13h existe mesmo sem plano nenhum, e
+    // some-los até o primeiro Começar fazia o compromisso piscar na tela (pendência 11).
     await expect(page.locator('.empty-day')).toHaveCount(0);
+    await expect(page.locator('.block-row')).toHaveCount(1);
+    await expect(page.locator('.block-row', { hasText: 'Almoço' })).toContainText('13:00–14:00');
+    await expect(page.locator('.block-row', { hasText: 'Estudo' })).toHaveCount(0);
     await expect(page.locator('#live-start')).toBeVisible();
     await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo');
     await expect(page.locator('#live-rhythm')).toContainText('25 · 5');
@@ -2003,10 +2007,10 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-block-name')).toContainText('Estudo 1');
     await expect(page.locator('.block-row', { hasText: '09:12–09:37' })).toHaveCount(1);
-    // E nada de estudo além dele: o resto do dia não aconteceu. A refeição das 13h fica,
-    // porque é um compromisso de verdade: o gerador emite bloqueios que caem depois da janela.
+    // E nada de estudo além dele: o resto do dia não aconteceu. A refeição continua no
+    // mesmo lugar em que já estava antes de começar — ela não pisca.
     await expect(page.locator('.block-row')).toHaveCount(2);
-    await expect(page.locator('.block-row', { hasText: 'Almoço' })).toHaveCount(1);
+    await expect(page.locator('.block-row', { hasText: 'Almoço' })).toContainText('13:00–14:00');
   });
 
   test('55b. voltar pra rotina devolve o resto do dia, e a corrida fica', async ({ page }) => {
