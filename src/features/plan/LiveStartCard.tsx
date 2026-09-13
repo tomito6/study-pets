@@ -11,6 +11,7 @@ import { blockMins, dk } from '../../domain/time';
 import type { StudyBlock } from '../../domain/types';
 import { formatCompact } from '../../domain/settings';
 import { strings } from '../../shared/strings';
+import { requestSettings } from '../../application/settings';
 import { showToast } from '../../shared/toast';
 import { useAppState } from '../../store/store';
 
@@ -52,7 +53,12 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
       <button type="button" className="ls-btn" id="live-start-btn" onClick={comecar}>
         {jaRodou ? t.back : t.start}
       </button>
-      <p className="ls-rhythm" id="live-rhythm">{t.rhythmValue(pomo, shortBreak, longBreak)}</p>
+      {/* O único lugar do app, fora das Configurações, que NOMEIA o ritmo — e o cartão
+          acabou de pedir pra pessoa escolher um. Então ele também é porta: mesma da
+          "🕘 Janelas do dia" (ver CLAUDE.md, "O ritmo tem porta"). */}
+      <button type="button" className="ls-rhythm" id="live-rhythm" onClick={() => requestSettings('ritmo')}>
+        {t.rhythmValue(pomo, shortBreak, longBreak)}
+      </button>
     </div>
   );
 }

@@ -287,6 +287,8 @@ export const strings = {
     },
     title: '🕘 Janelas do dia',
     intro: 'Só pra este dia. A rotina em Configurações continua igual.',
+    /** A porta pro ritmo do pomodoro, que mora em Configurações → Estrutura do dia e ninguém achava. */
+    rhythm: (pomo: number, short: number, long: number) => `Ritmo: ${pomo} · ${short} · ${long} min — mudar →`,
     windowsLabel: 'Janelas de estudo',
     add: '+ Adicionar',
     startNow: '▶ Começar agora',

@@ -405,7 +405,8 @@
   .ls-btn{width:100%;height:42px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
     font-size:14px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
   .ls-btn:hover{opacity:.92;}
-  .ls-rhythm{font-size:11.5px;color:var(--muted);margin:9px 0 0;}
+  .ls-rhythm{display:block;width:100%;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);margin:9px 0 0;padding:0;background:none;border:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .ls-rhythm:hover{color:var(--accent);}
   /* Os dois cards do padrão, em Configurações → Estrutura do dia. */
   .mode2{display:flex;gap:9px;}
   .mode2 .m{flex:1;display:block;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);
@@ -1287,8 +1288,8 @@
   /* importar calendário (.ics) — a seção e a tela de revisão */
   /* o destaque de quem chegou aqui pelo "Novo evento": acende e apaga sozinho */
   .st-section-lit .st-card{border-color:var(--accent2);box-shadow:0 0 0 3px var(--accent-wash);transition:box-shadow .4s,border-color .4s;}
-  .ev-import-link{display:block;width:100%;margin-top:14px;padding:0;background:none;border:none;text-align:center;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
-  .ev-import-link:hover{color:var(--accent);}
+  .ev-import-link,.dw-rhythm-link{display:block;width:100%;margin-top:14px;padding:0;background:none;border:none;text-align:center;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .ev-import-link:hover,.dw-rhythm-link:hover{color:var(--accent);}
   .ics-how{margin-top:12px;font-size:11.5px;color:var(--muted);}
   .ics-how summary{cursor:pointer;color:var(--accent);font-size:12px;}
   .ics-how ul{margin:8px 0 0;padding-left:18px;line-height:1.6;}

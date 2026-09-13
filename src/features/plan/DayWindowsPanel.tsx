@@ -15,6 +15,7 @@ import {
 } from '../../application/dayWindows';
 import type { DayWindowsRefusal } from '../../application/dayWindows';
 import { dayModeOf } from '../../application/plan';
+import { requestSettings } from '../../application/settings';
 import { dk } from '../../domain/time';
 import { state } from '../../store/store';
 import type { DateKey, StudyWindow } from '../../domain/types';
@@ -100,6 +101,13 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
 
+  // Fecha ANTES de pedir, como o goImport do EventPanel: dois modais abertos ao mesmo tempo
+  // deixariam o overlay do dia por cima da página que acabou de abrir.
+  const goRhythm = () => {
+    onClose();
+    requestSettings('ritmo');
+  };
+
   return (
     <Modal id="day-windows-panel" open={!!dateKey} title={t.title} onClose={onClose}>
       <p className="dw-intro">{t.intro}</p>
@@ -155,6 +163,14 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
         <button type="button" className="reset-btn" onClick={onClose}>{t.cancel}</button>
         <button type="button" className="save-btn" id="day-windows-save" onClick={save} disabled={windows.length === 0}>{t.save}</button>
       </div>
+      {/* O ritmo do pomodoro mora em Configurações → Estrutura do dia, e ninguém achava —
+          é a mesma história do "importe de um calendário" (ver CLAUDE.md, "Duas portas").
+          Este é o botão que a pessoa já aperta pra mexer no dia: a porta fica aqui, mostrando
+          o ritmo em vigor. Ela LEVA até lá; editar continua sendo lá, porque ritmo é da rotina
+          e não deste dia (a pergunta "o override carrega ritmo próprio?" continua aberta). */}
+      <button type="button" className="dw-rhythm-link" id="dw-rhythm" onClick={goRhythm}>
+        {t.rhythm(state.config.pomo, state.config.shortBreak, state.config.longBreak)}
+      </button>
     </Modal>
   );
 }

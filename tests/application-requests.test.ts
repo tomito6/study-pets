@@ -90,6 +90,17 @@ describe('Abrir Configurações pedido pela barra do laptop', () => {
     off();
   });
 
+  it('o pedido carrega a seção: o calendário e o ritmo são as duas portas que levam a algum lugar', () => {
+    requestSettings('calendar');
+    expect(derived.settingsRequest).toEqual({ focus: 'calendar' });
+    clearSettingsRequest();
+
+    // A do ritmo é a única que mora na SEGUNDA aba — quem atende precisa trocar de aba
+    // antes de rolar, senão a seção está em display:none e o scroll é um no-op mudo.
+    requestSettings('ritmo');
+    expect(derived.settingsRequest).toEqual({ focus: 'ritmo' });
+  });
+
   it('os dois pedidos são independentes: um não mexe no outro', () => {
     requestSettings();
     requestStartBlock(bloco);

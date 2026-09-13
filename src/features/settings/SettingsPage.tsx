@@ -75,12 +75,18 @@ export function SettingsPage() {
   const settingsRequest = useAppState((_s, d) => d.settingsRequest);
   // Qual seção foi pedida (o "importe de um calendário" do Novo evento manda 'calendar').
   // Vive aqui e não no store porque só esta página precisa saber onde rolar.
-  const [focus, setFocus] = useState<'calendar' | null>(null);
+  const [focus, setFocus] = useState<'calendar' | 'ritmo' | null>(null);
   useEffect(() => {
     if (!settingsRequest) return;
     const wanted = settingsRequest.focus;
     clearSettingsRequest();
     openSettings();
+    // O ritmo é a única seção pedida que mora na SEGUNDA aba, e o `openSettings` acabou
+    // de forçar o Geral. `setStab` e não `switchTab`: o switchTab zera o scrollTop, e é
+    // justamente o scroll que o efeito abaixo vai usar. As três chamadas caem no mesmo
+    // batch, então a aba certa já está montada quando ele roda — com a aba errada, a
+    // seção está em `display:none` e o `scrollIntoView` seria um no-op silencioso.
+    if (wanted === 'ritmo') setStab('day');
     setFocus(wanted);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsRequest]);
@@ -88,7 +94,8 @@ export function SettingsPage() {
   // Rolar até a seção pedida depois que o Geral montou, e apagar o destaque em seguida.
   useEffect(() => {
     if (!open || !focus) return;
-    const target = document.getElementById('ics-import-btn')?.closest('.st-section');
+    const anchor = focus === 'ritmo' ? 'cfg-pomo' : 'ics-import-btn';
+    const target = document.getElementById(anchor)?.closest('.st-section');
     target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     const t = setTimeout(() => setFocus(null), 2400);
     return () => clearTimeout(t);
@@ -216,7 +223,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <div className="st-section">
+              <div className={'st-section' + (focus === 'ritmo' ? ' st-section-lit' : '')}>
                 <div className="st-section-head"><div className="st-section-title">{t.rhythm.title}</div></div>
                 <div className="st-section-desc">{t.rhythm.desc}</div>
                 <div className="st-card">

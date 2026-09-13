@@ -2149,4 +2149,39 @@ test.describe('Study Pets — smoke', () => {
     }
     expect(erros).toEqual([]);
   });
+
+  // PENDENCIAS 4: o ritmo do pomodoro mora em Configurações → Estrutura do dia, e
+  // ninguém acha. A saída "um balão no tour" foi medida e reprovada (o tour é por
+  // ÁREA, então o balão nasceria invisível pra toda conta que já viu o tour do
+  // Plano — inclusive a única que existe). A saída é a porta, que é o padrão que o
+  // app já usou quando o "+ Evento" ganhou a porta do calendário.
+  test('60. o ritmo do pomodoro tem porta: das Janelas do dia até a seção certa, já rolada e acesa', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+
+    // A porta mostra o ritmo em vigor — quem abre já sabe o que vai mudar.
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#dw-rhythm')).toContainText('25 · 5 · 20');
+
+    // E LEVA: o modal fecha, as Configurações abrem na segunda aba, na seção certa.
+    await page.locator('#dw-rhythm').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('#settings-panel')).toBeVisible();
+    await expect(page.locator('.settings-tab.active')).toContainText('Estrutura do dia');
+    await expect(page.locator('#cfg-pomo')).toBeInViewport();
+    await expect(page.locator('#settings-panel .st-section-lit')).toBeVisible();
+
+    // A porta do calendário continua indo pro lugar dela — o alvo do scroll virou
+    // uma variável, e era exatamente o que podia quebrar em silêncio (ela não tinha teste).
+    await page.locator('#settings-panel .st-back').click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+    await page.locator('#add-event-btn').click();
+    await page.locator('#ev-import').click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+    await expect(page.locator('.settings-tab.active')).toContainText('Geral');
+    await expect(page.locator('#ics-import-btn')).toBeInViewport();
+    expect(erros).toEqual([]);
+  });
 });
