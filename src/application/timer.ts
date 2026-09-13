@@ -274,7 +274,7 @@ function finishTimer(now: Date = new Date()): void {
   }
   const todayKey = dk(now);
   const n = strings.timer.notification;
-  pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
+  void pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
 
   if (derived.focusOpen && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
     const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
