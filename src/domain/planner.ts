@@ -3,6 +3,7 @@
 
 import type { BlockType, PauseRecord, PlannerConfig, StudyBlock, StudyEvent, TimeString } from './types';
 import { startsWithEmoji } from './eventPresets';
+import { pausedMinutes } from './pauses';
 import { blockMins, minsToTime, timeToMins } from './time';
 import { calcXP } from './progression';
 
@@ -14,10 +15,10 @@ interface BlockedSpan {
   _seriesId?: string;
 }
 
-/** Uma pausa registrada, em minutos desde a meia-noite. */
+/** Uma pausa registrada: o minuto do dia em que começou, e quanto durou em segundos. */
 interface PauseSpan {
   at: number;
-  mins: number;
+  secs: number;
 }
 
 /** O que sobrou depois de colocar um estudo/pausa: onde terminou e quanto dele foi pausa. */
@@ -49,7 +50,7 @@ const isTime = (v: unknown): v is TimeString => typeof v === 'string' && /^\d{2}
  *   ele passaria por cima da pausa ou do evento que está entre os dois;
  * - o último bloco do dia nunca é pausa.
  *
- * **Pausas registradas** (`pauses`, ver `PauseRecord`): o bloco que contém o minuto
+ * **Pausas registradas** (`pauses`, ver `PauseRecord`): chegam em SEGUNDOS, e o bloco que contém o minuto
  * `at` fica `mins` mais longo (o cursor anda junto, então tudo que vem depois no dia
  * desliza); eventos e o fim da janela não se movem, então um bloco empurrado contra
  * eles é cortado ali — o último estudo do dia encolhe, ou some. O bloco continua um
@@ -87,8 +88,8 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
   blocked.sort((a, b) => a.start - b.start);
 
   const pauseSpans: PauseSpan[] = pauses
-    .filter((p) => p && isTime(p.at) && Number.isInteger(p.mins) && p.mins >= 1)
-    .map((p) => ({ at: timeToMins(p.at), mins: p.mins }))
+    .filter((p) => p && isTime(p.at) && Number.isInteger(p.secs) && p.secs >= 1)
+    .map((p) => ({ at: timeToMins(p.at), secs: p.secs }))
     .sort((a, b) => a.at - b.at);
 
   const blocks: StudyBlock[] = [];
@@ -99,15 +100,28 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
    * registrada que cai dentro dele estica o fim (uma segunda pausa pode cair no
    * trecho já esticado — por isso o laço olha o fim que cresce), e `limit` (o
    * próximo bloqueio ou o fim da janela) corta o que passar dele.
+   *
+   * **O arredondamento é do TOTAL, não de cada pausa** (2026-09-13): as pausas chegam em
+   * segundos e o que estica o bloco é `pausedMinutes` da SOMA, então dez toques em
+   * Pausar/Retomar dentro de sete segundos esticam um minuto, não dez. Cada pausa recebe
+   * só a diferença que ela completou (`add`, muitas vezes zero), e é essa diferença que o
+   * corte usa — assim um registro que não virou minuto nenhum também não ocupa espaço.
+   * Registro antigo (minutos × 60) devolve exatamente os minutos de antes, um a um.
    */
   function place(start: number, len: number, limit: number): Placed {
     let end = start + len;
-    const inside: PauseSpan[] = [];
+    let secs = 0; // segundos pausados acumulados dentro deste bloco
+    let mins = 0; // quantos minutos eles já valeram
+    const inside: { at: number; mins: number }[] = [];
     for (const p of pauseSpans) {
       if (p.at < start) continue;
       if (p.at >= end) break; // ordenadas: nenhuma depois cabe
-      end += p.mins;
-      inside.push(p);
+      secs += p.secs;
+      const total = pausedMinutes(secs);
+      const add = total - mins;
+      mins = total;
+      end += add;
+      inside.push({ at: p.at, mins: add });
     }
     const cut = Math.min(end, limit);
     let paused = 0;

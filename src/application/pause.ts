@@ -104,7 +104,10 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
     return 'ended';
   }
   resumeRuntime(regenerated, now, endsAt);
-  showToast(strings.timer.pauseRecorded(record.mins, planDeltaParts(planDelta(before, after)), dropped));
+  // Quanto o dia andou DE FATO: os minutos que o bloco cresceu. Com os segundos somados
+  // antes de arredondar, uma pausa curta atrás da outra pode não mexer no plano nenhuma vez.
+  const deslocou = (regenerated.paused ?? 0) - (block.paused ?? 0);
+  showToast(strings.timer.pauseRecorded(record.secs, deslocou, planDeltaParts(planDelta(before, after)), dropped));
   return 'resumed';
 }
 

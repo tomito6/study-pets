@@ -112,8 +112,10 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
   it('doc de antes das pausas: sem `pauses` → {}; lixo vira vazio; registro válido passa, em ordem', () => {
     expect(hydrateUserDoc({ coinsSpent: 5 }).pauses).toEqual({});
     expect(hydrateUserDoc({ pauses: 'x' }).pauses).toEqual({});
+    // Doc anterior a 2026-09-13 guardava minutos: entram como `mins * 60`, o que devolve
+    // o mesmo plano (o gerador soma os segundos e arredonda uma vez).
     expect(hydrateUserDoc({ pauses: { '2026-09-02': [{ at: '10:30', mins: 3 }, { at: '10:10', mins: 7 }, 'lixo', { at: '10:00', mins: 0 }] } }).pauses).toEqual({
-      '2026-09-02': [{ at: '10:10', mins: 7 }, { at: '10:30', mins: 3 }],
+      '2026-09-02': [{ at: '10:10', secs: 420 }, { at: '10:30', secs: 180 }],
     });
   });
 
@@ -363,7 +365,7 @@ describe('ida e volta', () => {
       tutorialSeen: { plan: true, analytics: true },
       avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado', body: 'curvo' },
       penalties: { '2026-09-02': [{ time: '10:00', endTime: '10:25', name: 'Estudo 3', xp: 100, pet: 'owl', petXp: 60, at: 5, reason: 'abandon' }] },
-      pauses: { '2026-09-02': [{ at: '10:10', mins: 7 }, { at: '15:02', mins: 1 }] },
+      pauses: { '2026-09-02': [{ at: '10:10', secs: 420 }, { at: '15:02', secs: 60 }] },
       notifications: [
         { id: 'nivel:4', kind: 'nivel', at: 1_700_000_000_000, read: false, data: { n: 4, nome: 'Dedicado' } },
         { id: 'dia:2026-09-01', kind: 'dia', at: 1_600_000_000_000, read: true, data: { dia: '2026-09-01', xp: 320, coins: 160 } },

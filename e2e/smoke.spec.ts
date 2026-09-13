@@ -658,7 +658,7 @@ test.describe('Study Pets — smoke', () => {
 
     await expect
       .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
-      .toEqual([{ at: '10:10', mins: 3 }]); // salvo na hora, sem debounce
+      .toEqual([{ at: '10:10', secs: 180 }]); // em segundos, e salvo na hora, sem debounce
 
     // Recarregar com a pausa aberta: ela fica no dispositivo, e o timer volta pausado na barra.
     await page.clock.setFixedTime(new Date(`${DIA}T10:20:00`));
@@ -676,7 +676,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row', { hasText: '10:00–10:33' }).locator('.block-paused')).toHaveText('⏸ 8 min');
     await expect
       .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
-      .toEqual([{ at: '10:10', mins: 3 }, { at: '10:15', mins: 5 }]);
+      .toEqual([{ at: '10:10', secs: 180 }, { at: '10:15', secs: 300 }]);
   });
 
   test('53. o botão da linha: "Iniciar" leva pro foco e "Continuar" traz de volta, sem comer a pausa', async ({ page }) => {
@@ -705,7 +705,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#toast')).toContainText('Pausa de 4 min');
     await expect
       .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
-      .toEqual([{ at: '10:10', mins: 4 }]);
+      .toEqual([{ at: '10:10', secs: 240 }]);
     await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // o relógio voltou de onde parou
   });
 

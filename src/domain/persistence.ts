@@ -11,7 +11,12 @@
 // v3 tirou o almoço da config (`lunch`/`lunchDur`/`hasLunch` + `lunchOverrides`) —
 // virou uma série diária de evento sem XP, convertida na leitura; v4 tirou a lista
 // de sites de dentro do hardcore (`config.hardcore.{mode,sites}`) e a pôs em
-// `config.siteBlock`, que vale com ou sem hardcore. Todos são lidos.
+// `config.siteBlock`, que vale com ou sem hardcore; v5 passou as pausas do timer de
+// minutos pra SEGUNDOS (`pauses[dia][].mins` → `.secs`), porque um registro por toque,
+// cada um arredondado pra cima sozinho, transformava dez toques em sete segundos em dez
+// minutos de dia empurrado — `normalizePauses` lê `mins` como `secs: mins * 60`, o que
+// devolve o mesmo plano minuto a minuto (420 planos comparados, nenhum diferente).
+// Todos são lidos.
 
 import { parseSafetyNet } from './backup';
 import type { SafetyNet } from './backup';
@@ -44,7 +49,7 @@ import type {
   UserConfig,
 } from './types';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export interface PetsState {
   owned: PetInstance[];

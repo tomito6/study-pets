@@ -709,9 +709,15 @@ export const strings = {
     /** O sufixo do rótulo da linha: "10:00 às 10:25, Estudo 3, Continuar" (o nome já veio antes). */
     actionLabel: { iniciar: 'Iniciar', continuar: 'Continuar' } as Record<'iniciar' | 'continuar', string>,
     mute: 'Silenciar',
-    /** Ao retomar: quanto durou e o que mudou no plano (os pedaços vêm de `planDeltaParts`). */
-    pauseRecorded: (mins: number, parts: string[], droppedChecks: number) =>
-      `⏸ Pausa de ${mins} min · o dia anda ${mins} min` +
+    /** "45s", "2 min" — a pausa em segundos vira frase sem fingir precisão que o plano não tem. */
+    pauseLength: (secs: number) => (secs < 60 ? `${secs}s` : `${Math.ceil(secs / 60)} min`),
+    /**
+     * Ao retomar: quanto a pausa durou de verdade, quanto o dia andou de verdade (pode ser
+     * zero — dez toques em sete segundos não completam um minuto) e o que mudou no plano.
+     */
+    pauseRecorded: (secs: number, deslocou: number, parts: string[], droppedChecks: number) =>
+      `⏸ Pausa de ${strings.timer.pauseLength(secs)}` +
+      (deslocou > 0 ? ` · o dia anda ${deslocou} min` : ' · o plano não se mexe') +
       (parts.length ? ` · ${parts.join(' · ')}` : '') +
       (droppedChecks > 0 ? ` · ${droppedChecks === 1 ? '1 check ficou sem bloco' : `${droppedChecks} checks ficaram sem bloco`}` : ''),
     pauseEnded: 'O bloco terminou durante a pausa — marque à mão se quiser ✓',

@@ -348,7 +348,7 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
     blocks.map((b) => `${b.time}-${b.endTime} ${b.type}${b.mini ? ' mini' : ''}${b.paused ? ` p${b.paused}` : ''}`);
 
   it('o bloco que contém a pausa fica mais longo, com o mesmo XP; tudo depois desliza', () => {
-    const blocks = janela('10:20', [{ at: '09:10', mins: 7 }]);
+    const blocks = janela('10:20', [{ at: '09:10', secs: 420 }]);
     expect(resumo(blocks)).toEqual([
       '09:00-09:32 estudo p7', '09:32-09:37 pausa', '09:37-10:02 estudo', '10:02-10:07 pausa', '10:07-10:20 estudo mini',
     ]);
@@ -358,7 +358,7 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
   });
 
   it('o fim da janela não se move: a pausa no último bloco encurta o estudo', () => {
-    const blocks = janela('09:50', [{ at: '09:40', mins: 10 }]);
+    const blocks = janela('09:50', [{ at: '09:40', secs: 600 }]);
     expect(resumo(blocks)).toEqual(['09:00-09:25 estudo', '09:25-09:30 pausa', '09:30-09:50 estudo mini p10']);
     expect(blocks[2]).toMatchObject({ xp: 20 }); // 10 min que valem
     expect(blockMins(blocks[2]!)).toBe(10);
@@ -366,23 +366,23 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
 
   it('um evento fixo corta o bloco empurrado; a pausa que atravessa o evento se dissolve nele', () => {
     const almoco: StudyEvent = { name: '🍽️ Almoço', start: '13:00', end: '14:00', countsAsStudy: false };
-    const blocks = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '12:00', end: '15:00' }] }), [almoco], [{ at: '12:40', mins: 10 }]);
+    const blocks = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '12:00', end: '15:00' }] }), [almoco], [{ at: '12:40', secs: 600 }]);
     expect(resumo(blocks).slice(0, 5)).toEqual([
       '12:00-12:25 estudo', '12:25-12:30 pausa', '12:30-13:00 estudo p10', '13:00-14:00 intervalo', '14:00-14:25 estudo',
     ]);
     expect(blockMins(blocks[2]!)).toBe(20);
     // Pausa que passa do evento: só o que cabe antes conta como pausa do bloco.
-    const cross = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '12:00', end: '15:00' }] }), [almoco], [{ at: '12:50', mins: 15 }]);
+    const cross = generateBlocks(cfg({ longBreak: 15, studyWindows: [{ start: '12:00', end: '15:00' }] }), [almoco], [{ at: '12:50', secs: 900 }]);
     expect(cross[2]).toMatchObject({ time: '12:30', endTime: '13:00', paused: 10, xp: 40 });
   });
 
   it('duas pausas no mesmo bloco somam; a segunda pode cair no trecho já esticado', () => {
-    const blocks = janela('10:20', [{ at: '09:05', mins: 5 }, { at: '09:20', mins: 5 }]);
+    const blocks = janela('10:20', [{ at: '09:05', secs: 300 }, { at: '09:20', secs: 300 }]);
     expect(blocks[0]).toMatchObject({ time: '09:00', endTime: '09:35', paused: 10, xp: 50 });
   });
 
   it('pausar a pausa do pomodoro: ela estica, o XP dela não muda, e o estudo seguinte emenda nela', () => {
-    const blocks = janela('10:20', [{ at: '09:27', mins: 10 }]);
+    const blocks = janela('10:20', [{ at: '09:27', secs: 600 }]);
     expect(blocks[1]).toMatchObject({ time: '09:25', endTime: '09:40', type: 'pausa', paused: 10, xp: 5 });
     expect(blockMins(blocks[1]!)).toBe(5);
     expect(blocks[2]!.time).toBe('09:40');
@@ -390,7 +390,7 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
 
   it('pausa cedo empurra o dia inteiro contra o fim da janela; o ciclo de 4 pomos não muda', () => {
     const sem = janela('17:30', []);
-    const com = janela('17:30', [{ at: '10:00', mins: 20 }]);
+    const com = janela('17:30', [{ at: '10:00', secs: 1200 }]);
     // A conta é em MINUTOS, não em blocos: a sobra que a pausa empurra contra o fim da janela
     // agora vira estudo em vez de morrer, então a contagem de blocos empata. O dia perde no
     // máximo os 20 min que ficaram pausados — e perde menos que isso quando parte deles cai
@@ -405,15 +405,15 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
 
   it('pausa que não cai em estudo/pausa nenhum é ignorada em silêncio', () => {
     const almoco: StudyEvent = { name: 'Almoço', start: '10:00', end: '11:00', countsAsStudy: false };
-    expect(janela('12:00', [{ at: '10:20', mins: 10 }], [almoco])).toEqual(janela('12:00', [], [almoco]));
-    expect(janela('12:00', [{ at: '13:00', mins: 10 }])).toEqual(janela('12:00', []));
-    expect(janela('12:00', [{ at: 'xx', mins: 10 } as PauseRecord, { at: '09:00', mins: 0 }])).toEqual(janela('12:00', []));
+    expect(janela('12:00', [{ at: '10:20', secs: 600 }], [almoco])).toEqual(janela('12:00', [], [almoco]));
+    expect(janela('12:00', [{ at: '13:00', secs: 600 }])).toEqual(janela('12:00', []));
+    expect(janela('12:00', [{ at: 'xx', secs: 600 } as PauseRecord, { at: '09:00', secs: 0 }])).toEqual(janela('12:00', []));
   });
 
   it('a pausa que engole o bloco inteiro contra um limite não emite bloco nenhum', () => {
     const almoco: StudyEvent = { name: 'Almoço', start: '09:01', end: '10:00', countsAsStudy: false };
     // Sobra de 1 min antes do almoço não vira nada; e uma pausa nesse minuto não pode criar um bloco de 0 min.
-    const blocks = janela('12:00', [{ at: '09:00', mins: 30 }], [almoco]);
+    const blocks = janela('12:00', [{ at: '09:00', secs: 1800 }], [almoco]);
     expect(blocks.every((b) => blockMins(b) > 0)).toBe(true);
   });
 
@@ -424,7 +424,7 @@ describe('generateBlocks — pausas registradas (o timer pausado empurra o dia)'
     ];
     for (const at of ['09:00', '09:12', '09:27', '09:59', '10:31', '12:50', '14:00', '16:55', '17:20']) {
       for (const mins of [1, 5, 13, 30, 90]) {
-        const blocks = janela('17:30', [{ at, mins }], eventos);
+        const blocks = janela('17:30', [{ at, secs: mins * 60 }], eventos);
         blocks.forEach((b, i) => {
           const next = blocks[i + 1];
           if (next) expect(next.time >= b.endTime, `${at}+${mins}: ${b.time}-${b.endTime} invade ${next.time}`).toBe(true);

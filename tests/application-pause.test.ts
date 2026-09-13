@@ -113,7 +113,7 @@ describe('retomar', () => {
     vi.setSystemTime(em('10:17:00'));
     expect(resumeTimer(em('10:17:00'))).toBe('resumed');
 
-    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 7 }]);
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', secs: 420 }]);
     expect(timerPaused()).toBe(false);
     expect(readPauseSession('u')).toBeNull();
     expect(wakeLockWanted()).toBe(true); // o foco continua aberto
@@ -175,7 +175,7 @@ describe('retomar', () => {
     pauseTimer(em('10:15:00'));
     vi.setSystemTime(em('10:40:00'));
     expect(resumeTimer(em('10:40:00'))).toBe('ended');
-    expect(state.pauses[HOJE]).toEqual([{ at: '10:15', mins: 25 }]);
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:15', secs: 1500 }]);
     expect(blocksForDay(HOJE).find((b) => b.time === '10:00')).toMatchObject({ endTime: '10:25', paused: 10, xp: 30 }); // 15 min que valem
     expect(derived.timerBlock).toBeNull();
     expect(derived.focusOpen).toBe(false);
@@ -193,7 +193,8 @@ describe('retomar', () => {
 
     vi.setSystemTime(em('10:10:10')); // 10 segundos de pausa
     expect(resumeTimer(em('10:10:10'))).toBe('resumed');
-    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 1 }]); // o plano ganha o minuto cheio
+    // O registro guarda os 10 segundos de verdade; quem arredonda pro minuto cheio é o gerador.
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', secs: 10 }]);
     const bloco = derived.timerBlock!;
     expect(bloco).toMatchObject({ endTime: '10:26', paused: 1 });
     expect(timerProgress(bloco, em('10:10:10'), null, derived.timerEndsAt).display).toBe(congelado);
@@ -204,6 +205,31 @@ describe('retomar', () => {
     relogioEm('10:25:09'); // 10:25:10, o fim ajustado
     expect(isChecked(state.checks, HOJE, '10:00')).toBe(true);
     expect(derived.timerBlock).toMatchObject({ type: 'pausa', time: '10:26' }); // a emenda é pelo plano
+  });
+
+  /**
+   * O caso que o Tomi achou (2026-09-13): apertar Pausar/Retomar dez vezes bem rápido.
+   * Com um registro de 1 min por toque, o dia andava DEZ minutos por sete segundos de
+   * pausa. Agora o registro é em segundos e quem arredonda é o gerador, uma vez, sobre a
+   * soma do bloco.
+   */
+  it('dez toques em Pausar/Retomar dentro de sete segundos empurram o dia um minuto, não dez', () => {
+    startTimer(estudo3, AGORA);
+    for (let i = 0; i < 10; i++) {
+      const pausa = em(`10:10:${String(i * 0.7 | 0).padStart(2, '0')}`);
+      vi.setSystemTime(pausa);
+      pauseTimer(pausa);
+      const volta = new Date(pausa.getTime() + 700); // 0,7s parado
+      vi.setSystemTime(volta);
+      expect(resumeTimer(volta)).toBe('resumed');
+    }
+    expect(state.pauses[HOJE]).toHaveLength(10);
+    expect(state.pauses[HOJE]!.reduce((s, p) => s + p.secs, 0)).toBe(10); // 10 × 1s (o mínimo)
+    // O bloco cresce UM minuto, e o que ele vale não muda.
+    expect(derived.timerBlock).toMatchObject({ time: '10:00', endTime: '10:26', paused: 1 });
+    expect(blockMins(derived.timerBlock!)).toBe(25);
+    // E o resto do dia andou um minuto, não dez.
+    expect(blocksForDay(HOJE).find((b) => b.type === 'pausa' && b.time === '10:26')).toBeTruthy();
   });
 
   it('duas pausas seguidas: a segunda congela o relógio já ajustado pela primeira', () => {
@@ -246,7 +272,7 @@ describe('retomar', () => {
     expect(derived.focusOpen).toBe(true);
     expect(wakeLockWanted()).toBe(true);
     expect(derived.timerBlock).toMatchObject({ endTime: '10:27', paused: 2 });
-    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 2 }]);
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', secs: 120 }]);
   });
 
   // O bug que o botão novo mata: tocar de novo na linha caía em `runBlock`, que começa com
@@ -258,7 +284,7 @@ describe('retomar', () => {
     vi.setSystemTime(em('10:17:00'));
     expect(continueBlock(em('10:17:00'))).toBe('resumed');
     expect(derived.focusOpen).toBe(true);
-    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 7 }]); // a pausa foi registrada, não jogada fora
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', secs: 420 }]); // a pausa foi registrada, não jogada fora
     expect(derived.timerBlock).toMatchObject({ time: '10:00', endTime: '10:32', paused: 7 });
     expect(readPauseSession('u')).toBeNull();
   });
@@ -291,7 +317,7 @@ describe('a pausa que ficou aberta no dispositivo', () => {
     expect(timerProgress(derived.timerBlock!, em('10:20:00'), derived.timerPausedAt)).toMatchObject({ phase: 'paused', display: '15:00' });
     vi.setSystemTime(em('10:22:00'));
     expect(resumeTimer(em('10:22:00'))).toBe('resumed');
-    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', mins: 12 }]);
+    expect(state.pauses[HOJE]).toEqual([{ at: '10:10', secs: 720 }]);
     expect(derived.timerBlock).toMatchObject({ time: '10:00', endTime: '10:37' });
   });
 

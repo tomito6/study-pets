@@ -15,14 +15,18 @@ const isTime = (v: unknown): v is TimeString => typeof v === 'string' && /^\d{2}
 const isPomodoroPart = (b: Pick<StudyBlock, 'type'>): boolean => b.type === 'estudo' || b.type === 'pausa';
 
 /**
- * O registro de uma pausa que acabou: o minuto em que começou (pra baixo) e quanto
- * durou (pra cima, mínimo 1). Arredondar assim garante que ninguém perde segundos
- * por ter pausado — ganha até 59.
+ * O registro de uma pausa que acabou: o minuto em que começou (pra baixo) e quanto ela
+ * durou, em **segundos** (pra cima, mínimo 1 — quem pausou nunca perde tempo).
+ *
+ * Guardar em segundos é o que impede a pausa de inflar: quem arredonda pra minuto é o
+ * gerador, uma vez, sobre a soma do bloco (ver `generateBlocks`). Com minutos por
+ * registro, dez toques em Pausar/Retomar dentro de sete segundos viravam dez minutos
+ * de dia empurrado.
  */
 export function pauseRecordFor(pausedAt: Date, resumedAt: Date): PauseRecord {
   const at = minsToTime(pausedAt.getHours() * 60 + pausedAt.getMinutes());
-  const mins = Math.max(1, Math.ceil((resumedAt.getTime() - pausedAt.getTime()) / 60000));
-  return { at, mins };
+  const secs = Math.max(1, Math.ceil((resumedAt.getTime() - pausedAt.getTime()) / 1000));
+  return { at, secs };
 }
 
 export const sortPauses = (list: PauseRecord[]): PauseRecord[] =>
@@ -41,19 +45,30 @@ export function normalizePauses(raw: unknown): PausesByDate {
     const records = list.flatMap((p): PauseRecord[] => {
       if (!p || typeof p !== 'object' || Array.isArray(p)) return [];
       const r = p as Record<string, unknown>;
-      if (!isTime(r.at) || typeof r.mins !== 'number' || !Number.isInteger(r.mins) || r.mins < 1) return [];
-      return [{ at: r.at, mins: r.mins }];
+      if (!isTime(r.at)) return [];
+      // Formato de hoje: segundos. Doc anterior a 2026-09-13: minutos — `mins * 60`
+      // reproduz o plano de antes exatamente, porque o gerador soma e arredonda depois.
+      if (typeof r.secs === 'number' && Number.isInteger(r.secs) && r.secs >= 1) return [{ at: r.at, secs: r.secs }];
+      if (typeof r.mins === 'number' && Number.isInteger(r.mins) && r.mins >= 1) return [{ at: r.at, secs: r.mins * 60 }];
+      return [];
     });
     if (records.length > 0) out[day] = sortPauses(records);
   }
   return out;
 }
 
-/** Quantas pausas e quantos minutos num dia — o resumo do fim do dia mostra. */
+/**
+ * Quantas pausas e quantos minutos num dia — o resumo do fim do dia mostra. Os minutos
+ * saem da soma dos segundos, arredondada uma vez (a mesma conta do gerador), senão o
+ * resumo contaria minutos que o plano não andou.
+ */
 export function pausesTotal(day: PauseRecord[] | undefined): { count: number; mins: number } {
   const list = day ?? [];
-  return { count: list.length, mins: list.reduce((s, p) => s + p.mins, 0) };
+  return { count: list.length, mins: pausedMinutes(list.reduce((s, p) => s + p.secs, 0)) };
 }
+
+/** Segundos pausados → os minutos que o plano anda. Uma conta só, sobre o total. */
+export const pausedMinutes = (secs: number): number => Math.ceil(Math.max(0, secs) / 60);
 
 // ---------------------------------------------------------------- a pausa aberta
 

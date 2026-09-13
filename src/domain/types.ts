@@ -124,12 +124,19 @@ export interface StudyBlock {
  * Uma pausa do timer que acabou, salva em `users/{uid}.pauses[dia]`: o minuto do
  * relógio em que começou e quanto durou. O gerador estica o bloco que contém `at`
  * e empurra o resto do dia; eventos e o fim da janela continuam fixos. Só `at` e
- * `mins`: o bloco que a contém sai do próprio plano, sem chave que envelheça.
+ * `secs`: o bloco que a contém sai do próprio plano, sem chave que envelheça.
  */
 export interface PauseRecord {
   at: TimeString;
-  /** Inteiro, mínimo 1 (segundos arredondados pra cima — quem pausou nunca perde tempo). */
-  mins: number;
+  /**
+   * Quanto durou, em **segundos** (inteiro, mínimo 1). Era em minutos arredondados pra
+   * cima até 2026-09-13, e cada registro arredondava sozinho: pausar e retomar 10 vezes
+   * em 7 segundos empurrava o dia em 10 minutos. O plano continua andando em minutos
+   * cheios (é a régua dele), mas quem arredonda é o gerador, **uma vez, sobre a soma**
+   * dos segundos que caem dentro do bloco. Doc antigo (`mins`) entra como `mins * 60`,
+   * o que reproduz o plano de antes minuto a minuto.
+   */
+  secs: number;
 }
 
 /** Pausas por dia, em ordem de `at`. */
