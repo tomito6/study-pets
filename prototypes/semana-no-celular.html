@@ -1,0 +1,1293 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A Semana no celular — cinco direções</title>
+<style>
+  :root{
+    --bg:#f6efe3; --bg2:#fffdf7; --border:#d8cdbb; --border-mid:#c0b49f;
+    --text:#40382e; --muted:#6e6455; --accent:#486244; --flat-deep:#dcd3bf;
+    --font-ui:'DM Sans',system-ui,-apple-system,sans-serif;
+    --font-title:'Lora',Georgia,serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 var(--font-ui);}
+  header{max-width:820px;margin:0 auto;padding:48px 24px 8px;}
+  h1{font:500 34px/1.2 var(--font-title);margin:0 0 14px;}
+  header p{color:var(--muted);margin:0 0 10px;}
+  .aviso{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin:22px 0 0;}
+  .dir{max-width:1180px;margin:0 auto;padding:34px 24px;border-top:1px solid var(--border);}
+  .dir-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;}
+  .letra{font:500 13px var(--font-ui);letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+  h2{font:500 26px/1.2 var(--font-title);margin:0;}
+  .corpo{display:flex;gap:34px;align-items:flex-start;flex-wrap:wrap;}
+  .tela{flex:0 0 auto;}
+  .texto{flex:1 1 420px;min-width:320px;}
+  .texto h3{font:500 12px var(--font-ui);letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);margin:22px 0 6px;}
+  .texto p{margin:0 0 10px;}
+  .texto ul{margin:0 0 10px;padding-left:20px;}
+  .texto li{margin:0 0 4px;}
+  .texto table{border-collapse:collapse;font-size:13px;margin:0 0 10px;}
+  .texto td{border-top:1px solid var(--border);padding:6px 10px 6px 0;vertical-align:top;}
+  code{font-size:.9em;background:rgba(0,0,0,.04);padding:1px 5px;border-radius:5px;}
+  details{margin-top:14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;}
+  summary{cursor:pointer;font-weight:500;}
+  details .corpo-critica{margin-top:10px;font-size:14px;color:var(--muted);}
+  footer{max-width:820px;margin:0 auto;padding:30px 24px 70px;color:var(--muted);font-size:14px;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <h1>A Semana no celular</h1>
+  <p>Cinco direções desenhadas em 390×844, o tamanho de um celular de verdade. A Semana existe no laptop
+  desde 2026-09-06 e nunca existiu no celular; duas tentativas já foram descartadas (grade de sete colunas
+  rolando de lado; uma linha por dia com faixa horizontal das 9h às 19h).</p>
+  <p>Cada direção responde a mesma pergunta: <b>o que a pessoa faz com a semana, no celular, na rua?</b>
+  No laptop a Semana é a tela de <i>planejar</i> (ver onde cabe um compromisso, arrastar evento pra outro
+  dia). No celular, a mão tem um polegar e a tela tem 390px — alguma coisa morre em toda direção, e o que
+  morre está escrito em cada uma.</p>
+  <div class="aviso"><b>Escolha uma</b> (ou diga o que pegar de cada) e ela vira tarefa executável. Nenhuma
+  delas mexe em <code>src/domain/</code>, e nenhuma toca a Semana do laptop.</div>
+</header>
+
+
+<section class="dir">
+  <div class="dir-head"><span class="letra">Direção A</span><h2>A semana dobrada</h2></div>
+  <div class="corpo">
+    <div class="tela"><section class="spA" aria-label="Direção A — A semana dobrada">
+<style>
+/* ── Direção A · "A semana dobrada" ─────────────────────────────────────────
+   Tokens copiados de src/styles/themes/cafe.css (tema padrão do app).
+   Classes do app reaproveitadas com o nome real: .topbar/.topbar-stacked,
+   .topbar-row, .xp-badge, .icon-btn, .nav-tabs/.nav-tab, .week-row,
+   .view-mode/.vm-btn, .main. As classes .wk-* são as novas.               */
+.spA{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --track:#e5dcc8;
+  --bg-blur:rgba(246,239,227,.92);
+  --border:#d8cdbb; --border-strong:#a99c86; --border-mid:#c0b49f;
+  --text:#40382e; --text-soft:#5d5346; --muted:#6e6455; --text-dim:#736858;
+  --accent:#486244; --accent2:#4e6b48; --accent-bg:#e8eddf; --on-accent:#fffdf6;
+  --accent-border:rgba(72,98,68,.45);
+  --s0:#486244; --s0-bg:#edf1e6; --s1:#47677d; --s1-bg:#e9eff2;
+  --s2:#8a4356; --s2-bg:#f6eaee; --s3:#8f5630; --s3-bg:#fbeee0;
+  --s4:#3d6b5b; --s4-bg:#e9f0ec; --s5:#64517b; --s5-bg:#efeaf4;
+  --orange:#9a5f38; --paper-event:#faf3e8; --clay-bar:#b98762;
+  --field:#fffefa; --field-line:#ada18d; --flat:#e4decf; --flat-deep:#dcd3bf;
+  --sage-line:#c7cfb8; --surface-hover-solid:#eee7d7;
+  --radius-sm:8px; --radius-md:10px; --radius:14px; --radius-lg:16px;
+  --font-ui:'DM Sans',system-ui,-apple-system,sans-serif;
+  --font-mono:'DM Sans',system-ui,sans-serif;   /* no café o mono É DM Sans */
+  --font-title:'Lora',Georgia,serif;
+
+  width:390px; height:844px; flex:0 0 auto;
+  box-sizing:border-box; overflow:hidden; position:relative;
+  background:var(--bg); color:var(--text);
+  font-family:var(--font-ui); font-size:14px; line-height:1.4;
+  border:1px solid var(--border-mid); border-radius:20px;
+  box-shadow:0 3px 0 var(--flat-deep);
+}
+.spA *,.spA *::before,.spA *::after{box-sizing:border-box;}
+.spA button{font:inherit;color:inherit;}
+
+/* ── barra do topo (app/Header.tsx, .topbar-stacked) ─────────────────────── */
+.spA .topbar{
+  position:sticky; top:0; z-index:100;
+  background:var(--bg-blur); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  flex-direction:column; align-items:stretch; gap:9px; padding:11px 20px 9px;
+  display:flex;
+}
+.spA .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
+.spA .topbar-row .sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spA .topbar-right{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:nowrap;}
+.spA .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:var(--font-mono);display:flex;align-items:center;gap:6px;}
+.spA .notif-btn{width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;font-size:14px;padding:0;}
+.spA .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;font-family:var(--font-ui);}
+.spA .nav-tabs{display:flex;gap:2px;margin:0;padding:3px;background:var(--track);border-radius:11px;}
+.spA .nav-tab{flex:1;padding:6px 0;text-align:center;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--muted);font-size:13px;font-weight:500;letter-spacing:.01em;}
+.spA .nav-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+
+/* ── corpo (.main) ───────────────────────────────────────────────────────── */
+.spA .main{max-width:480px;margin:0 auto;padding:13px 16px 0;height:calc(844px - 76px);overflow:hidden;}
+.spA .week-row{margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.spA .week-row .sel{
+  flex:1;min-width:0;background:var(--field);border:1px solid var(--field-line);
+  border-radius:var(--radius-sm);color:var(--text);font-size:13px;
+  font-family:var(--font-ui);padding:9px 12px;display:flex;
+  align-items:center;justify-content:space-between;
+}
+.spA .week-row .sel span:last-child{color:var(--muted);font-size:11px;}
+/* o toggle Dia · Semana: hoje só existe >=1100px; esta direção o traz pro celular */
+.spA .view-mode{display:inline-flex;background:var(--track);border-radius:var(--radius-md);padding:2px;flex-shrink:0;}
+.spA .vm-btn{background:none;border:0;border-radius:var(--radius-sm);padding:6px 11px;font-size:12px;font-weight:600;color:var(--muted);font-family:var(--font-ui);}
+.spA .vm-btn.on{background:var(--accent-bg);color:var(--accent);}
+
+/* ── a semana dobrada ────────────────────────────────────────────────────── */
+.spA .wk-list{margin-top:2px;}
+.spA .wk-day{margin-top:11px;}
+.spA .wk-day:first-child{margin-top:4px;}
+
+/* cabeçalho grudento: o dia é o único título da lista */
+.spA .wk-head{
+  position:sticky;top:0;z-index:5;
+  display:flex;align-items:center;gap:9px;
+  padding:6px 2px 5px;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+}
+.spA .wk-dow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text-soft);}
+.spA .wk-dnum{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);}
+.spA .wk-rule{flex:1;height:1px;background:var(--border);opacity:.7;}
+.spA .wk-sum{font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+.spA .wk-sum b{font-weight:500;color:var(--text-soft);}
+.spA .wk-sum.full{color:var(--accent);}
+.spA .wk-chev{color:var(--border-strong);font-size:11px;width:12px;text-align:center;}
+.spA .wk-day.today .wk-head{background:var(--bg);}
+.spA .wk-day.today .wk-dow,.spA .wk-day.today .wk-dnum{color:var(--accent);}
+.spA .wk-hoje{
+  font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-bg);
+  border:1px solid var(--accent-border);border-radius:99px;padding:1px 7px;
+}
+
+/* a CORRIDA de pomodoros: colapsada é uma linha nua, na cor do ciclo.
+   Sem papel de propósito — papel é o que o compromisso ganha. */
+.spA .wk-run{
+  display:flex;align-items:center;gap:9px;
+  padding:6px 2px 6px 0;
+  border-bottom:1px solid rgba(216,205,187,.55);
+  position:relative;
+}
+.spA .wk-run::before{
+  content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;
+  background:var(--run);
+}
+.spA .wk-run .wk-t{padding-left:11px;font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:86px;}
+.spA .wk-run .wk-n{font-size:12.5px;color:var(--text);flex:1;}
+.spA .wk-run .wk-n em{font-style:normal;color:var(--muted);}
+.spA .wk-run.s0{--run:var(--s0);} .spA .wk-run.s1{--run:var(--s1);}
+.spA .wk-run.s2{--run:var(--s2);} .spA .wk-run.s3{--run:var(--s3);}
+.spA .wk-run.s4{--run:var(--s4);} .spA .wk-run.s5{--run:var(--s5);}
+.spA .wk-run.s0 .wk-t{color:var(--s0);} .spA .wk-run.s1 .wk-t{color:var(--s1);}
+.spA .wk-run.s2 .wk-t{color:var(--s2);} .spA .wk-run.s3 .wk-t{color:var(--s3);}
+.spA .wk-run.s4 .wk-t{color:var(--s4);}
+
+/* pips: um por estudo da corrida. Só em dia que já começou — dia futuro não
+   tem nada a relatar, e uma fileira de bolinhas vazias lê como cobrança. */
+.spA .wk-pips{display:flex;gap:3px;flex-shrink:0;}
+.spA .wk-pips i{width:6px;height:6px;border-radius:50%;border:1px solid var(--border-strong);display:block;}
+.spA .wk-pips i.on{background:var(--accent);border-color:var(--accent);}
+
+/* o COMPROMISSO não colapsa: cartão de papel com a barra terracota, igual à
+   linha de evento do Dia (.block-row.event-row no tema café) */
+.spA .wk-ev{
+  display:flex;align-items:center;gap:9px;
+  margin:5px 0;padding:7px 10px 7px 9px;
+  background:var(--paper-event);
+  border:1px solid var(--border);border-left:4px solid var(--clay-bar);
+  border-radius:12px;
+}
+.spA .wk-ev .wk-t{font-family:var(--font-mono);font-size:11px;color:var(--orange);min-width:86px;}
+.spA .wk-ev .wk-n{font-size:12.5px;color:var(--text);flex:1;}
+.spA .wk-ev.meal{background:var(--bg3);border:1px dashed var(--border);border-left:4px solid var(--border-mid);}
+.spA .wk-ev.meal .wk-t,.spA .wk-ev.meal .wk-n{color:var(--muted);}
+.spA .wk-pip1{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--border-strong);background:var(--field);flex-shrink:0;}
+
+/* fim de semana / dia livre: uma linha só, sem lista */
+.spA .wk-rest{padding:9px 2px;font-size:12px;color:var(--muted);}
+
+.spA .wk-fade{
+  position:absolute;left:0;right:0;bottom:0;height:74px;pointer-events:none;
+  background:linear-gradient(to top,var(--bg),rgba(246,239,227,0));
+}
+</style>
+
+<div class="topbar topbar-stacked">
+  <div class="topbar-row">
+    <span class="sub">qua, 16 de setembro</span>
+    <div class="topbar-right">
+      <span class="xp-badge">1240 XP</span>
+      <button class="notif-btn" type="button">◍</button>
+      <button class="icon-btn" type="button">Sair</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" type="button">Plano</button>
+    <button class="nav-tab" type="button">Análise</button>
+    <button class="nav-tab" type="button">Perfil</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="week-row">
+    <div class="sel"><span>Semana 3 · 14 – 20 set</span><span>⌄</span></div>
+    <div class="view-mode">
+      <button class="vm-btn" type="button">Dia</button>
+      <button class="vm-btn on" type="button">Semana</button>
+    </div>
+  </div>
+
+  <div class="wk-list">
+
+    <div class="wk-day">
+      <div class="wk-head">
+        <span class="wk-dow">Seg</span><span class="wk-dnum">14</span>
+        <span class="wk-rule"></span>
+        <span class="wk-sum full"><b>6h30</b> · 16/16 ✓</span>
+        <span class="wk-chev">⌄</span>
+      </div>
+      <div class="wk-run s0"><span class="wk-t">09:00–11:10</span><span class="wk-n">4 estudos <em>· 1h40</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-run s1"><span class="wk-t">11:10–13:00</span><span class="wk-n">4 estudos <em>· 1h35</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-ev meal"><span class="wk-t">13:00–14:00</span><span class="wk-n">🍽 Refeição</span></div>
+      <div class="wk-run s2"><span class="wk-t">14:00–16:10</span><span class="wk-n">4 estudos <em>· 1h40</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-run s3"><span class="wk-t">16:10–18:00</span><span class="wk-n">4 estudos <em>· 1h35</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+    </div>
+
+    <div class="wk-day">
+      <div class="wk-head">
+        <span class="wk-dow">Ter</span><span class="wk-dnum">15</span>
+        <span class="wk-rule"></span>
+        <span class="wk-sum"><b>6h30</b> · 12/16</span>
+        <span class="wk-chev">⌄</span>
+      </div>
+      <div class="wk-run s0"><span class="wk-t">09:00–11:10</span><span class="wk-n">4 estudos <em>· 1h40</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-run s1"><span class="wk-t">11:10–13:00</span><span class="wk-n">4 estudos <em>· 1h35</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-ev meal"><span class="wk-t">13:00–14:00</span><span class="wk-n">🍽 Refeição</span></div>
+      <div class="wk-run s2"><span class="wk-t">14:00–16:10</span><span class="wk-n">4 estudos <em>· 1h40</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-run s3"><span class="wk-t">16:10–18:00</span><span class="wk-n">4 estudos <em>· 1h35</em></span><span class="wk-pips"><i></i><i></i><i></i><i></i></span></div>
+    </div>
+
+    <div class="wk-day today">
+      <div class="wk-head">
+        <span class="wk-dow">Qua</span><span class="wk-dnum">16</span>
+        <span class="wk-hoje">hoje</span>
+        <span class="wk-rule"></span>
+        <span class="wk-sum"><b>7h00</b> · 6/13</span>
+        <span class="wk-chev">⌄</span>
+      </div>
+      <div class="wk-run s0"><span class="wk-t">09:00–11:10</span><span class="wk-n">4 estudos <em>· 1h40</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="wk-run s1"><span class="wk-t">11:10–13:00</span><span class="wk-n">4 estudos <em>· 1h35</em></span><span class="wk-pips"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+      <div class="wk-ev meal"><span class="wk-t">13:00–14:00</span><span class="wk-n">🍽 Refeição</span></div>
+      <div class="wk-ev"><span class="wk-t">14:00–16:00</span><span class="wk-n">📅 Aula de Análise II</span><span class="wk-pip1"></span></div>
+      <div class="wk-run s2"><span class="wk-t">16:00–18:00</span><span class="wk-n">4 estudos <em>· 1h45</em></span><span class="wk-pips"><i></i><i></i><i></i><i></i></span></div>
+    </div>
+
+    <div class="wk-day">
+      <div class="wk-head">
+        <span class="wk-dow">Qui</span><span class="wk-dnum">17</span>
+        <span class="wk-rule"></span>
+        <span class="wk-sum"><b>6h30</b></span>
+        <span class="wk-chev">⌄</span>
+      </div>
+      <div class="wk-run s0"><span class="wk-t">09:00–11:10</span><span class="wk-n">4 estudos <em>· 1h40</em></span></div>
+      <div class="wk-run s1"><span class="wk-t">11:10–13:00</span><span class="wk-n">4 estudos <em>· 1h35</em></span></div>
+    </div>
+
+  </div>
+  <div class="wk-fade"></div>
+</div>
+</section>
+</div>
+    <div class="texto">
+      <h3>O que a pessoa faz</h3><p>Rola o polegar pela semana e lê, dia por dia, <b>o que cada um tem de diferente</b> — a aula das 14h de quarta, a consulta de sexta, e quanto de estudo sobra em volta delas — e, no dia que interessar, toca no cabeçalho pra desdobrar a lista do Dia ali mesmo e marcar um bloco ou apertar "Iniciar".</p><p><b>O que ela NÃO consegue:</b> ver a semana inteira de uma vez (a semana é rolagem, não uma olhada), comparar dois dias com o olho, e mover qualquer coisa — nem de horário, nem de dia — enquanto o dia está dobrado.</p>
+      <h3>O que morre</h3><ul><li><b>Arrastar evento pra outro dia.</b> É o gesto principal da Semana do laptop e não sobrevive: numa lista empilhada não existe eixo X de dias, então <code>fieldAtX</code> não tem o que medir. Mover pra outro dia volta a ser abrir o dia e editar. (Arrastar pra outro <b>horário</b> sobrevive — dentro do dia desdobrado, que é a lista do Dia de sempre.)</li><li><b>Comparar dois dias com o olho.</b> A grade dizia "terça está mais leve que quarta" pela altura das manchas, sem ler nada. Aqui isso vira número (<code>6h30</code> contra <code>5h55</code>) e ainda exige rolar de um cabeçalho ao outro.</li><li><b>O horário como espaço.</b> O buraco entre 11h e 14h era um vazio visível; dobrado é uma linha a menos. "Onde cabe uma aula de duas horas?" deixa de ser pergunta visual e vira leitura de horários — o que enfraquece justamente o PLANEJAR. Em troca ganha uma coisa que a Semana do laptop nunca teve: <b>dá pra marcar um bloco a partir dela</b>.</li></ul>
+      <h3>Custo em código</h3><p>| | | |---|---| | <b>Novo</b> | <code>src/features/plan/WeekList.tsx</code> (~130 linhas): para cada dia da semana, cabeçalho grudento + linhas colapsadas; dia desdobrado renderiza <code>&lt;BlockList&gt;</code> verbatim. | | <b>Editado</b> | <code>src/features/plan/PlanTab.tsx</code> — o toggle Dia·Semana deixa de estar atrás de <code>useWide()</code>; no celular <code>viewMode === 'week'</code> monta <code>&lt;WeekList&gt;</code> no lugar do <code>&lt;BlockList&gt;</code> + <code>.day-tabs</code> (que somem: com a semana inteira na tela eles são redundantes). <code>src/styles/app.css</code> — bloco <code>.wk-*</code> novo, fora de media query, e <code>.view-mode</code>/<code>.vm-btn</code> saem de dentro do <code>@media (min-width:1100px)</code>. <code>src/styles/themes/cafe.css</code> — as mesmas duas regras do toggle saem da media query do laptop; ~10 linhas pras linhas colapsadas. <code>src/shared/strings.ts</code> — <code>plan.week.runLabel(n)</code>, <code>restLine</code>, <code>openDay</code>. <code>e2e/smoke.spec.ts</code> — teste novo, a 480px. | | <b>Reaproveita</b> | <code>&lt;BlockList&gt;</code> <b>sem prop nova</b> (<code>drag</code> e <code>empty</code> já aceitam <code>null</code>, <code>selection</code> o PlanTab já tem) — o dia desdobrado é literalmente a lista do Dia, com check, "Iniciar/Continuar", grupos e edição de evento de graça. Do <code>application/plan</code>: <code>blocksForDay</code>, <code>dateForWeekDay</code>, <code>restKindOf</code>. Do domínio, só leitura: <code>isChecked</code>, <code>blockMins</code>, <code>timeToMins</code>, <code>cleanBlockName</code>, <code>formatCompact</code>. | | <b><code>WeekView.tsx</code></b> | <b>Intocado.</b> É a Semana do laptop; as duas não se falam. | | <b><code>src/domain/</code></b> | <b>Não mexe — nenhum arquivo.</b> A "corrida" não precisa de função nova: são os blocos consecutivos com o mesmo <code>b.cycle</code> e <code>type</code> estudo/pausa, e a contagem é um reduce local com <code>blockMins</code> + <code>isChecked</code>. (Evitei de propósito chamar <code>cycleSummary</code> aqui: ela conta evento como membro do ciclo via <code>countsForCycle</code>, e no colapsado o evento já tem linha própria — daria contagem dupla.) |</p>
+      <details><summary>A crítica (outro agente, sem dó)</summary><div class="corpo-critica"><p><b>1. Repete a Análise?</b> Só no cabeçalho. <code>6h30 · 12/16</code> é o dot de <code>goalWeek</code> com mais tinta (e uma segunda régua: dots são meta batida, aqui é blocos feitos — o app já teve esse problema em "Realizado", corrigido em 2026-09-10). O corpo (corrida + compromisso + horário) não existe em lugar nenhum. Então não é cópia, mas o cabeçalho é.</p><p><b>2. Cabe em 390px?</b> As alturas fecham (194px/dia, ~1,4 tela pra semana). A mentira é o <code>position:sticky; top:0</code> do <code>.wk-head</code>: no app quem rola é a página, a <code>.topbar</code> é sticky com <code>z-index:100</code> e altura <b>medida</b> em <code>--topbar-h</code>, e a <code>.timer-bar</code> gruda abaixo dela. Seu cabeçalho de dia vai escorregar por baixo das duas — é literalmente o bug do balão do tour (2026-09-10). E <code>height: calc(844px - 76px)</code> crava o 76px que o <code>useTopbarHeight</code> existe pra não cravar.</p><p><b>3. Útil na rua?</b> A tese está certa e o desenho a contradiz: você diz "colapsar o repetido, deixar o singular em cheio" e então gasta 4 das 5 linhas de cada dia no repetido — <code>4 estudos · 1h40</code> quatro vezes, idêntico de segunda a quinta. Quem rola vê 80% de carimbo. A informação que justifica a tela (aula de quarta às 14h) tem uma linha e você rola 194px pra chegar nela.</p><p><b>4. Custo subestimado?</b> Sim, e não pouco. <code>&lt;BlockList&gt;</code> aceita <code>dateKey</code>, mas <code>selection</code> (<code>useGroupSelection</code>) e <code>drag</code> (<code>useEventDrag</code>) são instâncias únicas do PlanTab amarradas ao <code>viewKey</code>; desdobrar quinta e marcar/agrupar ali grava no dia errado — ou você seta <code>uiDay</code> (e aí o toggle é um navegador, não uma vista). Matar <code>.day-tabs</code> mata as âncoras do tour do Plano (e2e 27: <code>.day-events-bar</code>, <code>#add-event-btn</code>) e a <code>.finish-day-btn</code>. Some o <code>#day-windows-btn</code> e o "+ Evento". Não são ~130 linhas.</p><p><b>5. Veredito: morto como está, mas a semente vive.</b> Ele troca a Semana (planejar por espaço) por um índice de dias, e o índice que ele substitui já existe e custa um toque. Se a tese é "o que varia é o compromisso", a direção honesta é mostrar <b>só os compromissos da semana</b> e o estudo como resíduo de uma linha por dia — não quatro corridas carimbadas. Prototipar isto seria pagar o preço todo (tour, selection, day-tabs) pra ganhar uma navegação que o app já tem.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="dir">
+  <div class="dir-head"><span class="letra">Direção B</span><h2>Agenda de buracos</h2></div>
+  <div class="corpo">
+    <div class="tela"><section class="scr scr-b" data-dir="B">
+<style>
+.scr-b{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --track:#e5dcc8;
+  --tint-rgb:64,56,46; --border-rgb:216,205,187;
+  --border:#d8cdbb; --border-strong:#a99c86; --border-mid:#c0b49f;
+  --hairline-row:rgba(var(--border-rgb),.85);
+  --text:#40382e; --text-soft:#5d5346; --muted:#6e6455; --text-dim:#736858;
+  --accent:#486244; --accent-rgb:72,98,68; --accent2:#4e6b48;
+  --accent-bg:#e8eddf; --accent-border:rgba(var(--accent-rgb),.45);
+  --accent-border-soft:rgba(var(--accent-rgb),.30); --on-accent:#fffdf6;
+  --orange:#9a5f38; --clay-bar:#b98762; --paper-event:#faf3e8;
+  --sage-line:#c7cfb8; --flat-deep:#dcd3bf;
+  --font-ui:'DM Sans',system-ui,sans-serif; --font-mono:'DM Sans',system-ui,sans-serif;
+  --font-title:'Lora',Georgia,serif;
+  width:390px;height:844px;flex:none;overflow:hidden;position:relative;
+  background:var(--bg);color:var(--text);font-family:var(--font-ui);
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+}
+.scr-b *{box-sizing:border-box;margin:0;padding:0;}
+.scr-b button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+
+/* ---- topbar (app/Header.tsx, .topbar-stacked) ---- */
+.scr-b .topbar{flex:none;background:rgba(255,253,247,.96);border-bottom:1px solid var(--border);
+  padding:11px 20px 9px;display:flex;flex-direction:column;align-items:stretch;gap:9px;}
+.scr-b .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
+.scr-b .topbar-row .sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);white-space:nowrap;}
+.scr-b .topbar-right{display:flex;align-items:center;gap:6px;flex:none;}
+.scr-b .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;
+  padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:var(--font-mono);}
+.scr-b .notif-btn{width:26px;height:26px;border-radius:50%;color:var(--muted);display:grid;place-items:center;font-size:14px;}
+.scr-b .icon-btn{border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;padding:5px 10px;}
+.scr-b .nav-tabs{display:flex;gap:2px;padding:3px;background:var(--track);border-radius:11px;}
+.scr-b .nav-tab{flex:1;padding:6px 0;text-align:center;border-radius:8px;font-size:12px;color:var(--muted);font-weight:500;}
+.scr-b .nav-tab.active{background:var(--accent);color:var(--on-accent);font-weight:600;}
+
+/* ---- .main ---- */
+.scr-b .main{flex:1;min-height:0;overflow:hidden;padding:20px 16px 0;display:flex;flex-direction:column;}
+
+/* ---- week-row: o select + o toggle Dia/Semana (os ids do laptop, agora no celular) ---- */
+.scr-b .week-row{flex:none;display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.scr-b .week-row select{flex:1;min-width:0;background:#fffefa;border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-size:13px;font-family:var(--font-ui);padding:9px 12px;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 17px,calc(100% - 11px) 17px;background-size:4px 4px,4px 4px;background-repeat:no-repeat;}
+.scr-b .view-mode{flex:none;display:flex;gap:2px;padding:3px;background:var(--track);border-radius:10px;}
+.scr-b .vm-btn{padding:6px 11px;border-radius:7px;font-size:12px;font-weight:500;color:var(--muted);}
+.scr-b .vm-btn.on{background:var(--accent);color:var(--on-accent);font-weight:600;}
+
+/* ---- a agenda ---- */
+.scr-b .week-agenda{flex:1;min-height:0;overflow-y:auto;padding-bottom:90px;
+  display:flex;flex-direction:column;gap:3px;-webkit-mask-image:linear-gradient(#000 calc(100% - 90px),transparent);}
+
+/* dia que já passou: uma linha só, sem buracos — agenda olha pra frente */
+.scr-b .wa-past{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;
+  font-size:12px;color:var(--text-dim);text-align:left;border-radius:12px;}
+.scr-b .wa-past b{font-weight:500;color:var(--muted);}
+.scr-b .wa-past .wa-chev{margin-left:auto;color:var(--border-strong);font-size:13px;}
+
+/* separador do dia — a mesma gramática do .cycle-divider */
+.scr-b .wa-head{display:flex;align-items:center;gap:8px;width:100%;padding:16px 2px 7px;text-align:left;}
+.scr-b .wa-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);white-space:nowrap;}
+.scr-b .wa-today .wa-name{color:var(--accent);}
+.scr-b .wa-tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--accent);background:var(--accent-bg);border-radius:99px;padding:2px 6px;}
+.scr-b .wa-line{flex:1;height:0;border-top:1px dashed var(--border);}
+.scr-b .wa-sum{font-size:11px;font-family:var(--font-mono);color:var(--muted);white-space:nowrap;}
+.scr-b .wa-sum.folga{color:var(--text-dim);}
+
+/* linha: buraco (o que se pode ocupar) e compromisso (o que já está marcado) */
+.scr-b .wa-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;
+  border:1px solid transparent;min-height:42px;}
+.scr-b .wa-time{font-size:11px;font-family:var(--font-mono);color:var(--muted);min-width:84px;flex:none;}
+.scr-b .wa-what{font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.scr-b .wa-dur{font-size:11px;font-family:var(--font-mono);color:var(--text-dim);flex:none;}
+
+/* buraco: tracejado = maleável. O ＋ é o que se faz com ele. */
+.scr-b .wa-free{border-style:dashed;border-color:var(--border);background:transparent;}
+.scr-b .wa-free .wa-what{color:var(--muted);}
+.scr-b .wa-add{flex:none;width:26px;height:26px;margin:-4px -4px -4px 0;border-radius:8px;
+  border:1px solid var(--accent-border-soft);color:var(--accent);font-size:14px;line-height:1;
+  display:grid;place-items:center;}
+/* o buraco que está acontecendo agora */
+.scr-b .wa-free.now{background:var(--accent-bg);border-style:solid;border-color:var(--sage-line);
+  box-shadow:inset 3px 0 0 var(--accent);}
+.scr-b .wa-free.now .wa-what{color:var(--accent);font-weight:600;}
+.scr-b .wa-now-tag{font-size:10px;font-family:var(--font-mono);color:var(--accent);}
+
+/* compromisso: papel quente + a barra de 4px do café (a mesma do .block-row.event-row) */
+.scr-b .wa-ev{background:var(--paper-event);border:1px solid var(--border);
+  border-left:4px solid var(--clay-bar);padding-left:9px;}
+.scr-b .wa-ev.meal{background:var(--bg3);}
+.scr-b .wa-ev .wa-time{color:var(--orange);}
+.scr-b .wa-ev .wa-dur{color:var(--muted);}
+
+/* dia de folga: nem buraco nem compromisso */
+.scr-b .wa-rest{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:12px;color:var(--text-dim);}
+
+.scr-b .fab{position:absolute;right:16px;bottom:18px;width:44px;height:44px;border-radius:50%;
+  background:var(--bg2);border:1px solid var(--border);box-shadow:0 3px 0 var(--flat-deep);
+  display:grid;place-items:center;font-size:16px;}
+</style>
+
+<div class="topbar topbar-stacked">
+  <div class="topbar-row">
+    <span class="sub">qua, 17 de setembro</span>
+    <div class="topbar-right">
+      <span class="xp-badge">1240 XP</span>
+      <button class="notif-btn">&#128276;</button>
+      <button class="icon-btn">Sair</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active">Plano</button>
+    <button class="nav-tab">Análise</button>
+    <button class="nav-tab">Perfil</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="week-row">
+    <select><option>Semana 3 · 15/09 – 21/09</option></select>
+    <div class="view-mode" id="view-mode">
+      <button class="vm-btn" id="view-day">Dia</button>
+      <button class="vm-btn on" id="view-week">Semana</button>
+    </div>
+  </div>
+
+  <div class="week-agenda" id="week-agenda">
+
+    <button class="wa-past"><b>Seg 15</b> · 2 compromissos <span class="wa-chev">›</span></button>
+    <button class="wa-past"><b>Ter 16</b> · 1 compromisso <span class="wa-chev">›</span></button>
+
+    <button class="wa-head wa-today">
+      <span class="wa-name">Qua 17</span><span class="wa-tag">hoje</span>
+      <span class="wa-line"></span><span class="wa-sum">7h de estudo</span>
+    </button>
+    <div class="wa-row wa-free now">
+      <span class="wa-time">09:00–13:00</span>
+      <span class="wa-what">estudo</span>
+      <span class="wa-now-tag">agora</span>
+      <span class="wa-dur">4h</span>
+      <button class="wa-add">+</button>
+    </div>
+    <div class="wa-row wa-ev meal">
+      <span class="wa-time">13:00–14:00</span>
+      <span class="wa-what">🍽️ Refeição</span>
+      <span class="wa-dur">1h</span>
+    </div>
+    <div class="wa-row wa-free">
+      <span class="wa-time">14:00–16:00</span>
+      <span class="wa-what">estudo</span>
+      <span class="wa-dur">2h</span>
+      <button class="wa-add">+</button>
+    </div>
+    <div class="wa-row wa-ev">
+      <span class="wa-time">16:00–17:00</span>
+      <span class="wa-what">👥 Reunião</span>
+      <span class="wa-dur">1h</span>
+    </div>
+    <div class="wa-row wa-free">
+      <span class="wa-time">17:00–18:00</span>
+      <span class="wa-what">estudo</span>
+      <span class="wa-dur">1h</span>
+      <button class="wa-add">+</button>
+    </div>
+
+    <button class="wa-head">
+      <span class="wa-name">Qui 18</span>
+      <span class="wa-line"></span><span class="wa-sum">6h de estudo</span>
+    </button>
+    <div class="wa-row wa-free">
+      <span class="wa-time">09:00–10:00</span><span class="wa-what">estudo</span>
+      <span class="wa-dur">1h</span><button class="wa-add">+</button>
+    </div>
+    <div class="wa-row wa-ev">
+      <span class="wa-time">10:00–12:00</span><span class="wa-what">📅 Análise II</span>
+      <span class="wa-dur">2h</span>
+    </div>
+    <div class="wa-row wa-free">
+      <span class="wa-time">12:00–13:00</span><span class="wa-what">estudo</span>
+      <span class="wa-dur">1h</span><button class="wa-add">+</button>
+    </div>
+    <div class="wa-row wa-ev meal">
+      <span class="wa-time">13:00–14:00</span><span class="wa-what">🍽️ Refeição</span>
+      <span class="wa-dur">1h</span>
+    </div>
+    <div class="wa-row wa-free">
+      <span class="wa-time">14:00–18:00</span><span class="wa-what">estudo</span>
+      <span class="wa-dur">4h</span><button class="wa-add">+</button>
+    </div>
+
+    <button class="wa-head">
+      <span class="wa-name">Sex 19</span>
+      <span class="wa-line"></span><span class="wa-sum">8h de estudo</span>
+    </button>
+    <div class="wa-row wa-free">
+      <span class="wa-time">09:00–13:00</span><span class="wa-what">estudo</span>
+      <span class="wa-dur">4h</span><button class="wa-add">+</button>
+    </div>
+    <div class="wa-row wa-ev meal">
+      <span class="wa-time">13:00–14:00</span><span class="wa-what">🍽️ Refeição</span>
+      <span class="wa-dur">1h</span>
+    </div>
+    <div class="wa-row wa-free">
+      <span class="wa-time">14:00–18:00</span><span class="wa-what">estudo</span>
+      <span class="wa-dur">4h</span><button class="wa-add">+</button>
+    </div>
+
+    <button class="wa-head">
+      <span class="wa-name">Sáb 20</span>
+      <span class="wa-line"></span><span class="wa-sum folga">folga</span>
+    </button>
+    <div class="wa-rest">🌴 Fim de semana livre</div>
+
+    <button class="wa-head">
+      <span class="wa-name">Dom 21</span>
+      <span class="wa-line"></span><span class="wa-sum folga">folga</span>
+    </button>
+    <div class="wa-rest">🌴 Fim de semana livre</div>
+
+  </div>
+  <button class="fab">⚙️</button>
+</div>
+</section>
+</div>
+    <div class="texto">
+      <h3>O que a pessoa faz</h3><p>Rola a semana e lê, em texto, onde há espaço — "quinta, 14:00–18:00, 4h" — e toca no <b>＋</b> daquela faixa pra criar o compromisso já com o horário preenchido; o cabeçalho do dia (<code>7h de estudo</code>) diz num número qual dia está leve.</p><p><b>O que ela não consegue</b>: comparar dois dias lado a lado (é uma lista vertical, Seg e Sex nunca aparecem juntos), sentir densidade pelo desenho (um dia de 2h e um de 8h ocupam o mesmo tanto de tela — só o número os separa), nem ver o plano bloco a bloco: "estudo · 4h" é uma faixa, os pomodoros de dentro dela só existem no Dia.</p>
+      <h3>O que morre</h3><p><b>Arrastar evento pra outro dia</b> — é a perda real, e é deliberada: sem grade não há alvo de soltura, e arrastar numa lista de alturas iguais não significa nada. A rota continua existindo (tocar no compromisso → Editar → mudar o dia), só deixa de ser gesto. Morrem junto: a <b>proporção</b> (altura = duração), a <b>linha do agora</b> como régua do dia, e o <b>comparar dias de relance</b> — os três eram do laptop, e nos três o celular troca desenho por número. Sobrevive o que responde "onde cabe": onde estão os compromissos, quanto sobra, e em qual dia.</p>
+      <h3>Custo em código</h3><ul><li><b>Novo</b>: <code>src/features/plan/WeekAgenda.tsx</code> (~130 linhas), e dentro dele a função pura que dobra <code>blocksForDay(key)</code> em faixas — sequência contígua de <code>estudo</code>/<code>pausa</code> vira um buraco; <code>event</code>/<code>intervalo</code> vira um compromisso. Recebe blocos, devolve linhas. É da feature, não do domínio.</li><li><b>Não reaproveita nada dos dois</b>: <code>WeekView</code> é geometria de grade (<code>pct()</code>, <code>top</code>/<code>height</code>, régua de horas) e é exatamente o que esta direção joga fora; <code>BlockList</code> é linha-por-bloco com check, XP, timer, grupo, ciclo, seleção e arrasto — a agenda não tem nenhum deles. Copiar qualquer um dos dois seria carregar o que não se usa.</li><li><b>Mexe</b>: <code>PlanTab.tsx</code> (tirar o <code>wide &amp;&amp;</code> do <code>#view-mode</code> no <code>WeekDayPicker</code> — os ids <code>#view-day</code>/<code>#view-week</code> já existem; e renderizar <code>WeekAgenda</code> quando <code>!wide &amp;&amp; mode === 'week'</code>), <code>strings.ts</code> (<code>plan.week.*</code>: "compromissos", "estudo", "folga", "de estudo"), <code>app.css</code> (bloco <code>.wa-*</code> <b>fora</b> do <code>@media (min-width:1100px)</code>, ~45 linhas). <code>cafe.css</code>: nada — as cores saem dos tokens que já existem (<code>--paper-event</code>, <code>--clay-bar</code>, <code>--accent-bg</code>, <code>--sage-line</code>).</li><li><b><code>src/domain/</code>: não mexe.</b> Nenhuma função nova, nenhum campo novo, nenhum <code>schemaVersion</code>. Lê <code>blocksForDay</code>, <code>restKindOf</code> e <code>dateForWeekDay</code>, que a Semana do laptop já usa.</li><li><b>e2e</b>: um spec novo em 390px (o smoke roda em 480, então o <code>describe</code> pode ser o padrão).</li></ul>
+      <details><summary>A crítica (outro agente, sem dó)</summary><div class="corpo-critica"><p><b>(1) Análise</b> — não duplica, e é a única força real: <code>goalWeek</code>/<code>heatmap</code> olham pra trás ("bateu a meta"), isto olha pra frente ("onde cabe"). Só o cabeçalho <code>7h de estudo</code> é eco — é <code>dayStudyPlanned</code>, que o card de aderência já soletra como "Yh no plano".</p><p><b>(2) 390px</b> — as alturas foram medidas, mas <b>os dados mentem</b>. Três linhas por dia é conta limpa. Com o .ics importado (feature entregue, grade de semestre), uma quinta tem 4–6 compromissos → 10+ linhas → um dia por tela, e o "qual dia tá leve" morre. E na sexta a semana vira 5 linhas colapsadas + 2 folgas: tela vazia justamente no dia em que ela abriria pra planejar a próxima.</p><p><b>(3) A faixa mente sobre duração.</b> <code>09:00–13:00 · 4h</code> contém pausas; o estudo ali é ~3h20. O app inteiro conta por <code>blockMins</code> e tem teste varrendo <code>src/</code> atrás de <code>endTime − time</code> solto — esta direção nasce reprovada, e o <code>7h de estudo</code> do cabeçalho cai com a mesma conta.</p><p><b>(4) O nome e o ＋ invertem o app.</b> Chamar de "buraco" o tempo que o gerador encheu de pomodoros é dizer que estudar é o vazio da agenda; e o único gesto herói da tela é um botão cuja função é <b>comer</b> estudo. Pior: criar evento num dia que você não está olhando é ação de mesa, não de ônibus. Na rua se olha "tenho aula às 10?" — e isso as abas de dia já entregam com mais detalhe.</p><p><b>(5) Custo subestimado, quatro vezes.</b> (a) <code>EventPanel</code> só conhece o dia visível (prop <code>dateKey</code>, e o <code>useEffect</code> reseta pra 11:30–13:00 ao abrir) — passar dia <b>e</b> horário de fora mexe no ponto mais frágil do arquivo (reset × preset × edit × <code>scope</code>); (b) <code>weekMode = wide &amp;&amp; mode === 'week'</code> governa mais coisa no <code>PlanTab</code> — tirar o <code>wide</code> muda o que existe no celular em modo semana e leva junto as âncoras do tour (<code>.day-events-bar</code>, <code>.finish-day-btn</code>, e2e 27); (c) o <code>overflow-y:auto</code> interno quebra <code>scrollToShow</code>/<code>placeBalloon</code>, que medem em coordenadas do <b>documento</b>; (d) dobrar blocos em faixas é dados→dados: pela regra do projeto é domínio com teste, não 130 linhas de feature.</p><p><b>(6) Veredito: não está morto, mas esta versão está.</b> O esqueleto (lista vertical, dias em sequência, compromissos como o conteúdo) é a única forma que sobrevive a 390px depois dos dois descartes do Tomi. O que precisa cair antes de virar protótipo: o nome, o ＋ como ação principal, e a faixa de estudo como número. Inverta — <b>a semana dos compromissos</b>, onde o estudo é fundo e a pergunta respondida é "o que me espera esta semana" —, prove contra um semestre importado e não contra um dia de três linhas, e aí vale a tela.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="dir">
+  <div class="dir-head"><span class="letra">Direção C</span><h2>Cartões que deslizam</h2></div>
+  <div class="corpo">
+    <div class="tela"><section class="dirC">
+<style>
+/* ── Direção C · Cartões que deslizam — 390x844, tema Café de casa ───────────
+   Tokens copiados de src/styles/themes/cafe.css. Tudo escopado em .dirC.
+   A faixa é estática aqui (translateX); no app é overflow-x + scroll-snap.   */
+.dirC{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --track:#e5dcc8;
+  --flat-deep:#dcd3bf; --surface-week:#efe8d9; --rest-fill:#ece4d4;
+  --text:#40382e; --text-soft:#5d5346; --muted:#6e6455; --text-dim:#736858;
+  --accent:#486244; --accent-rgb:72,98,68; --accent2:#4e6b48;
+  --accent-bg:#e8eddf; --on-accent:#fffdf6;
+  --accent-border:rgba(var(--accent-rgb),.45);
+  --accent-border-soft:rgba(var(--accent-rgb),.30);
+  --accent-wash-soft2:rgba(var(--accent-rgb),.07);
+  --border:#d8cdbb; --border-rgb:216,205,187; --border-mid:#c0b49f; --border-strong:#a99c86;
+  --hairline-row:rgba(var(--border-rgb),.85);
+  --s0:#486244; --s2:#8a4356; --s4:#3d6b5b;
+  --blue:#4c6472; --blue-bg:#e4eaee;
+  --orange:#9a5f38; --paper-event:#faf3e8; --clay-bar:#b98762;
+  --radius:14px; --radius-sm:8px; --radius-md:10px; --radius-lg:16px;
+  --font-ui:'DM Sans',-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'DM Sans',-apple-system,'Segoe UI',sans-serif;
+  --font-title:'Lora',Georgia,serif;
+  width:390px;flex:none;font-family:var(--font-ui);color:var(--text);
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+}
+.dirC *{box-sizing:border-box;margin:0;padding:0;}
+.dirC .frame{width:390px;height:844px;overflow:hidden;background:var(--bg);
+  border:1px solid var(--border-mid);border-radius:20px;display:flex;flex-direction:column;}
+
+/* topbar empilhada — app.css .topbar / .topbar-stacked */
+.dirC .topbar{flex:none;background:rgba(246,239,227,.92);border-bottom:1px solid var(--border);
+  padding:11px 20px 9px;display:flex;flex-direction:column;align-items:stretch;gap:9px;}
+.dirC .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
+.dirC .sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);white-space:nowrap;}
+.dirC .topbar-right{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}
+.dirC .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;
+  padding:5px 14px;font:500 13px var(--font-mono);color:var(--accent);}
+.dirC .notif-btn{width:26px;height:26px;border-radius:50%;border:0;background:transparent;
+  color:var(--muted);font-size:13px;line-height:1;display:grid;place-items:center;}
+.dirC .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--muted);font-size:12px;padding:5px 10px;font-family:var(--font-ui);}
+.dirC .nav-tabs{display:flex;gap:2px;margin:0;padding:3px;background:var(--track);border-radius:11px;}
+.dirC .nav-tab{flex:1;padding:6px 0;text-align:center;border-radius:8px;background:transparent;
+  border:1px solid transparent;color:var(--muted);font:500 13px var(--font-ui);}
+.dirC .nav-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+
+/* main — app.css .main (max-width 480, padding 20 16 100) */
+.dirC .main{flex:1;min-height:0;padding:20px 16px 100px;overflow:hidden;}
+
+/* week-row vira flex no celular pra caber o toggle (hoje só é flex >=1100px) */
+.dirC .week-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.dirC .week-row select{flex:1;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font:400 13px var(--font-ui);
+  padding:9px 12px;appearance:none;}
+.dirC .view-mode{display:inline-flex;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:2px;flex:none;}
+.dirC .vm-btn{background:none;border:0;border-radius:var(--radius-sm);padding:5px 11px;
+  font:600 12px var(--font-ui);color:var(--muted);}
+.dirC .vm-btn.on{background:var(--accent-bg);color:var(--accent);}
+
+/* day-tabs — exatamente as do celular hoje */
+.dirC .day-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.dirC .day-tab{flex:1;padding:6px 0;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:transparent;color:var(--muted);font:400 12px var(--font-ui);position:relative;}
+.dirC .day-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+.dirC .day-tab.today:not(.active){border-color:var(--accent-border);color:var(--text);}
+.dirC .day-tab .dot{position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--accent);}
+
+/* ── a faixa ──────────────────────────────────────────────────────────────── */
+.dirC .wk-strip{margin:0 -16px;overflow:hidden;}
+.dirC .wk-track{display:flex;gap:10px;align-items:stretch;transform:translateX(-282px);}
+.dirC .wk-card{flex:0 0 302px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);box-shadow:0 3px 0 var(--flat-deep);
+  padding:12px 13px 8px;display:flex;flex-direction:column;}
+.dirC .wk-card.today{border-color:var(--accent-border-soft);box-shadow:0 3px 0 var(--flat-deep),inset 0 0 0 1px var(--accent-wash-soft2);}
+.dirC .wk-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.dirC .wk-day{font:600 15px/1.1 var(--font-title);color:var(--text);}
+.dirC .wk-day .wk-dt{color:var(--text-dim);font-weight:400;}
+.dirC .wk-badge{flex:none;font:600 9px/1 var(--font-ui);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border-soft);
+  border-radius:99px;padding:4px 7px;}
+.dirC .wk-sum{margin-top:4px;font:400 11px/1.4 var(--font-mono);color:var(--muted);}
+.dirC .wk-sum b{font-weight:500;color:var(--accent);}
+.dirC .wk-rows{margin-top:9px;border-top:1px solid var(--hairline-row);}
+.dirC .wk-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--hairline-row);}
+.dirC .wk-bar{flex:none;width:3px;height:14px;border-radius:2px;background:var(--sc,var(--border-mid));}
+.dirC .wk-t{flex:none;font:400 11px var(--font-mono);color:var(--sc,var(--muted));min-width:36px;}
+.dirC .wk-n{flex:1;min-width:0;font-size:12.5px;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dirC .wk-m{flex:none;font:400 10.5px var(--font-mono);color:var(--muted);}
+.dirC .wk-m .ok{color:var(--accent);}
+.dirC .wk-row.c0{--sc:var(--s0);} .dirC .wk-row.c2{--sc:var(--s2);} .dirC .wk-row.c4{--sc:var(--s4);}
+.dirC .wk-row.longa{--sc:var(--blue);} .dirC .wk-row.longa .wk-n{color:var(--text-soft);}
+.dirC .wk-row.intervalo{--sc:var(--border-strong);} .dirC .wk-row.intervalo .wk-n{color:var(--text-soft);}
+.dirC .wk-row.event{--sc:var(--clay-bar);} .dirC .wk-row.event .wk-n{color:var(--orange);font-weight:500;}
+.dirC .wk-row.done .wk-n{color:var(--text-soft);}
+.dirC .wk-more{padding:7px 0 0;font:400 11px var(--font-mono);color:var(--text-dim);padding-left:11px;}
+.dirC .wk-open{margin-top:auto;display:flex;align-items:center;justify-content:space-between;
+  width:100%;padding:10px 0 4px;margin-top:10px;border:0;border-top:1px solid var(--border);
+  background:none;font:500 12px var(--font-ui);color:var(--accent);}
+.dirC .wk-open span{font-size:13px;}
+/* fim de semana pausado / dia livre */
+.dirC .wk-card.rest{background:var(--rest-fill);box-shadow:none;border-style:dashed;}
+.dirC .wk-rest{flex:1;display:grid;place-items:center;font-size:11.5px;color:var(--muted);padding:26px 0;}
+</style>
+
+<div class="frame">
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <span class="sub">17/09 · qua</span>
+      <div class="topbar-right">
+        <span class="xp-badge">4210 XP</span>
+        <button class="notif-btn">◔</button>
+        <button class="icon-btn">Sair</button>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active">Plano</button>
+      <button class="nav-tab">Análise</button>
+      <button class="nav-tab">Perfil</button>
+    </nav>
+  </header>
+
+  <div class="main">
+
+    <div class="week-row">
+      <select><option>Semana 3 · 15/09 – 21/09</option></select>
+      <div class="view-mode">
+        <button class="vm-btn">Dia</button>
+        <button class="vm-btn on">Semana</button>
+      </div>
+    </div>
+
+    <div class="day-tabs">
+      <button class="day-tab">seg<span class="dot"></span></button>
+      <button class="day-tab">ter<span class="dot"></span></button>
+      <button class="day-tab active today">qua</button>
+      <button class="day-tab">qui</button>
+      <button class="day-tab">sex</button>
+      <button class="day-tab">sáb</button>
+      <button class="day-tab">dom</button>
+    </div>
+
+    <div class="wk-strip">
+      <div class="wk-track">
+
+        <!-- terça: só a beirada aparece -->
+        <article class="wk-card">
+          <div class="wk-head"><div class="wk-day">Ter <span class="wk-dt">· 16/09</span></div></div>
+          <div class="wk-sum"><b>6h30 feito</b> · 6h30 no plano</div>
+          <div class="wk-rows">
+            <div class="wk-row c0 done"><i class="wk-bar"></i><span class="wk-t">09:00</span><span class="wk-n">Ciclo 1</span><span class="wk-m"><span class="ok">4/4 ✓</span> 1h40</span></div>
+            <div class="wk-row longa done"><i class="wk-bar"></i><span class="wk-t">10:55</span><span class="wk-n">Pausa longa</span><span class="wk-m">15 min</span></div>
+            <div class="wk-row c2 done"><i class="wk-bar"></i><span class="wk-t">11:10</span><span class="wk-n">Ciclo 2</span><span class="wk-m"><span class="ok">4/4 ✓</span> 1h35</span></div>
+            <div class="wk-row intervalo"><i class="wk-bar"></i><span class="wk-t">13:00</span><span class="wk-n">🍽️ Refeição</span><span class="wk-m">1h00</span></div>
+            <div class="wk-row c4 done"><i class="wk-bar"></i><span class="wk-t">14:00</span><span class="wk-n">Ciclo 3</span><span class="wk-m"><span class="ok">4/4 ✓</span> 1h40</span></div>
+            <div class="wk-row c0 done"><i class="wk-bar"></i><span class="wk-t">16:10</span><span class="wk-n">Ciclo 4</span><span class="wk-m"><span class="ok">4/4 ✓</span> 1h35</span></div>
+          </div>
+          <button class="wk-open">Abrir o dia <span>›</span></button>
+        </article>
+
+        <!-- QUARTA · hoje -->
+        <article class="wk-card today">
+          <div class="wk-head">
+            <div class="wk-day">Qua <span class="wk-dt">· 17/09</span></div>
+            <span class="wk-badge">hoje</span>
+          </div>
+          <div class="wk-sum"><b>4h30 feito</b> · 7h00 no plano</div>
+          <div class="wk-rows">
+            <div class="wk-row c0 done"><i class="wk-bar"></i><span class="wk-t">09:00</span><span class="wk-n">Ciclo 1</span><span class="wk-m"><span class="ok">4/4 ✓</span> 1h40</span></div>
+            <div class="wk-row longa done"><i class="wk-bar"></i><span class="wk-t">10:55</span><span class="wk-n">Pausa longa</span><span class="wk-m">15 min</span></div>
+            <div class="wk-row c2 done"><i class="wk-bar"></i><span class="wk-t">11:10</span><span class="wk-n">Ciclo 2</span><span class="wk-m"><span class="ok">4/4 ✓</span> 1h35</span></div>
+            <div class="wk-row intervalo"><i class="wk-bar"></i><span class="wk-t">13:00</span><span class="wk-n">🍽️ Refeição</span><span class="wk-m">1h00</span></div>
+            <div class="wk-row c4"><i class="wk-bar"></i><span class="wk-t">14:00</span><span class="wk-n">Ciclo 3</span><span class="wk-m">3/4 · 1h45</span></div>
+            <div class="wk-row event"><i class="wk-bar"></i><span class="wk-t">16:00</span><span class="wk-n">📅 Análise II</span><span class="wk-m">2h00</span></div>
+          </div>
+          <button class="wk-open">Abrir o dia <span>›</span></button>
+        </article>
+
+        <!-- quinta: espia na direita -->
+        <article class="wk-card">
+          <div class="wk-head"><div class="wk-day">Qui <span class="wk-dt">· 18/09</span></div></div>
+          <div class="wk-sum">6h55 no plano · 2 compromissos</div>
+          <div class="wk-rows">
+            <div class="wk-row c0"><i class="wk-bar"></i><span class="wk-t">09:00</span><span class="wk-n">Ciclo 1</span><span class="wk-m">4 est · 1h40</span></div>
+            <div class="wk-row longa"><i class="wk-bar"></i><span class="wk-t">10:55</span><span class="wk-n">Pausa longa</span><span class="wk-m">15 min</span></div>
+            <div class="wk-row event"><i class="wk-bar"></i><span class="wk-t">11:15</span><span class="wk-n">📅 Estatística</span><span class="wk-m">1h30</span></div>
+            <div class="wk-row intervalo"><i class="wk-bar"></i><span class="wk-t">13:00</span><span class="wk-n">🍽️ Refeição</span><span class="wk-m">1h00</span></div>
+            <div class="wk-row c2"><i class="wk-bar"></i><span class="wk-t">14:00</span><span class="wk-n">Ciclo 2</span><span class="wk-m">4 est · 1h40</span></div>
+            <div class="wk-row c4"><i class="wk-bar"></i><span class="wk-t">16:10</span><span class="wk-n">Ciclo 3</span><span class="wk-m">4 est · 1h35</span></div>
+          </div>
+          <button class="wk-open">Abrir o dia <span>›</span></button>
+        </article>
+
+        <article class="wk-card rest">
+          <div class="wk-head"><div class="wk-day">Sáb <span class="wk-dt">· 20/09</span></div></div>
+          <div class="wk-rest">🌴 Fim de semana livre</div>
+          <button class="wk-open">Abrir o dia <span>›</span></button>
+        </article>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+</div>
+    <div class="texto">
+      <h3>O que a pessoa faz</h3><p>Ela desliza até quinta pra ver <b>onde tem buraco e onde tem compromisso</b> — alguém perguntou se ela pode quinta às 16h, e em dois segundos ela sabe que a tarde de quinta é ciclo 3 inteiro e responde. E toca em "Abrir o dia" pra ir marcar.</p><p><b>O que ela NÃO consegue</b>: ver a forma do dia (um estudo de 25 min e uma aula de 2h ocupam a mesma altura de linha — o cartão diz *quando* e *quanto* em texto, nunca em geometria), nem comparar dois dias lado a lado (é um por vez, a comparação é de memória).</p><ul><li>--</li></ul>
+      <h3>O que morre</h3><p><b>Arrastar evento pra outro dia.</b> O gesto horizontal é do swipe, e não há grade pra soltar em cima — nem faria sentido: no cartão não existe "às 16h" como posição, só como texto. O que resta é "Abrir o dia" → editar o evento lá, que é o caminho que o celular já tem.</p><p>Morre junto a <b>leitura de forma</b>: no laptop dá pra bater o olho e ver que terça está vazia e quarta está lotada porque as manchas têm altura. Aqui isso vira um número no cabeçalho ("7h00 no plano") — se lê, mas não se *vê*. E morre <b>comparar</b> — dois dias nunca estão na tela ao mesmo tempo.</p><p>O que sobrevive inteiro é o motivo de olhar a semana na rua: onde estão os compromissos e quanto sobra em volta deles.</p><ul><li>--</li></ul>
+      <h3>Custo em código</h3><ul><li><b>Componente novo</b>: <code>src/features/plan/WeekCards.tsx</code> — a faixa + o <code>DayCard</code>. ~130 linhas. A condensação é leitura pura dentro do componente: <code>blocksForDay(key)</code> agrupado por <code>b.cycle</code> pra estudo/pausa, <code>event</code>/<code>intervalo</code> como linha própria, e <code>cycleSummary(blocks, cycle, checks)</code> pra "4/4 · 1h40".</li><li><b>Não reaproveita <code>BlockList</code></b> (granularidade errada: linha com check, grupo, arrasto — o cartão é resumo) <b>nem <code>WeekView</code></b> (a grade de posição absoluta é exatamente o que esta direção abre mão). É o custo honesto: passa a existir um segundo jeito de desenhar um dia. Reaproveita sim: <code>blocksForDay</code>, <code>restKindOf</code>, <code>dateForWeekDay</code>, <code>cycleSummary</code>, <code>isChecked</code>, <code>blockMins</code>, <code>formatCompact</code>, <code>cleanBlockName</code>, os tokens <code>s0..s5</code> e as <code>.day-tabs</code> inteiras.</li><li><b><code>PlanTab.tsx</code></b>: o <code>mode</code> já existe como <code>useState</code>; hoje o <code>#view-mode</code> só é montado com <code>useWide()</code>. Tira o gate e escolhe <code>WeekCards</code> quando <code>!wide &amp;&amp; mode === 'week'</code>. ~6 linhas.</li><li><b><code>app.css</code></b>: um bloco <code>.wk-*</code> <b>fora</b> da media query de 1100px, e mover <code>.view-mode</code>/<code>.vm-btn</code> (hoje só dentro dela) pro escopo comum + <code>.week-row{display:flex}</code> no celular. As <code>.wv-*</code> do laptop não são tocadas.</li><li><b><code>strings.ts</code></b>: 4–5 frases novas em <code>plan.week.cards</code>.</li><li><b>e2e</b>: um teste novo em 480px (o toggle passa a existir no celular — hoje o smoke roda nessa largura e não o vê).</li><li><b><code>domain/</code></b>: <b>nada</b>. Nenhum campo novo, nenhum <code>schemaVersion</code>, nenhuma migração.</li></ul><p>Uma decisão que evita nested scroll: cartão com muitas linhas <b>não rola por dentro</b> — corta em 9 linhas e a última vira "…e mais 3". Rolagem vertical da página e snap horizontal não brigam.</p><ul><li>--</li></ul>
+      <details><summary>A crítica (outro agente, sem dó)</summary><div class="corpo-critica"><p>(1) <b>Não copia, mas a linha de cabeçalho sim.</b> "4h30 feito · 7h00 no plano" ×7 é literalmente <code>dayStudyDoneMins</code>/<code>dayStudyPlanned</code> — é o heatmap escrito por extenso. O que é novo (horário dos compromissos) vive nas linhas; se essas linhas são o valor, o cabeçalho é enfeite que colide com a Análise.</p><p>(2) <b>Cabe, mas o mock mente por omissão.</b> Quarta tem 3 ciclos e 1 pausa longa; terça tem 4 ciclos e 1. Faltam as pausas longas entre os outros ciclos — com elas o dia padrão dá 9–10 linhas, não 6–8, e a regra "corta em 9 · …e mais 3" apaga exatamente a tarde que se foi olhar. Pior: <code>cycleSummary</code> só dá <code>minsDone</code>, então "3/4 · 1h45" (feito) e "4 est · 1h40" (planejado) são contas diferentes na mesma coluna. E pausa longa como linha própria é ruído: gasta 1/3 do cartão com o que ninguém foi ver.</p><p>(3) <b>Morre no gesto que já existe.</b> No celular a aba <code>qui</code> já abre o dia inteiro de quinta em <b>um toque</b> — <code>BlockList</code> renderiza qualquer dia (<code>.day-future</code> esmaecido). O cenário "posso quinta às 16h?" já está resolvido hoje, com mais informação e com o evento editável. A direção troca um toque por um deslize e entrega *menos*: sem check, sem editar, sem grupo.</p><p>(4) <b>Subestimado.</b> Você mata <code>weekMode</code>, que hoje <b>esconde</b> as <code>.day-tabs</code> (<code>PlanTab.tsx:137</code>) — reativá-las em modo Semana é lógica nova, e sincronizar tab ↔ scroll-snap é listener de scroll, não CSS. <code>.view-mode</code>/<code>.vm-btn</code> só existem dentro da media query em <code>--s</code> (app.css:1418) — fora dela é regra nova, não "mover". E o tour: o balão 1/3 ancora em <code>.day-events-bar</code> e <code>.block-row</code>, que somem no modo Semana — o e2e 27 em 480px cai no fallback de rodapé sem ninguém pedir.</p><p>(5) <b>Morto.</b> Não por ser feio — por não ganhar um modo. Dois jeitos de desenhar um dia, um toggle novo, e o único ganho sobre tocar numa aba é o cabeçalho que a Análise já dá.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="dir">
+  <div class="dir-head"><span class="letra">Direção D</span><h2>Carga da semana</h2></div>
+  <div class="corpo">
+    <div class="tela"><style>
+/* ============================================================================
+   Direção D — "Carga da semana" (a Semana no celular)
+   Tokens copiados de src/styles/themes/cafe.css; classes do app reaproveitadas
+   (.topbar, .nav-tabs, .xp-card, .stats-row, .week-row, .view-mode). O que é
+   novo tem prefixo .wb-* (week bars), no padrão do .wv-* da Semana do laptop.
+   Tudo escopado em .mock-d.
+   ============================================================================ */
+.mock-d{
+  /* superfície */
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --track:#e5dcc8;
+  --surface-hover-solid:#eee7d7; --bg-blur:rgba(246,239,227,.92);
+  --flat:#e4decf; --flat-deep:#dcd3bf;
+  /* linha */
+  --border:#d8cdbb; --border-strong:#a99c86; --border-mid:#c0b49f;
+  --field:#fffefa; --field-line:#ada18d;
+  /* texto */
+  --text:#40382e; --text-soft:#5d5346; --muted:#6e6455; --text-dim:#736858;
+  --on-accent:#fffdf6;
+  /* ação */
+  --accent:#486244; --accent2:#4e6b48; --accent-bg:#e8eddf;
+  --sage-line:#c7cfb8; --sage-line-2:#b6c4a7;
+  /* semântica */
+  --orange:#9a5f38; --paper-event:#faf3e8; --clay-bar:#b98762;
+  --orange-bg:var(--paper-event); --orange-wash:rgba(154,95,56,.16);
+  --orange-glow:rgba(154,95,56,.18); --orange-glow-inset:rgba(154,95,56,.08);
+  /* forma / tipo */
+  --radius:14px; --radius-sm:8px; --radius-md:10px; --radius-lg:16px;
+  --font-ui:'DM Sans','Segoe UI',system-ui,sans-serif;
+  --font-mono:'DM Sans','Segoe UI',system-ui,sans-serif;
+  --font-title:'Lora',Georgia,serif;
+
+  width:390px; flex:0 0 390px;
+}
+.mock-d *{box-sizing:border-box;margin:0;padding:0;}
+
+.mock-d .phone{
+  width:390px; height:844px; overflow:hidden; position:relative;
+  background:var(--bg); color:var(--text);
+  font-family:var(--font-ui); font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+  border:1px solid var(--border); border-radius:22px;
+  box-shadow:0 3px 0 var(--flat-deep);
+}
+
+/* ── TOPBAR empilhada (app/Header.tsx) ───────────────────────────────────── */
+.mock-d .topbar{
+  position:relative; z-index:100; background:var(--bg-blur);
+  border-bottom:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:stretch; gap:9px;
+  padding:11px 20px 9px;
+}
+.mock-d .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
+.mock-d .topbar-row .sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mock-d .topbar-right{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}
+.mock-d .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:var(--font-mono);display:flex;align-items:center;gap:6px;}
+.mock-d .notif-btn{position:relative;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;}
+.mock-d .notif-badge{position:absolute;top:-1px;right:-2px;min-width:15px;height:15px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on-accent);font:600 9px/15px var(--font-mono);text-align:center;}
+.mock-d .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:12px;padding:5px 10px;font-family:var(--font-ui);}
+.mock-d .nav-tabs{display:flex;gap:2px;margin:0;padding:3px;background:var(--track);border-radius:11px;}
+.mock-d .nav-tab{flex:1;padding:6px 0;text-align:center;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--muted);font-size:13px;font-weight:500;font-family:var(--font-ui);letter-spacing:.01em;}
+.mock-d .nav-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+
+/* ── MAIN ────────────────────────────────────────────────────────────────── */
+.mock-d .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
+
+.mock-d .xp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;}
+.mock-d .xp-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;}
+.mock-d .xp-sub{font-size:11px;color:var(--muted);}
+.mock-d .xp-num{font-size:32px;font-family:var(--font-title);font-weight:500;letter-spacing:-.02em;color:var(--accent);line-height:1;}
+.mock-d .xp-right{text-align:right;}
+.mock-d .xp-right .week-xp{font-size:13px;font-family:var(--font-mono);color:var(--muted);}
+.mock-d .xp-right .today-xp.today-pending{display:inline-block;margin-top:6px;color:var(--orange);background:linear-gradient(135deg,var(--orange-bg),var(--orange-wash));border:1px solid var(--clay-bar);border-radius:99px;padding:4px 12px;font-family:var(--font-mono);font-weight:600;font-size:12.5px;letter-spacing:.02em;box-shadow:0 2px 0 var(--flat);}
+.mock-d .bar-track{height:4px;background:var(--track);border-radius:99px;overflow:hidden;}
+.mock-d .bar-fill{height:100%;background:var(--accent);border-radius:99px;}
+
+.mock-d .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.mock-d .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;}
+.mock-d .stat-box .s-label{font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+.mock-d .stat-box .s-val{font-size:20px;font-weight:600;font-family:var(--font-mono);color:var(--text);}
+
+/* week-row: no celular ele passa a ter o toggle Dia · Semana ao lado do select */
+.mock-d .week-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.mock-d .week-row select{flex:1;min-width:0;background:var(--field);border:1px solid var(--field-line);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font-ui);padding:9px 12px;appearance:none;}
+.mock-d .view-mode{display:inline-flex;background:var(--track);border-radius:var(--radius-md);padding:2px;flex-shrink:0;}
+.mock-d .vm-btn{background:none;border:0;border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;font-weight:600;color:var(--muted);font-family:var(--font-ui);}
+.mock-d .vm-btn.on{background:var(--accent-bg);color:var(--accent);}
+
+/* ── O CARTÃO DAS BARRAS (novo: features/plan/WeekBars.tsx) ──────────────── */
+.mock-d .week-bars{
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:14px 12px 12px;
+  box-shadow:0 3px 0 var(--flat);
+}
+.mock-d .wb-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+.mock-d .wb-title{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+.mock-d .wb-total{font-size:11px;font-family:var(--font-mono);color:var(--text-dim);}
+
+.mock-d .wb-cols{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.mock-d .wb-col{
+  display:flex; flex-direction:column; align-items:center;
+  background:transparent; border:0; border-radius:var(--radius-md);
+  padding:6px 0 6px; font-family:inherit; cursor:pointer;
+}
+.mock-d .wb-col:hover{background:var(--surface-hover-solid);}
+.mock-d .wb-col.today{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--sage-line);}
+.mock-d .wb-label{font-size:11px;color:var(--muted);line-height:1.15;}
+.mock-d .wb-date{font-size:10px;font-family:var(--font-mono);color:var(--text-dim);line-height:1.2;margin-bottom:9px;}
+.mock-d .wb-col.today .wb-label{color:var(--accent);font-weight:600;}
+.mock-d .wb-col.today .wb-date{color:var(--accent2);}
+
+.mock-d .wb-plot{height:170px;width:100%;display:flex;align-items:flex-end;justify-content:center;}
+.mock-d .wb-bar{width:24px;display:flex;flex-direction:column-reverse;border-radius:5px 5px 3px 3px;overflow:hidden;}
+.mock-d .wb-done{background:var(--accent);}
+.mock-d .wb-plan{background:var(--track);}
+.mock-d .wb-busy{background:var(--clay-bar);}
+.mock-d .wb-rest{width:24px;border-top:2px dashed var(--border-strong);}
+.mock-d .wb-sum{font-size:10px;font-family:var(--font-mono);color:var(--text-soft);margin-top:8px;}
+.mock-d .wb-col.rest .wb-sum{color:var(--text-dim);}
+
+.mock-d .wb-foot{margin-top:13px;padding-top:11px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.45;}
+.mock-d .wb-foot b{font-weight:500;color:var(--text-soft);font-family:var(--font-mono);}
+.mock-d .wb-tip{margin-top:16px;text-align:center;font-size:11px;color:var(--text-dim);}
+</style>
+
+<section class="mock-d" aria-label="Semana no celular — Carga da semana">
+  <div class="phone">
+
+    <!-- cabeçalho: igual ao de hoje, nada muda -->
+    <header class="topbar topbar-stacked">
+      <div class="topbar-row">
+        <span class="sub">quarta-feira, 9 de setembro</span>
+        <div class="topbar-right">
+          <span class="xp-badge">4820 XP</span>
+          <button class="notif-btn" aria-label="Notificações">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+            </svg>
+            <span class="notif-badge">2</span>
+          </button>
+          <button class="icon-btn">Sair</button>
+        </div>
+      </div>
+      <div class="nav-tabs">
+        <button class="nav-tab active">Plano</button>
+        <button class="nav-tab">Análise</button>
+        <button class="nav-tab">Perfil</button>
+      </div>
+    </header>
+
+    <main class="main">
+
+      <div class="xp-card">
+        <div class="xp-row">
+          <div>
+            <div class="xp-sub">XP Total</div>
+            <div class="xp-num">4820</div>
+          </div>
+          <div class="xp-right">
+            <div class="week-xp">Semana: 1435 XP</div>
+            <div class="today-xp today-pending">Hoje: +290 XP · +140 🪙</div>
+          </div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:41%"></div></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="s-label">Estudos</div><div class="s-val">2/11</div></div>
+        <div class="stat-box"><div class="s-label">Pausas</div><div class="s-val">2/9</div></div>
+        <div class="stat-box"><div class="s-label">Semana</div><div class="s-val">44 ✓</div></div>
+      </div>
+
+      <div class="week-row">
+        <select aria-label="Semana visível">
+          <option>Semana 3  ·  7 set – 13 set</option>
+        </select>
+        <div class="view-mode">
+          <button class="vm-btn">Dia</button>
+          <button class="vm-btn on">Semana</button>
+        </div>
+      </div>
+
+      <!-- as abas dos dias somem: as sete colunas SÃO os sete dias -->
+      <div class="week-bars" id="week-bars">
+        <div class="wb-head">
+          <span class="wb-title">Carga da semana</span>
+          <span class="wb-total">13h de 28h55</span>
+        </div>
+
+        <div class="wb-cols">
+          <!-- seg 7 — 340 feitos / 405 de estudo / 60 comprometidos = 465 de 490 -->
+          <button class="wb-col" title="Segunda, 7 de setembro — 6h45 de estudo, 5h40 feitos">
+            <span class="wb-label">seg</span><span class="wb-date">7</span>
+            <span class="wb-plot">
+              <span class="wb-bar" style="height:161px">
+                <i class="wb-done" style="height:73.1%"></i>
+                <i class="wb-plan" style="height:14.0%"></i>
+                <i class="wb-busy" style="height:12.9%"></i>
+              </span>
+            </span>
+            <span class="wb-sum">6h45</span>
+          </button>
+
+          <!-- ter 8 — 300 / 385 / 60 -->
+          <button class="wb-col" title="Terça, 8 de setembro — 6h25 de estudo, 5h feitos">
+            <span class="wb-label">ter</span><span class="wb-date">8</span>
+            <span class="wb-plot">
+              <span class="wb-bar" style="height:154px">
+                <i class="wb-done" style="height:67.4%"></i>
+                <i class="wb-plan" style="height:19.1%"></i>
+                <i class="wb-busy" style="height:13.5%"></i>
+              </span>
+            </span>
+            <span class="wb-sum">6h25</span>
+          </button>
+
+          <!-- qua 9 (hoje) — 140 / 370 / 120: aula + refeição + deslocamento -->
+          <button class="wb-col today" title="Hoje, 9 de setembro — 6h10 de estudo, 2h20 feitos">
+            <span class="wb-label">qua</span><span class="wb-date">9</span>
+            <span class="wb-plot">
+              <span class="wb-bar" style="height:170px">
+                <i class="wb-done" style="height:28.6%"></i>
+                <i class="wb-plan" style="height:46.9%"></i>
+                <i class="wb-busy" style="height:24.5%"></i>
+              </span>
+            </span>
+            <span class="wb-sum">6h10</span>
+          </button>
+
+          <!-- qui 10 — janela só à tarde, nada marcado -->
+          <button class="wb-col" title="Quinta, 10 de setembro — 3h10 de estudo">
+            <span class="wb-label">qui</span><span class="wb-date">10</span>
+            <span class="wb-plot">
+              <span class="wb-bar" style="height:66px">
+                <i class="wb-plan" style="height:100%"></i>
+              </span>
+            </span>
+            <span class="wb-sum">3h10</span>
+          </button>
+
+          <!-- sex 11 -->
+          <button class="wb-col" title="Sexta, 11 de setembro — 6h25 de estudo">
+            <span class="wb-label">sex</span><span class="wb-date">11</span>
+            <span class="wb-plot">
+              <span class="wb-bar" style="height:154px">
+                <i class="wb-plan" style="height:86.5%"></i>
+                <i class="wb-busy" style="height:13.5%"></i>
+              </span>
+            </span>
+            <span class="wb-sum">6h25</span>
+          </button>
+
+          <!-- sáb / dom: fim de semana pausado -->
+          <button class="wb-col rest" title="Sábado, 12 de setembro — fim de semana livre">
+            <span class="wb-label">sáb</span><span class="wb-date">12</span>
+            <span class="wb-plot"><span class="wb-rest"></span></span>
+            <span class="wb-sum">—</span>
+          </button>
+          <button class="wb-col rest" title="Domingo, 13 de setembro — fim de semana livre">
+            <span class="wb-label">dom</span><span class="wb-date">13</span>
+            <span class="wb-plot"><span class="wb-rest"></span></span>
+            <span class="wb-sum">—</span>
+          </button>
+        </div>
+
+        <div class="wb-foot">Quinta é o dia mais leve — <b>3h10</b> de estudo e nenhum compromisso.</div>
+      </div>
+
+      <p class="wb-tip">Toque num dia pra abrir o plano dele.</p>
+
+    </main>
+  </div>
+</section>
+</div>
+    <div class="texto">
+      <h3>O que a pessoa faz</h3><p>Na fila do bonde ela vê a semana inteira numa tela — <b>qual dia ainda tem espaço, qual já está entupido e quanto de cada um ela já cumpriu</b> — e toca no dia pra abrir o plano dele. O que ela <b>não</b> consegue: saber *a que horas* o espaço está livre (terça está leve, mas de manhã ou de tarde?), ler o nome de um compromisso, ver onde está agora, nem mover nada — pra qualquer uma dessas coisas tem que entrar no dia.</p>
+      <h3>O que morre</h3><ul><li><b>Arrastar evento pra outro dia.</b> É a razão de ser da Semana do laptop e não tem substituto aqui: sem eixo de tempo não existe onde soltar. No celular o arrasto continua existindo só dentro do Dia (mudar de horário), como hoje.</li><li><b>O horário inteiro.</b> "Quinta está leve" nunca vira "quinta de manhã está livre". Quem quer encaixar a consulta das 15h ainda precisa abrir quinta.</li><li><b>A linha do agora</b> — não existe "onde eu estou".</li><li><b>Os nomes.</b> Não se lê "Análise II" em lugar nenhum; só que quarta tem 2h comprometidas.</li><li><b>Comparar o *formato* dos dias.</b> Dois dias de 6h25 podem ser 09–18 com um buraco de 3h no meio ou 14–20 corrido: as barras saem idênticas. Comparar *quantidade* é a única coisa que a direção faz bem — e é tudo que ela faz.</li></ul>
+      <h3>Custo em código</h3><p>| arquivo | o quê | |---|---| | <code>src/features/plan/WeekBars.tsx</code> | <b>novo</b>, ~90 linhas | | <code>src/features/plan/PlanTab.tsx</code> | <code>weekMode = mode === 'week'</code> (cai o <code>&amp;&amp; wide</code>); o ramo vira <code>wide ? &lt;WeekView/&gt; : &lt;WeekBars/&gt;</code>; o <code>onPickDay</code> (<code>setDay</code> + <code>setMode('day')</code>) já existe e serve igual | | <code>src/features/plan/PlanTab.tsx</code> → <code>WeekDayPicker</code> | o toggle <code>.view-mode</code> deixa de ser <code>{wide &amp;&amp; …}</code>. <code>.day-tabs</code> já some sozinho no <code>weekMode</code> | | <code>src/styles/app.css</code> | <code>.view-mode</code>/<code>.vm-btn</code> saem de dentro do <code>@media (min-width:1100px)</code> (hoje nas linhas 1418–1420); <code>.week-row</code> vira flex; entram ~25 regras <code>.wb-*</code> | | <code>src/styles/themes/cafe.css</code> | mesma mudança de escopo pro <code>.view-mode</code>/<code>.vm-btn.on</code> (hoje dentro do <code>@media (min-width:1100px)</code>, linhas 796–797) | | <code>src/shared/strings.ts</code> | <code>plan.week.bars</code>: título, total, a frase do dia mais leve, o rótulo de toque, aria de cada coluna | | <code>e2e/smoke.spec.ts</code> | teste novo <b>no viewport padrão de 480×900</b> — hoje nenhum <code>describe</code> de celular vê a Semana |</p><p><b>Domain: zero.</b> Os três números por dia saem de <code>stats.dayStudyPlanned</code> e <code>stats.dayStudyDoneMins</code>, que o <code>computeStatsNow</code> já calcula na mesma passada pra aderência da Análise, pros sete dias da semana visível (passado <b>e</b> futuro — <code>allDays()</code> cobre as semanas inteiras). Só o terceiro (minutos comprometidos = blocos <code>intervalo</code>) pede uma soma sobre <code>blocksForDay(key)</code> — que é memoizado e é exatamente o que a <code>WeekView</code> já faz sete vezes por render.</p><p><b>Não reaproveita a <code>WeekView</code></b>: ela é régua de horas de ponta a ponta (<code>pct()</code>, <code>h0</code>/<code>h1</code>, <code>top</code>/<code>height</code> por minuto, <code>.wv-hl</code>, <code>.wv-now</code>, o alvo de soltura do arrasto). Tirando o relógio não sobra nada dela. <b>Não reaproveita a <code>BlockList</code></b>: a lista é o Dia. Reaproveita, sim, o <code>.view-mode</code>, o <code>onPickDay</code>, o <code>.week-row</code> e os tokens.</p><p>Custo honesto de layout: a tela fica com <b>~106px de creme vazio</b> embaixo — em modo Semana o Plano vira um cartão só.</p>
+      <details><summary>A crítica (outro agente, sem dó)</summary><div class="corpo-critica"><p><b>(1) Sim, na metade que importa.</b> <code>███/░░░</code> por dia da semana corrente é <code>goalWeek</code> redesenhado contínuo em vez de binário — mesmos <code>dayStudyDoneMins</code>/<code>dayMetGoal</code>, mesma semana, e o heatmap já faz % da meta por dia. O único dado novo é a terracota (minutos comprometidos). Uma cor de informação nova não paga um modo de visualização, um toggle, strings e e2e.</p><p><b>(2) Cabe, e a aritmética confere</b> (conferi: seg 465/490·170 = 161px, busy 60/465 = 12,9% — bate). <b>Mas mente semanticamente</b>: a altura é *ocupação total* e o número embaixo é *estudo*. Quarta é a barra mais alta com menos estudo que segunda. Sem legenda — que você tirou de propósito — isso não se decodifica num relance a 390px.</p><p><b>(3) Inútil na rua, e pior que inútil: engana na pergunta que a Semana existe pra responder.</b> A barra não tem denominador — não mostra a janela. Quinta é curta porque a janela é 14–18 e está <b>100% cheia</b>; seu rodapé escreve "Quinta é o dia mais leve, nenhum compromisso" e convida a pessoa a marcar a consulta exatamente no dia onde não sobra nada. E de quarta em diante toda coluna futura é um <code>░░░</code> chapado: metade do gráfico devolve a config dela em forma de barra.</p><p><b>(4) Sim.</b> <code>--s</code> só existe em <code>#app</code> dentro do <code>@media (min-width:1100px)</code> (app.css:1391) — tirar <code>.view-mode</code>/<code>.vm-btn</code> de lá não é mudar escopo, é reescrever em px. Pior: <code>weekMode</code> deixa de implicar <code>WeekView</code> no DOM, e <code>measureWeekColumns()</code> (PlanTab:258) e o <code>useEventDrag</code> passam a medir <code>.wv-col</code>/<code>data-day-key</code> que não existem. E some a <code>.day-events-bar</code>, que é a âncora do balão 1/3 do tour, com <code>#add-event-btn</code> no 2/3 — e2e 27 é celular.</p><p><b>(5) Morto.</b> Não por feio: por dar resposta errada à única pergunta que justificaria existir. O que vale salvar é a terracota — tempo comprometido — e ela pertence a uma Semana que <b>mantenha eixo de tempo</b>, nem que seja tosco, ou a lugar nenhum.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="dir">
+  <div class="dir-head"><span class="letra">Direção E</span><h2>O que muda</h2></div>
+  <div class="corpo">
+    <div class="tela"><section class="mE" aria-label="Semana no celular — direção E: O que muda">
+<style>
+/* ──────────────────────────────────────────────────────────────────────────
+   Direção E — "O que muda": a Semana no celular como a folha de exceções.
+   Tokens do tema Café de casa (src/styles/themes/cafe.css), valores literais
+   porque este fragmento roda fora do app. Tudo escopado em .mE.
+   ────────────────────────────────────────────────────────────────────────── */
+.mE{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --track:#e5dcc8;
+  --border:#d8cdbb; --border-mid:#c0b49f; --border-strong:#a99c86;
+  --hairline-row:rgba(216,205,187,.85);
+  --text:#40382e; --text-soft:#5d5346; --muted:#6e6455; --text-dim:#736858;
+  --accent:#486244; --accent2:#4e6b48; --accent-bg:#e8eddf;
+  --accent-wash:rgba(72,98,68,.10); --accent-wash-soft2:rgba(72,98,68,.07);
+  --accent-border-soft:rgba(72,98,68,.30); --on-accent:#fffdf6;
+  --orange:#9a5f38; --orange-bg:#faf3e8;
+  --blue:#4c6472; --blue-bg:#e4eaee;
+  --gold:#8f6318;
+  --flat:#e4decf; --flat-deep:#dcd3bf;
+  --radius:14px; --radius-sm:8px; --radius-md:10px; --radius-lg:16px;
+  --font-ui:'DM Sans','Segoe UI',system-ui,sans-serif;
+  --font-mono:'DM Sans','Segoe UI',system-ui,sans-serif;
+  --font-title:'Lora',Georgia,serif;
+  display:inline-block;
+}
+.mE *{box-sizing:border-box;margin:0;padding:0;}
+.mE-phone{
+  width:390px;height:844px;overflow:hidden;position:relative;
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-ui);font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+  border-radius:22px;border:1px solid var(--border);box-shadow:0 3px 0 var(--flat-deep);
+}
+
+/* ── TOPBAR (.topbar.topbar-stacked — app.css) ───────────────────────────── */
+.mE .topbar{
+  position:sticky;top:0;z-index:100;background:rgba(246,239,227,.92);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:11px 20px 9px;
+}
+.mE .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;}
+.mE .topbar-row .sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mE .topbar-right{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:nowrap;}
+.mE .xp-badge{background:var(--accent-bg);border:1px solid var(--accent2);border-radius:99px;
+  padding:5px 14px;font-size:13px;font-weight:500;color:var(--accent);font-family:var(--font-mono);
+  display:flex;align-items:center;gap:6px;}
+.mE .notif-wrap{position:relative;display:flex;}
+.mE .notif-btn{position:relative;width:26px;height:26px;border-radius:50%;border:0;background:transparent;
+  color:var(--muted);display:grid;place-items:center;}
+.mE .notif-badge{position:absolute;top:-1px;right:-2px;min-width:15px;height:15px;padding:0 4px;
+  border-radius:99px;background:var(--accent);color:var(--on-accent);
+  font:600 9px/15px var(--font-mono);text-align:center;}
+.mE .icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--muted);font-size:12px;padding:5px 10px;font-family:var(--font-ui);}
+.mE .nav-tabs{display:flex;gap:2px;margin:0;padding:3px;background:var(--track);border-radius:11px;}
+.mE .nav-tab{flex:1;padding:6px 0;text-align:center;border-radius:8px;background:transparent;
+  border:1px solid transparent;color:var(--muted);font-size:13px;font-weight:500;
+  font-family:var(--font-ui);letter-spacing:.01em;}
+.mE .nav-tab.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+
+/* ── MAIN (.main — app.css) ──────────────────────────────────────────────── */
+.mE .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
+
+/* .week-row hoje é só `margin-bottom` no celular e vira flex a partir de 1100px.
+   Esta direção traz o toggle Dia · Semana pro celular, então a linha vira flex
+   nas duas larguras — é a única regra de layout que sai da media query. */
+.mE .week-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.mE .week-sel{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font-ui);
+  padding:9px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mE .view-mode{display:inline-flex;background:var(--track);border-radius:var(--radius-md);padding:2px;flex-shrink:0;}
+.mE .vm-btn{background:none;border:0;border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;
+  font-weight:600;color:var(--muted);font-family:var(--font-ui);}
+.mE .vm-btn.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 0 var(--flat-deep);}
+
+/* ── A FOLHA DA SEMANA (novo: .wd-*) ─────────────────────────────────────── */
+.mE .wd-caption{font-size:12px;line-height:1.5;color:var(--muted);margin:2px 2px 10px;}
+.mE .wd-caption b{color:var(--text);font-weight:600;}
+.mE .wd-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;box-shadow:0 3px 0 var(--flat-deep);}
+.mE .wd-day{display:block;width:100%;text-align:left;background:transparent;border:0;
+  border-bottom:1px solid var(--hairline-row);padding:11px 14px;font-family:var(--font-ui);
+  position:relative;}
+.mE .wd-head{display:flex;align-items:baseline;gap:8px;}
+.mE .wd-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;}
+.mE .wd-name .wd-today{color:var(--accent);font-weight:700;letter-spacing:.04em;font-size:11px;
+  text-transform:uppercase;margin-right:4px;}
+.mE .wd-meta{margin-left:auto;font-size:11px;font-family:var(--font-mono);color:var(--text-dim);white-space:nowrap;}
+.mE .wd-chev{font-size:14px;color:var(--border-strong);line-height:1;margin-left:2px;}
+.mE .wd-span{display:block;margin-top:3px;font-size:11px;font-family:var(--font-mono);color:var(--muted);}
+.mE .wd-span .wd-same{color:var(--text-dim);font-family:var(--font-ui);}
+.mE .wd-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+.mE .wd-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;line-height:1.6;
+  padding:2px 9px;border-radius:99px;border:1px solid var(--orange);background:var(--orange-bg);
+  color:var(--orange);white-space:nowrap;}
+.mE .wd-chip.win{border-style:dashed;}
+.mE .wd-chip.bonus{border-color:var(--accent-border-soft);background:var(--accent-bg);color:var(--accent);}
+
+/* hoje: o mesmo traço do bloco de agora (.block-row.now-block::before) */
+.mE .wd-day.today{background:var(--accent-wash-soft2);}
+.mE .wd-day.today::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;
+  border-radius:0 3px 3px 0;background:var(--accent);}
+.mE .wd-day.today .wd-meta{color:var(--accent);}
+
+/* os dias que já passaram, numa linha só; e o rodapé da rotina */
+.mE .wd-day.past .wd-name,.mE .wd-day.past .wd-meta{color:var(--muted);font-weight:500;}
+.mE .wd-day.rest .wd-meta{color:var(--muted);}
+.mE .wd-routine{padding:9px 14px;background:var(--bg3);font-size:11px;color:var(--muted);
+  font-family:var(--font-mono);display:flex;align-items:center;gap:7px;}
+.mE .wd-routine b{color:var(--text-dim);font-weight:500;}
+.mE .wd-sheet .wd-day:last-of-type{border-bottom:1px solid var(--hairline-row);}
+
+.mE .wd-foot{margin-top:10px;font-size:11px;color:var(--text-dim);text-align:center;}
+
+/* ── FAB (.fab-config — só no Plano, só no celular) ──────────────────────── */
+.mE .fab-config{position:absolute;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:var(--on-accent);border:none;font-size:20px;display:flex;
+  align-items:center;justify-content:center;
+  box-shadow:0 3px 0 var(--flat-deep),0 0 0 4px rgba(72,98,68,.14);z-index:90;}
+</style>
+
+<div class="mE-phone">
+
+  <!-- cabeçalho empilhado do celular (app/Header.tsx) -->
+  <div class="topbar topbar-stacked">
+    <div class="topbar-row">
+      <span class="sub">quarta-feira, 16 de setembro</span>
+      <div class="topbar-right">
+        <span class="xp-badge">3240 XP</span>
+        <span class="notif-wrap">
+          <span class="notif-btn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+            <span class="notif-badge">2</span>
+          </span>
+        </span>
+        <span class="icon-btn">Sair</span>
+      </div>
+    </div>
+    <div class="nav-tabs">
+      <span class="nav-tab active">Plano</span>
+      <span class="nav-tab">Análise</span>
+      <span class="nav-tab">Perfil</span>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="week-row">
+      <div class="week-sel">Semana 3&nbsp; ·&nbsp; 14 set – 20 set</div>
+      <div class="view-mode">
+        <span class="vm-btn">Dia</span>
+        <span class="vm-btn on">Semana</span>
+      </div>
+    </div>
+
+    <p class="wd-caption">Daqui até domingo: <b>17h05</b> no plano · <b>3 dias</b> fora da rotina.</p>
+
+    <div class="wd-sheet">
+
+      <!-- o que já passou, numa linha só -->
+      <div class="wd-day past">
+        <span class="wd-head">
+          <span class="wd-name">seg 14 · ter 15</span>
+          <span class="wd-meta">7h30 de 11h40 feitas</span>
+          <span class="wd-chev">›</span>
+        </span>
+      </div>
+
+      <!-- hoje -->
+      <div class="wd-day today">
+        <span class="wd-head">
+          <span class="wd-name"><span class="wd-today">hoje</span>qua 16</span>
+          <span class="wd-meta">5 de 12 feitos</span>
+          <span class="wd-chev">›</span>
+        </span>
+        <span class="wd-span">09:00 → 18:00 · 5h00 de estudo</span>
+        <span class="wd-chips"><span class="wd-chip">👥 Reunião · 11:00–12:00</span></span>
+      </div>
+
+      <div class="wd-day">
+        <span class="wd-head">
+          <span class="wd-name">qui 17</span>
+          <span class="wd-meta">4h10</span>
+          <span class="wd-chev">›</span>
+        </span>
+        <span class="wd-span">09:00 → 18:00</span>
+        <span class="wd-chips"><span class="wd-chip">🎓 Análise II · 10:00–12:00</span></span>
+      </div>
+
+      <div class="wd-day">
+        <span class="wd-head">
+          <span class="wd-name">sex 18</span>
+          <span class="wd-meta">5h50</span>
+          <span class="wd-chev">›</span>
+        </span>
+        <span class="wd-span">09:00 → 18:00 · <span class="wd-same">a rotina de sempre</span></span>
+      </div>
+
+      <div class="wd-day">
+        <span class="wd-head">
+          <span class="wd-name">sáb 19</span>
+          <span class="wd-meta">2h05</span>
+          <span class="wd-chev">›</span>
+        </span>
+        <span class="wd-span">10:00 → 13:00</span>
+        <span class="wd-chips"><span class="wd-chip bonus">🕘 janelas abertas · dia bônus</span></span>
+      </div>
+
+      <div class="wd-day rest">
+        <span class="wd-head">
+          <span class="wd-name">dom 20</span>
+          <span class="wd-meta">🌴 fim de semana livre</span>
+          <span class="wd-chev">›</span>
+        </span>
+      </div>
+
+      <div class="wd-routine">todo dia&nbsp; ·&nbsp; <b>🍽️ Refeição 13:00–14:00</b></div>
+    </div>
+
+    <p class="wd-foot">Toque num dia pra abrir o plano dele.</p>
+  </div>
+
+  <div class="fab-config">⚙️</div>
+</div>
+</section>
+</div>
+    <div class="texto">
+      <h3>O que a pessoa faz</h3><p>Na rua ela abre e lê em dois segundos o que esta semana tem de diferente do de sempre — "quinta tem aula das 10 às 12, sábado eu abri janelas" — e toca num dia pra cair no plano dele (ou no chip do compromisso pra editar só aquele dia, pelo modal que já existe); o que ela <b>não</b> consegue é ver a *forma* do dia — duração proporcional, buraco, sobreposição — nem mover um compromisso pra outro dia.</p>
+      <h3>O que morre</h3><ul><li><b>Arrastar evento pra outro dia</b> — morre inteiro, e é a maior perda: não há grade onde soltar. O substituto é tocar no chip → Editar → "só este dia", que é digitar em vez de arrastar. Mover de dia continua sendo do laptop.</li><li><b>O horário como geometria</b> — some a proporção: um estudo de 25 min e uma aula de 2h viram chips do mesmo tamanho. Você *lê* "10:00–12:00", não *vê*. E sobreposição some junto: se a aula de quinta encavala na refeição, esta tela não conta — só o Dia conta.</li><li><b>Comparar dias de relance</b> — a comparação vira verbal ("4h10 contra 5h50"), não visual. Bater o olho e ver que quarta está mais leve, não dá.</li><li><b>A textura do dia</b> (levas, pausas, o ciclo) some: no laptop a coluna mostra o ritmo; aqui o dia é uma linha.</li></ul>
+      <h3>Custo em código</h3><ul><li><b>Componente novo</b>: <code>src/features/plan/WeekDigest.tsx</code>, ~130 linhas. É o único arquivo novo.</li><li><b>Não reaproveita <code>WeekView</code></b> (estrutura incompatível: lá é grade absoluta em %, aqui é lista) <b>nem <code>BlockList</code></b> (não existe linha de bloco aqui). Reaproveita as <b>leituras</b>, que são as mesmas que a <code>WeekView</code> já usa: <code>blocksForDay</code>, <code>dateForWeekDay</code>, <code>restKindOf</code>, <code>dayWindowsOverride</code>, <code>isChecked</code>, <code>isDayClosed</code>, <code>blockMins</code>, <code>cleanBlockName</code>. Se o chip abrir a edição, reaproveita os modais que já são filhos do <code>PlanTab</code> (<code>EventDeleteModal</code> / <code>EventPanel</code>) — zero código novo aí.</li><li><b><code>src/features/plan/PlanTab.tsx</code></b>: ~10 linhas. O <code>#view-mode</code> deixa de ser <code>wide &amp;&amp; …</code>; <code>weekMode</code> vira <code>mode === 'week'</code> (o <code>!weekMode</code> que já esconde as abas dos dias continua valendo); no corpo, <code>weekMode ? (wide ? &lt;WeekView/&gt; : &lt;WeekDigest/&gt;) : &lt;BlockList/&gt;</code>.</li><li><b><code>src/styles/app.css</code></b>: um bloco <code>.wd-*</code> novo (~45 linhas, só tokens) fora da media query; e <b>quatro regras saem de dentro do <code>@media (min-width:1100px)</code></b> — <code>.week-row</code>, <code>.view-mode</code>, <code>.vm-btn</code>, <code>.vm-btn.on</code> — porque o toggle passa a existir no celular (os tamanhos em <code>calc(n * var(--s))</code> continuam escopados no laptop).</li><li><b><code>src/shared/strings.ts</code></b>: <code>plan.week.digest</code>, ~12 chaves.</li><li><b><code>src/domain/</code>: nada.</b> Nenhum arquivo de domínio é aberto. A única agregação é uma passada sobre os sete arrays que <code>blocksForDay</code> já devolve — primeiro <code>time</code>, último <code>endTime</code>, soma de <code>blockMins</code> dos estudos, e a contagem de em quantos dias cada <code>_seriesId</code> aparece (é o que manda a refeição pro rodapé). É a mesma altitude do laço do <code>h0</code>/<code>h1</code> que a <code>WeekView</code> já faz dentro do componente; se um dia virar regra de verdade, aí sim desce pro domínio com teste.</li><li><b>e2e</b>: um teste novo a 480px. Nenhum existente quebra — o único lugar da suíte que toca <code>#view-week</code> é o <code>describe</code> do laptop (<code>e2e/smoke.spec.ts:1309</code>).</li></ul>
+      <details><summary>A crítica (outro agente, sem dó)</summary><div class="corpo-critica"><p><b>(1) Cópia da Análise?</b> Quase não — e é o melhor dela: nenhuma tela mostra hoje os *overrides* lado a lado ("sáb com janelas abertas", "qui tem aula"). Mas duas linhas são <code>adherence</code>/<code>goalWeek</code> com outra roupa: a faixa do passado ("7h30 de 11h40 feitas") e o "5 de 12 feitos" de hoje. Cortar as duas — o passado já é a Análise, e "feitos hoje" já está no XP card três centímetros acima.</p><p><b>(2) Cabe em 390px?</b> No mock, sim; na conta do Tomi, não. A premissa "cinco dos sete dias são o mesmo desenho" só vale pra quem não usou o <code>.ics</code> — e importar a grade do semestre é feature de quatro dias atrás. Com 3–4 aulas por dia o chip <code>🎓 Análise II · 10:00–12:00</code> (~180px) empilha em 2–3 linhas, o dia vai a ~110px e os sete rolam além dos 844. O caso "curto e bonito" é o <b>degenerado</b>, não o comum. E o mock trapaceia num ponto: <code>.week-sel</code> é um <code>&lt;div&gt;</code>; no app é um <code>&lt;select&gt;</code> (app.css:298, <code>width:100%</code>) que a 390px, espremido pelo toggle, vira reticências.</p><p><b>(3) Útil na rua?</b> Sim, num recorte estreito: "quinta tem compromisso marcado?" Ela responde sem desenho — nenhuma outra direção faz isso. O que ela <b>não</b> responde é "às 16h dá?", porque às 16h sempre tem pomodoro; e o que ela esconde (a aula encavalando a refeição) é justamente o que faria a pessoa mexer no dia.</p><p><b>(4) Custo subestimado, ~2×.</b> "domain: nada" é o tell: decidir "a rotina de sempre" é comparar <code>effectiveWindows(dia)</code> com <code>config.studyWindows</code> — regra pura, com teste, no domínio. Pior, "série que aparece nos 7 dias vai pro rodapé": com <code>skipWeekends</code> a refeição cai em 5 de 7 e volta a ser chip nos cinco dias, poluindo tudo; <code>until</code> no meio da semana e <code>exceptions</code> quebram igual. E os "~10 linhas" do PlanTab ignoram que <code>weekMode</code> é usado em quatro lugares (211, 137, 258 <code>measureWeekColumns</code>, 275): ligá-lo no celular roda a medição de colunas do arrasto sem nenhum <code>.wv-col</code> no DOM. Precisa de flag separada. Some os <code>role="button"</code>/teclado das <code>.wd-day</code> (contrato do CLAUDE.md) e o tour 3/3, que ancora em <code>.finish-day-btn</code> — inexistente neste modo.</p><p><b>(5) Veredito: vale prototipar, cortada.</b> É a única das cinco que mostra algo que o Dia e a Análise não mostram (a exceção, olhando pra frente). Mas o esboço atual vende uma tela curta com uma semana que o usuário-alvo não tem: prototipar com a semana <b>real</b> (calendário importado, 4 eventos/dia) antes de qualquer linha de código, e se ela rolar três telas, está morta como está — o resgate seria mostrar só os dias que têm exceção e dizer "os outros quatro: rotina de sempre".</p></div></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Gerado em 2026-09-14 pela sessão das pendências. As cinco direções foram desenhadas em paralelo, cada uma
+  sem ver as outras, e depois criticadas por um agente que não desenhou nenhuma. A página é autocontida:
+  abre offline, com dois cliques.
+</footer>
+</body>
+</html>
