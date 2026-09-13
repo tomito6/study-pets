@@ -21,6 +21,7 @@ import type { EventPresetId } from '../../domain/eventPresets';
 import { dateFromKey } from '../../domain/time';
 import type { DateKey, RecurrenceFreq } from '../../domain/types';
 import { strings } from '../../shared/strings';
+import { showToast } from '../../shared/toast';
 import { Modal } from '../shell/Modal';
 
 const t = strings.events.panel;
@@ -121,21 +122,21 @@ export function EventPanel({ open, dateKey, edit = null, onClose }: Props) {
     const base = { name, start, end, countsAsStudy: counts };
     if (edit?.kind === 'single') {
       const r = updateEvent(edit.dateKey, edit.event.start, base);
-      if (!r.ok) { alert(t.validation[r.reason]); return; }
+      if (!r.ok) { showToast(t.validation[r.reason]); return; }
     } else if (edit?.kind === 'series') {
       const r =
         scope === 'day'
           ? updateSeriesOccurrence(edit.series.id, dateKey, base)
           : updateSeries(edit.series.id, { ...base, weekdays, freq, until: until || null }, dateKey);
-      if (!r.ok) { alert(t.validation[r.reason]); return; }
+      if (!r.ok) { showToast(t.validation[r.reason]); return; }
     } else if (repeat) {
       const input = { ...base, weekdays, freq, until: until || null };
       const v = validateSeries(input);
-      if (!v.ok) { alert(t.validation[v.reason]); return; }
+      if (!v.ok) { showToast(t.validation[v.reason]); return; }
       addEventSeries(dateKey, input);
     } else {
       const v = validateEvent(base);
-      if (!v.ok) { alert(t.validation[v.reason]); return; }
+      if (!v.ok) { showToast(t.validation[v.reason]); return; }
       addEvent(dateKey, base);
     }
     onClose();
