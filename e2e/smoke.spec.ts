@@ -2107,4 +2107,46 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#day-windows-btn')).toBeVisible();
     expect(erros).toEqual([]);
   });
+
+  // PENDENCIAS 13 (a metade que sobrou): as abas dos dias diziam qual está
+  // SELECIONADA, nunca qual é HOJE. Quem clicava numa aba antiga e esquecia via um
+  // plano que parecia o de hoje — sem "🕘 Janelas do dia", sem "✓ Encerrar o dia" e
+  // sem nada explicando a ausência. Agora a aba de hoje tem marca (dentro da semana
+  // visível) e, quando o dia visível não é hoje, uma linha diz isso e oferece a volta
+  // (que é a única metade que funciona também em OUTRA semana, onde aba de hoje não há).
+  test('59. a aba de hoje tem marca, e quem está olhando outro dia tem o caminho de volta', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+
+    // Em hoje: a marca está na mesma aba que está selecionada, e a linha não existe.
+    await expect(page.locator('.day-tab.today')).toContainText('Qua');
+    await expect(page.locator('.day-tab.today')).toHaveClass(/active/);
+    await expect(page.locator('#other-day')).toHaveCount(0);
+
+    // Outro dia da mesma semana: a linha aparece com o dia que está na tela, e a
+    // marca de hoje continua na quarta — agora sem o preenchimento da selecionada.
+    await page.locator('.day-tab', { hasText: 'Sex' }).click();
+    await expect(page.locator('#other-day')).toContainText('Sex');
+    await expect(page.locator('.day-tab.today')).toContainText('Qua');
+    await expect(page.locator('.day-tab.today')).not.toHaveClass(/active/);
+
+    // A volta, que antes não existia em lugar nenhum.
+    await page.locator('#other-day-go').click();
+    await expect(page.locator('#other-day')).toHaveCount(0);
+    await expect(page.locator('.day-tab.active')).toContainText('Qua');
+
+    // Em OUTRA semana nenhuma aba é hoje — e é exatamente aí que só a linha resolve.
+    const semanas = page.locator('#week-select option');
+    if (await semanas.count() > 1) {
+      const outra = await semanas.nth(1).getAttribute('value');
+      await page.locator('#week-select').selectOption(outra!);
+      await expect(page.locator('.day-tab.today')).toHaveCount(0);
+      await expect(page.locator('#other-day')).toBeVisible();
+      await page.locator('#other-day-go').click();
+      await expect(page.locator('.day-tab.today')).toHaveClass(/active/);
+    }
+    expect(erros).toEqual([]);
+  });
 });

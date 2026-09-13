@@ -78,7 +78,7 @@ export const strings = {
   plan: {
     /** O quarto do pacote "Café de casa", na coluna do laptop. */
     room: {
-      tagline: 'Boa companhia para o seu próximo passo.',
+      tagline: 'Sua companhia de hoje.',
       seePets: 'Ver meus pets →',
       noPet: 'Sem pet equipado',
       noPetHint: 'Adote um na loja e ele vem morar aqui.',
@@ -92,6 +92,9 @@ export const strings = {
     todayNone: 'Hoje: —',
     todayPending: (xp: number, coins: number) => `Hoje: +${xp} XP · +${coins} 🪙`,
     todayClosed: '✓ Hoje encerrado',
+    /** O dia visível não é hoje — a linha que só aparece nesse caso, e a volta. */
+    otherDay: (dia: string, data: string) => `📅 Você está olhando ${dia}, ${data}`,
+    goToday: 'Ir pra hoje →',
     stats: { estudos: 'Estudos', pausas: 'Pausas', semana: 'Semana' },
     weekChecks: (n: number) => `${n} ✓`,
     weekOption: (n: number, start: string, end: string) => `Semana ${n}  ·  ${start} – ${end}`,

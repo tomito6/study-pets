@@ -7,14 +7,14 @@ import { canMoveEvents, findEventEditTarget, moveEvent, moveNeedsScope } from '.
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
 import { hardcoreEnabled } from '../../application/hardcore';
-import { blocksForDay, computeStatsNow, dateForWeekDay, dayModeOf } from '../../application/plan';
+import { blocksForDay, computeStatsNow, dateForWeekDay, dayModeOf, viewToday } from '../../application/plan';
 import { continueBlock } from '../../application/pause';
 import { clearStartRequest, isTimerBlock, startContextFor, tryStartTimer } from '../../application/timer';
 import { isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
-import { blockMins as blockMinsOf, dk, timeToMins } from '../../domain/time';
+import { blockMins as blockMinsOf, dateFromKey, dk, timeToMins } from '../../domain/time';
 import { formatCompact } from '../../domain/settings';
 import { canStartBlock } from '../../domain/timer';
 import type { Stats } from '../../domain/stats';
@@ -112,9 +112,11 @@ interface PickerProps {
   onMode: (mode: ViewMode) => void;
   /** Na Semana as abas dos dias somem — a grade tem os dias em cima. */
   weekMode: boolean;
+  /** Qual das sete abas é hoje. Nenhuma, quando a semana visível não é a de hoje. */
+  todayKey: DateKey;
 }
 
-function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode }: PickerProps) {
+function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode, todayKey }: PickerProps) {
   const checksByDay = useAppState((s) => s.checks);
   const current = weeks[week - 1];
   return (
@@ -141,7 +143,7 @@ function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode }: Picke
             return (
               <button
                 key={label}
-                className={'day-tab' + (i === day ? ' active' : '') + (done > 0 ? ' has-progress' : '')}
+                className={'day-tab' + (i === day ? ' active' : '') + (done > 0 ? ' has-progress' : '') + (dk(d) === todayKey ? ' today' : '')}
                 onClick={() => setDay(i)}
               >
                 {label}
@@ -153,6 +155,28 @@ function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode }: Picke
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * "Você está olhando outro dia" — e o caminho de volta.
+ *
+ * As abas dos dias diziam qual está **selecionada**, nunca qual é **hoje**: quem
+ * clicava numa aba antiga e esquecia via um plano que parecia o de hoje, sem
+ * "🕘 Janelas do dia" nem "✓ Encerrar o dia" (os dois só existem no dia de hoje) e
+ * sem nada explicando a ausência. A marca na aba (`.day-tab.today`) resolve dentro
+ * da semana visível; esta linha resolve também fora dela, onde aba de hoje não
+ * existe — e é a única que oferece a volta.
+ *
+ * Só aparece quando o dia visível não é hoje: no estado normal ela não ocupa nada.
+ */
+function OtherDayNote({ viewKey, todayKey, dayLabel }: { viewKey: DateKey; todayKey: DateKey; dayLabel: string }) {
+  if (viewKey === todayKey) return null;
+  return (
+    <div className="other-day" id="other-day">
+      <span>{t.otherDay(dayLabel, fmtDay(dateFromKey(viewKey)))}</span>
+      <button className="other-day-go" id="other-day-go" onClick={() => viewToday()}>{t.goToday}</button>
+    </div>
   );
 }
 
@@ -339,7 +363,7 @@ export function PlanTab() {
         <div className="stat-box"><div className="s-label">{t.stats.pausas}</div><div className="s-val" id="stat-p">{pD}/{pT}</div></div>
         <div className="stat-box"><div className="s-label">{t.stats.semana}</div><div className="s-val" id="stat-w">{t.weekChecks(stats.weekChecksOfCurrent)}</div></div>
       </div>
-      <WeekDayPicker weeks={weeks} week={week} day={day} wide={wide} mode={mode} onMode={setMode} weekMode={weekMode} />
+      <WeekDayPicker weeks={weeks} week={week} day={day} wide={wide} mode={mode} onMode={setMode} weekMode={weekMode} todayKey={todayKey} />
       {weekMode ? (
         <WeekView
           week={week}
@@ -352,6 +376,7 @@ export function PlanTab() {
         />
       ) : (
         <>
+      <OtherDayNote viewKey={viewKey} todayKey={todayKey} dayLabel={t.days[day]} />
       <div className="day-events-bar">
         {selection.active ? (
           <div className="group-hint" id="group-hint">
