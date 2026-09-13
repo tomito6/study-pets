@@ -13,12 +13,13 @@
 import { isDayClosed } from '../domain/checks';
 import { routineAfter, startNowWindows, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
+import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, StudyBlock, StudyWindow, TimeString } from '../domain/types';
 import { notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
-import { blocksForDay, clearBlockCache, rebuildWeeks, restKindOf } from './plan';
+import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks, restKindOf } from './plan';
 import { scheduleSave } from './save';
 
 export type DayWindowsRefusal =
@@ -57,6 +58,44 @@ function commit(dateKey: DateKey, before: StudyBlock[], now: Date): void {
   notify();
   notifyPlanDelta(dateKey, before);
   if (dateKey === dk(now)) rescheduleEndOfDayPrompt(now); // o último estudo de hoje pode ter mudado
+}
+
+/**
+ * Troca o modo de um dia: **pela rotina** ou **ao vivo**.
+ *
+ * Trocar não mexe no que já foi vivido. Num dia que já tem corrida (a pessoa começou,
+ * parou, e agora quer a rotina de volta), a rotina entra só de agora em diante — é o
+ * mesmo `routineAfter` do "Voltar ao padrão", pela mesma razão: curar um bloco parcial
+ * devolveria XP que ninguém estudou. Indo pro ao vivo, o override some e o dia fica sem
+ * plano dali pra frente; o que já aconteceu continua no lugar se houver corrida.
+ */
+export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date()): DayWindowsResult {
+  const can = canEditDayWindows(dateKey, now);
+  if (!can.ok) return can;
+  if (dayModeOf(dateKey) === mode) return { ok: true };
+  const before = blocksForDay(dateKey);
+  const atual = state.windowOverrides[dateKey];
+  const corridas = atual ? atual.studyWindows.filter((w) => w.live) : [];
+
+  if (mode === 'rotina') {
+    if (corridas.length > 0 && dateKey === dk(now)) {
+      const r = routineAfter(corridas, state.config.studyWindows, now);
+      if (r.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
+      else delete state.windowOverrides[dateKey];
+    } else if (corridas.length > 0) {
+      state.windowOverrides[dateKey] = { studyWindows: corridas };
+    } else {
+      delete state.windowOverrides[dateKey];
+    }
+    delete state.dayModes[dateKey];
+  } else {
+    // Ao vivo: o que já foi vivido fica; o resto do dia deixa de vir montado.
+    if (corridas.length > 0) state.windowOverrides[dateKey] = { studyWindows: corridas };
+    else delete state.windowOverrides[dateKey];
+    state.dayModes[dateKey] = 'live';
+  }
+  commit(dateKey, before, now);
+  return { ok: true };
 }
 
 export function setDayWindows(dateKey: DateKey, windows: StudyWindow[], now: Date = new Date()): DayWindowsResult {

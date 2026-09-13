@@ -44,7 +44,8 @@ import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { checkBlock } from './checks';
 import { armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
-import { blocksForDay, currentDayKey } from './plan';
+import { chainLive } from './live';
+import { blocksForDay, currentDayKey, dayModeOf } from './plan';
 import { stopBlocking, syncBlocking } from './siteBlock';
 
 /**
@@ -246,9 +247,20 @@ function finishTimer(now: Date = new Date()): void {
   if (derived.focusOpen && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
     const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
     playSound('sucesso');
+    // No modo ao vivo o plano não tem futuro: a emenda GERA o bloco seguinte esticando a
+    // corrida, em vez de procurá-lo numa lista que acaba agora. Sem isto o tracker pararia
+    // sozinho a cada pomodoro — o oposto exato da feature. Vem ANTES da leva porque é ela
+    // que diz se a leva fechou de verdade.
+    const aoVivo = dayModeOf(todayKey) === 'live' || !!block.live;
+    const next = aoVivo ? chainLive(todayKey, block.endTime, now) : chainedBlockAfter(blocksForDay(todayKey), block);
     // Este bloco fechou a leva? Só quando o check é DESTE momento: se ele já estava
     // marcado à mão, a leva fechou lá na lista e já foi comemorada lá.
-    const leva = result ? closedCycleOf(blocksForDay(todayKey), block, state.checks[todayKey]) : null;
+    // E num dia ao vivo TUDO que existe no plano já aconteceu e está marcado, então o
+    // ciclo estaria sempre completo e a faixa dispararia a cada estudo a partir do
+    // segundo — o marco que reconhece a leva viraria ruído de 30 em 30 minutos. Ali ele
+    // fecha onde a leva de fato fecha: quando o próximo bloco é a pausa longa.
+    const podeComemorar = !aoVivo || (!!next && next.type === 'pausa' && next.name.includes('longa'));
+    const leva = result && podeComemorar ? closedCycleOf(blocksForDay(todayKey), block, state.checks[todayKey]) : null;
     const completed = {
       name: cleanBlockName(block.name),
       type: block.type,
@@ -257,7 +269,6 @@ function finishTimer(now: Date = new Date()): void {
       at: now.getTime(),
       cycle: leva,
     };
-    const next = chainedBlockAfter(blocksForDay(todayKey), block);
     if (next) {
       derived.timerCompleted = completed;
       runBlock(next);

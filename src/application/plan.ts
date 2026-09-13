@@ -2,6 +2,8 @@
 // Único lugar que liga o domínio ao store — React e legado consomem daqui.
 
 import { configForDay, isBonusDay, restDayKind } from '../domain/dayWindows';
+import { modeForDay } from '../domain/dayMode';
+import type { DayMode } from '../domain/dayMode';
 import type { RestKind } from '../domain/dayWindows';
 import { expandEventsForDate } from '../domain/events';
 import { generateBlocks as generateBlocksPure } from '../domain/planner';
@@ -103,9 +105,17 @@ export function getEventsForDate(dateKey: DateKey): StudyEvent[] {
   return expandEventsForDate(dateKey, state.events, state.eventSeries || []);
 }
 
+/** De que jeito este dia nasce: pela rotina (o padrão) ou ao vivo. */
+export const dayModeOf = (dateKey: DateKey): DayMode => modeForDay(dateKey, state.dayModes, null);
+
 export function blocksForDay(dateKey: DateKey): StudyBlock[] {
   if (restKindOf(dateKey) !== null) return []; // fim de semana pausado (sem janelas do dia) ou dia livre
   const windowOv = state.windowOverrides[dateKey];
+  // Dia ao vivo que ainda não começou não tem plano nenhum — é o ponto do modo. A linha
+  // é obrigatória, não higiene: `generateBlocks` com `studyWindows: []` cai no fallback
+  // `cfg.start`/`cfg.end`, e `deriveStartEnd([])` devolve 09:00–18:00 — o dia que não
+  // começou nasceria com o plano inteiro, 33 blocos que ninguém pediu.
+  if (!windowOv && dayModeOf(dateKey) === 'live') return [];
   const events = getEventsForDate(dateKey);
   const dayCfg = configForDay(state.config, windowOv); // as janelas só deste dia, se houver
   return generateBlocks(dayCfg, events, state.pauses?.[dateKey] ?? []); // e as pausas do timer daquele dia

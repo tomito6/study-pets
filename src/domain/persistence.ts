@@ -24,6 +24,8 @@ import { DEFAULT_AVATAR, normalizeAvatar } from './avatar';
 import type { AvatarConfig } from './avatar';
 import { DEFAULT_CFG, migrateConfig } from './config';
 import type { WindowOverrides } from './dayWindows';
+import { normalizeDayModes } from './dayMode';
+import type { DayModes } from './dayMode';
 import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
 import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
@@ -76,6 +78,11 @@ export interface PersistedState {
   groups: GroupsByDate;
   /** Janelas de estudo só de um dia; lista vazia = dia livre (ver domain/dayWindows.ts). */
   windowOverrides: WindowOverrides;
+  /**
+   * De que jeito cada dia nasce: pela rotina (o padrão, e a ausência) ou ao vivo. Só os
+   * dias em que a pessoa escolheu explicitamente entram aqui — ver domain/dayMode.ts.
+   */
+  dayModes: DayModes;
   /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
   tutorialSeen: TutorialSeen;
   /**
@@ -154,6 +161,7 @@ export function emptyPersistedState(): PersistedState {
     coinsSpent: 0,
     groups: {},
     windowOverrides: {},
+    dayModes: {},
     tutorialSeen: {},
     safetyNet: null,
     ageConfirmed: false,
@@ -304,6 +312,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
     groups: hydrateGroups(d.groups),
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
+    dayModes: normalizeDayModes(d.dayModes),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
     // Só a forma; o prazo de 30 dias é conferido em application/backup.ts, que tem o relógio.
@@ -339,6 +348,7 @@ export function serializeState(s: PersistedState): UserDoc {
     coinsSpent: s.coinsSpent || 0,
     groups: s.groups || {},
     windowOverrides: s.windowOverrides || {},
+    dayModes: s.dayModes || {},
     tutorialSeen: s.tutorialSeen || {},
     safetyNet: s.safetyNet ?? null,
     ageConfirmed: s.ageConfirmed === true,
