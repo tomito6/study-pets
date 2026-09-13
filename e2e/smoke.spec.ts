@@ -956,6 +956,12 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('.finish-day-btn').click();
     await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+    // O save tem 800 ms de debounce, e este teste recarrega a página logo em seguida: sem
+    // esperar o documento chegar no sessionStorage, o app volta como CONTA NOVA e o
+    // onboarding cobre a lista. Não era teoria — falhou assim numa rodada rápida da suíte
+    // (5,9 min contra 10,3), e é o mesmo motivo pelo qual os outros dez testes que
+    // recarregam esperam por esta linha antes.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
     await page.clock.setFixedTime(new Date('2026-09-03T09:10:00'));
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
