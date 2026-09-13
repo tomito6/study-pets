@@ -105,7 +105,12 @@ async function abrirApp(page: Page): Promise<void> {
   await page.locator('#onb-avatar-next').click();
   await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
   await page.locator('#onb-next').click();
-  await page.getByRole('button', { name: 'Começar' }).click();
+  // A declaração de idade destrava o "Começar" desde 2026-09-11 (ver "Idade mínima" no
+  // CLAUDE.md). O helper do smoke ganhou isto na hora; este ficou pra trás DE NOVO, e os
+  // cinco testes passaram a bater nos 90 s num botão `disabled`. Mesma armadilha da nota
+  // acima: mexeu no onboarding, atualize os DOIS helpers.
+  if (!(await page.locator('#onb-age').isChecked())) await page.locator('#onb-age').check();
+  await page.locator('#onb-begin').click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
   await page.locator('#tour-skip').click({ timeout: 3000 }).catch(() => {});
 }
