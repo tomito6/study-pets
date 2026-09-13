@@ -36,6 +36,7 @@ import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state, useAppState } from '../../store/store';
 import { HardcoreQuitModal } from './HardcoreModals';
+import { StopHereModal } from './StopHereModal';
 import { SiteBlockBadge } from './SiteBlockBadge';
 import { useSecondTick } from './useSecondTick';
 
@@ -60,6 +61,7 @@ export function FocusOverlay() {
   const showing = open && !!block;
   useSecondTick(showing);
   const [quitOpen, setQuitOpen] = useState(false);
+  const [stopOpen, setStopOpen] = useState(false);
   useEffect(() => {
     if (!hardcore) setQuitOpen(false); // a sequência acabou (ou emendou): a confirmação não faz mais sentido
   }, [hardcore]);
@@ -192,9 +194,16 @@ export function FocusOverlay() {
                 {t.cancel}
               </button>
             ) : (
-              <button type="button" className="focus-pause" id="focus-pause" onClick={togglePause}>
-                {paused ? strings.timer.resume : strings.timer.pause}
-              </button>
+              <>
+                <button type="button" className="focus-pause" id="focus-pause" onClick={togglePause}>
+                  {paused ? strings.timer.resume : strings.timer.pause}
+                </button>
+                {/* Os dois têm o mesmo peso: nenhum é o principal, porque nenhum é "o certo".
+                    Pausar é respirar sem largar o bloco; parar é a porta pra vida real. */}
+                <button type="button" className="focus-pause" id="focus-stop" onClick={() => setStopOpen(true)}>
+                  {strings.timer.stopHere}
+                </button>
+              </>
             )}
           </div>
         )}
@@ -211,6 +220,7 @@ export function FocusOverlay() {
         )}
       </div>
       <HardcoreQuitModal open={quitOpen && !!hardcore} petName={hcPet?.name ?? null} blockName={cleanBlockName(block.name)} onClose={() => setQuitOpen(false)} />
+      <StopHereModal open={stopOpen && !hardcore} block={block} onClose={() => setStopOpen(false)} />
     </div>
   );
 }

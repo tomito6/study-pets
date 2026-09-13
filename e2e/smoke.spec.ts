@@ -1943,4 +1943,39 @@ test.describe('Study Pets — smoke', () => {
       await expect(page.locator('.group-header')).toContainText('0/3');
     });
   });
+
+  // "■ Parar por aqui" (2026-09-13): até então sair no meio de um bloco não rendia nada —
+  // o bloco ficava inteiro no plano, sem check, e os minutos estudados sumiam.
+  test('54. parar por aqui: o bloco entra com os minutos que passaram, e o dia acaba ali', async ({ page }) => {
+    await abrirApp(page, '10:12');
+    await page.locator('#tour-skip').click();
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    // Pausar e Parar têm o mesmo peso: nenhum é "o certo".
+    await expect(page.locator('#focus-pause')).toBeVisible();
+    await page.locator('#focus-stop').click();
+    await expect(page.locator('#stop-here-confirm')).toBeVisible();
+    await expect(page.locator('#stop-here-count')).toContainText('12 min');
+    await expect(page.locator('#stop-here-count')).toContainText('+24 XP'); // 12 min × 2
+
+    await page.locator('#stop-here-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+
+    // O bloco vira o parcial, e o resto do dia some: não aconteceu.
+    await expect(page.locator('.block-row', { hasText: '10:00–10:12' })).toBeVisible();
+    await expect(page.locator('.block-row', { hasText: '10:30–10:55' })).toHaveCount(0);
+    // E o que já tinha acontecido continua lá, intacto.
+    await expect(page.locator('.block-row', { hasText: '09:00–09:25' })).toBeVisible();
+
+    // O parcial vale os 12 minutos, não os 25 do plano.
+    await page.locator('.block-row', { hasText: '10:00–10:12' }).locator('.check').click();
+    await expect(page.locator('#today-xp-val')).toContainText('+24 XP');
+
+    // "Voltar ao padrão" devolve o resto do dia e NÃO cura o bloco parcial.
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-windows-restore').click();
+    await expect(page.locator('.block-row', { hasText: '10:00–10:12' })).toBeVisible();
+    await expect(page.locator('#today-xp-val')).toContainText('+24 XP');
+  });
 });

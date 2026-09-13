@@ -703,6 +703,27 @@ export const strings = {
     pause: '⏸ Pausar',
     resume: '▶ Retomar',
     stop: '✕ Parar',
+    /** "■ Parar por aqui": o dia acaba agora, e os minutos que passaram valem. */
+    stopHere: '■ Parar por aqui',
+    /** Na barra do timer o rótulo é curto: é a linha mais apertada do app. */
+    stopHereShort: '■ Parar',
+    stopSheet: {
+      title: 'Parar por aqui?',
+      /** A conta pronta, com tique de minuto — senão o número envelhece na tela. */
+      count: (nome: string, mins: number, xp: number, coins: number) =>
+        `${nome} entra com ${mins} min · +${xp} XP · +${coins} 🪙`,
+      /** Sem bloco em andamento que valha um minuto, não há o que contar. */
+      nothing: 'Nada a registrar neste bloco.',
+      stop: '■ Parar',
+      stopSub: 'Dá pra voltar mais tarde.',
+      finish: '✓ Encerrar o dia',
+      finishSub: 'Credita o XP agora.',
+      back: 'Continuar estudando',
+    },
+    /** O toast da parada: conta o ganho, nunca a perda. */
+    stopped: (at: string, nome: string, mins: number, xp: number) =>
+      `■ Parei às ${at} · ${nome} com ${mins} min · +${xp} XP`,
+    stoppedBare: (at: string) => `■ Parei às ${at}`,
     /** O botão da linha do bloco de agora: a mesma porta pra ir e pra voltar. */
     startBlock: '▶ Iniciar',
     continueBlock: '▶ Continuar',

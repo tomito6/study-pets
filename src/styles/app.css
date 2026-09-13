@@ -361,6 +361,16 @@
   /* Bloco que ainda não começou: só o CHECK esmaece, nunca a linha — esmaecer o dia
      inteiro daria cara de dia morto a um dia que está começando. */
   .check.not-yet{opacity:.35;}
+  /* A folha do "Parar por aqui": a conta em accent e as duas portas empilhadas, cada
+     uma com a sua linha de explicação. Nenhuma é vermelha — parar não é castigo. */
+  .stop-count{background:var(--accent-wash);border-radius:var(--radius-sm);padding:10px;text-align:center;
+    font-family:var(--font-mono);font-size:13px;color:var(--accent);margin:0 0 14px;}
+  .stop-door{display:block;width:100%;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:11px 13px;margin-bottom:9px;background:var(--bg);font-family:var(--font-ui);}
+  .stop-door .sd-t{display:block;font-size:13.5px;color:var(--text);font-weight:600;}
+  .stop-door .sd-s{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .stop-back{justify-content:center;}
+  .stop-back-btn{background:none;border:0;color:var(--accent);font-size:13px;font-family:var(--font-ui);cursor:pointer;padding:4px;}
   .check svg{width:10px;height:10px;display:none;}
   .check.checked svg{display:block;}
   .block-time{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:95px;}
