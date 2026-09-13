@@ -177,12 +177,16 @@ export function creditedDaysNotices(dias: readonly CreditedDay[], ctx: CreditCon
   return out;
 }
 
-/** O abandono cobrado ao abrir o app (modo hardcore). Ver `application/hardcore.ts`. */
+/**
+ * O abandono cobrado no modo hardcore. `ocioso` diz QUAL dos dois: o app ficou
+ * aberto sem ninguém, ou fechou no meio. Ver `application/hardcoreRuntime.ts`.
+ */
 export function abandonNotice(
   dia: DateKey,
   block: { time: string; name: string },
   cost: { userXp: number; petXp: number },
   pet: string | null,
+  ocioso = false,
 ): NewNotification {
   return {
     id: `abandono:${dia}:${block.time}`,
@@ -191,6 +195,7 @@ export function abandonNotice(
       dia,
       nome: block.name.replace(/📖|🧘|☕/g, '').trim(),
       xp: cost.userXp,
+      ...(ocioso ? { ocioso: true } : {}),
       ...(pet && cost.petXp > 0 ? { pet, petXp: cost.petXp } : {}),
     },
   };

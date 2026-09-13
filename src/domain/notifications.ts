@@ -55,6 +55,12 @@ export interface NotifData {
   recorde?: boolean;
   /** O dia a que o acontecimento se refere. */
   dia?: DateKey;
+  /**
+   * Abandono no hardcore: o app ficou ABERTO sem ninguém (o laço de emenda
+   * descobriu), em vez de ter fechado (o boot descobriu). Muda só a frase — a
+   * conta é a mesma, de propósito.
+   */
+  ocioso?: boolean;
 }
 
 export interface Notification {
@@ -139,6 +145,7 @@ export function normalizeNotifications(raw: unknown, cap: number = MAX_NOTIFICAT
     if (typeof rawData.coins === 'number' && Number.isFinite(rawData.coins)) data.coins = rawData.coins;
     if (typeof rawData.mins === 'number' && Number.isFinite(rawData.mins)) data.mins = rawData.mins;
     if (rawData.recorde === true) data.recorde = true;
+    if (rawData.ocioso === true) data.ocioso = true;
     if (typeof rawData.dia === 'string' && rawData.dia) data.dia = rawData.dia;
     out.push({
       id,

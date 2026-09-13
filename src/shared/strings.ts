@@ -26,6 +26,7 @@ type NotifData = {
   mins?: number;
   recorde?: boolean;
   dia?: string;
+  ocioso?: boolean;
 };
 
 export const strings = {
@@ -936,6 +937,10 @@ export const strings = {
         `🔥 Desistiu de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
       abandoned: (name: string, cost: { userXp: number; petXp: number }, pet: string | null) =>
         `🔥 O app fechou no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
+      // O app NÃO fechou — ele ficou aberto na frente da pessoa. Dizer "o app fechou"
+      // aqui seria mentir pra quem está olhando a própria tela aberta.
+      abandonedIdle: (name: string, cost: { userXp: number; petXp: number }, pet: string | null) =>
+        `🔥 O timer ficou rodando sozinho no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
     },
   },
   notifications: {
@@ -972,7 +977,10 @@ export const strings = {
       dia: () => 'Dia encerrado',
       sequencia: (d: NotifData) => `${d.n ?? 0} dias seguidos batendo a meta`,
       horas: (d: NotifData) => `${d.n ?? 0} horas de estudo`,
-      abandono: (d: NotifData) => `O app fechou no meio de ${d.nome ?? 'um estudo'}`,
+      abandono: (d: NotifData) =>
+        d.ocioso
+          ? `O timer ficou rodando sozinho no meio de ${d.nome ?? 'um estudo'}`
+          : `O app fechou no meio de ${d.nome ?? 'um estudo'}`,
     } as Record<string, (d: NotifData) => string>,
     /** A segunda linha. Pode ser vazia. */
     body: {

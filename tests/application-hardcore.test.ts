@@ -9,7 +9,7 @@ import { hardcoreQuitPreview, quitHardcore, resumeHardcoreOnBoot, startHardcore 
 import { endHardcoreSession } from '../src/application/hardcoreRuntime';
 import { blocksForDay, computeStatsNow, rebuildWeeks } from '../src/application/plan';
 import { cancelSession } from '../src/application/settings';
-import { closeFocus, reconcileTimer, stopTimer } from '../src/application/timer';
+import { closeFocus, reconcileTimer, startTimer, stopTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
 import { isForfeited } from '../src/domain/hardcore';
 import { emptyPersistedState } from '../src/domain/persistence';
@@ -17,6 +17,7 @@ import { petLevel, petLevelStart } from '../src/domain/pets';
 import type { PetInstance, StudyBlock } from '../src/domain/types';
 import { readHardcoreSession, useHardcoreStorage, writeHardcoreSession } from '../src/infrastructure/hardcoreSession';
 import { unloadGuardArmed } from '../src/infrastructure/unloadGuard';
+import { strings } from '../src/shared/strings';
 import { derived, state } from '../src/store/store';
 
 const HOJE = '2026-09-02';
@@ -292,5 +293,137 @@ describe('cancelar sessão', () => {
     cancelSession();
     expect(state.penalties).toEqual({});
     expect(state.config.hardcore.enabled).toBe(false);
+  });
+});
+
+// PENDENCIAS 14, a outra metade: o teto de `ATRASO_MAX_MIN` pulava o hardcore, e
+// o laço de emenda marcava tudo. Medido em 2026-09-13, começando às 09:00 com a
+// config padrão: com o app FECHADO, sumir até as 18:00 cobrava o abandono (o pet
+// caindo do Lv. 5 pro 4); com o app ABERTO, entregava os 32 blocos do plano —
+// 540 min, 960 XP e 425 moedas. O modo que existe pra cobrar era o único que
+// pagava por ir embora.
+describe('o app que ficou aberto sem ninguém', () => {
+  it('cobra o abandono, e cobra o MESMO que o app fechado cobraria', () => {
+    // (a) o app ficou aberto: o laço de emenda descobre
+    startHardcore(estudo3, AGORA); // 10:10, Estudo 3 (10:00–10:25)
+    const tarde = new Date(`${HOJE}T14:00:00`);
+    vi.setSystemTime(tarde);
+    reconcileTimer(tarde);
+    const aberto = {
+      checks: JSON.stringify(state.checks[HOJE] ?? {}),
+      penalidades: JSON.stringify(state.penalties[HOJE] ?? []),
+      petXP: state.pets.owned[0].xp,
+      xpDoDia: computeStatsNow(tarde).todayXP,
+    };
+    expect(derived.hardcore).toBeNull();
+    expect(derived.timerBlock).toBeNull();
+    expect(derived.focusOpen).toBe(false);
+    expect(isForfeited(state.penalties, HOJE, '10:00')).toBe(true);
+    expect(aberto.xpDoDia).toBe(0); // nada foi "estudado": os 32 blocos não entram
+    // e a cobrança aconteceu de verdade — senão a igualdade lá embaixo seria
+    // só "os dois caminhos não fizeram nada"
+    expect(JSON.parse(aberto.penalidades)).toHaveLength(1);
+    expect(aberto.petXP).toBeLessThan(petLevelStart(5));
+
+    // (b) a MESMA ausência com o app fechado: o boot descobre
+    Object.assign(state, emptyPersistedState(), { user: { uid: 'u', displayName: null, email: null }, uiWeek: 1, uiDay: 2 });
+    state.config.hardcore = { enabled: true };
+    state.pets.owned = [gato(petLevelStart(5))];
+    state.pets.active = 'cat';
+    state.pets.xpProcessedUntil = ONTEM;
+    ontemComXP();
+    derived.hardcore = null;
+    vi.setSystemTime(AGORA);
+    startHardcore(estudo3, AGORA);
+    derived.timerBlock = null; // o app fechou
+    derived.focusOpen = false;
+    derived.hardcore = null;
+    vi.setSystemTime(tarde);
+    expect(resumeHardcoreOnBoot(tarde)).toBe('abandoned');
+
+    // os dois caminhos deixam o estado idêntico — é o ponto da correção
+    expect(JSON.stringify(state.checks[HOJE] ?? {})).toBe(aberto.checks);
+    expect(state.pets.owned[0].xp).toBe(aberto.petXP);
+    expect(computeStatsNow(tarde).todayXP).toBe(aberto.xpDoDia);
+    const agora = JSON.parse(JSON.stringify(state.penalties[HOJE]));
+    const antes = JSON.parse(aberto.penalidades);
+    expect(agora.map((p: { time: string; xp: number; petXp: number; reason: string }) => [p.time, p.xp, p.petXp, p.reason]))
+      .toEqual(antes.map((p: { time: string; xp: number; petXp: number; reason: string }) => [p.time, p.xp, p.petXp, p.reason]));
+  });
+
+  it('a linha do sininho não diz que o app fechou — ele está aberto na frente da pessoa', () => {
+    startHardcore(estudo3, AGORA);
+    const tarde = new Date(`${HOJE}T14:00:00`);
+    vi.setSystemTime(tarde);
+    reconcileTimer(tarde);
+    const linha = state.notifications.find((n) => n.kind === 'abandono');
+    expect(linha?.data.ocioso).toBe(true);
+    expect(strings.notifications.text.abandono(linha!.data)).toContain('rodando sozinho');
+    expect(strings.notifications.text.abandono(linha!.data)).not.toContain('app fechou');
+  });
+
+  it('o atraso curto continua emendando: o teto vale igual, não a impunidade', () => {
+    startHardcore(estudo3, AGORA);
+    const volta = new Date(`${HOJE}T10:45:00`); // o Estudo 3 acabou faz 20 min
+    vi.setSystemTime(volta);
+    reconcileTimer(volta);
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(true);
+    expect(state.penalties[HOJE]).toBeUndefined();
+    expect(derived.hardcore).not.toBeNull();
+  });
+
+  it('numa PAUSA sai de graça, como no boot', () => {
+    const pausa: StudyBlock = { time: '10:25', endTime: '10:30', name: '🧘 Pausa', type: 'pausa', xp: 5, cycle: 0 };
+    vi.setSystemTime(new Date(`${HOJE}T10:26:00`));
+    startHardcore(pausa, new Date(`${HOJE}T10:26:00`));
+    const tarde = new Date(`${HOJE}T14:00:00`);
+    vi.setSystemTime(tarde);
+    reconcileTimer(tarde);
+    expect(state.penalties[HOJE]).toBeUndefined();
+    expect(derived.hardcore).toBeNull();
+    expect(derived.timerBlock).toBeNull();
+  });
+});
+
+// A ponta solta medida junto com a de cima: `timerProgress` compara só o HORÁRIO,
+// então o bloco de ontem voltava a "começa em" no mesmo horário de hoje — e
+// `finishTimer` marca no dia de HOJE, num bloco que era de ontem.
+describe('o dia que vira com o bloco rodando', () => {
+  it('encerra o timer em vez de teleportar o bloco pro dia novo', () => {
+    startTimer(estudo3, AGORA);
+    expect(derived.timerBlock).not.toBeNull();
+    const amanha = new Date('2026-09-03T09:30:00');
+    vi.setSystemTime(amanha);
+    reconcileTimer(amanha);
+    expect(derived.timerBlock).toBeNull();
+    expect(derived.focusOpen).toBe(false);
+    expect(state.checks['2026-09-03']).toBeUndefined();
+    expect(state.checks[HOJE]).toBeUndefined();
+  });
+
+  it('no hardcore a virada cobra o abandono — igual ao boot do dia seguinte', () => {
+    startHardcore(estudo3, AGORA);
+    const amanha = new Date('2026-09-03T09:30:00');
+    vi.setSystemTime(amanha);
+    reconcileTimer(amanha);
+    expect(state.penalties[HOJE]).toHaveLength(1);
+    expect(state.penalties['2026-09-03']).toBeUndefined(); // cobrado no dia do bloco
+    expect(derived.hardcore).toBeNull();
+  });
+});
+
+describe('o bloco que terminou sozinho não deixa âncora', () => {
+  it('a virada da meia-noite não avisa de um timer que já acabou', () => {
+    startTimer(estudo3, AGORA);
+    const fim = new Date(`${HOJE}T10:26:00`); // o Estudo 3 acaba às 10:25, foco fechado emenda nada
+    derived.focusOpen = false;
+    vi.setSystemTime(fim);
+    reconcileTimer(fim);
+    expect(derived.timerBlock).toBeNull();
+    const amanha = new Date('2026-09-03T00:30:00');
+    vi.setSystemTime(amanha);
+    reconcileTimer(amanha); // não pode cair no caminho do "ninguém estava aqui"
+    expect(state.penalties).toEqual({});
+    expect(derived.timerBlock).toBeNull();
   });
 });

@@ -174,3 +174,16 @@ describe('todo tipo tem texto', () => {
     }
   });
 });
+
+describe('a causa do abandono sobrevive à leitura', () => {
+  it('`ocioso` volta do documento; a ausência dele é o abandono de sempre', () => {
+    const lidas = normalizeNotifications([
+      { id: 'abandono:2026-09-13:10:00', kind: 'abandono', at: 1, read: false, data: { nome: 'Estudo 3', xp: 100, ocioso: true } },
+      { id: 'abandono:2026-09-12:10:00', kind: 'abandono', at: 2, read: false, data: { nome: 'Estudo 3', xp: 100 } },
+    ]);
+    expect(lidas.find((n) => n.id.endsWith('13:10:00'))?.data.ocioso).toBe(true);
+    // documento antigo: nunca houve outro jeito de abandonar senão o app fechar
+    expect(lidas.find((n) => n.id.endsWith('12:10:00'))?.data.ocioso).toBeUndefined();
+    expect(strings.notifications.text.abandono({ nome: 'Estudo 3' })).toContain('app fechou');
+  });
+});

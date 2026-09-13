@@ -43,7 +43,7 @@ import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { checkBlock } from './checks';
-import { armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
+import { abandonHardcore, armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { chainLive } from './live';
 import { blocksForDay, currentDayKey, dayModeOf } from './plan';
 import { stopBlocking, syncBlocking } from './siteBlock';
@@ -93,9 +93,10 @@ function clearPause(): void {
 }
 
 /** Põe o bloco no timer, abre o foco (com a tela segura pelo Wake Lock) e fica de olho no fim. */
-function runBlock(block: StudyBlock): void {
+function runBlock(block: StudyBlock, now: Date = new Date()): void {
   clearPause();
   derived.timerBlock = block;
+  derived.timerDay = dk(now);
   derived.focusOpen = true;
   notify();
   void requestWakeLock();
@@ -122,23 +123,52 @@ export function reconcileTimer(now: Date = new Date()): void {
     syncBlocking(now); // a extensão continua bloqueando, com o fim que desliza
     return;
   }
+  // O dia virou com o bloco rodando. `timerProgress` compara só o HORÁRIO, então o
+  // bloco de ontem voltaria a "começa em" no mesmo horário de hoje — e `finishTimer`
+  // marcaria o check no dia de HOJE, num bloco que era de ontem. É a mesma regra que
+  // a pausa já seguia acima.
+  if (derived.timerBlock && derived.timerDay && derived.timerDay !== dk(now)) {
+    encerrarSemNinguem(now);
+    return;
+  }
   let guard = 0;
   while (derived.timerBlock && timerProgress(derived.timerBlock, now, null, derived.timerEndsAt).done && guard++ < 100) {
-    // O bloco acabou faz muito tempo? Então ninguém estava aqui, e marcar seria
-    // inventar. Encerra sem check, sem som e sem emenda. No hardcore o abandono tem
-    // contabilidade própria (`resumeHardcoreOnBoot`), então esta guarda fica de fora
-    // dele por ora — ver PENDENCIAS.
-    if (!derived.hardcore) {
-      const atrasoMs = now.getTime() - timerEnd(derived.timerBlock, now, derived.timerEndsAt).getTime();
-      if (atrasoMs > ATRASO_MAX_MIN * 60_000) {
-        stopTimer();
-        showToast(strings.timer.staleStop);
-        break;
-      }
+    // O bloco acabou faz muito tempo? Então ninguém estava aqui, e marcar seria inventar.
+    const atrasoMs = now.getTime() - timerEnd(derived.timerBlock, now, derived.timerEndsAt).getTime();
+    if (atrasoMs > ATRASO_MAX_MIN * 60_000) {
+      encerrarSemNinguem(now);
+      break;
     }
     finishTimer(now);
   }
   syncBlocking(now); // "em espera" virou "rodando" (ou o bloco acabou): a extensão acompanha
+}
+
+/**
+ * Ninguém estava aqui: o bloco acabou faz mais de `ATRASO_MAX_MIN`, ou o dia virou
+ * com ele rodando. Encerra sem check, sem som e sem emenda.
+ *
+ * **No hardcore isto CUSTA**, e custa o mesmo que teria custado com o app fechado.
+ * Enquanto a guarda pulava o hardcore, a mesma ausência tinha dois preços opostos:
+ * medido em 2026-09-13, sumir das 09:00 às 18:00 com o app fechado cobrava o abandono
+ * (−100 XP, o pet caindo de nível) e com o app ABERTO entregava os 32 blocos do plano
+ * — 540 min, 960 XP, 425 moedas. O modo que existe pra cobrar era o único que pagava
+ * por ir embora, e pagava mais que o modo normal, que ganhou o teto primeiro.
+ *
+ * Uma pausa (ou uma sessão que nunca chegou a rodar) sai de graça, como no boot:
+ * `resolveSession` também só cobra estudo.
+ */
+function encerrarSemNinguem(now: Date): void {
+  const hc = derived.hardcore;
+  if (!hc) {
+    stopTimer();
+    showToast(strings.timer.staleStop);
+    return;
+  }
+  const cobrado = hc.armed ? abandonHardcore(hc, now, 'ocioso') : null;
+  endHardcoreSession(); // antes do stopTimer: com sessão viva ele é no-op (o foco hardcore não tem saída livre)
+  stopTimer();
+  if (!cobrado) showToast(strings.timer.staleStop);
 }
 
 // ---- os ganchos da pausa (application/pause.ts decide; aqui é só o runtime) ----
@@ -165,6 +195,7 @@ export function resumeRuntime(block: StudyBlock, now: Date, endsAt: number | nul
   clearPause();
   derived.timerEndsAt = endsAt;
   derived.timerBlock = block;
+  derived.timerDay = dk(now);
   derived.focusOpen = true;
   startWatcher();
   void requestWakeLock();
@@ -175,6 +206,7 @@ export function resumeRuntime(block: StudyBlock, now: Date, endsAt: number | nul
 /** Ao abrir o app com uma pausa aberta no dispositivo: o timer volta pausado, na barra (o foco fechado). */
 export function adoptPausedBlock(block: StudyBlock, pausedAt: number): void {
   derived.timerBlock = block;
+  derived.timerDay = dk(new Date(pausedAt));
   derived.timerPausedAt = pausedAt;
   derived.timerEndsAt = null; // o ajuste de uma pausa anterior morreu com a carga da página: vale o fim do plano
   derived.focusOpen = false;
@@ -201,7 +233,7 @@ export function startTimer(block: StudyBlock, now: Date = new Date()): void {
   // ninguém ver — e desde que o foco só se fecha pausado, é o estado normal da lista.
   if (derived.timerPausedAt != null && derived.timerBlock) showToast(strings.timer.pauseDropped);
   derived.timerCompleted = null;
-  runBlock(block);
+  runBlock(block, now);
   syncBlocking(now);
   requestNotificationPermission();
 }
@@ -271,7 +303,7 @@ function finishTimer(now: Date = new Date()): void {
     };
     if (next) {
       derived.timerCompleted = completed;
-      runBlock(next);
+      runBlock(next, now);
       if (derived.hardcore) hardcoreChained(next, now);
       syncBlocking(now); // emendou: estudo → pausa libera, pausa → estudo bloqueia de novo
       return;
@@ -282,6 +314,7 @@ function finishTimer(now: Date = new Date()): void {
   }
   if (derived.hardcore) endHardcoreSession(); // a sequência acabou por conta própria: nada a cobrar
   derived.timerBlock = null;
+  derived.timerDay = null; // o bloco acabou no dia dele; deixar a âncora faria a virada da meia-noite avisar de um timer que não existe
   derived.timerEndsAt = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
@@ -312,6 +345,7 @@ export function stopTimer(): void {
   clearWatcher();
   clearPause(); // "Parar" no meio de uma pausa: nada é registrado — registro é só de bloco que continuou
   derived.timerBlock = null;
+  derived.timerDay = null;
   derived.focusOpen = false;
   derived.timerCompleted = null;
   releaseWakeLock();

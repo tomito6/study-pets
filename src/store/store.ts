@@ -11,7 +11,7 @@ import type { BlockingAck } from '../infrastructure/extensionBridge';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
 import type { CycleSummary } from '../domain/cycles';
-import type { BlockType, SiteBlockMode, StudyBlock } from '../domain/types';
+import type { BlockType, DateKey, SiteBlockMode, StudyBlock } from '../domain/types';
 import type { Week } from '../domain/weeks';
 import type { AudioSettings } from '../infrastructure/audio/sounds';
 import type { AuthUser } from '../infrastructure/ports';
@@ -69,6 +69,13 @@ export interface CompletedBlock {
 export interface Derived {
   weeks: Week[];
   timerBlock: StudyBlock | null;
+  /**
+   * O dia a que o bloco em andamento pertence. `timerProgress` compara só o
+   * HORÁRIO ("09:00"), então sem esta âncora um bloco de ontem, visto depois da
+   * meia-noite, volta a "começa em" no mesmo horário de hoje — e `finishTimer`
+   * marcaria o check no dia de HOJE. Runtime: um reload perde o timer junto.
+   */
+  timerDay: DateKey | null;
   /** ms de quando o bloco em andamento foi pausado; null rodando. O registro no doc só nasce ao retomar. */
   timerPausedAt: number | null;
   /**
@@ -119,6 +126,7 @@ export interface SiteBlockRuntime {
 export const derived: Derived = {
   weeks: [],
   timerBlock: null,
+  timerDay: null,
   timerPausedAt: null,
   timerEndsAt: null,
   focusOpen: false,
