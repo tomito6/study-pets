@@ -1,7 +1,7 @@
 // O sininho ligado ao resto do app: quem cria as linhas, e por que elas não duplicam.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toggleBlockCheck } from '../src/application/checks';
-import { closeDay, initialDayEnd, resetEndOfDayPrompt } from '../src/application/dayEnd';
+import { closeDay, initialDayEnd, resetEndOfDayPrompt, scheduleEndOfDayPrompt } from '../src/application/dayEnd';
 import {
   clearNotifications,
   markNotificationsRead,
@@ -13,7 +13,7 @@ import { startDayRollover, stopDayRollover } from '../src/application/dayRollove
 import { initAfterLoad } from '../src/application/session';
 import { clearHardcoreSession, writeHardcoreSession } from '../src/infrastructure/hardcoreSession';
 import { applyPendingPetXP } from '../src/application/pets';
-import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
+import { blocksForDay, clearBlockCache, currentDayKey, rebuildWeeks } from '../src/application/plan';
 import { cancelSession } from '../src/application/settings';
 import { emptyPersistedState } from '../src/domain/persistence';
 import type { PetInstance } from '../src/domain/types';
@@ -266,6 +266,78 @@ describe('a virada da meia-noite com o app ABERTO', () => {
     vi.setSystemTime(new Date('2026-09-03T00:00:05'));
     vi.advanceTimersByTime(3 * 60 * 60 * 1000);
     expect(notifications()).toEqual([]);
+  });
+
+  // PENDENCIAS 13: `uiWeek`/`uiDay` só eram escritos no boot e por clique, então
+  // quem atravessava a meia-noite com o app aberto continuava olhando ONTEM — e
+  // "🕘 Janelas do dia" e "✓ Encerrar o dia", que só existem no dia de hoje,
+  // sumiam sem explicação. Recarregar consertava, o que deixava o sintoma
+  // intermitente e difícil de relatar.
+  /** Deixa o relógio em `iso` e dispara o timeout da virada. */
+  function virarPara(iso: string) {
+    vi.setSystemTime(new Date(iso));
+    vi.advanceTimersByTime(3 * 60 * 60 * 1000 + 6000);
+  }
+
+  it('quem estava olhando o dia que virou vai junto: a tela passa a ser a de hoje', () => {
+    expect(currentDayKey()).toBe(HOJE);
+    startDayRollover(new Date('2026-09-02T22:00:00'));
+    virarPara('2026-09-03T00:00:05');
+    expect(currentDayKey()).toBe('2026-09-03');
+    expect(state.uiDay).toBe(3); // quarta → quinta
+    stopDayRollover();
+  });
+
+  it('quem tinha navegado pra outro dia de propósito fica onde estava', () => {
+    // `periodStart` ancora a lista de semanas (toda conta tem, o onboarding grava),
+    // então os índices continuam querendo dizer a mesma data depois do rebuild.
+    state.config.periodStart = '2026-08-31';
+    rebuildWeeks(new Date('2026-09-02T22:00:00'));
+    state.uiDay = 0; // segunda, 31/08 — escolha do usuário, não o dia de hoje
+    expect(currentDayKey()).toBe('2026-08-31');
+    startDayRollover(new Date('2026-09-02T22:00:00'));
+    virarPara('2026-09-03T00:00:05');
+    expect(currentDayKey()).toBe('2026-08-31'); // o dia virou; a escolha dele não
+    expect(state.uiDay).toBe(0);
+    stopDayRollover();
+  });
+
+  it('no domingo a virada troca de SEMANA, não só de dia', () => {
+    // Conta de verdade tem `periodStart` (o onboarding grava), e é ele que ancora
+    // a lista de semanas: sem ele, `rebuildWeeks` re-ancora em `mondayOf(hoje)` e
+    // toda semana volta a se chamar "1".
+    state.config.periodStart = '2026-08-31';
+    rebuildWeeks(new Date('2026-09-02T22:00:00'));
+    state.uiDay = 6; // domingo, 06/09
+    const semanaAntes = state.uiWeek;
+    expect(currentDayKey()).toBe('2026-09-06');
+    startDayRollover(new Date('2026-09-06T22:00:00'));
+    virarPara('2026-09-07T00:00:05');
+    expect(currentDayKey()).toBe('2026-09-07');
+    expect(state.uiWeek).toBe(semanaAntes + 1);
+    expect(state.uiDay).toBe(0);
+    stopDayRollover();
+  });
+
+  it('o prompt de fim de dia do dia velho não cala o do dia novo', () => {
+    marcar(1);
+    scheduleEndOfDayPrompt(new Date('2026-09-02T22:00:00')); // já passou do último estudo: abre na hora
+    expect(derived.dayEnd.promptOpen).toBe(true);
+    derived.dayEnd = { ...derived.dayEnd, promptOpen: false };
+    // no MESMO dia ele não reabre — é o `promptShown` que está ligado
+    scheduleEndOfDayPrompt(new Date('2026-09-02T22:30:00'));
+    expect(derived.dayEnd.promptOpen).toBe(false);
+
+    startDayRollover(new Date('2026-09-02T22:00:00'));
+    virarPara('2026-09-03T00:00:05');
+
+    // dia novo, com estudo marcado e já passado do último: agora abre
+    vi.setSystemTime(new Date('2026-09-03T22:00:00'));
+    const b = blocksForDay('2026-09-03').filter((x) => x.type === 'estudo')[0]!;
+    toggleBlockCheck('2026-09-03', b);
+    scheduleEndOfDayPrompt(new Date('2026-09-03T22:00:00'));
+    expect(derived.dayEnd.promptOpen).toBe(true);
+    stopDayRollover();
   });
 });
 

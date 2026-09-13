@@ -160,19 +160,23 @@ cabe na regra, mas é desenho novo, não redefinição; (c) a exploração tamb�
 noite vira loft) ou continua escolha manual em Configurações → Aparência? Automático soa bonito e é
 exatamente o tipo de coisa que irrita quando erra.
 
-## 13. O dia visível não acompanha a virada da meia-noite
+## 13. Nada diz qual das abas dos dias é HOJE
 
-`state.uiWeek`/`state.uiDay` só são escritos no boot (`application/session.ts`, `initAfterLoad`) e
-por clique. Ninguém os recorrige quando o dia vira: `application/dayRollover.ts` cuida do XP do pet
-e mais nada. Quem deixa o app (ou o PWA) aberto atravessando a meia-noite continua olhando **ontem** —
-e, como "🕘 Janelas do dia" e "✓ Encerrar o dia" só existem no dia de hoje, os dois somem sem
-explicação. Recarregar resolve, o que torna o sintoma intermitente e difícil de relatar.
+A metade que sobrou do item da meia-noite (a outra foi resolvida em 2026-09-13: o `dayRollover` agora
+leva a tela junto quando o dia vira — ver "A meia-noite com o app aberto" no CLAUDE.md).
 
-É primo do bug do domingo no `findWeek` (consertado em 2026-09-13): a mesma família de "o app acha
-que hoje é outro dia". **Decidir:** o `dayRollover` também reposiciona a semana/dia visíveis quando
-eles estavam em cima do dia que acabou de virar (e não mexe se o usuário navegou de propósito)? Ou a
-aba Plano passa a ter um jeito de dizer "você está olhando outro dia" quando `viewKey !== hoje` —
-que resolveria os dois casos e também o de quem clicou numa aba antiga e esqueceu?
+As abas dos dias (`.day-tab`) marcam só qual está **selecionada** (`.active`) e se o dia tem progresso
+(`.has-progress`). **Nenhuma marca é "hoje"**. Quem clica numa aba antiga e esquece não tem como
+perceber pela lista — o único lugar que diz a data de hoje é o `#today-label` do cabeçalho, e ele fica
+longe das abas. No laptop as abas ainda mostram o número do dia (`.day-num`), no celular nem isso.
+
+Não é bug: é a informação que falta pra "estou olhando outro dia" ser óbvio. A virada da meia-noite
+deixou de ser o caminho pra cair nesse estado, mas o clique continua sendo.
+
+**Decidir:** uma marca discreta na aba de hoje (um ponto, o número em negrito, uma borda)? Ou o
+contrário — a lista ganha uma linha de contexto quando `viewKey !== hoje`, que serve também pra dia
+passado e futuro? A segunda ocupa espaço numa tela estreita; a primeira é barata mas só resolve dentro
+da semana visível, e não diz nada quando o usuário está numa OUTRA semana, onde nenhuma aba é hoje.
 
 ---
 

@@ -14,7 +14,7 @@ import type { DateKey, PauseRecord, PlannerConfig, StudyBlock, StudyEvent } from
 import { buildWeeks, dateForWeekDay as dateForWeekDayIn, findWeek as findWeekIn, weekDays } from '../domain/weeks';
 import type { WeekDay } from '../domain/weeks';
 import { isDayClosed } from '../domain/checks';
-import { derived, getVersion, notify, state } from '../store/store';
+import { derived, getVersion, notify, setView, state } from '../store/store';
 
 // ---------------------------------------------------------------- gerador memoizado
 // Memoização é preocupação de performance da UI, não regra de domínio — por isso mora aqui.
@@ -59,6 +59,24 @@ export const dateForWeekDay = (weekN: number, dayIdx: number): Date =>
   dateForWeekDayIn(derived.weeks, weekN, dayIdx);
 
 export const findWeek = (date: Date): number => findWeekIn(derived.weeks, date);
+
+/**
+ * Põe a semana/dia visíveis em cima de HOJE. O boot e a virada da meia-noite
+ * chamam o mesmo caminho — a conta morava só dentro do `initAfterLoad`, e por
+ * isso a virada com o app aberto não tinha como reaproveitá-la.
+ *
+ * O índice do dia sai do tempo decorrido desde a segunda, com teto em 6. Parece
+ * frágil perto do horário de verão, mas não é: na UE a virada cai sempre no
+ * DOMINGO, o último dia da semana exibida, onde o teto já segura — conferido em
+ * Europe/Berlin contra a conta por data de calendário, 2025–2027, sem uma
+ * divergência. Ficou como estava de propósito: isto é extração, não mudança.
+ */
+export function viewToday(now: Date = new Date()): void {
+  const semana = findWeek(now);
+  const w = derived.weeks[semana - 1];
+  const dia = w ? Math.min(6, Math.max(0, Math.floor((now.getTime() - w.start.getTime()) / 86400000))) : 0;
+  setView(semana, dia);
+}
 
 // ---------------------------------------------------------------- descanso
 const restInputFor = (dateKey: DateKey, isWeekend = isWeekendKey(dateKey)) => ({

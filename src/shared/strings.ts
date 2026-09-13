@@ -86,6 +86,8 @@ export const strings = {
       level: (lv: number) => `Lv. ${lv}`,
     },
     xpTotal: 'XP Total',
+    /** A meia-noite passou com o app aberto e a tela seguiu o dia (ver application/dayRollover.ts). */
+    dayTurned: '🌅 Passou da meia-noite — este é o plano de hoje',
     weekXp: (xp: number) => `Semana: ${xp} XP`,
     todayNone: 'Hoje: —',
     todayPending: (xp: number, coins: number) => `Hoje: +${xp} XP · +${coins} 🪙`,

@@ -17,7 +17,7 @@ import { stopBlocking, watchExtension } from './siteBlock';
 import { openOnboarding } from './onboarding';
 import { dropExpiredSafetyNet } from './backup';
 import { applyPendingPetXP } from './pets';
-import { clearBlockCache, findWeek, rebuildWeeks } from './plan';
+import { clearBlockCache, rebuildWeeks, viewToday } from './plan';
 import { blockSaves } from './save';
 import { rememberDoc, subscribeRemote, unsubscribeRemote } from './sync';
 import { stopTimer, watchVisibility } from './timer';
@@ -144,9 +144,7 @@ export async function loadUserData(uid: string, now: Date = new Date()): Promise
 export function initAfterLoad(now: Date = new Date()): void {
   dropExpiredSafetyNet(now); // a cópia do histórico apagado que passou dos 30 dias some aqui
   setTimeout(() => scheduleEndOfDayPrompt(), 600);
-  state.uiWeek = findWeek(now);
-  const week = derived.weeks[state.uiWeek - 1];
-  state.uiDay = week ? Math.min(6, Math.max(0, Math.floor((now.getTime() - week.start.getTime()) / 86400000))) : 0;
+  viewToday(now);
   notify();
   resumeHardcoreOnBoot(now); // a sessão hardcore que ficou neste dispositivo: volta pro foco, ou cobra o abandono
   resumePauseOnBoot(now); // a pausa que ficou aberta neste dispositivo: o timer volta pausado

@@ -10,6 +10,7 @@ import { computeStatsNow } from '../application/plan';
 import { signOut } from '../application/session';
 import { requestSettings } from '../application/settings';
 import { getLevel } from '../domain/progression';
+import { dk } from '../domain/time';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { strings } from '../shared/strings';
 import { useDismiss } from '../shared/useDismiss';
@@ -64,7 +65,11 @@ function PawIcon() {
 export function Header() {
   // computeStatsNow é memoizado por versão do store: o Plano e o cabeçalho pagam uma passada só.
   const { tab, totalXP, user } = useAppState((s) => ({ tab: s.uiTab, totalXP: computeStatsNow().totalXP, user: s.user }));
-  const today = useMemo(todayLabel, []);
+  // A data do cabeçalho acompanha a virada da meia-noite: com `[]` ela ficava
+  // congelada no dia em que a página carregou, e quem atravessava a meia-noite com
+  // o app aberto lia "quarta-feira, 2 de setembro" numa quinta (ver PENDENCIAS 13).
+  // A chave é o dia, não o relógio — nas outras renderizações o memo não recalcula.
+  const today = useMemo(todayLabel, [dk(new Date())]);
   const wide = useWide();
   // A `.timer-bar` gruda em `top: var(--topbar-h)`: a altura tem que ser a de verdade,
   // não um número fixo — numa tela estreita esta barra quebra em duas linhas.

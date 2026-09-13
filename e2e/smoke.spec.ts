@@ -2078,4 +2078,28 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#live-start')).toHaveCount(0);
     expect(await page.locator('.block-row').count()).toBeGreaterThan(1);
   });
+  // PENDENCIAS 13: com o app aberto atravessando a meia-noite, `uiWeek`/`uiDay`
+  // ficavam onde o boot os deixou. A tela continuava em ONTEM e, como "🕘 Janelas
+  // do dia" e "✓ Encerrar o dia" só existem no dia de hoje, os dois sumiam sem
+  // uma palavra. O gatilho aqui é o `pageshow` — o mesmo que o app já escuta pra
+  // quando a aba volta do bfcache ou o celular é destravado.
+  test('58. a meia-noite com o app aberto: a tela segue o dia, e o "Encerrar o dia" não some', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '23:58');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#today-label')).toContainText('quarta-feira');
+    await expect(page.locator('.day-tab.active')).toContainText('Qua');
+    await expect(page.locator('.finish-day-btn')).toBeVisible();
+
+    // Passa da meia-noite com a aba aberta e a página volta a ficar visível.
+    await page.clock.setFixedTime(new Date('2026-09-03T00:05:00'));
+    await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+
+    await expect(page.locator('.day-tab.active')).toContainText('Qui');
+    await expect(page.locator('#today-label')).toContainText('quinta-feira');
+    // O que sumia: os dois botões que só existem no dia de hoje.
+    await expect(page.locator('.finish-day-btn')).toBeVisible();
+    await expect(page.locator('#day-windows-btn')).toBeVisible();
+    expect(erros).toEqual([]);
+  });
 });
