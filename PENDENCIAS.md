@@ -119,6 +119,17 @@ candidato e já é o nome do overlay; (c) o nome do app muda junto? Aí é domí
 documentos legais — e o CLAUDE.md pede pra **não** renomear o projeto na Vercel, porque o domínio muda e
 o Authorized domain do Firebase Auth quebra o login com Google. Se mudar, vale plan próprio.
 
+**Decidido em 2026-09-13** (branch `feat/vocabulario`): as três perguntas estão respondidas em
+`plans/2026-09-13_0300_vocabulario.md`, com a **lista de execução pronta** (111 trocas, antes e depois
+literais). Resumo: **(a)** só o que o usuário lê — `schemaVersion` continua 4; **(b)** não existe uma
+palavra: o bloco numerado vira `🍅 Pomodoro 3`, o substantivo da atividade vira "foco" minúsculo e
+incontável, o que conta estudo E evento continua "bloco", e o verbo sai por elisão; **(c)** o nome fica,
+com prazo — o risco que o CLAUDE.md nomeia **não se aplica** (o projeto na Vercel se chama `plano-estudos`,
+renomear a marca não toca o domínio), e a janela barata fecha quando a tela de consentimento do Google e a
+Chrome Web Store abrirem. **"Foco" como nome do bloco foi descartado**: `strings.ts:805` viraria "sair de um
+foco no modo foco". Junto vieram dois bugs: **7 das 17 skills mentem** (a regra aceita evento, a descrição
+diz "estudo") e "N estudos" no grupo e no ciclo conta evento. **Cinco perguntas ficaram pro Tomi.**
+
 ## 12. O modo escuro vira o "Loft noturno"
 
 Pedido de 2026-09-12. O escuro de hoje é o tema original do app, herdado da primeira versão — nunca
