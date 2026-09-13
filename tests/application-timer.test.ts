@@ -170,6 +170,28 @@ describe('reconcileTimer — ao voltar pra aba com o intervalo congelado', () =>
     expect(derived.timerCompleted).toMatchObject({ name: 'Pausa', type: 'pausa' });
   });
 
+  // Medido em 2026-09-13: sem teto, o laço marcava o dia inteiro. Com a config padrão,
+  // deixar o app aberto das 09:00 às 18:00 rendia 32 blocos, 540 min, 960 XP e 425
+  // moedas que ninguém estudou — e o pet subia de nível por cima.
+  it('o bloco que acabou faz muito tempo NÃO é marcado: encerra sem inventar nada', () => {
+    startTimer(bloco); // 10:10, Estudo 3 (10:00–10:25)
+    const muitoDepois = new Date(`${HOJE}T13:00:00`); // o bloco acabou faz 2h35
+    vi.setSystemTime(muitoDepois);
+    reconcileTimer(muitoDepois);
+    expect(state.checks[HOJE]).toBeUndefined();
+    expect(derived.timerBlock).toBeNull();
+    expect(derived.focusOpen).toBe(false);
+  });
+
+  it('mas o atraso de meia hora ainda emenda — é pra isso que o laço existe', () => {
+    startTimer(bloco);
+    const volta = new Date(`${HOJE}T10:50:00`); // o Estudo 3 acabou faz 25 min
+    vi.setSystemTime(volta);
+    reconcileTimer(volta);
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(true);
+    expect(derived.timerBlock).not.toBeNull();
+  });
+
   it('nada terminou: não mexe em nada', () => {
     startTimer(bloco);
     const agora = new Date(`${HOJE}T10:20:00`);

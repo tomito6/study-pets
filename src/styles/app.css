@@ -358,6 +358,9 @@
   .block-row.event-row.cycle-block{border-style:dashed !important;opacity:var(--fade-event-cycle);}
   .check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
   .check.checked{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+  /* Bloco que ainda não começou: só o CHECK esmaece, nunca a linha — esmaecer o dia
+     inteiro daria cara de dia morto a um dia que está começando. */
+  .check.not-yet{opacity:.35;}
   .check svg{width:10px;height:10px;display:none;}
   .check.checked svg{display:block;}
   .block-time{font-size:11px;color:var(--muted);font-family:var(--font-mono);min-width:95px;}

@@ -435,10 +435,13 @@ describe('casos de uso dos pets', () => {
     const estudos = blocksForDay(HOJE).filter((b) => b.type === 'estudo' || b.type === 'event');
     const ultimo = estudos[estudos.length - 1]!;
     // Marca o último primeiro: a skill olha a posição no plano, não a ordem dos checks.
+    // O relógio vai pro fim do dia porque desde 2026-09-13 bloco que não começou não
+    // aceita check — o que este teste mede é a posição, não o horário.
+    const fimDoDia = new Date(`${HOJE}T23:00:00`);
     expect(state.checks[HOJE]?.[ultimo.time]).toBeUndefined();
-    toggleBlockCheck(HOJE, ultimo, AGORA);
+    toggleBlockCheck(HOJE, ultimo, fimDoDia);
     expect(state.checks[HOJE]![ultimo.time]).toMatchObject({ bonus: 0.15 });
-    toggleBlockCheck(HOJE, estudos[0]!, AGORA);
+    toggleBlockCheck(HOJE, estudos[0]!, fimDoDia);
     expect(state.checks[HOJE]![estudos[0]!.time]).toMatchObject({ bonus: 0 });
   });
 

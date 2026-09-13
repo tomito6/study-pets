@@ -4,7 +4,7 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
 import { playSound } from '../../application/timer';
-import { isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
+import { hasBlockStarted, isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { cleanBlockName as cleanName } from '../../domain/timer';
 import { isForfeited } from '../../domain/hardcore';
 import { blockInGroup, groupHeaderPositions, groupProgress } from '../../domain/groups';
@@ -131,6 +131,14 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
       showToast(strings.hardcore.plan.forfeitedToast);
       return;
     }
+    // Bloco que ainda não começou não aceita check, nem hoje (2026-09-13). Vem DEPOIS
+    // do `forfeited` de propósito: no bloco abandonado a explicação certa é "você
+    // desistiu", não "ainda não chegou". E vive só aqui, no caminho do check — pô-la no
+    // clique da linha mataria o foco aberto antes da hora, que é feature.
+    if (!hasBlockStarted(dateKey, b.time, now)) {
+      showToast(strings.plan.notYet);
+      return;
+    }
     // A posição é capturada ANTES do toggle: o re-render pode mexer na linha.
     const rect = e.currentTarget.getBoundingClientRect();
     const result = toggleBlockCheck(dateKey, b, now);
@@ -205,7 +213,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
     >
       {!isI && (
         <div
-          className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')}
+          className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '') + (!done && !forfeited && !hasBlockStarted(dateKey, b.time, now) ? ' not-yet' : '')}
           onClick={onCheckClick}
           onKeyDown={onCheckKey}
           role="checkbox"

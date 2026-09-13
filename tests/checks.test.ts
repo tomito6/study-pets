@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canCheckBlock,
   canToggleCheck,
   computePendingPetXP,
+  hasBlockStarted,
   isChecked,
   isDayClosed,
   isFutureDay,
@@ -81,6 +83,47 @@ describe('canToggleCheck — o que pode ser marcado', () => {
 
   it('funciona sem closedDays definido', () => {
     expect(canToggleCheck(HOJE, { now: agora })).toBe(true);
+  });
+});
+
+describe('hasBlockStarted — bloco que ainda não chegou (2026-09-13)', () => {
+  it('em HOJE, compara o relógio com o início do bloco', () => {
+    expect(hasBlockStarted(HOJE, '13:00', agora)).toBe(true); // agora é 14:00
+    expect(hasBlockStarted(HOJE, '14:00', agora)).toBe(true); // o minuto exato conta
+    expect(hasBlockStarted(HOJE, '14:01', agora)).toBe(false);
+    expect(hasBlockStarted(HOJE, '17:45', agora)).toBe(false);
+  });
+
+  it('em dia passado, todo bloco já começou', () => {
+    expect(hasBlockStarted(ONTEM, '23:55', agora)).toBe(true);
+  });
+
+  it('em dia futuro, nenhum — ainda que `canToggleCheck` já recuse antes', () => {
+    expect(hasBlockStarted(AMANHA, '00:05', agora)).toBe(false);
+  });
+});
+
+describe('canCheckBlock — as duas regras do bloco', () => {
+  const ctx = { closedDays: {}, penalties: {}, now: agora };
+
+  it('bloco de hoje que já começou aceita check', () => {
+    expect(canCheckBlock(HOJE, '13:00', ctx)).toBe(true);
+  });
+
+  it('bloco de hoje que ainda não começou NÃO aceita — era o buraco que fazia o plano virar auto-declaração', () => {
+    expect(canCheckBlock(HOJE, '17:45', ctx)).toBe(false);
+  });
+
+  it('o bloco abandonado no hardcore continua recusado, e por ele mesmo', () => {
+    const comPenalidade = {
+      ...ctx,
+      penalties: { [HOJE]: [{ time: '13:00', endTime: '13:25', name: 'Estudo 1', xp: 100, pet: null, petXp: 0, at: 0, reason: 'quit' as const }] },
+    };
+    expect(canCheckBlock(HOJE, '13:00', comPenalidade)).toBe(false);
+  });
+
+  it('dia passado aceita qualquer horário — quem estuda longe do computador marca à noite', () => {
+    expect(canCheckBlock(ONTEM, '23:55', ctx)).toBe(true);
   });
 });
 

@@ -153,9 +153,12 @@ describe('retomar', () => {
     expect(com.dayStudyMins[HOJE]).toBe(sem.dayStudyMins[HOJE]);
   });
 
-  it('checks feitos adiantado e grupos acompanham os blocos que deslizaram', () => {
-    const estudo4 = blocksForDay(HOJE).find((b) => b.time === '10:30')!;
-    toggleBlockCheck(HOJE, estudo4, AGORA); // marcou o próximo antes da hora
+  // Desde 2026-09-13 o app não deixa marcar bloco que não começou, então um check
+  // adiantado só chega de um documento escrito antes da regra (ou de outro dispositivo
+  // com build antigo). O remap continua tendo que cobri-lo — por isso o check entra
+  // direto no estado, e não pelo caso de uso.
+  it('check adiantado que veio do documento, e grupos, acompanham os blocos que deslizaram', () => {
+    state.checks[HOJE] = { '10:30': { pet: null, bonus: 0 } }; // o Estudo 4, marcado antes da hora
     expect(addGroup(HOJE, { start: '10:00', end: '10:55', name: 'Análise', goal: '' }).ok).toBe(true);
     startTimer(estudo3, AGORA);
     pauseTimer(AGORA);

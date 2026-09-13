@@ -29,7 +29,7 @@ import { isForfeited } from '../domain/hardcore';
 import { pauseSessionFor } from '../domain/pauses';
 import { closedCycleOf } from '../domain/cycles';
 import { dk } from '../domain/time';
-import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerProgress } from '../domain/timer';
+import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerEnd, timerProgress } from '../domain/timer';
 import type { StartCheck, StartContext } from '../domain/timer';
 import type { DateKey, StudyBlock } from '../domain/types';
 import { playSound as playSoundInfra } from '../infrastructure/audio/sounds';
@@ -46,6 +46,28 @@ import { checkBlock } from './checks';
 import { armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { blocksForDay, currentDayKey } from './plan';
 import { stopBlocking, syncBlocking } from './siteBlock';
+
+/**
+ * Quanto tempo depois do fim de um bloco o app ainda o fecha sozinho.
+ *
+ * O laço de emenda existe pra aba em segundo plano e celular travado, e o CLAUDE.md
+ * diz que ele deve resolver "um bloco por vez se vários passaram" — isso continua
+ * valendo. Sem teto, porém, ele vira cascata: medido em 2026-09-13, com a config
+ * padrão, ficar fora 1h30 marcava 6 blocos (90 min que ninguém estudou) e deixar o
+ * app aberto o dia inteiro marcava os 32 do plano — 540 minutos, 960 XP e 425 moedas,
+ * com o pet subindo de nível por cima.
+ *
+ * O número é 30 e não é arbitrário: ele tem que ser MAIOR que a maior ausência
+ * legítima (a tela travada durante um pomodoro inteiro mais a pausa: ~30 min, e aí o
+ * primeiro bloco volta ~25 min atrasado) e MENOR que a menor ausência que já não é
+ * mais "eu estava aqui" (uma refeição, uma aula). Aos 5 min, que foi o primeiro
+ * palpite, ele reprovava o caso de 21 minutos que o CLAUDE.md registra como certo.
+ *
+ * Passando daqui, o timer encerra no bloco que estava rodando e ele fica na lista SEM
+ * check: perde-se no máximo um bloco que a pessoa talvez tenha terminado, e ela marca
+ * à mão. A alternativa inventava horas.
+ */
+export const ATRASO_MAX_MIN = 30;
 
 let endWatcher: ReturnType<typeof setInterval> | null = null;
 
@@ -100,7 +122,21 @@ export function reconcileTimer(now: Date = new Date()): void {
     return;
   }
   let guard = 0;
-  while (derived.timerBlock && timerProgress(derived.timerBlock, now, null, derived.timerEndsAt).done && guard++ < 100) finishTimer(now);
+  while (derived.timerBlock && timerProgress(derived.timerBlock, now, null, derived.timerEndsAt).done && guard++ < 100) {
+    // O bloco acabou faz muito tempo? Então ninguém estava aqui, e marcar seria
+    // inventar. Encerra sem check, sem som e sem emenda. No hardcore o abandono tem
+    // contabilidade própria (`resumeHardcoreOnBoot`), então esta guarda fica de fora
+    // dele por ora — ver PENDENCIAS.
+    if (!derived.hardcore) {
+      const atrasoMs = now.getTime() - timerEnd(derived.timerBlock, now, derived.timerEndsAt).getTime();
+      if (atrasoMs > ATRASO_MAX_MIN * 60_000) {
+        stopTimer();
+        showToast(strings.timer.staleStop);
+        break;
+      }
+    }
+    finishTimer(now);
+  }
   syncBlocking(now); // "em espera" virou "rodando" (ou o bloco acabou): a extensão acompanha
 }
 

@@ -718,6 +718,8 @@ export const strings = {
     /** Começar outro bloco larga a pausa aberta: a mesma regra do "✕ Parar", mas dita em voz alta. */
     pauseDropped: '⏸ Pausa descartada: você começou outro bloco',
     pauseMidnight: 'A pausa atravessou a meia-noite: o timer foi encerrado 🌙',
+    /** O timer ficou rodando sozinho por muito tempo: encerra sem marcar nada. */
+    staleStop: 'O timer ficou rodando sozinho — encerrei sem marcar. Marque à mão o que você fez ✓',
     pauseRefusal: (r: { reason: 'no-timer' } | { reason: 'hardcore' } | { reason: 'not-running' } | { reason: 'day-closed' }) =>
       r.reason === 'hardcore' ? 'No modo hardcore não tem pausa 🔥'
       : r.reason === 'not-running' ? 'O bloco ainda não começou ⏳'

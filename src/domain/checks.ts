@@ -4,7 +4,7 @@
 import type { ChecksByDate, DateKey, PenaltiesByDate, PetInstanceId, StudyBlock, TimeString } from './types';
 import { isForfeited } from './hardcore';
 import { checkPetOf, xpFromCheck } from './progression';
-import { dateFromKey, dk } from './time';
+import { dateFromKey, dk, timeToMins } from './time';
 
 export function isChecked(checks: ChecksByDate, dateKey: DateKey, blockTime: TimeString): boolean {
   return !!(checks[dateKey] && checks[dateKey]![blockTime]);
@@ -36,8 +36,29 @@ export function canToggleCheck(
 }
 
 /**
- * `canToggleCheck` mais a regra do bloco: um bloco abandonado no modo hardcore
- * não pode ser marcado depois — senão desistir seria de graça.
+ * O bloco já começou? Em dia passado, sempre — o dia inteiro já aconteceu. Em dia
+ * futuro a pergunta nem chega aqui (`canToggleCheck` já recusou). Em HOJE, compara
+ * o relógio com o início do bloco.
+ *
+ * A régua é "já começou", não "já terminou", de propósito: terminar antes do fim do
+ * plano é legítimo (a pessoa acabou a leitura) e o próprio modo foco marca o bloco
+ * pelo fim ajustado de uma pausa, que pode cair antes do `endTime`. "Já terminou"
+ * recusaria o check automático do app.
+ */
+export function hasBlockStarted(dateKey: DateKey, blockTime: TimeString, now: Date): boolean {
+  const hoje = dk(now);
+  if (dateKey !== hoje) return dateKey < hoje;
+  return now.getHours() * 60 + now.getMinutes() >= timeToMins(blockTime);
+}
+
+/**
+ * `canToggleCheck` mais as duas regras do bloco: um bloco abandonado no modo
+ * hardcore não pode ser marcado depois (senão desistir seria de graça), e um bloco
+ * que ainda não começou não pode ser marcado — nem hoje.
+ *
+ * A segunda nasceu em 2026-09-13: até então o dia era a única régua, então às 09:00
+ * dava pra marcar o bloco das 17:45 e levar XP, moedas, meta e sequência. Era o que
+ * fazia o plano parecer auto-declaração.
  */
 export function canCheckBlock(
   dateKey: DateKey,
@@ -45,7 +66,8 @@ export function canCheckBlock(
   ctx: { closedDays?: Record<DateKey, boolean>; penalties?: PenaltiesByDate; now: Date },
 ): boolean {
   if (!canToggleCheck(dateKey, ctx)) return false;
-  return !isForfeited(ctx.penalties, dateKey, blockTime);
+  if (isForfeited(ctx.penalties, dateKey, blockTime)) return false;
+  return hasBlockStarted(dateKey, blockTime, ctx.now);
 }
 
 /** Quantos dias pra trás vale a pena procurar o último dia que contou. */
