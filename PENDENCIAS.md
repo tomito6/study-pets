@@ -141,6 +141,20 @@ cabe na regra, mas é desenho novo, não redefinição; (c) a exploração tamb�
 noite vira loft) ou continua escolha manual em Configurações → Aparência? Automático soa bonito e é
 exatamente o tipo de coisa que irrita quando erra.
 
+## 12. O dia visível não acompanha a virada da meia-noite
+
+`state.uiWeek`/`state.uiDay` só são escritos no boot (`application/session.ts`, `initAfterLoad`) e
+por clique. Ninguém os recorrige quando o dia vira: `application/dayRollover.ts` cuida do XP do pet
+e mais nada. Quem deixa o app (ou o PWA) aberto atravessando a meia-noite continua olhando **ontem** —
+e, como "🕘 Janelas do dia" e "✓ Encerrar o dia" só existem no dia de hoje, os dois somem sem
+explicação. Recarregar resolve, o que torna o sintoma intermitente e difícil de relatar.
+
+É primo do bug do domingo no `findWeek` (consertado em 2026-09-13): a mesma família de "o app acha
+que hoje é outro dia". **Decidir:** o `dayRollover` também reposiciona a semana/dia visíveis quando
+eles estavam em cima do dia que acabou de virar (e não mexe se o usuário navegou de propósito)? Ou a
+aba Plano passa a ter um jeito de dizer "você está olhando outro dia" quando `viewKey !== hoje` —
+que resolveria os dois casos e também o de quem clicou numa aba antiga e esqueceu?
+
 ---
 
 ## Como esse arquivo deve crescer

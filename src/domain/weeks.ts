@@ -90,10 +90,25 @@ export function dateForWeekDay(weeks: Week[], weekN: number, dayIdx: number): Da
   return d;
 }
 
-/** Semana (1-based) que contém a data; 1 se nenhuma. */
+/**
+ * Semana (1-based) que contém a data.
+ *
+ * **Por dia, não por instante** (2026-09-12): `w.end` é o domingo às 00:00 (a `mondayOf`
+ * zera a hora e o fim é início + 6 dias), então `date <= w.end` era falso em qualquer
+ * domingo depois da meia-noite — nenhuma semana casava, e o fallback jogava o usuário na
+ * semana 1. Quem tinha histórico antigo abria o app **num domingo de agosto**: o cabeçalho
+ * dizia a data de hoje, mas o dia visível era passado, e com ele sumiam "🕘 Janelas do dia"
+ * e "✓ Encerrar o dia". Só no domingo, e só pra quem já usava o app — por isso conta nova
+ * em teste nunca reproduziu.
+ *
+ * O fallback também deixou de ser cego: data depois do fim cai na **última** semana, não na
+ * primeira. Errar a semana é ruim; errar em 40 dias de distância é outra coisa.
+ */
 export function findWeek(weeks: Week[], date: Date): number {
-  for (const w of weeks) if (date >= w.start && date <= w.end) return w.n;
-  return 1;
+  if (weeks.length === 0) return 1;
+  const key = dk(date);
+  for (const w of weeks) if (dk(w.start) <= key && key <= dk(w.end)) return w.n;
+  return key > dk(weeks[weeks.length - 1]!.end) ? weeks[weeks.length - 1]!.n : 1;
 }
 
 /** Todos os dias, em ordem. Com `skipWeekends`, sábado e domingo ficam de fora. */

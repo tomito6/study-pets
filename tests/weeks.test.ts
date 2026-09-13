@@ -59,10 +59,43 @@ describe('dateForWeekDay / findWeek / weekDays', () => {
     expect(dateForWeekDay([], 3, 4)).toBeInstanceOf(Date);
   });
 
-  it('acha a semana de uma data (1-based) e cai em 1 fora do range', () => {
+  it('acha a semana de uma data (1-based); antes do range cai em 1, depois na última', () => {
     expect(findWeek(weeks, HOJE)).toBe(1);
     expect(findWeek(weeks, new Date('2026-09-09T12:00:00'))).toBe(2);
     expect(findWeek(weeks, new Date('2020-01-01T12:00:00'))).toBe(1);
+    // Depois do fim: a última semana. Errar a semana é ruim; errar por 40 dias é outra coisa.
+    const ultima = weeks[weeks.length - 1]!;
+    expect(findWeek(weeks, new Date('2030-01-01T12:00:00'))).toBe(ultima.n);
+  });
+
+  /**
+   * O bug do domingo (2026-09-12). `w.end` é o domingo às 00:00 — `mondayOf` zera a hora e o
+   * fim é início + 6 dias —, então comparar INSTANTES fazia nenhuma semana casar em qualquer
+   * domingo depois da meia-noite, e o fallback jogava o usuário na semana 1. Quem tinha
+   * histórico antigo abria o app num domingo de agosto, com o cabeçalho dizendo a data certa,
+   * e perdia "🕘 Janelas do dia" e "✓ Encerrar o dia" — os dois só existem no dia de hoje.
+   * Conta nova nunca reproduziu: a semana 1 dela É a semana corrente, e o fallback acertava
+   * por acidente.
+   */
+  it('acha a semana em QUALQUER hora do dia — inclusive no domingo', () => {
+    const antigas = buildWeeks({ periodStart: '2026-08-03', periodEnd: null, dataKeys: [], today: HOJE });
+    const domingo = (hh: number, mm = 0) => new Date(2026, 8, 13, hh, mm); // 13/09/2026, um domingo
+    const esperada = antigas.find((w) => dk(w.start) <= '2026-09-13' && '2026-09-13' <= dk(w.end))!.n;
+    for (const hora of [0, 1, 10, 12, 23]) {
+      expect(findWeek(antigas, domingo(hora)), `domingo às ${hora}h`).toBe(esperada);
+    }
+    expect(findWeek(antigas, domingo(23, 59))).toBe(esperada);
+  });
+
+  it('todo dia da semana, a qualquer hora, cai na semana que o contém', () => {
+    const semanas = buildWeeks({ periodStart: '2026-07-06', periodEnd: null, dataKeys: [], today: HOJE });
+    for (let dia = 0; dia < 28; dia++) {
+      for (const hora of [0, 9, 17, 23]) {
+        const d = new Date(2026, 7, 3 + dia, hora, 30); // agosto/setembro, varrendo 4 semanas
+        const w = semanas[findWeek(semanas, d) - 1]!;
+        expect(dk(w.start) <= dk(d) && dk(d) <= dk(w.end), `${dk(d)} ${hora}h`).toBe(true);
+      }
+    }
   });
 
   it('lista todos os dias, e pula fim de semana quando pedido', () => {
