@@ -26,9 +26,19 @@ describe('caixas nativas do navegador', () => {
     expect(arquivos.length).toBeGreaterThan(50);
     for (const caminho of arquivos) {
       const texto = readFileSync(caminho, 'utf8');
+      // `alert` solto é sempre nativo. `confirm` e `prompt` soltos NÃO são: o app tem
+      // funções locais com esses nomes (o `confirm()` do DangerModals), então a forma
+      // sem prefixo só é cobrada pro alert — as outras duas, com o objeto global na frente.
       expect(texto, `${caminho} usa alert()`).not.toMatch(/(^|[^.\w])alert\s*\(/m);
-      expect(texto, `${caminho} usa window.confirm()`).not.toMatch(/window\s*\.\s*confirm\s*\(/);
-      expect(texto, `${caminho} usa window.prompt()`).not.toMatch(/window\s*\.\s*prompt\s*\(/);
+      expect(texto, `${caminho} usa uma caixa nativa pelo objeto global`).not.toMatch(
+        /\b(window|globalThis|self)\s*\.\s*(alert|confirm|prompt)\s*\(/,
+      );
+      // ...e a forma solta com um texto dentro, que é como a nativa é chamada de verdade
+      // (`confirm('tem certeza?')`). O `confirm()` local do DangerModals não passa argumento,
+      // então ele continua livre sem precisar de exceção por arquivo.
+      expect(texto, `${caminho} usa confirm()/prompt() nativo`).not.toMatch(
+        /(^|[^.\w])(confirm|prompt)\s*\(\s*['"`]/m,
+      );
     }
   });
 });

@@ -1546,7 +1546,7 @@ test.describe('Study Pets — smoke', () => {
       await expect(painel).toHaveCount(0);
     });
 
-    // PENDENCIAS 2: o chão que o tema café desenha sob os sprites do Perfil nasceu de
+    // PENDENCIAS "o chão do hero": o chão que o tema café desenha sob os sprites do Perfil nasceu de
     // beirada a beirada. No celular isso é 1,8 vezes o par de sprites e lê como chão;
     // no laptop o hero tem ~980px e a faixa vira uma linha dura atravessando o cartão,
     // com os dois personagens perdidos no meio. Agora ele é um pedestal de 300px
@@ -2105,7 +2105,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#live-start')).toHaveCount(0);
     expect(await page.locator('.block-row').count()).toBeGreaterThan(1);
   });
-  // PENDENCIAS 13: com o app aberto atravessando a meia-noite, `uiWeek`/`uiDay`
+  // PENDENCIAS "a meia-noite": com o app aberto atravessando a meia-noite, `uiWeek`/`uiDay`
   // ficavam onde o boot os deixou. A tela continuava em ONTEM e, como "🕘 Janelas
   // do dia" e "✓ Encerrar o dia" só existem no dia de hoje, os dois sumiam sem
   // uma palavra. O gatilho aqui é o `pageshow` — o mesmo que o app já escuta pra
@@ -2130,7 +2130,7 @@ test.describe('Study Pets — smoke', () => {
     expect(erros).toEqual([]);
   });
 
-  // PENDENCIAS 13 (a metade que sobrou): as abas dos dias diziam qual está
+  // PENDENCIAS "qual aba é hoje" (a metade que sobrou da meia-noite): as abas dos dias diziam qual está
   // SELECIONADA, nunca qual é HOJE. Quem clicava numa aba antiga e esquecia via um
   // plano que parecia o de hoje — sem "🕘 Janelas do dia", sem "✓ Encerrar o dia" e
   // sem nada explicando a ausência. Agora a aba de hoje tem marca (dentro da semana
@@ -2172,7 +2172,7 @@ test.describe('Study Pets — smoke', () => {
     expect(erros).toEqual([]);
   });
 
-  // PENDENCIAS 4: o ritmo do pomodoro mora em Configurações → Estrutura do dia, e
+  // PENDENCIAS "o ritmo ninguém acha": o ritmo do pomodoro mora em Configurações → Estrutura do dia, e
   // ninguém acha. A saída "um balão no tour" foi medida e reprovada (o tour é por
   // ÁREA, então o balão nasceria invisível pra toda conta que já viu o tour do
   // Plano — inclusive a única que existe). A saída é a porta, que é o padrão que o
@@ -2192,8 +2192,17 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#day-windows-panel')).toBeHidden();
     await expect(page.locator('#settings-panel')).toBeVisible();
     await expect(page.locator('.settings-tab.active')).toContainText('Estrutura do dia');
-    await expect(page.locator('#cfg-pomo')).toBeInViewport();
     await expect(page.locator('#settings-panel .st-section-lit')).toBeVisible();
+    // A seção do ritmo é a TERCEIRA da aba e o `toBeInViewport` sozinho não prova nada —
+    // dependendo da altura da janela ela já está visível sem rolagem nenhuma, e um alvo de
+    // scroll errado passaria verde. O que se cobra é a rolagem ter acontecido e a seção ter
+    // parado no MEIO da área, que é o que o `block:'center'` promete.
+    const centro = await page.evaluate(() => {
+      const sc = document.querySelector('.st-scroll')!.getBoundingClientRect();
+      const sec = document.getElementById('cfg-pomo')!.closest('.st-section')!.getBoundingClientRect();
+      return { desvio: Math.abs((sec.top + sec.bottom) / 2 - (sc.top + sc.bottom) / 2), altura: sc.height };
+    });
+    expect(centro.desvio, 'a seção do ritmo não parou no meio da área de scroll').toBeLessThan(centro.altura / 4);
 
     // A porta do calendário continua indo pro lugar dela — o alvo do scroll virou
     // uma variável, e era exatamente o que podia quebrar em silêncio (ela não tinha teste).

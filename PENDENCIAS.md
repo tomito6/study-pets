@@ -10,7 +10,9 @@ Lista de coisas pra fazer no app. Diferente do `IDEIAS.md` (rabiscos exploratór
 > a recusa de evento virou toast, o logout deixou de ser o desbloqueio de dois cliques, a notificação do
 > fim do bloco passou a existir no celular, as abas dos dias dizem qual é hoje (e oferecem a volta), o
 > ritmo do pomodoro ganhou porta, o escuro virou o **Loft noturno**, o chão do hero encolheu, a frase do
-> quarto coube numa linha, e o nome das abas ficou decidido. Cada um num commit, com teste. O que sobra
+> quarto coube numa linha, e o nome das abas ficou decidido — nove itens em oito commits (a frase do
+> quarto e as abas dos dias vieram juntas), mais um commit com os buracos que a revisão da própria leva
+> achou. Todos com teste, menos a troca da frase, que é uma string. O que sobra
 > abaixo é o que **depende de você**: um esboço pra escolher, uma pergunta de escopo, e as perguntas que
 > os dois plans grandes deixaram em aberto.
 

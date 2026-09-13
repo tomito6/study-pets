@@ -109,7 +109,7 @@ export interface Derived {
 /** Runtime do bloqueio de sites. Nada aqui é persistido. */
 /**
  * O pedido de abrir as Configurações (a engrenagem da barra, o menu do avatar, o
- * "importe de um calendário" do Novo evento e o "Ritmo: 25 · 5 · 15 — mudar" das
+ * "importe de um calendário" do Novo evento e o "Ritmo: … — mudar" das
  * Janelas do dia). `focus` leva a página até a seção pedida — senão ela abre no
  * topo do Geral, como sempre. `'ritmo'` é a única que mora na segunda aba, então
  * é a única que troca de aba antes de rolar.

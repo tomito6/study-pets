@@ -178,5 +178,9 @@ describe('sair da conta', () => {
     const sair = corpo.slice(0, corpo.indexOf('\n}'));
     expect(sair).toContain('abandonBlocking()');
     expect(sair).not.toContain('stopBlocking()');
+    // E a ORDEM, que é o que de fato segura a trava: `stopTimer()` chama `stopBlocking()`,
+    // e com a autoridade ainda de pé ele mandaria o `stopped` que o `abandonBlocking` acabou
+    // de recusar. Trocar as duas linhas de lugar reabre o buraco com a suíte verde.
+    expect(sair.indexOf('abandonBlocking()')).toBeLessThan(sair.indexOf('stopTimer()'));
   });
 });

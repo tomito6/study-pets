@@ -73,7 +73,11 @@ describe('os arquivos de tema', () => {
     for (const { slug, caminho, css } of arquivosDeTema()) {
       // Fora de qualquer bloco `:root[data-theme=...]`/seletor com o atributo, um tema
       // não pode ter regra nenhuma — senão ele valeria também nos outros temas.
-      const seletores = [...css.matchAll(/(^|\})\s*([^{}@]+)\{/g)].map((m) => m[2]!.trim());
+      // Sem tirar os comentários, um `/* … { … */` viraria seletor. E o `[{}]` (em vez de só
+      // `}`) é o que faz a PRIMEIRA regra dentro de cada `@media` ser examinada — ela vem
+      // logo depois do `{` do at-rule, e era a única que escapava da rede.
+      const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '');
+      const seletores = [...limpo.matchAll(/(^|[{}])\s*([^{}@]+)\{/g)].map((m) => m[2]!.trim());
       for (const sel of seletores) {
         if (sel.startsWith('/*') || sel.startsWith('from') || sel.startsWith('to') || /^\d+%/.test(sel)) continue;
         expect(sel.includes(`[data-theme="${slug}"]`), `${caminho}: o seletor "${sel}" vale fora do tema`).toBe(true);
