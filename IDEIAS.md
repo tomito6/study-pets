@@ -599,8 +599,8 @@ app reconcilia). Isto aqui é o passo seguinte:
 > `plans/2026-09-04_0600_revisao-fundacao.md`): `windowOverrides[dia] = { studyWindows }` (vazio = dia
 > livre), botão "🕘 Janelas do dia" ao lado de "+ Evento" com o mesmo editor das Configurações, "Começar
 > agora" (próximo múltiplo de 5 min) e "Dia livre" (só sem check no dia). Decisão: dia livre é **neutro**
-> na sequência, como o fim de semana pausado; a alternativa (quebra) está na branch
-> `feat/revisao-fundacao-alt-dia-livre-quebra`.
+> na sequência, como o fim de semana pausado; a alternativa (quebra) foi descartada — o
+> porquê está no próprio plan file.
 
 Almoço tem override por dia (`lunchOverrides`); janela não. "Acordei tarde, hoje começo às 10" hoje é
 mudar a config pra sempre ou criar um evento falso — e isso contradiz a promessa central ("almoçou
