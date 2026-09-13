@@ -11,7 +11,7 @@
 // continuam de folga — e "Restaurar rotina" devolve a folga.
 
 import { isDayClosed } from '../domain/checks';
-import { startNowWindows, validateDayWindows, windowsForDay } from '../domain/dayWindows';
+import { routineAfter, startNowWindows, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
 import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, StudyBlock, StudyWindow, TimeString } from '../domain/types';
@@ -92,13 +92,30 @@ export function setDayOff(dateKey: DateKey, now: Date = new Date()): DayWindowsR
   return { ok: true };
 }
 
-/** "Restaurar rotina": o dia volta a seguir a config. */
+/**
+ * "Restaurar rotina" / "Voltar ao padrão": o dia volta a seguir a config.
+ *
+ * **Com corrida no dia, a rotina volta só de agora em diante** (`routineAfter`). Apagar o
+ * override inteiro regeneraria o dia pela rotina e **curaria o bloco parcial**: quem parou
+ * às 10:12 num pomo que ia até 10:25 tem um bloco de 12 minutos e 24 XP, e dois toques o
+ * devolveriam com 25 minutos e 50 XP — o XP deixaria de ser proporcional exatamente no
+ * fluxo que "Parar por aqui" existe pra servir, e pelo caminho honesto. O que foi vivido
+ * fica; o que volta é o resto do dia.
+ */
 export function clearDayWindows(dateKey: DateKey, now: Date = new Date()): DayWindowsResult {
   const can = canEditDayWindows(dateKey, now);
   if (!can.ok) return can;
-  if (!state.windowOverrides[dateKey]) return { ok: true };
+  const atual = state.windowOverrides[dateKey];
+  if (!atual) return { ok: true };
   const before = blocksForDay(dateKey);
-  delete state.windowOverrides[dateKey];
+  const corridas = atual.studyWindows.filter((w) => w.live);
+  if (corridas.length > 0 && dateKey === dk(now)) {
+    const r = routineAfter(corridas, state.config.studyWindows, now);
+    if (r.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
+    else delete state.windowOverrides[dateKey];
+  } else {
+    delete state.windowOverrides[dateKey];
+  }
   commit(dateKey, before, now);
   return { ok: true };
 }

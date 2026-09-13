@@ -144,10 +144,14 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       cycle: cycleN,
     };
     if (mini) out.mini = true;
+    if (emCorrida) out.live = true;
     if (r.paused > 0) out.paused = r.paused;
     blocks.push(out);
     return r;
   }
+
+  /** A janela que está sendo gerada agora é uma corrida? (o laço das janelas escreve) */
+  let emCorrida = false;
 
   function pushBreak(start: number, len: number, limit: number, name: string): Placed {
     const r = place(start, len, limit);
@@ -222,6 +226,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     // O ritmo é da JANELA quando ela é uma corrida do modo ao vivo (ver `StudyWindow.live`);
     // senão é o da config, como sempre. `half` desce pra cá junto, porque depende dele.
     const live = win.live;
+    emCorrida = !!live;
     const pomo = live ? live.pomo : cfg.pomo;
     const shortBreak = live ? live.shortBreak : cfg.shortBreak;
     const longBreak = live ? live.longBreak : cfg.longBreak;
@@ -250,10 +255,12 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       // nenhum (logo depois de um bloqueio, ou no começo de uma janela) fica livre.
       if (gap < pomo && gap > 0) {
         if (live) {
-          // Numa corrida, a sobra É o que aconteceu: vira estudo da duração real. Nunca
-          // `mini` (que é uma categoria do plano, não um fato) e nunca `stretch`, que
-          // reescreveria um bloco que já foi vivido.
-          pushStudy(cur, gap, nextBlockStart, false);
+          // Numa corrida, a sobra É o que aconteceu: vira estudo da duração real, e nunca
+          // `stretch`, que reescreveria um bloco já vivido. A flag `mini` segue a MESMA
+          // condição da rotina (`gap >= half`) de propósito: sem isso, um dia aparado
+          // perdia a flag de um bloco que já existia — e "byte a byte igual" deixava de
+          // ser verdade por um detalhe que nada no app lê, mas que a prova cobra.
+          pushStudy(cur, gap, nextBlockStart, gap >= half);
         } else {
           const lastStudy = studyEndingAt(cur, win.start);
           if (gap >= half) pushStudy(cur, gap, nextBlockStart, true);
@@ -328,7 +335,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       const sobra = place(cur, winEnd - cur, winEnd);
       const ultimo = studyEndingAt(cur, win.start);
       // DESLIGAMENTO 3 (corrida): mesma razão do 1 — o que sobrou é tempo que passou.
-      if (live) pushStudy(cur, winEnd - cur, winEnd, false);
+      if (live) pushStudy(cur, winEnd - cur, winEnd, sobra.effective >= half);
       else if (sobra.effective >= half) pushStudy(cur, winEnd - cur, winEnd, true);
       else if (ultimo) stretch(ultimo, winEnd - cur, winEnd);
       cur = winEnd;

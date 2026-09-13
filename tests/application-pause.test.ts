@@ -8,10 +8,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toggleBlockCheck } from '../src/application/checks';
 import { closeDay, initialDayEnd, resetEndOfDayPrompt } from '../src/application/dayEnd';
+import { clearDayWindows } from '../src/application/dayWindows';
 import { addGroup } from '../src/application/groups';
 import { startHardcore } from '../src/application/hardcore';
 import { endHardcoreSession } from '../src/application/hardcoreRuntime';
-import { continueBlock, pauseTimer, resumePauseOnBoot, resumeTimer, timerPaused } from '../src/application/pause';
+import { continueBlock, pauseTimer, resumePauseOnBoot, resumeTimer, stopHere, timerPaused } from '../src/application/pause';
 import { blocksForDay, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
 import { closeFocus, reconcileTimer, startTimer, stopTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
@@ -361,5 +362,89 @@ describe('a meia-noite pausado', () => {
     expect(derived.timerBlock).toBeNull();
     expect(timerPaused()).toBe(false);
     expect(state.pauses).toEqual({});
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "■ Parar por aqui": o dia acaba agora e os minutos que passaram valem. Até 2026-09-13
+// sair no meio não rendia nada — o bloco ficava inteiro no plano, sem check, e os 12
+// minutos estudados sumiam.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('stopHere — parar no meio do bloco', () => {
+  it('o bloco em andamento entra com a duração real, e o resto do dia some', () => {
+    startTimer(estudo3, AGORA); // Estudo 3 é 10:00–10:25
+    const r = stopHere(em('10:12:00'));
+    expect(r).toMatchObject({ ok: true, at: '10:12' });
+    expect(r.ok && r.block).toMatchObject({ time: '10:00', endTime: '10:12', xp: 24 }); // 12 min × 2
+    const dia = blocksForDay(HOJE);
+    expect(dia[dia.length - 1]).toMatchObject({ time: '10:00', endTime: '10:12' });
+    expect(derived.timerBlock).toBeNull();
+  });
+
+  it('os blocos que já tinham acontecido ficam exatamente como eram', () => {
+    // A comparação ignora `live`, que é metadado sobre COMO o dia foi vivido (e o que a
+    // regra do Ponto final lê) — não um fato do bloco. Tudo que significa alguma coisa
+    // pro usuário, pro XP e pras chaves de check tem que bater: horário, duração, nome,
+    // XP e ciclo. A prova ampla está na varredura de 2146 cortes reais.
+    const semFlag = (bs: StudyBlock[]) =>
+      JSON.stringify(bs.map(({ live: _live, ...resto }) => resto));
+    const antes = semFlag(blocksForDay(HOJE).filter((b) => b.endTime <= '10:00'));
+    startTimer(estudo3, AGORA);
+    stopHere(em('10:12:00'));
+    expect(semFlag(blocksForDay(HOJE).filter((b) => b.endTime <= '10:00'))).toBe(antes);
+  });
+
+  it('o XP do dia é o dos minutos que passaram, não o do plano que não aconteceu', () => {
+    startTimer(estudo3, AGORA);
+    stopHere(em('10:12:00'));
+    const parcial = blocksForDay(HOJE).find((b) => b.time === '10:00')!;
+    toggleBlockCheck(HOJE, parcial, em('10:12:30'));
+    expect(computeStatsNow(em('10:12:30')).todayXP).toBe(24);
+  });
+
+  it('pausado, a pausa é registrada ANTES do corte — os minutos parados não somem', () => {
+    startTimer(estudo3, AGORA);
+    pauseTimer(em('10:05:00'));
+    vi.setSystemTime(em('10:09:00'));
+    stopHere(em('10:09:00'));
+    expect(state.pauses[HOJE]).toHaveLength(1);
+    expect(state.pauses[HOJE]![0]).toMatchObject({ at: '10:05' });
+  });
+
+  it('no hardcore não existe: a porta lá é Desistir, e cobra', () => {
+    startHardcore(estudo3, AGORA);
+    expect(stopHere(em('10:12:00'))).toEqual({ ok: false, reason: 'hardcore' });
+    endHardcoreSession();
+    stopTimer();
+  });
+
+  it('em espera não há o que parar — a saída é Cancelar', () => {
+    const futuro: StudyBlock = { time: '11:10', endTime: '11:35', name: '📖 Estudo 5', type: 'estudo', xp: 50, cycle: 1 };
+    startTimer(futuro, AGORA);
+    expect(stopHere(AGORA)).toEqual({ ok: false, reason: 'no-timer' });
+    stopTimer();
+  });
+});
+
+describe('"Voltar ao padrão" depois de uma parada', () => {
+  it('NÃO cura o bloco parcial — senão dois toques devolveriam 50 XP no lugar de 24', () => {
+    startTimer(estudo3, AGORA);
+    stopHere(em('10:12:00'));
+    expect(blocksForDay(HOJE).find((b) => b.time === '10:00')).toMatchObject({ endTime: '10:12', xp: 24 });
+    vi.setSystemTime(em('13:30:00'));
+    expect(clearDayWindows(HOJE, em('13:30:00'))).toEqual({ ok: true });
+    // o parcial continua parcial...
+    expect(blocksForDay(HOJE).find((b) => b.time === '10:00')).toMatchObject({ endTime: '10:12', xp: 24 });
+    // ...e a rotina volta só de agora em diante
+    const depois = blocksForDay(HOJE).filter((b) => b.time >= '13:30');
+    expect(depois.length).toBeGreaterThan(0);
+    expect(depois[0]!.time).toBe('13:30');
+  });
+
+  it('num dia sem corrida continua apagando o override, como sempre fez', () => {
+    state.windowOverrides[HOJE] = { studyWindows: [{ start: '10:00', end: '12:00' }] };
+    clearBlockCache();
+    expect(clearDayWindows(HOJE, AGORA)).toEqual({ ok: true });
+    expect(state.windowOverrides[HOJE]).toBeUndefined();
   });
 });

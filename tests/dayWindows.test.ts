@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CFG } from '../src/domain/config';
-import { configForDay, isDayOff, roundUpToStep, startNowWindows, validateDayWindows } from '../src/domain/dayWindows';
+import { configForDay, isDayOff, roundUpToStep, routineAfter, startNowWindows, stopDayAt, validateDayWindows } from '../src/domain/dayWindows';
 import { extendDayTo, extendWindowsTo } from '../src/domain/endOfDay';
 
 const at = (hm: string) => new Date(`2026-09-02T${hm}:00`);
@@ -88,5 +88,70 @@ describe('prolongar', () => {
     const cfg = extendDayTo(DEFAULT_CFG, '19:00');
     expect(cfg.end).toBe('19:00');
     expect(cfg.studyWindows).toEqual([w('09:00', '19:00')]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "■ Parar por aqui": o dia acaba onde a pessoa parou, e os minutos que passaram
+// valem. A prova de que o passado não se mexe está em tests/planner.test.ts e na
+// varredura de 2146 cortes reais — aqui é a forma das janelas.
+// ─────────────────────────────────────────────────────────────────────────────
+const R = { pomo: 25, shortBreak: 5, longBreak: 15 };
+const em = (hm: string) => new Date(`2026-09-02T${hm}:00`);
+
+describe('stopDayAt — parar no meio do dia', () => {
+  it('apara a janela no minuto da parada e a marca como corrida', () => {
+    const r = stopDayAt([{ start: '09:00', end: '18:00' }], em('10:12'), R);
+    expect(r).toEqual({ ok: true, windows: [{ start: '09:00', end: '10:12', live: R }] });
+  });
+
+  it('a janela que ainda não começou some — ela não aconteceu', () => {
+    const r = stopDayAt([{ start: '09:00', end: '12:00' }, { start: '14:00', end: '18:00' }], em('10:12'), R);
+    expect(r).toEqual({ ok: true, windows: [{ start: '09:00', end: '10:12', live: R }] });
+  });
+
+  it('a janela da manhã que já fechou fica inteira, e a da tarde é aparada', () => {
+    const r = stopDayAt([{ start: '09:00', end: '12:00' }, { start: '14:00', end: '18:00' }], em('15:02'), R);
+    expect(r).toEqual({
+      ok: true,
+      windows: [{ start: '09:00', end: '12:00', live: R }, { start: '14:00', end: '15:02', live: R }],
+    });
+  });
+
+  it('parar antes de qualquer janela não deixa registro — e NÃO vira dia livre', () => {
+    // Lista vazia seria lida como `isDayOff`, que é outra coisa: "hoje eu descanso".
+    expect(stopDayAt([{ start: '09:00', end: '18:00' }], em('08:30'), R)).toEqual({ ok: false, reason: 'nothing-lived' });
+  });
+
+  it('o ritmo que rodou vai junto, congelado no fato', () => {
+    const outro = { pomo: 50, shortBreak: 10, longBreak: 20 };
+    const r = stopDayAt([{ start: '09:00', end: '18:00' }], em('10:12'), outro);
+    expect(r.ok && r.windows[0]!.live).toEqual(outro);
+  });
+});
+
+describe('routineAfter — "Voltar ao padrão" não desfaz o que foi vivido', () => {
+  const corrida = [{ start: '09:00', end: '10:12', live: R }];
+  const rotina = [{ start: '09:00', end: '18:00' }];
+
+  it('a corrida fica intacta e a rotina volta a partir de agora', () => {
+    const r = routineAfter(corrida, rotina, em('13:30'));
+    expect(r).toEqual({ ok: true, windows: [{ start: '09:00', end: '10:12', live: R }, { start: '13:30', end: '18:00' }] });
+  });
+
+  it('sem isto, o bloco parcial seria curado: a rotina NUNCA volta pra trás', () => {
+    // Voltar às 10:20 não pode reabrir 10:00–10:25 e transformar os 12 min vividos em 25.
+    const r = routineAfter(corrida, rotina, em('10:20'));
+    expect(r.ok && r.windows[1]).toEqual({ start: '10:20', end: '18:00' });
+  });
+
+  it('a rotina que já acabou não volta', () => {
+    const r = routineAfter(corrida, [{ start: '09:00', end: '12:00' }], em('13:30'));
+    expect(r).toEqual({ ok: true, windows: corrida });
+  });
+
+  it('voltar antes do fim da corrida não sobrepõe: a rotina começa onde ela acabou', () => {
+    const r = routineAfter(corrida, rotina, em('09:40'));
+    expect(r.ok && r.windows[1]!.start).toBe('10:12');
   });
 });

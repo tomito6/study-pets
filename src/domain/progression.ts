@@ -276,7 +276,7 @@ export interface SkillContext {
  * se a skill já estava ativa ANTES do bloco começar (evita equipar no final).
  */
 export function skillEligible(
-  b: Pick<StudyBlock, 'type' | 'time' | 'endTime'>,
+  b: Pick<StudyBlock, 'type' | 'time' | 'endTime' | 'live'>,
   dateKey: DateKey,
   ctx: SkillContext,
 ): boolean {
@@ -299,7 +299,11 @@ export function skillEligible(
     case 'first-study':
       return study && ctx.studiesCheckedToday === 0;
     case 'last-study':
-      return counts && ctx.isLastStudy;
+      // Bloco nascido numa CORRIDA nunca é "o último estudo do dia": o fim de uma corrida
+      // é onde a pessoa parou, não onde o dia acaba — e ela pode voltar. Sem esta guarda,
+      // cada parada criaria um novo "último estudo" e a Ponto final (tier baixa, peso 3,
+      // até +45%) pagaria uma vez por parada, com o número gravado no check pra sempre.
+      return counts && ctx.isLastStudy && !b.live;
     case 'nth-study':
       return study && ctx.studiesCheckedBefore >= rule.from - 1;
     case 'event':

@@ -111,6 +111,14 @@ export interface StudyBlock {
   /** Estudo menor que um pomo, encaixado num gap. */
   mini?: boolean;
   /**
+   * O bloco nasceu dentro de uma janela de **corrida** (ver `StudyWindow.live`): ele é
+   * registro do que aconteceu, não uma faixa que o plano reservou. Gerado, nunca salvo.
+   *
+   * Só em **estudo**: quem lê isto é a regra da skill Ponto final, e nenhuma skill vale
+   * pra pausa. Marcar a pausa também seria simétrico e não serviria a ninguém.
+   */
+  live?: boolean;
+  /**
    * Minutos em que o timer ficou pausado dentro deste bloco (ver `PauseRecord`). O
    * `endTime` já inclui esse tempo: um pomo de 25 min com 7 de pausa vai de 09:00
    * a 09:32. A duração que vale (XP, moedas, meta) é `blockMins`, que desconta isto.

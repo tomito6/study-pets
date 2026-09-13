@@ -8,7 +8,7 @@
 
 import { deriveStartEnd, isValidWindow } from './settings';
 import { minsToTime, timeToMins } from './time';
-import type { DateKey, StudyWindow, TimeString, UserConfig } from './types';
+import type { DateKey, LiveRhythm, StudyWindow, TimeString, UserConfig } from './types';
 
 /** As janelas de um dia. Lista vazia = dia livre (o plano fica sem blocos). */
 export interface DayWindowsOverride {
@@ -74,6 +74,67 @@ export function validateDayWindows(windows: StudyWindow[]): DayWindowsValidation
     if (timeToMins(sorted[i]!.start) < timeToMins(sorted[i - 1]!.end)) return { ok: false, reason: 'overlap' };
   }
   return { ok: true };
+}
+
+/** O dia parou: as janelas aparadas, ou o motivo de não haver o que aparar. */
+export type StopDayResult = { ok: true; windows: StudyWindow[] } | { ok: false; reason: 'nothing-lived' };
+
+/**
+ * "■ Parar por aqui": o dia acaba no minuto em que a pessoa parou, e o que sobrou do
+ * plano some — porque não aconteceu. Cada janela é aparada no corte e passa a ser uma
+ * **corrida** (`live`), com o ritmo que rodou.
+ *
+ * A marca vale pra janela INTEIRA, não só pro rabo, e isso é medido, não suposto. A
+ * intuição era partir a janela no último bloco completo, deixando o começo como rotina
+ * pra não mexer nas bordas de antes de um evento. Medindo os 2146 cortes possíveis de
+ * cinco dias diferentes (com refeição, com aula no meio, com duas janelas, à noite), a
+ * versão partida preserva o passado em 33% deles e esta preserva em **100%** — porque os
+ * quatro desligamentos da corrida não inventam nada: com o mesmo ritmo, eles devolvem
+ * exatamente os mesmos blocos, e só param de reescrever a borda rasgada do fim.
+ *
+ * Os minutos que passaram valem: parar às 10:12 num pomo que ia até 10:25 deixa o bloco
+ * 10:00–10:12, com o XP dos 12 minutos.
+ */
+export function stopDayAt(windows: StudyWindow[], now: Date, ritmo: LiveRhythm): StopDayResult {
+  const corte = now.getHours() * 60 + now.getMinutes();
+  const out: StudyWindow[] = [];
+  for (const w of windows) {
+    if (!isValidWindow(w)) continue;
+    const inicio = timeToMins(w.start);
+    if (inicio >= corte) continue; // a janela inteira está no futuro: não aconteceu
+    const fim = Math.min(timeToMins(w.end), corte);
+    if (fim <= inicio) continue;
+    out.push({ start: w.start, end: minsToTime(fim), live: { ...ritmo } });
+  }
+  // Nada vivido: parar antes do começo da primeira janela não deixa registro nenhum, e
+  // uma lista vazia seria lida como "dia livre" (ver `isDayOff`) — que é outra coisa.
+  if (out.length === 0) return { ok: false, reason: 'nothing-lived' };
+  return { ok: true, windows: out };
+}
+
+/**
+ * "↺ Voltar ao padrão" depois de uma parada: a rotina volta **de agora em diante** e o
+ * que foi vivido fica como está.
+ *
+ * Sem isto, o caminho honesto desfazia o corte: `clearDayWindows` apaga o override, o
+ * gerador regenera o dia inteiro pela rotina, e o bloco parcial de 12 minutos volta a
+ * valer 25 — parar pra almoçar e voltar devolveria 50 XP no lugar de 24. As corridas
+ * ficam; a rotina entra só no que sobra do dia, aparada no corte e no que sobrepõe
+ * corrida (corrida vence, porque é fato).
+ */
+export function routineAfter(corridas: StudyWindow[], rotina: StudyWindow[], now: Date): StopDayResult {
+  const agora = now.getHours() * 60 + now.getMinutes();
+  const fimDasCorridas = corridas.reduce((m, w) => Math.max(m, timeToMins(w.end)), 0);
+  const desde = Math.max(agora, fimDasCorridas);
+  const out: StudyWindow[] = corridas.map((w) => ({ ...w }));
+  for (const w of rotina) {
+    if (!isValidWindow(w)) continue;
+    const fim = timeToMins(w.end);
+    if (fim <= desde) continue; // já passou: a rotina não volta pra trás
+    out.push({ start: minsToTime(Math.max(timeToMins(w.start), desde)), end: w.end });
+  }
+  if (out.length === 0) return { ok: false, reason: 'nothing-lived' };
+  return { ok: true, windows: out.sort((a, b) => timeToMins(a.start) - timeToMins(b.start)) };
 }
 
 export const START_NOW_STEP_MIN = 5;

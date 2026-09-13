@@ -18,6 +18,7 @@
 // relógio depois de retomar é `derived.timerEndsAt` — ver `timerEnd`.
 
 import { isDayClosed } from '../domain/checks';
+import { stopDayAt } from '../domain/dayWindows';
 import { addPause, parsePauseSession, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
 import { planDelta, planDeltaParts } from '../domain/planDelta';
 import { dk } from '../domain/time';
@@ -28,6 +29,7 @@ import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
+import { effectiveWindows } from './dayWindows';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from './plan';
 import { saveNow } from './save';
 import { adoptPausedBlock, pauseRuntime, reopenFocus, resumeRuntime, stopTimer } from './timer';
@@ -50,6 +52,73 @@ export function pauseTimer(now: Date = new Date()): PauseResult {
   pauseRuntime(now);
   return { ok: true };
 }
+
+export type StopHereRefusal = 'no-timer' | 'hardcore' | 'not-today' | 'day-closed' | 'nothing-lived';
+export type StopHereResult = { ok: true; block: StudyBlock | null; at: string } | { ok: false; reason: StopHereRefusal };
+
+/**
+ * "■ Parar por aqui": o dia acaba agora, e **os minutos que passaram valem**.
+ *
+ * Até aqui sair no meio de um bloco não rendia nada — o bloco ficava inteiro no plano,
+ * sem check, e os 12 minutos estudados sumiam. Isso nunca foi uma decisão: é consequência
+ * de o XP sair do plano (`calcXP` sobre a duração do bloco) e o check não guardar duração.
+ * Como XP e moeda são lineares, basta o plano ter o bloco do tamanho certo — e é o que
+ * `stopDayAt` faz, aparando as janelas no minuto da parada e marcando-as como corrida.
+ * Zero campo novo no documento.
+ *
+ * A pausa aberta é registrada ANTES do corte (retomando), senão os minutos parados
+ * sumiriam — é a mesma regra do "✕ Parar", só que aqui há o que preservar.
+ *
+ * **Não passa por `setDayWindows`** de propósito: o `commit` dele dispara
+ * `notifyPlanDelta`, e parar pra almoçar mostraria "Plano reajustado: −8 estudos ·
+ * termina às 10:12" — contabilidade de perda no segundo em que o app deveria estar
+ * calado. O dia não foi mexido, foi vivido.
+ */
+export function stopHere(now: Date = new Date()): StopHereResult {
+  const block = derived.timerBlock;
+  if (!block) return { ok: false, reason: 'no-timer' };
+  if (derived.hardcore) return { ok: false, reason: 'hardcore' }; // lá a porta é "Desistir", e cobra
+  const todayKey = dk(now);
+  if (isDayClosed(state.closedDays, todayKey)) return { ok: false, reason: 'day-closed' };
+  if (timerProgress(block, now, derived.timerPausedAt, derived.timerEndsAt).phase === 'waiting') {
+    return { ok: false, reason: 'no-timer' }; // em espera não há o que parar: a saída é Cancelar
+  }
+  if (derived.timerPausedAt != null && dk(new Date(derived.timerPausedAt)) !== todayKey) {
+    return { ok: false, reason: 'not-today' };
+  }
+
+  // A pausa aberta vira registro antes de o dia fechar. `resumeTimer` faz isso inteiro
+  // (registro, remapeamento de checks e grupos, save) — e se ela atravessou o fim do
+  // bloco ele já para sozinho, e não há o que aparar.
+  if (derived.timerPausedAt != null && resumeTimer(now) === 'ended') {
+    return { ok: true, block: null, at: minuto(now) };
+  }
+
+  const corte = stopDayAt(effectiveWindows(todayKey), now, {
+    pomo: state.config.pomo,
+    shortBreak: state.config.shortBreak,
+    longBreak: state.config.longBreak,
+  });
+  if (!corte.ok) {
+    stopTimer();
+    return { ok: false, reason: 'nothing-lived' };
+  }
+
+  state.windowOverrides[todayKey] = { studyWindows: corte.windows };
+  clearBlockCache();
+  rebuildWeeks(now); // a data ganha dados — e notifica
+  void saveNow(); // sem debounce: um F5 logo depois não pode perder o corte
+  rescheduleEndOfDayPrompt(now); // o último estudo de hoje passou a ser o parcial
+
+  // O bloco parcial é o último do dia agora. Pode não existir (a parada caiu no primeiro
+  // minuto de um bloco, e `place` não emite nada com menos de 1 min que valha).
+  const parcial = blocksForDay(todayKey).filter((b) => b.type === 'estudo').pop() ?? null;
+  stopTimer();
+  return { ok: true, block: parcial && parcial.time === block.time ? parcial : null, at: minuto(now) };
+}
+
+const minuto = (d: Date): string =>
+  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
 export type ResumeOutcome = 'resumed' | 'ended' | 'none';
 
