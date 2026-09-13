@@ -2107,4 +2107,63 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#day-windows-btn')).toBeVisible();
     expect(erros).toEqual([]);
   });
+  // O tutorial das Configurações (2026-09-14): um cartão no rodapé da própria página,
+  // porque nenhum balão do tour renderiza lá (z-80 contra os z-200 da .settings-page).
+  // Ele troca de aba sozinho e acende a seção de que está falando.
+  test('59. o tutorial das Configurações passeia pelas duas abas e acende cada seção', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+
+    await page.locator('#fab-config').click();
+    await expect(page.locator('#settings-tour')).toBeVisible();
+    await expect(page.locator('#settings-tour-count')).toHaveText('1/6');
+    // Passo 1 mora na "Estrutura do dia": a aba troca sozinha e a seção acende.
+    await expect(page.locator('#settings-panel .settings-tab[data-tab="day"]')).toHaveClass(/active/);
+    await expect(page.locator('#st-sec-windows')).toHaveClass(/st-section-lit/);
+    await expect(page.locator('#settings-tour-title')).toHaveText('Janelas de estudo');
+
+    await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#st-sec-rhythm')).toHaveClass(/st-section-lit/);
+    await expect(page.locator('#st-sec-windows')).not.toHaveClass(/st-section-lit/);
+
+    // Andando até o passo 5, que vive na OUTRA aba — ela tem que trocar sozinha.
+    for (let i = 0; i < 3; i++) await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#settings-tour-count')).toHaveText('5/6');
+    await expect(page.locator('#settings-panel .settings-tab[data-tab="general"]')).toHaveClass(/active/);
+    await expect(page.locator('#st-sec-goal')).toHaveClass(/st-section-lit/);
+
+    // O último diz "Entendi" e não volta mais — nem nesta visita nem na seguinte.
+    await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#settings-tour-next')).toHaveText('Entendi');
+    await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
+    await page.locator('#settings-panel').getByRole('button', { name: '← Voltar' }).click();
+    await page.locator('#fab-config').click();
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
+    expect(erros).toEqual([]);
+  });
+
+  // PENDENCIAS 4: o ritmo do pomodoro morava em Configurações → Estrutura do dia e
+  // ninguém o achava. O modal do dia passa a mostrá-lo e a levar até ele.
+  test('60. o "Janelas do dia" mostra o ritmo e leva direto até ele nas Configurações', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-rhythm')).toContainText('25 · 5');
+    await page.locator('#day-windows-rhythm-btn').click();
+
+    // O modal fecha, as Configurações abrem na aba certa, e a seção do ritmo acende.
+    // (a casca do Modal fica sempre no DOM; quem diz aberto/fechado é a classe .open)
+    await expect(page.locator('#day-windows-panel')).not.toHaveClass(/open/);
+    await expect(page.locator('#settings-panel')).toHaveClass(/open/);
+    await expect(page.locator('#settings-panel .settings-tab[data-tab="day"]')).toHaveClass(/active/);
+    await expect(page.locator('#st-sec-rhythm')).toHaveClass(/st-section-lit/);
+    await expect(page.locator('#cfg-pomo')).toBeVisible();
+    // Quem pediu UMA seção não é sequestrado pelo tutorial das Configurações.
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
+    expect(erros).toEqual([]);
+  });
 });

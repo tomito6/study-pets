@@ -11,7 +11,8 @@ import { safetyNetDaysLeft } from '../../domain/backup';
 import { setDefaultDayMode } from '../../application/dayWindows';
 import { exportMyData } from '../../application/export';
 import { clearSettingsRequest, saveSettings } from '../../application/settings';
-import { restartTour } from '../../application/tutorial';
+import { finishTour, restartTour } from '../../application/tutorial';
+import { SETTINGS_TOUR } from '../../domain/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
 import type { DayMode } from '../../domain/dayMode';
@@ -25,12 +26,24 @@ import { CalendarImportSection } from './CalendarImportSection';
 import { SiteBlockSection } from './SiteBlockSection';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
 import { AvatarPicker } from './AvatarPicker';
+import { SettingsTour } from './SettingsTour';
 import { ThemePicker } from './ThemePicker';
 
 const t = strings.settings;
 const th = strings.hardcore.settings;
 type SettingsTab = 'day' | 'general';
 type SettingsModal = 'none' | 'fit' | 'cancel' | 'delete';
+
+/**
+ * Para onde um atalho de fora pede pra ir. O caminho era um
+ * `getElementById('ics-import-btn')` cravado no efeito; virou mapa quando o
+ * "🕘 Janelas do dia" passou a mandar abrir o ritmo do pomodoro.
+ */
+export type SettingsFocus = 'calendar' | 'rhythm';
+const FOCO: Record<SettingsFocus, { tab: SettingsTab; section: string }> = {
+  calendar: { tab: 'general', section: 'st-sec-calendar' },
+  rhythm: { tab: 'day', section: 'st-sec-rhythm' },
+};
 
 function Switch({ id, checked, onChange }: { id: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -56,12 +69,14 @@ export function SettingsPage() {
 
   const patch = (p: Partial<ConfigDraft>) => setDraft((d) => ({ ...d, ...p }));
 
+  const [tourSuspenso, setTourSuspenso] = useState(false);
   const openSettings = () => {
     setDraft(draftFromConfig(state.config));
     setStab('general'); // abre no Geral — a primeira aba; "Estrutura do dia" é a segunda
     setOpen(true);
+    setTourSuspenso(false);
   };
-  const close = () => setOpen(false);
+  const close = () => { setOpen(false); setTourSuspenso(false); };
   // A barra do laptop (engrenagem, menu do avatar) pede pra abrir pelo store: atende com o mesmo openSettings.
   // O padrão do modo é lido e escrito DIRETO, fora do rascunho: `normalizeConfig` monta a
   // config campo a campo, então um campo novo lá sumiria no primeiro Salvar — em silêncio.
@@ -75,24 +90,62 @@ export function SettingsPage() {
   const settingsRequest = useAppState((_s, d) => d.settingsRequest);
   // Qual seção foi pedida (o "importe de um calendário" do Novo evento manda 'calendar').
   // Vive aqui e não no store porque só esta página precisa saber onde rolar.
-  const [focus, setFocus] = useState<'calendar' | null>(null);
+  const [focus, setFocus] = useState<SettingsFocus | null>(null);
   useEffect(() => {
     if (!settingsRequest) return;
     const wanted = settingsRequest.focus;
     clearSettingsRequest();
     openSettings();
     setFocus(wanted);
+    // Quem chegou por um atalho pediu UMA seção — o tour automático não sequestra a
+    // visita. Ele volta na próxima abertura pela engrenagem.
+    setTourSuspenso(!!wanted);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsRequest]);
 
-  // Rolar até a seção pedida depois que o Geral montou, e apagar o destaque em seguida.
+  // Rolar até a seção pedida depois que a aba montou, e apagar o destaque em seguida.
+  // O alvo saiu de um `getElementById('ics-import-btn')` cravado pra um mapa: agora o
+  // "🕘 Janelas do dia" também consegue mandar abrir o ritmo do pomodoro.
   useEffect(() => {
     if (!open || !focus) return;
-    const target = document.getElementById('ics-import-btn')?.closest('.st-section');
-    target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const alvo = FOCO[focus];
+    if (!alvo) return;
+    setStab(alvo.tab); // a aba inativa é display:none — rolar antes mediria 0×0
+    const r = setTimeout(() => {
+      document.getElementById(alvo.section)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 0);
     const t = setTimeout(() => setFocus(null), 2400);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(r); clearTimeout(t); };
   }, [open, focus]);
+
+  // ---- o tour das Configurações (cartão no rodapé; ver domain/tutorial.ts) ----
+  const tourVisto = useAppState((s2) => s2.tutorialSeen.settings === true);
+  const [passoTour, setPassoTour] = useState(0);
+  // Não roda por cima do onboarding nem de um modal desta página (o Encaixar estudo é
+  // um `.panel-overlay` em z-200, o mesmo da página: o cartão ficaria por baixo dele).
+  const tourAtivo = open && !tourVisto && !onboarding && modal === 'none' && !tourSuspenso;
+  const passoAtual = tourAtivo ? SETTINGS_TOUR[passoTour] : undefined;
+
+  useEffect(() => {
+    if (!passoAtual) return;
+    setStab(passoAtual.tab); // ANTES de rolar, pelo mesmo motivo do foco acima
+    // `setStab` direto, nunca `switchTab`: ele zera o scrollTop, e zerar brigaria com
+    // o `scrollIntoView` deste mesmo efeito.
+    const r = setTimeout(() => {
+      document.getElementById(passoAtual.section)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 0);
+    return () => clearTimeout(r);
+  }, [passoAtual?.id]);
+
+  const avancarTour = () => {
+    if (passoTour + 1 >= SETTINGS_TOUR.length) { finishTour('settings'); setPassoTour(0); return; }
+    setPassoTour((i) => i + 1);
+  };
+  const pularTour = () => { finishTour('settings'); setPassoTour(0); };
+
+  /** A seção acesa agora: a do passo do tour, ou a que o atalho pediu. */
+  const acesa = passoAtual?.section ?? (focus ? FOCO[focus]?.section : undefined);
+  const secao = (id: string) => 'st-section' + (acesa === id ? ' st-section-lit' : '');
   const switchTab = (next: SettingsTab) => {
     setStab(next);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -173,7 +226,7 @@ export function SettingsPage() {
               {/* O modo vem primeiro: ele decide se as janelas abaixo valem pra um dia novo.
                   Escreve DIRETO, fora do rascunho — `normalizeConfig` monta a config campo a
                   campo e engoliria um campo novo no primeiro Salvar. É o arranjo do avatar. */}
-              <div className="st-section">
+              <div className={secao('st-sec-daymode')} id="st-sec-daymode">
                 <div className="st-section-head"><div className="st-section-title">{tm.title}</div></div>
                 <div className="st-section-desc">{tm.desc}</div>
                 <div className="st-card">
@@ -203,7 +256,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <div className="st-section">
+              <div className={secao('st-sec-windows')} id="st-sec-windows">
                 <div className="st-section-head">
                   <div className="st-section-title">{t.windows.title}</div>
                   <button type="button" className="add-block-btn" onClick={() => patch({ studyWindows: appendWindow(draft.studyWindows) })}>
@@ -216,7 +269,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <div className="st-section">
+              <div className={secao('st-sec-rhythm')} id="st-sec-rhythm">
                 <div className="st-section-head"><div className="st-section-title">{t.rhythm.title}</div></div>
                 <div className="st-section-desc">{t.rhythm.desc}</div>
                 <div className="st-card">
@@ -241,7 +294,7 @@ export function SettingsPage() {
               </div>
 
               {/* Por último, como resultado do que está acima. */}
-              <div className="st-section">
+              <div className={secao('st-sec-preview')} id="st-sec-preview">
                 <div className="st-section-head"><div className="st-section-title">{t.summary.title}</div></div>
                 <div className="st-section-desc">{t.summary.desc}</div>
                 <ConfigPreview cfg={cfgPreview} />
@@ -250,7 +303,7 @@ export function SettingsPage() {
 
             {/* ---------------- Geral ---------------- */}
             <div className={'settings-tab-content' + (stab === 'general' ? ' active' : '')} data-tab-content="general">
-              <div className="st-section">
+              <div className={secao('st-sec-period')} id="st-sec-period">
                 <div className="st-section-head"><div className="st-section-title">{t.period.title}</div></div>
                 <div className="st-section-desc">{t.period.desc}</div>
                 <div className="st-card">
@@ -279,7 +332,7 @@ export function SettingsPage() {
 
               <CalendarImportSection highlight={focus === 'calendar'} />
 
-              <div className="st-section">
+              <div className={secao('st-sec-goal')} id="st-sec-goal">
                 <div className="st-section-head"><div className="st-section-title">{t.goal.title}</div></div>
                 <div className="st-section-desc">{t.goal.desc}</div>
                 <div className="st-card">
@@ -439,6 +492,9 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
+        {/* Acima da barra de ações, dentro da página: filho da `.settings-page`, então
+            não disputa z-index com ela nem depende do `zoom` do `#app` da tela grande. */}
+        {tourAtivo && <SettingsTour passo={passoTour} onNext={avancarTour} onSkip={pularTour} />}
         <div className="st-actions">
           <div className="st-actions-inner">
             <button className="reset-btn" onClick={() => setDraft(defaultDraft())}>{t.reset}</button>

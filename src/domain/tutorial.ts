@@ -6,8 +6,8 @@
 // fica na feature — este arquivo não sabe o que é um `getBoundingClientRect`,
 // só recebe retângulos e devolve coordenadas.
 
-export type TourArea = 'plan' | 'profile' | 'analytics' | 'live';
-export const TOUR_AREAS: readonly TourArea[] = ['plan', 'profile', 'analytics', 'live'];
+export type TourArea = 'plan' | 'profile' | 'analytics' | 'live' | 'settings';
+export const TOUR_AREAS: readonly TourArea[] = ['plan', 'profile', 'analytics', 'live', 'settings'];
 
 /** O que fica salvo: a área inteira vista (por "Entendi" no último balão ou "Pular"). */
 export type TutorialSeen = Partial<Record<TourArea, true>>;
@@ -208,3 +208,37 @@ export function scrollToShow(anchor: Rect, viewport: TourViewport, scrollY: numb
   const centre = anchor.top + anchor.height / 2;
   return Math.max(0, Math.round(centre - inset - (viewport.bottom - viewport.top) / 2));
 }
+
+
+// ---------------------------------------------------------------- o tour das Configurações
+
+/**
+ * O tour da página de Configurações. É uma lista à parte do `TOUR_STEPS` porque a
+ * superfície é outra: `.tour-balloon` é `z-index:80` e `.settings-page` é `z-index:200`,
+ * então NENHUM balão ancorado renderiza lá dentro — e a página tem rolagem própria
+ * (`.st-scroll`), de modo que a medição em coordenadas do documento também não valeria.
+ *
+ * Em vez de furar as duas coisas, o tour das Configurações é um **cartão no rodapé**
+ * (a mesma forma que o `TourBalloon` já usa quando a âncora não existe), e quem dá o
+ * "aqui" é a própria página: ela troca de aba e acende a seção com `.st-section-lit`,
+ * que já existia pro atalho do calendário.
+ *
+ * `tab` importa: a aba inativa é `display:none` (app.css), então rolar até uma seção
+ * da outra aba mediria um retângulo 0×0 e não rolaria nada — a aba troca ANTES.
+ */
+export interface SettingsTourStep {
+  id: string;
+  /** Em qual aba das Configurações a seção vive. */
+  tab: 'day' | 'general';
+  /** O id do `.st-section` que este passo explica — a página rola até ele e o acende. */
+  section: string;
+}
+
+export const SETTINGS_TOUR: readonly SettingsTourStep[] = [
+  { id: 'set-windows', tab: 'day', section: 'st-sec-windows' },
+  { id: 'set-rhythm', tab: 'day', section: 'st-sec-rhythm' },
+  { id: 'set-preview', tab: 'day', section: 'st-sec-preview' },
+  { id: 'set-daymode', tab: 'day', section: 'st-sec-daymode' },
+  { id: 'set-goal', tab: 'general', section: 'st-sec-goal' },
+  { id: 'set-period', tab: 'general', section: 'st-sec-period' },
+];

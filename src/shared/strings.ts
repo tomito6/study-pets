@@ -282,6 +282,12 @@ export const strings = {
       liveSince: (at: string) => `Ao vivo desde as ${at}. Antes disso, pela rotina.`,
       changed: 'Modo do dia trocado',
     },
+    /** O ritmo é GLOBAL; o botão leva até ele em vez de fingir que é do dia. */
+    rhythm: {
+      label: 'Ritmo',
+      value: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
+      change: 'Mudar →',
+    },
     title: '🕘 Janelas do dia',
     intro: 'Só pra este dia. A rotina em Configurações continua igual.',
     windowsLabel: 'Janelas de estudo',
@@ -371,6 +377,40 @@ export const strings = {
      * e fica uma hora no foco nunca veria os balões.
      */
     liveHint: 'O próximo bloco emenda sozinho. Precisa parar? O botão está aqui embaixo.',
+    /**
+     * O tour das Configurações. Cartão no rodapé, e a página é quem acende a seção —
+     * ver `SETTINGS_TOUR` em `domain/tutorial.ts`. Cada passo explica a DECISÃO que a
+     * seção representa, não onde clicar: o campo está aceso logo acima.
+     */
+    settings: {
+      intro: 'Como o seu dia é montado',
+      steps: {
+        'set-windows': {
+          title: 'Janelas de estudo',
+          body: 'As faixas do dia em que você estuda — o app só monta pomodoro dentro delas. Duas janelas com um buraco no meio é o jeito de dizer "de manhã e de noite".',
+        },
+        'set-rhythm': {
+          title: 'Ritmo do pomodoro',
+          body: 'Quanto dura um estudo, a pausa curta e a longa. É daqui que sai o tamanho de cada bloco do seu dia — e dá pra chegar nesta seção direto pelo "🕘 Janelas do dia".',
+        },
+        'set-preview': {
+          title: 'Como fica o dia',
+          body: 'O resultado das duas seções acima, antes de valer: quantos pomodoros cabem e onde o dia termina. Se algo não fecha, o aviso aparece aqui.',
+        },
+        'set-daymode': {
+          title: 'Modo do dia',
+          body: 'Pela rotina, o dia já nasce montado. Ao vivo, ele começa quando você aperta Começar e vai até onde você for. Vale só de hoje em diante, e cada dia dá pra trocar no Plano.',
+        },
+        'set-goal': {
+          title: 'Meta diária',
+          body: 'Os minutos que fazem o dia contar pra sequência. É um piso, não uma cobrança — bater a meta é o que acende o dia, passar dela não muda nada.',
+        },
+        'set-period': {
+          title: 'Período de uso',
+          body: 'Até quando o app desenha semanas pra frente. O início é a única coisa aqui que não dá pra mudar depois — pra trocar, só apagando o histórico, e isso tem 30 dias de volta.',
+        },
+      } as Record<string, { title: string; body: string }>,
+    },
     /** Indexado pelo id do passo (`domain/tutorial.ts`). Duas linhas no máximo: explica o modelo, não o botão. */
     steps: {
       'plan-blocks': {
