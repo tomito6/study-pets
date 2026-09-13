@@ -1659,7 +1659,9 @@ test.describe('Study Pets — smoke', () => {
   });
 
   test('48. a leva fecha na lista: marcar o último estudo do ciclo comemora e carimba o divisor', async ({ page }) => {
-    await abrirApp(page, '10:10');
+    // 10:40 e não 10:10: desde 2026-09-13 bloco que ainda não começou não aceita check,
+    // e o quarto estudo da leva é 10:30–10:55. O que o teste mede é a leva, não o relógio.
+    await abrirApp(page, '10:40');
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
     const divisor = page.locator('.cycle-divider').first();
