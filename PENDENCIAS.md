@@ -138,7 +138,7 @@ candidato e já é o nome do overlay; (c) o nome do app muda junto? Aí é domí
 documentos legais — e o CLAUDE.md pede pra **não** renomear o projeto na Vercel, porque o domínio muda e
 o Authorized domain do Firebase Auth quebra o login com Google. Se mudar, vale plan próprio.
 
-**Decidido em 2026-09-13** (branch `feat/vocabulario`): as três perguntas estão respondidas em
+**Decidido em 2026-09-13**: as três perguntas estão respondidas em
 `plans/2026-09-13_0300_vocabulario.md`, com a **lista de execução pronta** (111 trocas, antes e depois
 literais). Resumo: **(a)** só o que o usuário lê — `schemaVersion` continua 4; **(b)** não existe uma
 palavra: o bloco numerado vira `🍅 Pomodoro 3`, o substantivo da atividade vira "foco" minúsculo e
