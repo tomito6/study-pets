@@ -140,7 +140,15 @@ saída</b> — então a tela principal deste modo é o foco, e a aba Plano é o 
   <a href="#s6">6 · Trocar no meio do dia</a> &nbsp;·&nbsp;
   <a href="#s7">7 · Dia misturado e dia passado</a> &nbsp;·&nbsp;
   <a href="#s8">8 · O tutorial</a> &nbsp;·&nbsp;
-  <a href="#s9">9 · O gerador</a> &nbsp;·&nbsp;
+  <a href="#s9">9 · O gerador</a><br>
+  <b style="color:var(--text)">Rodada 2:</b> &nbsp;
+  <a href="#s10">10 · O toggle do seu jeito</a> &nbsp;·&nbsp;
+  <a href="#s11">11 · As duas abordagens</a> &nbsp;·&nbsp;
+  <a href="#s12">12 · Sair no meio</a> &nbsp;·&nbsp;
+  <a href="#s13">13 · Hardcore e o almoço</a> &nbsp;·&nbsp;
+  <a href="#s14">14 · O bloco parcial</a> &nbsp;·&nbsp;
+  <a href="#s15">15 · O check adiantado</a> &nbsp;·&nbsp;
+  <a href="#s16">16 · A Análise</a><br>
   <a href="#fim">O que eu faria</a> &nbsp;·&nbsp;
   <a href="#perg">O que eu preciso que você decida</a>
 </div>
@@ -316,8 +324,11 @@ saída</b> — então a tela principal deste modo é o foco, e a aba Plano é o 
   mesma classe de coisa, então ele entra ali e não numa faixa nova. Isso não é economia de pixel: tirando aquele
   botão do dia ao vivo, como os primeiros esboços faziam, o modo <b>levava junto o “🌴 Dia livre”</b> — o app
   perderia a única frase que diz “hoje eu não vou, e tudo bem”, e pra declarar folga a pessoa teria que voltar
-  pro modo rotina primeiro. De quebra, o rótulo novo é mais curto que o de hoje: a barra do dia quebra em duas
-  linhas a 360px quando diz “🕘 Janelas · editado”, e “⏱ Ao vivo” alivia isso em vez de piorar.</p>
+  pro modo rotina primeiro. De quebra, o rótulo novo é mais curto que o de hoje — <b>73,4px contra 130,5px</b>,
+  medidos no app rodando —, e a barra do dia cai de 269,1px para 227,4px.
+  <b style="color:var(--novo)">Correção de 13/09:</b> a rodada 1 dizia aqui que a barra “quebra em duas linhas
+  a 360px”. Não quebra, em nenhuma largura — medi de novo no app de verdade. O rótulo curto ganha folga,
+  não conserta um estrago.</p>
   <div class="frames">
     <div class="frame">
       <p class="cap">a barra do dia, nos três estados do botão</p>
@@ -378,7 +389,7 @@ saída</b> — então a tela principal deste modo é o foco, e a aba Plano é o 
   </div>
   <div class="cut ok">O “ou nas configurações, ou em cima na esquerda” do seu pedido: eu atendi pelo lado das
   Configurações e pelo botão do dia, e <b>recusei o chip no canto superior esquerdo</b> — ele é imposto permanente
-  na barra de todo mundo por um modo que talvez use 20% dos dias, e ali mora o <code>#today-label</code>, que é
+  na barra de todo mundo, e ali mora o <code>#today-label</code>, que é
   sempre <b>hoje</b> enquanto o modo é do dia <b>visível</b>. Navegar pro dia 16 deixaria o chip mentindo ou
   tiraria o “hoje” do cabeçalho. Medi o custo mesmo assim e ele está na última seção, como pergunta.</div>
 </section>
@@ -942,6 +953,564 @@ saída</b> — então a tela principal deste modo é o foco, e a aba Plano é o 
   depois do primeiro pomodoro); e retomar uma pausa tem que empurrar o fim da corrida <b>antes</b> de regenerar.</div>
 </section>
 
+<style>
+/* ── rodada 2 ───────────────────────────────────────────────────────── */
+.rodada{max-width:1180px;margin:52px 0 30px;display:flex;align-items:center;gap:14px}
+.rodada b{font-family:var(--font-title);font-size:21px;font-weight:600;white-space:nowrap}
+.rodada i{flex:1;height:0;border-top:1px solid var(--border-strong);font-style:normal}
+.rodada span{font-size:12px;color:var(--muted)}
+.day-mode{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin:0 16px 8px}
+.dm-btn{flex:1;background:transparent;border:0;color:var(--muted);font-size:12px;padding:8px 0;font-family:var(--font-ui)}
+.dm-btn.on{background:var(--accent-wash);color:var(--accent);font-weight:600}
+.dm-btn+.dm-btn{border-left:1px solid var(--border)}
+.day-mode.dead{opacity:.4}
+.wk-row{display:flex;align-items:center;gap:12px;padding:12px 16px 4px}
+.wk-row .sel{flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);
+  padding:7px 10px;font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--muted);font-size:11.5px;padding:6px 11px;font-family:var(--font-ui);white-space:nowrap}
+.seg button.on{background:var(--accent-wash);color:var(--accent);font-weight:600}
+.seg button+button{border-left:1px solid var(--border)}
+.seg.empty{border-style:dashed;border-color:var(--novo);padding:6px 11px;color:var(--muted);font-size:11.5px}
+.cmp{border-collapse:collapse;font-size:12.5px;width:100%;max-width:880px}
+.cmp th{text-align:left;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  padding:0 14px 7px 0;border-bottom:1px solid var(--border)}
+.cmp th:first-child{width:30%}
+.cmp td{padding:9px 14px 9px 0;border-bottom:1px solid var(--hairline);vertical-align:top;line-height:1.5;color:var(--muted)}
+.cmp td:first-child{color:var(--text)}
+.cmp td.win{color:var(--accent)}
+.cmp td.lose{color:#9c6a45}
+.mini{width:172px}
+.mini .cap{font-size:10px}
+.arrowrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.arrowrow .ar{font-size:19px;color:var(--muted)}
+.hc-note{font-size:11px;color:var(--muted);text-align:center;margin:10px 0 0}
+.stop-sheet .porta{border:1px solid var(--border);border-radius:var(--radius-md);padding:11px 13px;margin-bottom:9px;background:var(--bg)}
+.stop-sheet .porta .pt{font-size:13.5px;color:var(--text);font-weight:600}
+.stop-sheet .porta .ps{font-size:11.5px;color:var(--muted);margin-top:3px}
+.stop-sheet .conta{background:var(--accent-wash);border-radius:var(--radius-sm);padding:10px;text-align:center;
+  font-family:var(--font-mono);font-size:13px;color:var(--accent);margin:12px 0 14px}
+.dayline{display:flex;align-items:center;gap:9px;margin:8px 0 2px}
+.dayline i{flex:1;height:0;border-top:1px dashed var(--border-strong)}
+.dayline span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono)}
+.dropoff .do-row{display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:11.5px}
+.dropoff .do-n{width:54px;color:var(--muted);font-family:var(--font-mono)}
+.dropoff .do-track{flex:1;height:7px;background:var(--track);border-radius:99px;overflow:hidden}
+.dropoff .do-fill{height:100%;background:var(--accent);border-radius:99px}
+.dropoff .do-v{width:74px;text-align:right;color:var(--muted);font-family:var(--font-mono);font-size:11px}
+.check.dim{opacity:.35}
+</style>
+
+<div class="rodada"><b>Rodada 2</b><i></i><span>13/09 · depois das suas respostas</span></div>
+
+<!-- ══════════════════════════════════════════════════════ 10 -->
+<section id="s10">
+  <h2><span class="num">10</span>O toggle do seu jeito<span class="tag">sua ideia</span></h2>
+  <p class="why">Você pediu pra ver desenhado antes de fechar, então aqui está na melhor versão possível — e
+  com a tela que decide. Um aviso de partida: no celular <b>não existe</b> um "botão que nem o treco de
+  Dia/Semana". Aquele controle só é montado a partir de 1100px, no JSX e no CSS — eu confirmei injetando um
+  a 480px e ele sai como <code>div</code> sem estilo nenhum. Então no celular isto é um componente novo, de
+  largura cheia, numa fila própria. No laptop, cabe ao lado do outro com folga enorme: largura nunca foi o
+  problema.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap">celular · a fila nova, <b>Rotina</b> ligado</p>
+      <div class="phone">
+        <div class="wk-row"><span class="sel">Semana 2 · 08/09 – 14/09</span></div>
+        <div class="day-tabs" style="display:flex;gap:5px;padding:0 16px 8px">
+          <button class="nav-tab" style="padding:5px 0;font-size:11px">Seg</button>
+          <button class="nav-tab active" style="padding:5px 0;font-size:11px">Ter</button>
+          <button class="nav-tab" style="padding:5px 0;font-size:11px">Qua</button>
+          <button class="nav-tab" style="padding:5px 0;font-size:11px">Qui</button>
+          <button class="nav-tab" style="padding:5px 0;font-size:11px">Sex</button>
+        </div>
+        <div class="day-mode mark"><button class="dm-btn on">📋 Rotina</button><button class="dm-btn">⏱ Ao vivo</button></div>
+        <div class="day-events-bar"><button class="add-event-btn">🕘 Janelas do dia</button><button class="add-event-btn">Agrupar</button><button class="add-event-btn primary">+ Evento</button></div>
+        <div class="list" style="padding-top:6px">
+          <div class="block-row"><span class="check"></span><span class="block-time">09:00–09:25</span><span class="block-name">📖 Estudo 1</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row pausa-row"><span class="check"></span><span class="block-time">09:25–09:30</span><span class="block-name">🧘 Pausa</span><span class="block-xp">+5 XP</span></div>
+        </div>
+      </div>
+      <p class="note"><b>+40px de altura permanente</b>, em todo dia — inclusive fim de semana pausado e dia
+      livre, onde não há estudo de que falar.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">celular · <b>Ao vivo</b> ligado, dia em andamento</p>
+      <div class="phone">
+        <div class="day-mode"><button class="dm-btn">📋 Rotina</button><button class="dm-btn on mark">⏱ Ao vivo</button></div>
+        <div class="day-events-bar"><button class="add-event-btn">🕘 Janelas do dia</button><button class="add-event-btn">Agrupar</button><button class="add-event-btn primary">+ Evento</button></div>
+        <div class="list" style="padding-top:6px">
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:12–09:37</span><span class="block-name">📖 Estudo 1</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row pausa-row"><span class="check checked">✓</span><span class="block-time">09:37–09:42</span><span class="block-name">🧘 Pausa</span><span class="block-xp">+5 XP</span></div>
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:42–10:07</span><span class="block-name">📖 Estudo 2</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row now-block"><span class="check"></span><span class="block-time">10:07–10:32</span><span class="block-name">📖 Estudo 3</span><span class="pill solid">▶ Continuar</span></div>
+        </div>
+        <div class="live-tally">3 estudos · 1h15 hoje</div>
+        <div style="height:14px"></div>
+      </div>
+      <p class="note">De propósito eu <b>não</b> desenhei a tela vazia com um botão: ela dura quatro segundos,
+      uma vez por dia. Desenhar o modo por ela é o rebaixamento em forma de mockup.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">celular · o <b>dia misto</b> — a tela que decide</p>
+      <div class="phone">
+        <div class="day-mode"><button class="dm-btn">📋 Rotina</button><button class="dm-btn on">⏱ Ao vivo</button></div>
+        <div class="list" style="padding-top:10px">
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:00–09:25</span><span class="block-name">📖 Estudo 1</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:30–09:55</span><span class="block-name">📖 Estudo 2</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row ev-row"><span class="check"></span><span class="block-time">13:00–14:00</span><span class="block-name">🍽️ Refeição</span></div>
+          <div class="mode-divider"><span class="md-line"></span><span class="md-label">Ao vivo a partir daqui</span><span class="md-line"></span></div>
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">14:12–15:02</span><span class="block-name">📖 Estudo 5</span><span class="block-xp">+100 XP</span></div>
+        </div>
+        <div style="height:12px"></div>
+      </div>
+      <p class="note" style="color:var(--novo)">O controle diz <b>Ao vivo</b>. A manhã foi pela rotina — e
+      isso não cabe em dois botões. Uma terceira posição ("Misto") também não resolve: três chips com ícone
+      medem 238px e estouram a barra em todo celular.</p>
+    </div>
+    <div class="frame auto">
+      <p class="cap">laptop · os dois segmentados na mesma linha</p>
+      <div class="desk" style="width:560px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="sel" style="flex:1">Semana 2 · 08/09 – 14/09</span>
+          <span class="seg"><button>Dia</button><button class="on">Semana</button></span>
+          <span class="seg mark"><button class="on">📋 Rotina</button><button>⏱ Ao vivo</button></span>
+        </div>
+      </div>
+      <p class="note" style="max-width:560px">Cabe com folga: sobram ~490px mesmo a 1100px, o pior caso. O
+      custo não é largura — são <b>quatro palavras do mesmo peso</b>, duas que trocam a vista e duas que
+      trocam o dia, sem nada na tela dizendo qual é qual.</p>
+      <p class="cap" style="margin-top:18px">laptop · na Semana, o segundo toggle some</p>
+      <div class="desk" style="width:560px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="sel" style="flex:1">Semana 2 · 08/09 – 14/09</span>
+          <span class="seg"><button>Dia</button><button class="on">Semana</button></span>
+          <span class="seg empty">— sai daqui —</span>
+        </div>
+      </div>
+      <p class="note" style="max-width:560px">Na Semana não há dia visível, então o controle pisca pra dentro
+      e pra fora conforme a vista — e é o botão colado nele que o faz sumir.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">celular · os estados mortos</p>
+      <div class="phone" style="padding:14px 0">
+        <div class="day-mode dead"><button class="dm-btn on">📋 Rotina</button><button class="dm-btn">⏱ Ao vivo</button></div>
+        <p class="note" style="padding:0 16px;margin:0 0 10px">dia passado</p>
+        <div class="day-mode dead"><button class="dm-btn on">📋 Rotina</button><button class="dm-btn">⏱ Ao vivo</button></div>
+        <p class="note" style="padding:0 16px;margin:0 0 10px">dia encerrado</p>
+        <div class="day-mode dead"><button class="dm-btn on">📋 Rotina</button><button class="dm-btn">⏱ Ao vivo</button></div>
+        <p class="note" style="padding:0 16px;margin:0">fim de semana pausado</p>
+      </div>
+      <p class="note">Na maioria das telas em que ele aparece, <b>não dá pra apertar</b>. E todo dia anterior
+      à feature passa a exibir "Rotina" aceso — o app rotulando o histórico inteiro com uma palavra que
+      ninguém escolheu.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ 11 -->
+<section id="s11">
+  <h2><span class="num">11</span>As duas abordagens, lado a lado</h2>
+  <p class="why">A decisão é sua, e fica mais fácil com as duas no mesmo recorte. A de baixo é a que já
+  estava desenhada: o modo mora onde o app já decide as outras coisas do dia.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap"><b>D</b> · a barra e o modal</p>
+      <div class="phone">
+        <div class="day-events-bar" style="padding-bottom:12px"><button class="add-event-btn live mark">⏱ Ao vivo</button><button class="add-event-btn">Agrupar</button><button class="add-event-btn primary">+ Evento</button></div>
+        <div class="overlay" style="padding-top:4px"><div class="sheet">
+          <h3>Modo do dia</h3>
+          <div class="chips"><button class="chip">📋 Rotina</button><button class="chip on">⏱ Ao vivo</button><button class="chip">🌴 Dia livre</button></div>
+          <p class="chip-desc">O dia começa quando você começa.</p>
+          <div class="card"><div class="k">Janelas deste dia</div>
+            <div class="st-row" style="margin-top:7px"><span>09:00 → 12:00</span><span class="v">3h 00min</span></div></div>
+          <div class="sheet-foot"><button class="link">↺ Voltar ao padrão</button><button class="btn ghost">Cancelar</button><button class="btn solid">Salvar</button></div>
+        </div></div>
+      </div>
+      <p class="note">A barra soma <b>227px</b> de 361 — 42px mais curta que hoje.</p>
+    </div>
+    <div class="frame">
+      <p class="cap"><b>D</b> · o dia misto, no modal</p>
+      <div class="phone"><div class="overlay"><div class="sheet">
+        <h3>Modo do dia</h3>
+        <div class="chips"><button class="chip">📋 Rotina</button><button class="chip on">⏱ Ao vivo</button><button class="chip">🌴 Dia livre</button></div>
+        <p class="chip-desc mark" style="padding:7px 9px;border-radius:8px">Ao vivo desde as 14:02. Antes disso, pela rotina.</p>
+        <div class="card"><div class="k">Janelas deste dia</div>
+          <div class="st-row" style="margin-top:7px"><span>09:00 → 12:35</span><span class="v">rotina</span></div>
+          <div class="st-row"><span>14:02 → agora</span><span class="v" style="color:var(--accent)">ao vivo</span></div></div>
+        <div class="sheet-foot"><button class="link">↺ Voltar ao padrão</button><button class="btn ghost">Cancelar</button><button class="btn solid">Salvar</button></div>
+      </div></div></div>
+      <p class="note">É o quadro que responde ao do dia misto na seção 10: a linha que a barra <b>nunca</b>
+      poderia carregar cabe aqui sem apertar nada.</p>
+    </div>
+    <div class="frame auto" style="width:100%">
+      <p class="cap">o comparativo</p>
+      <table class="cmp">
+        <tr><th></th><th>A · toggle (sua ideia)</th><th>D · botão do dia (decidido)</th></tr>
+        <tr><td>Onde fica</td><td>fila própria acima da barra</td><td>dentro do botão que já existe</td></tr>
+        <tr><td>Existe no celular hoje</td><td class="lose">não — componente novo</td><td class="win">sim</td></tr>
+        <tr><td>Altura permanente</td><td class="lose">+40px em todo dia</td><td class="win">zero</td></tr>
+        <tr><td>Na Semana</td><td class="lose">some (não há dia visível)</td><td class="win">não existe lá, e tudo bem</td></tr>
+        <tr><td>Dia livre e Voltar ao padrão</td><td>continuam no botão — dois lugares</td><td class="win">mesmo modal, um lugar</td></tr>
+        <tr><td>Natureza do gesto</td><td class="lose">parece instantâneo e reversível; confirma e não volta</td><td>modal — quem abriu veio decidir</td></tr>
+        <tr><td>Dia misto</td><td class="lose">mente acima da lista, o dia inteiro</td><td class="win">uma linha explica</td></tr>
+        <tr><td>Barra do dia</td><td>inalterada (269px)</td><td class="win">227px</td></tr>
+        <tr><td>Custo no e2e</td><td>0 asserções — mas quebra calada a regra de desenho do tour</td><td>4 rótulos + 1 clique no teste da extensão</td></tr>
+      </table>
+      <div class="cut" style="margin-top:14px"><b>A:</b> o modo fica visível sem abrir nada — e mente no dia
+      misto. &nbsp;<b>D:</b> o modo mora onde o dia já é decidido — e pra ver, tem que abrir.</div>
+    </div>
+    <div class="frame">
+      <p class="cap">o detalhe que o e2e não pega</p>
+      <div class="phone" style="padding:14px 0 16px">
+        <div class="tour" style="margin:0 16px 10px">
+          <h4>Seu dia já está montado</h4>
+          <p>Marque o check quando terminar um bloco. Tocar no bloco abre o modo foco.</p>
+          <div class="tf"><button class="skip">Pular</button><button class="next">Próximo (1/3)</button></div>
+        </div>
+        <div class="day-mode mark"><button class="dm-btn on">📋 Rotina</button><button class="dm-btn">⏱ Ao vivo</button></div>
+        <div class="day-events-bar"><button class="add-event-btn">🕘 Janelas do dia</button><button class="add-event-btn">Agrupar</button><button class="add-event-btn primary">+ Evento</button></div>
+      </div>
+      <p class="note">O balão do tour se ancora na <b>barra do dia</b>. Empurrar a âncora 40px pra baixo dá
+      <i>mais</i> espaço acima — então o e2e 27/45/46 passa verde e a regra de desenho ("o balão cobre só o
+      seletor de semana e as abas dos dias") quebra calada. É o mesmo buraco por onde os dois bugs de posição
+      do tour entraram.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ 12 -->
+<section id="s12">
+  <h2><span class="num">12</span>Sair no meio — os quatro cruzamentos<span class="tag">seu pedido</span></h2>
+  <p class="why">Sair no meio é um <b>fato</b>, não uma fuga: o app paga o que aconteceu. E isso é mais
+  barato do que parece — o "cheio ou nada" nunca foi uma decisão, é só consequência de o XP sair do plano e
+  o check não guardar duração. Como XP e moeda são lineares, basta o plano ter o bloco do tamanho certo.
+  Uma primitiva só, com o mesmo nome e a mesma conta em rotina e ao vivo: a pausa aberta vira registro, o
+  dia fecha em "agora", o bloco em andamento entra com a duração real. <b>Zero campo novo no documento.</b>
+  No hardcore o estudo continua custando 2× — foi o combinado — e a pausa vira a porta.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap">rotina × normal — e <b>ao vivo × normal é a mesma tela</b></p>
+      <div class="phone"><div class="focus">
+        <div class="focus-top"><span class="focus-clock">10:12</span></div>
+        <span class="cyc-chip">Ciclo 1 · Bloco 3</span>
+        <div class="focus-name">Estudo 3</div>
+        <div class="focus-sub">25 min</div>
+        <div class="ring-wrap" style="width:160px;height:160px">
+          <svg width="160" height="160"><circle cx="80" cy="80" r="70" fill="none" stroke="#e5dcc8" stroke-width="8"></circle>
+          <circle cx="80" cy="80" r="70" fill="none" stroke="#486244" stroke-width="8" stroke-linecap="round"
+            stroke-dasharray="440" stroke-dashoffset="211"></circle></svg>
+          <div class="ring-time"><span class="big" style="font-size:32px">12:47</span></div></div>
+        <div class="focus-gain">+50 XP · +25 🪙 ao concluir</div>
+        <div class="focus-actions"><button>⏸ Pausar</button><button class="mark">■ Parar por aqui</button></div>
+      </div></div>
+      <p class="note">Os dois botões têm <b>o mesmo peso</b>: nenhum é o principal, porque nenhum é "o
+      certo". A mesma tela com o chip "⏱ Ao vivo" e o placar do dia é o par que prova que o modo ao vivo
+      não é menos — só o chip muda.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">a folha "Parar por aqui?"</p>
+      <div class="phone"><div class="overlay" style="background:rgba(64,56,46,.4)"><div class="sheet stop-sheet">
+        <h3>Parar por aqui?</h3>
+        <div class="conta mark">Estudo 3 entra com 12 min · +24 XP · +12 🪙</div>
+        <div class="porta"><div class="pt">■ Parar</div><div class="ps">Dá pra voltar mais tarde.</div></div>
+        <div class="porta"><div class="pt">✓ Encerrar o dia</div><div class="ps">Credita o XP agora.</div></div>
+        <div class="sheet-foot" style="justify-content:center"><button class="link" style="margin:0">Continuar estudando</button></div>
+      </div></div></div>
+      <p class="note">A conta vem pronta, com tique de minuto — senão o número envelhece na tela.
+      <b>Nada de contar o que não vai acontecer</b>: sem "−6 estudos saem do plano". A folha só aparece com
+      bloco em andamento e pelo menos 1 minuto estudado; sem isso, parar para e pronto.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">foco pausado · a saída honesta</p>
+      <div class="phone"><div class="focus">
+        <div class="focus-top"><span class="focus-clock">10:20</span><span style="font-size:11px;color:var(--accent)">← Sair</span></div>
+        <div class="focus-name">Estudo 3</div>
+        <div class="focus-sub">pausado · 08:41</div>
+        <div class="ring-wrap" style="width:150px;height:150px;opacity:.45">
+          <svg width="150" height="150"><circle cx="75" cy="75" r="66" fill="none" stroke="#e5dcc8" stroke-width="8"></circle>
+          <circle cx="75" cy="75" r="66" fill="none" stroke="#6e6455" stroke-width="8" stroke-dasharray="415" stroke-dashoffset="199"></circle></svg>
+          <div class="ring-time"><span class="big" style="font-size:30px;color:var(--muted)">12:47</span></div></div>
+        <div class="focus-actions"><button class="accentish">▶ Retomar</button><button class="mark">■ Parar por aqui</button></div>
+      </div></div>
+      <p class="note">O que muda embaixo do capô: parar aqui <b>registra os 8 minutos antes de cortar</b>.
+      Hoje o "✕ Parar" chama <code>clearPause()</code> e os minutos parados somem do histórico — é o buraco
+      que esta primitiva fecha de passagem.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">hardcore rodando um <b>estudo</b> · o contraste</p>
+      <div class="phone"><div class="focus">
+        <div class="focus-top"><span class="focus-clock">10:12</span><span class="focus-chip" style="border-color:var(--orange);color:var(--orange)">🔥 Hardcore</span></div>
+        <div class="focus-name">Estudo 3</div>
+        <div class="focus-sub">25 min</div>
+        <div class="ring-wrap" style="width:150px;height:150px">
+          <svg width="150" height="150"><circle cx="75" cy="75" r="66" fill="none" stroke="#e5dcc8" stroke-width="8"></circle>
+          <circle cx="75" cy="75" r="66" fill="none" stroke="#486244" stroke-width="8" stroke-linecap="round" stroke-dasharray="415" stroke-dashoffset="199"></circle></svg>
+          <div class="ring-time"><span class="big" style="font-size:30px">12:47</span></div></div>
+        <p class="hc-note mark">Na próxima pausa você pode sair de graça.</p>
+        <div class="focus-actions"><button style="border-color:var(--orange);color:var(--orange)">Desistir…</button></div>
+      </div></div>
+      <p class="note">Sem "Sair", sem "Pausar", sem "Parar por aqui". Desistir continua custando 2× o XP do
+      bloco <b>inteiro</b> — proporcional na multa faria desistir no minuto 1 custar 4 XP, e aí o modo deixa
+      de ser modo. A única novidade é a linha cinza, que torna o hardcore suportável sem afrouxá-lo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ 13 -->
+<section id="s13">
+  <h2><span class="num">13</span>O hardcore que deixa você almoçar<span class="tag">seu pedido</span></h2>
+  <p class="why">Você pediu: no hardcore não dá pra sair do estudo, mas <b>entre dois pomodoros</b> deveria
+  dar pra botar um evento. A porta de sair na pausa já existe hoje ("Parar aqui, sem custo"); o que falta é
+  cadastrar o evento <b>sem perder a sessão</b>.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap">hardcore numa <b>pausa</b></p>
+      <div class="phone"><div class="focus">
+        <div class="focus-top"><span class="focus-clock">12:47</span><span class="focus-chip" style="border-color:var(--orange);color:var(--orange)">🔥 Hardcore</span></div>
+        <div class="focus-name">Pausa</div>
+        <div class="focus-sub">5 min</div>
+        <div class="ring-wrap" style="width:150px;height:150px">
+          <svg width="150" height="150"><circle cx="75" cy="75" r="66" fill="none" stroke="#e5dcc8" stroke-width="8"></circle>
+          <circle cx="75" cy="75" r="66" fill="none" stroke="#8fa7c4" stroke-width="8" stroke-linecap="round" stroke-dasharray="415" stroke-dashoffset="66"></circle></svg>
+          <div class="ring-time"><span class="big" style="font-size:30px">04:12</span></div></div>
+        <p class="hc-note mark">Na pausa dá pra mexer no plano.</p>
+        <div class="focus-actions"><button class="mark">+ Evento</button><button>■ Parar aqui (sem custo)</button></div>
+      </div></div>
+      <p class="note">Dois botões de contorno, <b>nenhum vermelho</b>: a pausa não é o momento de assustar.
+      O chip do hardcore fica, porque a sessão continua viva.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">o "+ Evento" aberto <b>dentro</b> do foco</p>
+      <div class="phone"><div class="focus" style="padding-top:10px">
+        <div class="overlay" style="background:rgba(64,56,46,.45);padding:10px 6px"><div class="sheet">
+          <h3>Novo evento</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+            <button class="chip on" style="flex:1 1 47%">🍽️ Refeição</button><button class="chip" style="flex:1 1 47%">👥 Reunião</button>
+            <button class="chip" style="flex:1 1 47%">☕ Café</button><button class="chip" style="flex:1 1 47%">🚌 Deslocamento</button>
+          </div>
+          <div class="rhythm3" style="margin:0">
+            <div><label>Início</label><div class="inp">13:00</div></div>
+            <div><label>Fim</label><div class="inp">14:00</div></div>
+          </div>
+          <p class="note" style="margin-top:9px">Só a partir das 12:50, o fim desta pausa.</p>
+          <div class="sheet-foot"><button class="btn ghost">Cancelar</button><button class="btn solid">Salvar</button></div>
+        </div></div>
+      </div></div>
+      <p class="note">O preset 🍽️ já vem escolhido e o formulário já em 13:00–14:00. A guarda de horário
+      <b>não é higiene</b>: um evento que mova o fim da pausa em andamento faz o app perder o bloco de vista
+      e a sessão hardcore morrer em silêncio como "acabou sozinha". O toast da recusa:
+      "Esse horário já está rolando ⏳".</p>
+      <div class="cut ok" style="max-width:393px">E a linha tem que dizer a verdade:
+      <b>o hardcore termina quando o evento começar — sem custo.</b> Não "a corrente segue": com um bloqueio
+      no caminho não há próximo bloco pra emendar, e a sessão encerra ali, de graça.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ 14 -->
+<section id="s14">
+  <h2><span class="num">14</span>A linha do bloco parcial</h2>
+  <p class="why">Os horários já dizem tudo. Um selo "parcial" ou "12 de 25 min" seria comparação com o que
+  <b>não</b> aconteceu — cobrança disfarçada. Quem explica é uma marca sobre o <b>dia</b>, não sobre o bloco.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap">a lista depois de parar</p>
+      <div class="phone">
+        <div class="list">
+          <div class="cycle-divider c1"><span class="cd-label">Ciclo 1</span><span class="cd-line"></span></div>
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:00–09:25</span><span class="block-name">📖 Estudo 1</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row pausa-row"><span class="check checked">✓</span><span class="block-time">09:25–09:30</span><span class="block-name">🧘 Pausa</span><span class="block-xp">+5 XP</span></div>
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:30–09:55</span><span class="block-name">📖 Estudo 2</span><span class="block-xp">+50 XP</span></div>
+          <div class="block-row pausa-row"><span class="check checked">✓</span><span class="block-time">09:55–10:00</span><span class="block-name">🧘 Pausa</span><span class="block-xp">+5 XP</span></div>
+          <div class="block-row mark"><span class="check checked">✓</span><span class="block-time">10:00–10:12</span><span class="block-name">📖 Estudo 3</span><span class="block-xp">+24 XP</span></div>
+          <div class="dayline"><i></i><span>Parei às 10:12</span><i></i></div>
+        </div>
+        <div class="live-start" style="margin-top:0;padding:18px">
+          <div class="ls-title" style="font-size:18px;margin:0 0 4px">Voltar?</div>
+          <p class="ls-note" style="margin:0 0 13px">A rotina volta a partir de agora.</p>
+          <button class="ls-btn">▶ Voltar</button>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+      <p class="note">A linha parcial <b>não tem nada de diferente</b> — check normal, XP da duração real.
+      O toast da parada conta o ganho, nunca a perda:
+      "■ Parei às 10:12 · Estudo 3 com 12 min · +24 XP".</p>
+    </div>
+    <div class="frame">
+      <p class="cap">o que "↺ Voltar ao padrão" faz agora</p>
+      <div class="phone" style="padding-bottom:12px">
+        <p class="note" style="padding:10px 16px 0;margin:0">depois de apertar, às 13:30</p>
+        <div class="list">
+          <div class="block-row"><span class="check checked">✓</span><span class="block-time">10:00–10:12</span><span class="block-name">📖 Estudo 3</span><span class="block-xp">+24 XP</span></div>
+          <div class="dayline"><i></i><span>Parei às 10:12</span><i></i></div>
+          <div class="mode-divider mark"><span class="md-line"></span><span class="md-label">Rotina a partir daqui</span><span class="md-line"></span></div>
+          <div class="block-row now-block"><span class="check"></span><span class="block-time">13:30–13:55</span><span class="block-name">📖 Estudo 4</span><span class="pill solid">▶ Iniciar</span></div>
+          <div class="block-row pausa-row"><span class="check"></span><span class="block-time">13:55–14:00</span><span class="block-name">🧘 Pausa</span><span class="block-xp">+5 XP</span></div>
+        </div>
+      </div>
+      <p class="note" style="color:var(--novo)">A manhã fica <b>intacta</b>: o parcial de 12 min continua 12
+      min. Sem esta amarra, dois toques curariam o bloco e devolveriam 50 XP no lugar de 24 — o XP deixaria
+      de ser proporcional exatamente no fluxo que a feature existe pra servir, e pelo caminho honesto.</p>
+      <div class="cut ok" style="max-width:393px">"Voltar ao padrão" passa a significar <b>a rotina volta de
+      agora em diante</b> — nunca "apaga o que foi vivido".</div>
+    </div>
+    <div class="frame auto">
+      <p class="cap">laptop · o cartão e a lista dizendo a mesma coisa</p>
+      <div class="desk" style="display:flex;gap:22px;align-items:flex-start">
+        <div class="col">
+          <div class="ck">Pausado · 08:41</div>
+          <div class="clock" style="font-family:var(--font-mono);font-size:30px;color:var(--orange);line-height:1;margin:6px 0 12px">12:47</div>
+          <div class="crow"><button class="cstart">▶ Continuar</button><span class="rv">■ Parar</span></div>
+        </div>
+        <div style="width:300px">
+          <div style="display:flex;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--hairline)">
+            <span class="check checked" style="width:15px;height:15px;font-size:9px">✓</span><span class="block-time" style="min-width:84px;color:var(--s0)">10:00–10:12</span><span class="block-name" style="font-size:12.5px">Estudo 3</span><span class="block-xp">+24 XP</span></div>
+          <div class="dayline" style="margin-top:10px"><i></i><span>Parei às 10:12</span><i></i></div>
+        </div>
+      </div>
+      <p class="note" style="max-width:560px">Na barra o rótulo é <b>"■ Parar"</b>, não "Parar por aqui":
+      medido, o longo tem 98px contra 53px, e a barra do timer é a linha mais apertada do app.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ 15 -->
+<section id="s15">
+  <h2><span class="num">15</span>O check que não chega adiantado<span class="tag">seu pedido</span></h2>
+  <p class="why">Hoje, às 09:00, dá pra marcar o bloco das 17:45 e levar XP, moedas, meta e sequência — a
+  função que autoriza o check <b>nunca olha o horário do bloco</b>, só o dia. É isso que faz o modo rotina
+  parecer auto-declaração, e fechar aqui é o que iguala os dois modos. São <b>dois portões</b>: bloco que
+  não começou não aceita check; e o bloco <b>em andamento</b> também não aceita check manual — ele se fecha
+  pelo "▶ Continuar", pagando o proporcional. Sem o segundo, marcar no minuto 1 levaria o bloco cheio
+  enquanto "Parar por aqui" aos 12 minutos paga 24.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap">a lista às 10:10</p>
+      <div class="phone"><div class="list">
+        <div class="block-row"><span class="check checked">✓</span><span class="block-time">09:00–09:25</span><span class="block-name">📖 Estudo 1</span><span class="block-xp">+50 XP</span></div>
+        <div class="block-row pausa-row"><span class="check checked">✓</span><span class="block-time">09:25–09:30</span><span class="block-name">🧘 Pausa</span><span class="block-xp">+5 XP</span></div>
+        <div class="block-row"><span class="check"></span><span class="block-time">09:30–09:55</span><span class="block-name">📖 Estudo 2</span><span class="block-xp">+50 XP</span></div>
+        <div class="block-row now-block"><span class="check dim mark"></span><span class="block-time">10:00–10:25</span><span class="block-name">📖 Estudo 3</span><span class="pill solid">▶ Continuar</span></div>
+        <div class="block-row"><span class="check dim mark"></span><span class="block-time">10:30–10:55</span><span class="block-name">📖 Estudo 4</span><span class="block-xp">+50 XP</span></div>
+        <div class="block-row"><span class="check dim"></span><span class="block-time">11:00–11:25</span><span class="block-name">📖 Estudo 5</span><span class="block-xp">+50 XP</span></div>
+      </div><div style="height:14px"></div></div>
+      <p class="note">Só o <b>check</b> esmaece, nunca a linha inteira. Esmaecer 25 de 30 linhas deixaria o
+      dia aberto com cara de dia morto — e o estilo do dia futuro desliga o ponteiro, o que mataria a
+      entrada do foco em espera. Tocando, o toast é o que o dia futuro já usa: "Ainda não chegou 🔮".</p>
+    </div>
+    <div class="frame">
+      <p class="cap">as duas amarras</p>
+      <div class="phone" style="padding:16px 0">
+        <div class="list" style="padding-bottom:6px">
+          <div class="block-row" style="border-color:var(--orange);opacity:.75"><span class="check" style="border:0;color:var(--orange)">✕</span><span class="block-time">10:00–10:25</span><span class="block-name">📖 Estudo 3</span><span class="block-xp" style="color:var(--orange);background:var(--orange-bg)">desistiu</span></div>
+        </div>
+        <p class="note" style="padding:0 16px;margin:0 0 14px">continua dizendo <b>"Você desistiu deste bloco"</b> — a recusa nova vem <i>depois</i> da do abandono</p>
+        <div class="list" style="padding-bottom:6px">
+          <div class="block-row now-block"><span class="check dim"></span><span class="block-time">10:30–10:55</span><span class="block-name">📖 Estudo 4</span><span class="pill">▶ Iniciar</span></div>
+        </div>
+        <p class="note" style="padding:0 16px;margin:0">o <b>foco em espera</b> continua abrindo — a recusa vive só no caminho do check, nunca no clique da linha</p>
+      </div>
+      <p class="note">As duas foram medidas: sem a primeira o app troca a explicação certa pela errada e um
+      teste de hardcore cai; sem a segunda, o foco aberto antes da hora deixa de existir.</p>
+      <div class="cut ok" style="max-width:393px">A régua é <b>"já começou"</b>, e ela custou 2 de 943 testes
+      unitários e 1 de 54 do smoke — todos ajuste de relógio, verificados verdes. A régua dura ("já
+      terminou") custaria 7 e criaria dois bugs reais: recusaria o check automático do próprio foco quando
+      o bloco termina antes do fim do plano por causa de uma pausa.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ 16 -->
+<section id="s16">
+  <h2><span class="num">16</span>A Análise não pergunta em que modo o dia aconteceu<span class="tag">você tinha razão</span></h2>
+  <p class="why">Na rodada 1 eu tirei os dias ao vivo do gráfico de conclusão por ciclo e apaguei uma linha
+  dos cards. Você reclamou, e estava certo. <b>A causa não era o modo</b> — era o ciclo contar corridas em
+  vez de pomodoros: cada parada criava um ciclo, então um dia com seis paradas virava seis ciclos em 100%.
+  Consertada a causa, <b>nenhum dia precisa ser excluído de nada</b>.</p>
+  <div class="frames">
+    <div class="frame">
+      <p class="cap">o drop-off · antes e depois</p>
+      <div class="phone" style="padding:16px">
+        <p class="cap" style="margin-bottom:8px">antes — por blocos, dias ao vivo fora</p>
+        <div class="dropoff" style="opacity:.6">
+          <div class="do-row"><span class="do-n">Ciclo 1</span><span class="do-track"><span class="do-fill" style="width:100%"></span></span><span class="do-v">100%</span></div>
+          <div class="do-row"><span class="do-n">Ciclo 2</span><span class="do-track"><span class="do-fill" style="width:85%"></span></span><span class="do-v">85%</span></div>
+          <div class="do-row"><span class="do-n">Ciclo 3</span><span class="do-track"><span class="do-fill" style="width:55%"></span></span><span class="do-v">55%</span></div>
+          <div class="do-row"><span class="do-n">Ciclo 4</span><span class="do-track"><span class="do-fill" style="width:25%"></span></span><span class="do-v">25%</span></div>
+        </div>
+        <p class="note" style="margin:4px 0 18px;color:var(--novo)">só dias de rotina</p>
+        <p class="cap" style="margin-bottom:8px">depois — por dias, todo mundo dentro</p>
+        <div class="dropoff mark" style="padding:6px">
+          <div class="do-row"><span class="do-n">Ciclo 1</span><span class="do-track"><span class="do-fill" style="width:100%"></span></span><span class="do-v">12 de 12</span></div>
+          <div class="do-row"><span class="do-n">Ciclo 2</span><span class="do-track"><span class="do-fill" style="width:75%"></span></span><span class="do-v">9 de 12</span></div>
+          <div class="do-row"><span class="do-n">Ciclo 3</span><span class="do-track"><span class="do-fill" style="width:45%"></span></span><span class="do-v">5 de 11</span></div>
+          <div class="do-row"><span class="do-n">Ciclo 4</span><span class="do-track"><span class="do-fill" style="width:25%"></span></span><span class="do-v">2 de 8</span></div>
+        </div>
+      </div>
+      <p class="note">Chegou = marcou algum estudo do ciclo. Completou = marcou todos. Medindo por
+      <b>dias</b>, o 100% automático do dia ao vivo some por construção — hoje o numerador dele <i>é</i> o
+      denominador. E a nota "só dias de rotina" desaparece.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">o card de um dia ao vivo · a linha que fica</p>
+      <div class="phone" style="padding:16px">
+        <div class="card" style="padding:16px">
+          <div class="k">Realizado hoje</div>
+          <div style="font-family:var(--font-mono);font-size:26px;color:var(--accent);margin:8px 0 3px">75 / 60 min ✓</div>
+          <div style="font-size:12px;color:var(--muted)">1h15 de estudo · 1h15 no plano</div>
+          <div class="bar-track" style="height:7px;background:var(--track);border-radius:99px;margin-top:11px;overflow:hidden">
+            <div style="height:100%;width:100%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+      <p class="note">Redundante não é falso. E nos cards de Semana e Geral a lista <b>mistura os dois
+      modos</b> — a linha não teria como sumir só num deles sem piscar conforme a semana.</p>
+    </div>
+    <div class="frame">
+      <p class="cap">o feedback que o dia ao vivo perdia</p>
+      <div class="phone"><div class="focus" style="padding-top:14px">
+        <div class="focus-done"><span class="fd-pet">🐕</span><div><div class="fd-title">✓ Estudo 3 concluído</div>
+          <div class="fd-sub">+50 XP · +25 🪙</div></div></div>
+        <div class="ring-wrap" style="width:150px;height:150px;margin-top:4px">
+          <svg width="150" height="150"><circle cx="75" cy="75" r="66" fill="none" stroke="#e5dcc8" stroke-width="8"></circle>
+          <circle cx="75" cy="75" r="66" fill="none" stroke="#486244" stroke-width="8" stroke-linecap="round" stroke-dasharray="415" stroke-dashoffset="0"></circle></svg>
+          <div class="ring-time"><span class="big" style="font-size:22px;color:var(--accent)">+50 XP</span></div>
+          <span class="mark" style="position:absolute;inset:-8px;border-radius:50%"></span>
+        </div>
+        <div class="scene-foot">o ripple, o número subindo e o som — saindo do anel</div>
+      </div></div>
+      <p class="note">O dia padrão tem <b>33 blocos marcáveis</b>. Num dia ao vivo, com o check automático,
+      você não toca em nenhum: zero ripples, zero números subindo, zero sons de check, o dia inteiro. Isso é
+      o modo ao vivo sendo uma versão do app <i>sem o prazer do app</i>. O gesto sumiu; o momento não — então
+      o fim do bloco no foco passa a disparar o mesmo trio.</p>
+    </div>
+    <div class="frame auto">
+      <p class="cap">laptop · a Semana num dia ao vivo futuro</p>
+      <div class="desk" style="width:430px">
+        <div style="display:flex;gap:5px;height:210px;font-size:9px;color:var(--muted)">
+          <div style="flex:1"><div style="text-align:center;padding-bottom:5px">Seg</div>
+            <div style="background:rgba(122,155,111,.5);height:52px;border-radius:3px;margin-bottom:3px"></div>
+            <div style="background:rgba(122,155,111,.5);height:64px;border-radius:3px"></div></div>
+          <div style="flex:1"><div style="text-align:center;padding-bottom:5px">Ter</div>
+            <div style="background:rgba(122,155,111,.5);height:52px;border-radius:3px;margin-bottom:3px"></div>
+            <div style="background:rgba(122,155,111,.5);height:40px;border-radius:3px"></div></div>
+          <div style="flex:1"><div style="text-align:center;padding-bottom:5px;border-bottom:2px solid var(--accent)">Qua</div>
+            <div style="margin-top:20px;background:rgba(72,98,68,.55);height:38px;border-radius:3px"></div>
+            <div style="border-top:1px solid #b3764f;margin-top:4px"></div></div>
+          <div style="flex:1" class="mark"><div style="text-align:center;padding-bottom:5px">Qui</div>
+            <div style="height:170px;border:1px dashed var(--border-strong);border-radius:4px;position:relative">
+              <div style="position:absolute;left:2px;right:2px;top:40px;height:26px;background:var(--orange-bg);border:1px dashed var(--orange-border);border-radius:3px"></div>
+            </div></div>
+        </div>
+      </div>
+      <p class="note" style="max-width:430px">Quinta é futura e ao vivo: os <b>eventos</b> aparecem normalmente,
+      e atrás deles a janela da rotina em contorno, sem blocos dentro e sem cor de ciclo. O "Sem plano ainda"
+      sai. A leitura é <i>"é aqui que você costuma estudar"</i>, não "é isto que você vai fazer" — e com o
+      padrão global ligado, sem isso a semana inteira ficaria vazia.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ══════════════════════════════════════════════════════ fim -->
 <section id="fim" style="background:var(--accent-bg);border-color:var(--accent-border)">
   <h2>O que eu faria</h2>
@@ -964,46 +1533,66 @@ saída</b> — então a tela principal deste modo é o foco, e a aba Plano é o 
   <p class="why" style="color:var(--text)"><b>O que eu recusei do seu pedido, e por quê:</b> o chip de modo no
   canto superior esquerdo. Ali mora a data de hoje, e o modo é do dia <i>visível</i> — navegar pro dia 16 deixaria
   o chip mentindo ou tiraria o “hoje” do cabeçalho. Fora que é um elemento permanente na barra de todo mundo por
-  um modo que talvez use 20% dos dias. Medi o custo mesmo assim (138×29px, a barra continua em 96px a 320/360/375/393,
+  um modo cujo lugar natural é outro. Medi o custo mesmo assim (138×29px, a barra continua em 96px a 320/360/375/393,
   e no laptop a data já está escondida): se você quiser, é barato, e o lugar está certo. Está como primeira
   pergunta abaixo.</p>
 </section>
 
 <section id="perg">
-  <h2>O que eu preciso que você decida</h2>
-  <p class="why">Sete. As três primeiras mudam o desenho; as outras quatro mudam o comportamento em casos
-  específicos, e todas têm a minha escolha já marcada — se você não responder, eu sigo por ela.</p>
-  <ol class="olist" style="font-size:13px;max-width:860px">
-    <li><b>O chip no canto superior esquerdo entra?</b> <span class="tag q">minha escolha: não</span> Alternativas: entra no
-    lugar da data no celular; ou só <i>aparece</i> depois que você usar o modo uma vez.</li>
-    <li><b>Os nomes “Rotina” e “Ao vivo”.</b> <span class="tag q">minha escolha: sim</span> Uma das revisões objetou que “ao
-    vivo” é vocabulário de transmissão — sugere alguém te assistindo. Alternativas: “Plano · Agora”, “Planejado ·
-    Sem plano”, ou não nomear e o botão dizer o estado (“Hoje: sem plano”). Isso encosta direto na pendência do
-    vocabulário e talvez valha decidir junto. Se “Rotina” virar nome de modo, o “↺ Restaurar rotina” do modal
-    <b>tem</b> que virar “↺ Voltar ao padrão”, senão “rotina” significa duas coisas no mesmo modal — o erro de
-    “sessão” de novo.</li>
-    <li><b>O padrão global em Configurações entra no v1?</b> <span class="tag q">minha escolha: entra</span> Mas ele
-    <b>precisa</b> guardar a data em que você virou a chave: sem isso a leitura é retroativa, todo dia passado sem
-    janela editada viraria “ao vivo sem corrida”, e XP total, nível, moedas, sequência, melhor dia e o heatmap
-    inteiro sumiriam da tela num clique.</li>
-    <li><b>A noite esquecida.</b> <span class="tag q">minha escolha: não marcar nada</span> Se o fim de um bloco foi
-    detectado há mais de 5 min, a corrida termina ali e o bloco fica na lista <b>sem</b> check — você marca à mão
-    se fez. Alternativas: perguntar na volta (mais preciso, mais fricção) ou marcar e parar (inventa até 25 min).
-    <b>Achado de graça, que não é do tracker:</b> esse mesmo laço já mente hoje no modo rotina — fechar o laptop
-    às 10h com o foco aberto e voltar às 18h <b>marca o plano inteiro do dia</b>. Quer que eu abra item próprio?</li>
-    <li><b>Um dia ao vivo que nunca foi começado: falha ou folga?</b> <span class="tag q">minha escolha: falha</span>
-    Dizer “hoje é ao vivo” não é dizer “hoje eu descanso”, e o “🌴 Dia livre” está a um chip de distância no mesmo
-    modal. A alternativa (neutro) é confortável e faz quem usa o modo nunca falhar um dia — e aí a sequência deixa
-    de significar o que significa hoje.</li>
-    <li><b>O intervalo: rotula depois, ou pergunta na hora?</b> <span class="tag q">minha escolha: depois</span></li>
-    <li><b>O fim do bloco continua marcando sozinho no foco?</b> <span class="tag q">minha escolha: sim</span> Custo real,
-    e eu registro: num dia ao vivo você <b>nunca marca nada</b>, e o ripple verde, o “+50 XP” flutuante e o som do
-    check — que o próprio CLAUDE.md nomeia como um dos dois motivos pra voltar — não acontecem o dia inteiro.
-    Sobra a faixa de 4s por bloco e a do ciclo por leva. Se depois de um mês o dia ao vivo parecer seco, é essa a
-    primeira alavanca a puxar.</li>
+  <h2>As sete de ontem — respondidas</h2>
+  <p class="why">Suas respostas de 13/09, e o que cada uma virou.</p>
+  <table class="cmp" style="max-width:940px">
+    <tr><th style="width:38%">A pergunta</th><th style="width:18%">Você</th><th>O que virou</th></tr>
+    <tr><td>1 · O chip no canto superior esquerdo</td><td class="win">meu jeito, mas quero ver o seu</td><td>Fica no botão do dia. O seu está desenhado na <b>seção 10</b>, e o comparativo na <b>11</b>.</td></tr>
+    <tr><td>2 · Os nomes</td><td class="win">Rotina e Ao vivo</td><td>Fechado. E as definições foram cortadas — você reclamou de "muuuitas palavras".</td></tr>
+    <tr><td>3 · O padrão global</td><td class="win">entra</td><td>Entra, guardando a data em que a chave virou. Isso derrubou várias outras decisões: ver a <b>16</b>.</td></tr>
+    <tr><td>4 · A noite esquecida</td><td class="win">não marcar nada</td><td>Fechado. E o pedido novo — não marcar bloco futuro — virou a <b>seção 15</b>.</td></tr>
+    <tr><td>5 · Dia ao vivo nunca começado</td><td class="win">falha, como qualquer dia</td><td>Era a minha escolha também. Mas você tinha razão no fundo: a <b>16</b> desfaz os três lugares em que eu de fato rebaixei o modo.</td></tr>
+    <tr><td>6 · O intervalo</td><td class="win">rotula depois</td><td>Fechado — e virou parte da <b>12</b>, com o XP proporcional.</td></tr>
+    <tr><td>7 · O check automático no foco</td><td class="win">fica</td><td>Fica, e agora com ripple, "+XP" e som: um dia ao vivo perdia os 33 feedbacks do dia.</td></tr>
+  </table>
+  <div class="cut ok" style="margin-top:16px;max-width:940px"><b>Uma frase pro CLAUDE.md quando isso for
+  implementado:</b> <i>o modo é como o dia foi vivido, não quanto ele vale. Nenhuma métrica, nenhum gráfico e
+  nenhum recorde pergunta em que modo o dia aconteceu.</i></div>
+</section>
+
+<section id="perg2">
+  <h2>O que sobrou pra você decidir</h2>
+  <p class="why">Oito, e todas nasceram das suas respostas. As três primeiras mudam o app inteiro, inclusive
+  pros dias de rotina que já existem — essas eu não decido sozinho. As outras cinco têm a minha escolha
+  marcada.</p>
+  <ol class="olist" style="font-size:13px;max-width:880px">
+    <li><b>O drop-off passa a contar dias em vez de blocos?</b> <span class="tag q">muda pra todo mundo</span>
+    É o conserto certo (a causa era o ciclo contar corridas), mas ele mexe no gráfico dos seus dias de rotina
+    que já existem: os percentuais sobem e achatam, porque a pergunta vira "quantos dias inteiros" em vez de
+    "quantos blocos". A alternativa barata é média de estudos por ciclo, sem denominador — entra igual nos
+    dois modos, mas perde a leitura de aderência.</li>
+    <li><b>O bloco em andamento deixa de aceitar check manual?</b> <span class="tag q">muda pra todo mundo</span>
+    É o que fecha o buraco de marcar no minuto 1 e levar o bloco cheio enquanto "Parar por aqui" aos 12
+    minutos paga 24. Mas tira um gesto que hoje funciona. Fecho, ou deixo marcar e aceito que os mesmos 12
+    minutos tenham dois preços?</li>
+    <li><b>Os recordes que contam BLOCO passam a contar MINUTO?</b> <span class="tag q">muda pra todo mundo</span>
+    Melhor dia, Melhor semana e o "BLOCOS" do Perfil. Sem isso, um dia muito picado toma o recorde pra
+    sempre — e com o proporcional, picar o dia fica de graça. Já é possível hoje com pomo curto; isto só
+    deixa mais fácil. O recorde de XP num dia já é imune.</li>
+    <li><b>A partir de quantos minutos uma parada deixa de ser "⏸ pausa" e vira "saída"?</b>
+    <span class="tag q">minha escolha: 30 min, só no texto</span> Hoje os dois são o mesmo dado e a mesma
+    linha: um bloco 09:00–13:00 com "⏸ 228 min" é honesto e feio. 30 min é um limiar que o app já conhece.</li>
+    <li><b>Voltar depois de parar: automático ou pelo botão?</b> <span class="tag q">minha escolha: botão</span>
+    Automático é gentil, mas apaga o fato de que houve um intervalo.</li>
+    <li><b>Um dia de rotina em que você parou no meio é o quê?</b> <span class="tag q">minha escolha: (a)</span>
+    (a) um dia de rotina com o fim aparado, (b) meio rotina meio ao vivo, ou (c) ao vivo dali pra frente. A
+    implementação é a mesma; muda o que o botão da barra diz e se aparece o "↺ Voltar ao padrão".</li>
+    <li><b>No hardcore, desistir continua pagando zero pelos minutos feitos?</b>
+    <span class="tag q">minha escolha: sim</span> É a única incoerência que sobra num app que passa a pagar
+    por minuto em todo lugar — e é defensável: proporcional na multa faria desistir no minuto 1 custar 4 XP,
+    e aí o modo deixa de ser modo. A alternativa é os minutos feitos entrarem, com a multa cheia por cima.</li>
+    <li><b>Na Semana, a faixa da rotina num dia ao vivo futuro:</b> <span class="tag q">minha escolha: contorno vazio</span>
+    contorno vazio (mais honesto, quase invisível ao lado das colunas cheias) ou contorno com as horas escritas?</li>
   </ol>
   <p class="legend"><i></i> tracejado laranja = o que é novo. Tudo que não está tracejado já existe no app hoje.</p>
 </section>
+
 
 </body>
 </html>
