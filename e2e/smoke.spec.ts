@@ -135,7 +135,7 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: 'Começar' }).click();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
 
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#ap-name')).toHaveText('Sibila');
     await expect(page.locator('#ap-species')).toHaveText('Cobra');
     await expect(page.locator('#pet-sprite')).toHaveAttribute('src', /idle\/pets\/snake\//);
@@ -785,7 +785,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
 
     // O pet desceu de nível na hora (a forma fica).
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#ap-lv')).toHaveText('Lv. 4');
     await expect(page.locator('#ap-species')).toHaveText('Gato');
   });
@@ -858,7 +858,7 @@ test.describe('Study Pets — smoke', () => {
     await checksDeEstudo(page).nth(1).click();
     await expect(checksDeEstudo(page).nth(1)).not.toHaveClass(/checked/);
 
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#char-coins')).toHaveText('25');
   });
 
@@ -1006,7 +1006,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
     await expect(page.locator('#xp-total')).toHaveText('350');
 
-    await page.getByRole('button', { name: /Análise/ }).click();
+    await page.locator('#tab-analise').click();
     await expect(page.locator('#analytics-page')).toHaveClass(/visible/);
     await page.locator('#tour-skip').click(); // o balão da Análise fica em cima da sub-nav (teste 36 cobre ele)
     await expect(page.locator('#tour-balloon')).toHaveCount(0);
@@ -1085,7 +1085,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
 
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#char-coins')).toHaveText('180');
 
     await page.getByRole('button', { name: /Loja de pets/ }).click();
@@ -1114,7 +1114,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
 
     // Adota o cachorro com nome próprio (o campo já vem com uma sugestão).
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await page.getByRole('button', { name: /Loja de pets/ }).click();
     await page.locator('#pets-shop-panel .shop-item', { hasText: 'Cachorro' }).locator('.shop-btn').click();
     await expect(page.locator('#pet-name-input')).not.toHaveValue('');
@@ -1147,7 +1147,7 @@ test.describe('Study Pets — smoke', () => {
 
     // O Perfil sinaliza (selo no card do pet ativo, contagem em "Meus pets"); tocar no card abre o pet.
     // O pet inicial também chegou no Lv. 5 no dia 1 — toda espécie evolui —, então são dois.
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#ap-lv')).toHaveText('Lv. 5');
     await expect(page.locator('#ap-evo-badge')).toBeVisible();
     await expect(page.locator('#my-pets-evo')).toHaveText('2 podem evoluir');
@@ -1425,12 +1425,12 @@ test.describe('Study Pets — smoke', () => {
     await expect(balao).toHaveCount(0);
 
     // Cada aba tem o seu, na primeira visita. "Pular" marca a aba inteira.
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(balao).toContainText('Pets são horas estudadas');
     await expect(balao).not.toContainText('1/1'); // balão único não tem contador
     await page.locator('#tour-skip').click();
     await expect(balao).toHaveCount(0);
-    await page.getByRole('button', { name: /Plano/ }).click();
+    await page.locator('#tab-plano').click();
     await expect(balao).toHaveCount(0);
 
     // Configurações → Geral → "Ver o tour de novo": fecha e o 1/3 volta.
@@ -1448,7 +1448,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click(); // o Plano fica visto
     await expect(balao).toHaveCount(0);
 
-    await page.getByRole('button', { name: /Análise/ }).click();
+    await page.locator('#tab-analise').click();
     await expect(balao).toHaveAttribute('data-step', 'analytics-subnav');
     await expect(balao).toContainText('Tô fazendo o que planejei?');
     await expect(balao).not.toContainText('1/1'); // balão único não tem contador
@@ -1467,7 +1467,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#save-indicator')).toContainText('Modo teste');
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
-    await page.getByRole('button', { name: /Análise/ }).click();
+    await page.locator('#tab-analise').click();
     await expect(page.locator('#analytics-page')).toHaveClass(/visible/);
     await expect(balao).toHaveCount(0);
   });
@@ -1506,12 +1506,12 @@ test.describe('Study Pets — smoke', () => {
       await abrirApp(page);
       await page.locator('#tour-skip').click();
 
-      await page.getByRole('button', { name: /Perfil/ }).click();
+      await page.locator('#tab-perfil').click();
       await expect(page.locator('#tour-balloon')).toContainText('Pets são horas estudadas');
       await balaoUtilizavel(page);
       await page.locator('#tour-skip').click();
 
-      await page.getByRole('button', { name: /Análise/ }).click();
+      await page.locator('#tab-analise').click();
       await expect(page.locator('#tour-balloon')).toContainText('Tô fazendo o que planejei?');
       await balaoUtilizavel(page);
     });
@@ -1633,14 +1633,14 @@ test.describe('Study Pets — smoke', () => {
 
     // Vale na hora, sem "Salvar" — o mesmo sprite já está no Perfil.
     await page.getByRole('button', { name: /Voltar/ }).click();
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#char-sprite')).toHaveAttribute('src', comCabelo!);
 
     // E é salvo: recarregar traz a mesma aparência de volta.
     await expect(page.locator('#save-indicator')).toContainText('Modo teste');
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#char-sprite')).toHaveAttribute('src', comCabelo!);
   });
 
@@ -1760,11 +1760,11 @@ test.describe('Study Pets — smoke', () => {
 
     // É a mesma aparência no Perfil…
     await page.locator('#tour-skip').click();
-    await page.getByRole('button', { name: /Perfil/ }).click();
+    await page.locator('#tab-perfil').click();
     await expect(page.locator('#char-sprite')).toHaveAttribute('src', escolhido!);
 
     // …e as Configurações abrem com ela selecionada.
-    await page.getByRole('button', { name: /Plano/ }).click();
+    await page.locator('#tab-plano').click();
     await page.getByRole('button', { name: 'Configurações' }).click();
     await page.locator('#settings-panel .settings-tab[data-tab="general"]').click();
     await expect(page.locator('#avatar-picker [data-swatch="ebano"]')).toHaveClass(/selected/);
@@ -2079,8 +2079,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(balao).toBeHidden();
 
     // Visto uma vez, não volta.
-    await page.getByRole('button', { name: /Perfil/ }).click();
-    await page.getByRole('button', { name: /Plano/ }).click();
+    await page.locator('#tab-perfil').click();
+    await page.locator('#tab-plano').click();
     await expect(balao).toBeHidden();
   });
 
