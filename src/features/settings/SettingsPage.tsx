@@ -11,7 +11,7 @@ import { safetyNetDaysLeft } from '../../domain/backup';
 import { setDefaultDayMode } from '../../application/dayWindows';
 import { exportMyData } from '../../application/export';
 import { clearSettingsRequest, saveSettings } from '../../application/settings';
-import { finishTour, restartTour } from '../../application/tutorial';
+import { clearSetupTour, finishTour, restartTour } from '../../application/tutorial';
 import { SETTINGS_TOUR } from '../../domain/tutorial';
 import { defaultDraft, draftFromConfig, normalizeConfig } from '../../domain/settings';
 import type { ConfigDraft } from '../../domain/settings';
@@ -120,10 +120,12 @@ export function SettingsPage() {
 
   // ---- o tour das Configurações (cartão no rodapé; ver domain/tutorial.ts) ----
   const tourVisto = useAppState((s2) => s2.tutorialSeen.settings === true);
+  /** A corrida de setup: armada pelo `finishOnboarding`, some no último "Entendi". */
+  const obrigatorio = useAppState((_s2, d) => d.setupTour);
   const [passoTour, setPassoTour] = useState(0);
   // Não roda por cima do onboarding nem de um modal desta página (o Encaixar estudo é
   // um `.panel-overlay` em z-200, o mesmo da página: o cartão ficaria por baixo dele).
-  const tourAtivo = open && !tourVisto && !onboarding && modal === 'none' && !tourSuspenso;
+  const tourAtivo = open && !tourVisto && !onboarding && modal === 'none' && (obrigatorio || !tourSuspenso);
   const passoAtual = tourAtivo ? SETTINGS_TOUR[passoTour] : undefined;
 
   useEffect(() => {
@@ -137,11 +139,20 @@ export function SettingsPage() {
     return () => clearTimeout(r);
   }, [passoAtual?.id]);
 
+  const encerrarTour = () => {
+    const eraSetup = obrigatorio;
+    finishTour('settings');
+    clearSetupTour();
+    setPassoTour(0);
+    // A corrida de setup é a continuação do onboarding: terminando, a pessoa cai no
+    // Plano dela. Quem abriu a página por conta própria fica onde estava.
+    if (eraSetup) setOpen(false);
+  };
   const avancarTour = () => {
-    if (passoTour + 1 >= SETTINGS_TOUR.length) { finishTour('settings'); setPassoTour(0); return; }
+    if (passoTour + 1 >= SETTINGS_TOUR.length) { encerrarTour(); return; }
     setPassoTour((i) => i + 1);
   };
-  const pularTour = () => { finishTour('settings'); setPassoTour(0); };
+  const pularTour = () => { if (obrigatorio) return; encerrarTour(); };
 
   /** A seção acesa agora: a do passo do tour, ou a que o atalho pediu. */
   const acesa = passoAtual?.section ?? (focus ? FOCO[focus]?.section : undefined);
@@ -201,7 +212,9 @@ export function SettingsPage() {
 
       <div className={'settings-page' + (open ? ' open' : '')} id="settings-panel">
         <div className="st-topbar">
-          <button type="button" className="st-back" onClick={close}>{t.back}</button>
+          {/* Na corrida de setup o "← Voltar" some: com ele a trava não trava. São seis
+              cliques e acaba — e a página fica utilizável por baixo o tempo todo. */}
+          {!obrigatorio && <button type="button" className="st-back" onClick={close}>{t.back}</button>}
           <div className="st-title">{t.title}</div>
         </div>
         <div className="st-tabs-wrap">
@@ -494,7 +507,7 @@ export function SettingsPage() {
         </div>
         {/* Acima da barra de ações, dentro da página: filho da `.settings-page`, então
             não disputa z-index com ela nem depende do `zoom` do `#app` da tela grande. */}
-        {tourAtivo && <SettingsTour passo={passoTour} onNext={avancarTour} onSkip={pularTour} />}
+        {tourAtivo && <SettingsTour passo={passoTour} obrigatorio={obrigatorio} onNext={avancarTour} onSkip={pularTour} />}
         <div className="st-actions">
           <div className="st-actions-inner">
             <button className="reset-btn" onClick={() => setDraft(defaultDraft())}>{t.reset}</button>

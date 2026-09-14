@@ -51,41 +51,20 @@ daquele dia passaria a carregar **ritmo próprio**? A segunda é a que o IDEIAS 
 (ritmo por janela, ou até por grupo) e é a única honesta dentro de um modal que diz "só pra este dia" —
 mas é campo novo no documento, e o precedente que existe hoje é só o `StudyWindow.live`, do modo ao vivo.
 
-## 5. O tutorial das Configurações obrigatório
-
-O tutorial das Configurações existe desde 2026-09-14 (seis cartões, uma vez, com "Pular"). O pedido do
-Tomi era que **não desse pra pular**, e isso ficou de fora de propósito — não por preguiça, por risco.
-
-A trava não pode morar na TELA, só na corrida. Se ela pertencer à página, toda porta lateral vira
-armadilha: o `#gear-btn` e o menu do avatar (`Header.tsx`), o "importe de um calendário" do Novo evento
-(`requestSettings('calendar')`), e principalmente o **"Ver o tour de novo"** — `restartTour()` zera
-`tutorialSeen` inteiro, então quem clicou por curiosidade ficaria preso em seis cartões sem saída, num
-app cujo guia proíbe exatamente esse padrão. Tirar o "Pular" também deixa um `role="dialog"` sem saída
-por teclado.
-
-**O desenho que funciona**, se for pra fazer: a corrida obrigatória é disparada por `finishOnboarding`,
-não por abrir a página — uma vez, numa conta que nunca viu tour nenhum (`Object.keys(tutorialSeen).length
-=== 0`), com o contador visível e a tela utilizável por baixo. Toda porta lateral abre os **mesmos**
-cartões com Pular. Quem apagou o histórico não é interrogado de novo: `cancelSession` preserva
-`tutorialSeen` de propósito.
-
-**Custo medido:** `abrirApp` (`e2e/smoke.spec.ts`) é usado por quase todos os 60 testes, e a corrida
-obrigatória põe seis cliques em cada um — o helper `passarOnboarding` teria de dispensá-la.
-
-## 6. A Semana no celular
+## 5. A Semana no celular
 
 Continua em aberto desde 2026-09-06. Já está descartado: grid de sete colunas rolando de lado. Já foi
 rejeitado: uma linha por dia com faixa horizontal das 9h às 19h. **Precisa de uma rodada nova de
 esboço** — não dá pra implementar sem ela.
 
-## 7. A validação de evento ainda usa `alert()` nativo
+## 6. A validação de evento ainda usa `alert()` nativo
 
 Quatro `alert()` em `features/events/EventPanel.tsx` quando salvar é recusado — é a única caixa nativa
 que sobrou no app, e destoa de tudo. **Decidir:** vira toast (como Grupos, Janelas do dia e
 Configurações) ou erro inline no painel (como login e apagar conta)? Toast é o padrão dominante pra
 recusa de save em modal.
 
-## 8. `stopBlocking()` no logout fura a regra do "recarregar não é escapar"
+## 7. `stopBlocking()` no logout fura a regra do "recarregar não é escapar"
 
 O bloqueio de sites só manda `stopped` quando *esta* carga da página armou algo — é o que impede
 recarregar pra liberar o site. O `stopBlocking()` do logout não tem essa guarda: sair da conta manda
@@ -93,20 +72,20 @@ recarregar pra liberar o site. O `stopBlocking()` do logout não tem essa guarda
 o alarme do `until`, no máximo um pomodoro), ou o logout é saída legítima e o texto é que deve dizer
 isso?
 
-## 9. Notificação pelo service worker
+## 8. Notificação pelo service worker
 
 Hoje é `new Notification`, que no Chrome do Android nem existe como construtor. Trocar por
 `registration.showNotification` faz a notificação funcionar no celular — mas só no build (o SW não
 existe em dev). O push do servidor o IDEIAS.md já decidiu não fazer. **Decidir:** vale o primeiro
 degrau?
 
-## 10. Miúdos de conta, se um dia houver outro usuário
+## 9. Miúdos de conta, se um dia houver outro usuário
 
 Sem lembrete de e-mail não verificado no perfil, e sem vincular Google + e-mail/senha
 (`linkWithCredential`) — quem cria conta com um e-mail que já entrou pelo Google recebe "use o Google".
 Ambos foram adiados conscientemente enquanto o app é de um usuário só. **Decidir:** ainda podem esperar?
 
-## 11. Modo tracker, ao lado do modo planner
+## 10. Modo tracker, ao lado do modo planner
 
 O app hoje é **planner**: você monta a rotina antes, o dia nasce pronto e você vai marcando. O pedido
 (2026-09-12) é o modo **tracker**: você chega, escolhe o ritmo do pomodoro do dia e aperta um botão só
@@ -146,7 +125,7 @@ dias, o bloco em andamento deixar de aceitar check manual, e os recordes por min
 no plan. As três perguntas que mudam o app inteiro (drop-off por dias, o bloco em andamento
 deixar de aceitar check manual, e os recordes por minuto) continuam abertas, com o custo medido no plan.
 
-## 12. O vocabulário (e o nome) presumem estudo
+## 11. O vocabulário (e o nome) presumem estudo
 
 "Janelas de estudo", "Estudo 3", "Encaixar estudo", "meta diária de estudo", `studyWindows`,
 `dailyStudyMin` — e "Study Pets". Quem usa pomodoro pra trabalhar não se vê em nada disso, e o pedido
@@ -171,7 +150,7 @@ Chrome Web Store abrirem. **"Foco" como nome do bloco foi descartado**: `strings
 foco no modo foco". Junto vieram dois bugs: **7 das 17 skills mentem** (a regra aceita evento, a descrição
 diz "estudo") e "N estudos" no grupo e no ciclo conta evento. **Cinco perguntas ficaram pro Tomi.**
 
-## 13. O modo escuro vira o "Loft noturno"
+## 12. O modo escuro vira o "Loft noturno"
 
 Pedido de 2026-09-12. O escuro de hoje é o tema original do app, herdado da primeira versão — nunca
 foi desenhado. A exploração das oito direções
@@ -193,7 +172,7 @@ cabe na regra, mas é desenho novo, não redefinição; (c) a exploração tamb�
 noite vira loft) ou continua escolha manual em Configurações → Aparência? Automático soa bonito e é
 exatamente o tipo de coisa que irrita quando erra.
 
-## 14. Nada diz qual das abas dos dias é HOJE
+## 13. Nada diz qual das abas dos dias é HOJE
 
 A metade que sobrou do item da meia-noite (a outra foi resolvida em 2026-09-13: o `dayRollover` agora
 leva a tela junto quando o dia vira — ver "A meia-noite com o app aberto" no CLAUDE.md).

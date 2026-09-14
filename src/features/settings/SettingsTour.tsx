@@ -18,11 +18,17 @@ const t = strings.tutorial;
 interface Props {
   /** Índice do passo atual em `SETTINGS_TOUR`. */
   passo: number;
+  /**
+   * A corrida de setup (logo depois do onboarding): sem "Pular". Em toda outra porta
+   * — engrenagem, menu do avatar, "Ver o tour de novo" — isto é `false` e o Pular
+   * existe, senão a trava deixaria de ser setup e viraria armadilha de tela.
+   */
+  obrigatorio: boolean;
   onNext: () => void;
   onSkip: () => void;
 }
 
-export function SettingsTour({ passo, onNext, onSkip }: Props) {
+export function SettingsTour({ passo, obrigatorio, onNext, onSkip }: Props) {
   const step = SETTINGS_TOUR[passo];
   if (!step) return null;
   const texto = t.settings.steps[step.id];
@@ -30,7 +36,7 @@ export function SettingsTour({ passo, onNext, onSkip }: Props) {
   const ultimo = passo === SETTINGS_TOUR.length - 1;
 
   return (
-    <div className="st-tour" id="settings-tour" role="dialog" aria-label={t.settings.intro}>
+    <div className={'st-tour' + (obrigatorio ? ' st-tour-setup' : '')} id="settings-tour" role="dialog" aria-label={t.settings.intro}>
       <div className="st-tour-head">
         <span className="st-tour-kicker">{t.settings.intro}</span>
         <span className="st-tour-count" id="settings-tour-count">{t.counter(passo + 1, SETTINGS_TOUR.length)}</span>
@@ -38,11 +44,12 @@ export function SettingsTour({ passo, onNext, onSkip }: Props) {
       <div className="st-tour-title" id="settings-tour-title">{texto.title}</div>
       <p className="st-tour-body">{texto.body}</p>
       <div className="st-tour-actions">
-        {/* "Pular" continua existindo, e existe de propósito: sem ele este cartão é a
-            única coisa na tela sem saída por teclado, e o CLAUDE.md proíbe o padrão de
-            prender quem só queria abrir as Configurações. Ver a pendência do tour
-            obrigatório pra como armá-lo com segurança. */}
-        <button type="button" className="st-tour-skip" id="settings-tour-skip" onClick={onSkip}>{t.skip}</button>
+        {/* O "Pular" some SÓ na corrida de setup, que é uma vez e acaba em seis cliques.
+            Em qualquer outra porta ele existe: prender quem só queria abrir as
+            Configurações é o padrão que o CLAUDE.md proíbe. */}
+        {obrigatorio
+          ? <span className="st-tour-once" id="settings-tour-once">{t.settings.once}</span>
+          : <button type="button" className="st-tour-skip" id="settings-tour-skip" onClick={onSkip}>{t.skip}</button>}
         <button type="button" className="st-tour-next" id="settings-tour-next" onClick={onNext}>
           {ultimo ? t.done : t.next}
         </button>

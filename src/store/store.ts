@@ -91,6 +91,17 @@ export interface Derived {
   startRequest: StudyBlock | null;
   /** "Abrir Configurações" pedido pela barra do laptop; a SettingsPage atende e limpa. */
   settingsRequest: SettingsRequest | null;
+  /**
+   * A corrida de setup: os seis cartões das Configurações SEM "Pular", uma vez, logo
+   * depois do onboarding. É a trava — e ela mora aqui, no runtime, de propósito.
+   *
+   * Persistida, um reload no meio devolveria a pessoa pra dentro da trava; aqui um
+   * reload a solta e ela cai nos mesmos seis cartões COM "Pular". A trava falha
+   * aberta: nunca prende, no pior caso deixa de acontecer. Quem arma é o
+   * `finishOnboarding`, nunca abrir a página — senão toda porta lateral (engrenagem,
+   * menu do avatar, atalho do calendário, "Ver o tour de novo") viraria armadilha.
+   */
+  setupTour: boolean;
   audio: AudioSettings;
   save: SaveStatus;
   authReady: boolean;
@@ -133,6 +144,7 @@ export const derived: Derived = {
   timerCompleted: null,
   startRequest: null,
   settingsRequest: null,
+  setupTour: false,
   audio: { volume: 0.7, muted: false },
   save: { text: '', visible: false },
   authReady: false,

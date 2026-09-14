@@ -384,6 +384,8 @@ export const strings = {
      */
     settings: {
       intro: 'Como o seu dia é montado',
+      /** Na corrida de setup, no lugar do "Pular": diz que tem fim e que é uma vez. */
+      once: 'Seis passos, só desta vez.',
       steps: {
         'set-windows': {
           title: 'Janelas de estudo',
