@@ -2053,6 +2053,8 @@ test.describe('Study Pets — smoke', () => {
     // dizer "▶ Voltar · 0 pomodoros" quando a régua era "tem bloco" em vez de "tem estudo".
     await expect(page.locator('#live-start-btn')).toContainText('Começar');
     await expect(page.locator('#live-tally')).toHaveCount(0); // nada rolou: à esquerda só o ritmo
+    // E sem "Encerrar o dia": num dia ao vivo ele só existe depois de um estudo feito.
+    await expect(page.locator('.finish-day-btn')).toHaveCount(0);
 
     // Começar abre a corrida: um bloco só, do minuto de agora até o fim do pomodoro.
     // (a lista continua no DOM, atrás do overlay)
@@ -2064,6 +2066,8 @@ test.describe('Study Pets — smoke', () => {
     // mesmo lugar em que já estava antes de começar — ela não pisca.
     await expect(page.locator('.block-row')).toHaveCount(2);
     await expect(page.locator('.block-row', { hasText: 'Almoço' })).toContainText('13:00–14:00');
+    // Rodando ainda não é feito: o Encerrar continua escondido (a lista está no DOM atrás do foco).
+    await expect(page.locator('.finish-day-btn')).toHaveCount(0);
   });
 
   test('55b. voltar pra rotina devolve o resto do dia, e a corrida fica', async ({ page }) => {
@@ -2123,9 +2127,10 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#cfg-day-mode-live').click();
     await page.locator('#settings-panel').getByRole('button', { name: '← Voltar' }).click();
 
-    // Hoje passou a ser ao vivo — o cartão Começar ocupa a tela.
+    // Hoje passou a ser ao vivo — o cartão Começar ocupa a tela, e o Encerrar espera um estudo feito.
     await expect(page.locator('#live-start')).toBeVisible();
     await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo');
+    await expect(page.locator('.finish-day-btn')).toHaveCount(0);
     // O tour do modo acende junto (é área nova); pula, senão ele cobre as abas dos dias.
     await page.locator('#tour-skip').click();
     await expect(page.locator('#tour-balloon')).toBeHidden();
@@ -2460,6 +2465,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#live-tally')).toContainText('1 pomodoro');
     await expect(page.locator('#live-tally')).toContainText('parou às 09:2');
     await expect(page.locator('#live-start-btn')).toContainText('Voltar');
+    // Com um estudo feito, o "Encerrar o dia" passa a existir.
+    await expect(page.locator('.finish-day-btn')).toBeVisible();
     expect(erros).toEqual([]);
   });
 });

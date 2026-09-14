@@ -10,7 +10,7 @@ import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay, dayModeOf, viewToday } from '../../application/plan';
 import { continueBlock } from '../../application/pause';
 import { clearStartRequest, isTimerBlock, startContextFor, tryStartTimer } from '../../application/timer';
-import { isDayClosed } from '../../domain/checks';
+import { isChecked, isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
@@ -180,9 +180,14 @@ function OtherDayNote({ viewKey, todayKey, dayLabel }: { viewKey: DateKey; today
   );
 }
 
-function FinishDay({ viewKey, todayKey }: { viewKey: string; todayKey: string }) {
+/**
+ * `hidden`: num dia AO VIVO o botão só existe depois de um estudo FEITO (ver `PlanTab`). O dia
+ * encerrado ignora isso: o banner "✓ Dia encerrado" aparece sempre. O wrap vazio fica no DOM
+ * nos dois casos — é a âncora do terceiro balão do tour do Plano, e o e2e o procura.
+ */
+function FinishDay({ viewKey, todayKey, hidden }: { viewKey: string; todayKey: string; hidden: boolean }) {
   const closed = useAppState((s) => isDayClosed(s.closedDays, viewKey));
-  if (viewKey !== todayKey) return <div className="finish-day-wrap" id="finish-day-wrap" />;
+  if (viewKey !== todayKey || (hidden && !closed)) return <div className="finish-day-wrap" id="finish-day-wrap" />;
   return (
     <div className="finish-day-wrap" id="finish-day-wrap">
       {closed ? (
@@ -225,6 +230,7 @@ export function PlanTab() {
   const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
   const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
   const aoVivo = loaded && dayModeOf(viewKey) === 'live';
+  const checks = useAppState((s) => s.checks);
   // O cartão só aparece com nada rodando: com o relógio correndo quem está na frente é o foco.
   // E com nenhuma corrida ainda aberta no minuto de agora (reload no meio de um bloco): ali a
   // porta é o "▶ Iniciar" da linha, que retoma a MESMA corrida — o "▶ Voltar" abriria outra.
@@ -474,7 +480,11 @@ export function PlanTab() {
       {/* O placar do dia: o que substitui, fora do foco, a lista que a pessoa não olha
           enquanto o relógio corre. É também a âncora do segundo balão do tour. */}
       {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} />}
-      <FinishDay viewKey={viewKey} todayKey={todayKey} />
+      {/* Num dia ao vivo o "Encerrar o dia" só aparece depois de um estudo FEITO (2026-09-14, pedido do
+          Tomi): antes disso não há o que encerrar, e o botão ficava colado no Começar num dia que nem
+          começou. Feito = marcado: o bloco que está rodando, um aparado sem check ou um fantasma não
+          contam. Uma manhã de rotina marcada que virou corrida conta; um dia de rotina não muda. */}
+      <FinishDay viewKey={viewKey} todayKey={todayKey} hidden={aoVivo && !blocks.some((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time))} />
         </>
       )}
 
