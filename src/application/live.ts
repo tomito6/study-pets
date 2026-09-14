@@ -7,6 +7,7 @@
 // só os dois verbos do modo: começar, e emendar no bloco seguinte.
 
 import { isDayClosed } from '../domain/checks';
+import { pausedMinutes } from '../domain/pauses';
 import { dk, minsToTime, timeToMins } from '../domain/time';
 import type { LiveRhythm, StudyBlock } from '../domain/types';
 import { derived, state } from '../store/store';
@@ -78,15 +79,29 @@ export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
  *
  * Devolve o dia regenerado quando esticou, `null` quando não havia corrida a esticar.
  */
-export function growLiveForPause(dateKey: string, before: StudyBlock, after: StudyBlock[], now: Date = new Date()): StudyBlock[] | null {
+export function growLiveForPause(dateKey: string, before: StudyBlock, _after: StudyBlock[], now: Date = new Date()): StudyBlock[] | null {
   const janelas = state.windowOverrides[dateKey]?.studyWindows;
   if (!janelas) return null;
   const inicio = timeToMins(before.time);
   const idx = janelas.findIndex((w) => w.live && timeToMins(w.start) <= inicio && timeToMins(w.end) > inicio);
   if (idx < 0) return null;
-  const depois = after.find((b) => b.time === before.time);
-  const cresceu = (depois?.paused ?? 0) - (before.paused ?? 0);
+
+  // Quanto crescer se mede pela pausa DE VERDADE, não pelo bloco já regenerado: o
+  // `place` do gerador conta os minutos pausados só até o corte da janela
+  // (`min(p.at + p.mins, cut) − p.at`), então uma pausa que atravessa o fim da corrida
+  // aparece menor do que é — e crescer por esse número cresce de menos. Iterar também não
+  // serve: cada volta revela só mais um pedaço, e a convergência é linear.
+  //
+  // A conta fechada: a janela da corrida termina exatamente no fim do bloco em andamento
+  // (é `chainLive` que a estica, bloco a bloco), então
+  //   fim = início + planejado + pausado_antes
+  // e crescer por `pausado_total − pausado_antes` põe o fim exatamente onde o bloco
+  // acabaria sem corte nenhum. Toda pausa de hoje registrada a partir do início deste
+  // bloco é dele: o timer só deixa pausar o bloco que está rodando.
+  const meus = (state.pauses[dateKey] ?? []).filter((r) => timeToMins(r.at) >= inicio);
+  const cresceu = pausedMinutes(meus.reduce((soma, r) => soma + r.secs, 0)) - (before.paused ?? 0);
   if (cresceu <= 0) return null; // pausa curta demais pra mexer no plano (ele anda em minutos cheios)
+
   const copia = [...janelas];
   const janela = janelas[idx]!;
   copia[idx] = { ...janela, end: minsToTime(Math.min(timeToMins(janela.end) + cresceu, 24 * 60 - 1)) };

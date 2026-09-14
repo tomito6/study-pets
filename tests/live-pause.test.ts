@@ -66,12 +66,44 @@ describe('"■ Parar por aqui" credita os minutos que passaram', () => {
 });
 
 describe('pausar dentro de uma corrida do modo ao vivo', () => {
-  it('o bloco continua valendo os 25 min, e a emenda continua', () => {
+  /** A corrida do primeiro pomodoro: 09:12–09:37, ritmo padrão. */
+  function corridaComecada(): StudyBlock {
     setDayMode(HOJE, 'live', em('09:12:00'));
     const r = startLive(HOJE, em('09:12:00'));
     if (!r.ok) throw new Error('a corrida não começou');
     startTimer(r.block, em('09:12:00'));
+    return r.block;
+  }
 
+  // O caso que a revisão achou DEPOIS do primeiro conserto: medir o crescimento pelo bloco
+  // regenerado subestima quando a pausa atravessa o fim da corrida, porque o gerador conta
+  // os minutos pausados só até o corte. Os dois cenários abaixo reprovavam assim.
+  it('a pausa que atravessa o fim da corrida cresce ela o tanto certo', () => {
+    corridaComecada();
+    vi.setSystemTime(em('09:33:00'));
+    expect(pauseTimer(em('09:33:00'))).toEqual({ ok: true });
+    vi.setSystemTime(em('09:39:00'));
+    expect(resumeTimer(em('09:39:00'))).toBe('resumed');
+    const bloco = blocksForDay(HOJE).find((b) => b.time === '09:12')!;
+    expect(blockMins(bloco)).toBe(25); // e não 23, com a pausa contada pela metade
+    expect(bloco.endTime).toBe('09:43');
+  });
+
+  it('e a pausa LONGA que começa no último minuto não mata o bloco', () => {
+    corridaComecada();
+    vi.setSystemTime(em('09:36:00'));
+    expect(pauseTimer(em('09:36:00'))).toEqual({ ok: true });
+    vi.setSystemTime(em('09:46:00'));
+    // Antes isto devolvia 'ended': a janela crescia 1 min, o relógio batia no fim do plano
+    // e o bloco era dado como terminado — 24 min de estudo sem crédito nenhum.
+    expect(resumeTimer(em('09:46:00'))).toBe('resumed');
+    const bloco = blocksForDay(HOJE).find((b) => b.time === '09:12')!;
+    expect(blockMins(bloco)).toBe(25);
+    expect(bloco.endTime).toBe('09:47');
+  });
+
+  it('o bloco continua valendo os 25 min, e a emenda continua', () => {
+    corridaComecada();
     vi.setSystemTime(em('09:20:00'));
     expect(pauseTimer(em('09:20:00'))).toEqual({ ok: true });
     vi.setSystemTime(em('09:27:00'));
