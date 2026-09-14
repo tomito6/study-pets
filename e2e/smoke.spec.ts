@@ -2071,6 +2071,10 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-live').click();
+    // O tour do modo ao vivo acende (área própria) e o balão, ancorado na faixa, cobre a
+    // barra do dia — como um dia que não começou é onde ele nasce, ele volta depois da
+    // parada no primeiro minuto (que desfaz a corrida). Pula, como os outros testes do modo.
+    await page.locator('#tour-skip').click();
     await page.locator('#live-start-btn').click();
     await expect(page.locator('#focus-overlay')).toBeVisible();
 
