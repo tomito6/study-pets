@@ -255,7 +255,13 @@
   .notif-empty-body{font-size:11px;line-height:1.45;color:var(--muted);}
   .notif-btn:focus-visible,.notif-item:focus-visible,.notif-clear:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   /* MAIN */
-  .main{max-width:480px;margin:0 auto;padding:20px 16px 100px;}
+  /* A página do Plano ocupa pelo menos a tela (menos a barra do topo): é o que deixa o
+     "✓ Encerrar o dia" ancorado NO PÉ, e não colado no que vier antes dele (2026-09-14, pedido
+     do Tomi ao ver o botão Começar do dia ao vivo). Ele fica absoluto a 100px do fim — acima
+     do ⚙️ flutuante — e a folga de baixo reserva o lugar dele quando a lista é longa e a página
+     rola. Fora do flow, ele não muda a distância entre os outros filhos (margens continuam
+     colapsando como sempre). */
+  .main{position:relative;max-width:480px;margin:0 auto;padding:20px 16px 164px;min-height:calc(100dvh - var(--topbar-h));}
 
   /* XP CARD */
   .xp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
@@ -778,7 +784,7 @@
   .my-pets-empty .mpe-icon { font-size:24px; margin-bottom:6px; }
 
   /* FINISH DAY */
-  .finish-day-wrap { margin:14px 0 4px; }
+  .finish-day-wrap { position:absolute; left:16px; right:16px; bottom:100px; margin:0; }
   .finish-day-btn { width:100%; padding:14px; background:var(--accent); color:var(--on-accent); border:none; border-radius:var(--radius); font-size:14px; font-weight:600; font-family:var(--font-ui); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:filter .15s; }
   .finish-day-btn:hover { filter:var(--lift-hover); }
   .finish-day-banner { width:100%; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--muted); font-size:13px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
@@ -1474,7 +1480,9 @@
     .topbar-wide .xp-badge .level-tag{display:inline;font-size:11px;color:var(--muted);border-left:0;padding-left:0;}
 
     /* a página, na coluna da direita. Análise e Perfil escalam inteiras (zoom); o Plano é medido em --s regra a regra */
-    .main{grid-column:2;grid-row:2 / 4;max-width:none;margin:0;padding:calc(20 * var(--s)) 0 calc(100 * var(--s));}
+    .main{grid-column:2;grid-row:2 / 4;max-width:none;margin:0;padding:calc(20 * var(--s)) 0 calc(100 * var(--s));min-height:0;}
+    /* No laptop a coluna da lista segue o flow de sempre; só a folga cresce. */
+    .finish-day-wrap{position:static;margin:calc(28 * var(--s)) 0 4px;}
     .analytics-page,.profile-page{grid-column:1 / -1;grid-row:2 / 4;max-width:calc(980 * var(--s));margin:0 auto;width:100%;}
     .analytics-page,.profile-page{zoom:calc(100vw / 1480px);padding:26px 0 100px;}
     .xp-card,.stats-row{display:none;}
