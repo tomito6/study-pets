@@ -1,6 +1,5 @@
-// Janelas de um dia (src/application/dayWindows.ts): só aquele dia muda, "começar
-// agora", dia livre neutro na sequência, e o que é recusado (passado, encerrado,
-// hoje com check). Sem DOM.
+// Janelas de um dia (src/application/dayWindows.ts): só aquele dia muda, dia livre
+// neutro na sequência, e o que é recusado (passado, encerrado, hoje com check). Sem DOM.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toggleBlockCheck } from '../src/application/checks';
@@ -12,7 +11,6 @@ import {
   isRestDayKey,
   setDayOff,
   setDayWindows,
-  startNow,
 } from '../src/application/dayWindows';
 import { applyPendingPetXP } from '../src/application/pets';
 import { blocksForDay, calcStreaksNow, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
@@ -88,21 +86,6 @@ describe('setDayWindows', () => {
     expect(setDayWindows('2027-02-10', [w('10:00', '12:00')], AGORA)).toEqual({ ok: true });
     expect(derived.weeks.length).toBeGreaterThan(antes);
     expect(derived.weeks[derived.weeks.length - 1]!.end >= new Date('2027-02-10T00:00:00')).toBe(true);
-  });
-});
-
-describe('startNow — "começar agora"', () => {
-  it('hoje: o primeiro bloco passa a começar no próximo múltiplo de 5 min', () => {
-    expect(startNow(HOJE, AGORA)).toEqual({ ok: true, start: '10:10' });
-    expect(blocksForDay(HOJE)[0]).toMatchObject({ time: '10:10', endTime: '10:35', type: 'estudo' });
-    expect(state.windowOverrides[HOJE]).toEqual({ studyWindows: [w('10:10', '18:00')] });
-  });
-
-  it('só no dia de hoje; e depois do fim do dia não sobra nada', () => {
-    expect(startNow(AMANHA, AGORA)).toEqual({ ok: false, reason: 'not-today' });
-    const tarde = new Date('2026-09-02T18:30:00');
-    vi.setSystemTime(tarde);
-    expect(startNow(HOJE, tarde)).toEqual({ ok: false, reason: 'nothing-left' });
   });
 });
 

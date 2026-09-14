@@ -295,17 +295,23 @@ export const strings = {
       liveSince: (at: string) => `Ao vivo desde as ${at}. Antes disso, pela rotina.`,
       changed: 'Modo do dia trocado',
     },
-    /** O ritmo é GLOBAL; o botão leva até ele em vez de fingir que é do dia. */
+    /**
+     * O ritmo é GLOBAL; o botão leva até ele em vez de fingir que é do dia. O título é
+     * o MESMO da seção de destino nas Configurações, de propósito: a porta e o lugar
+     * aonde ela leva têm que se chamar igual.
+     */
     rhythm: {
-      label: 'Ritmo',
-      value: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
+      label: 'Ritmo do pomodoro',
+      study: 'min de estudo',
+      short: 'min de pausa',
+      long: 'min de pausa longa',
+      sub: 'Vale pra todos os dias. Mudou hoje, mudou a semana.',
       change: 'Mudar →',
     },
     title: '🕘 Janelas do dia',
     intro: 'Só pra este dia. A rotina em Configurações continua igual.',
     windowsLabel: 'Janelas de estudo',
     add: '+ Adicionar',
-    startNow: '▶ Começar agora',
     dayOff: '🌴 Dia livre',
     dayOffConfirm: 'Declarar este dia como livre? Ele fica de fora da sequência e da meta — sem cobrança.',
     dayOffYes: 'Sim, dia livre',
@@ -315,19 +321,16 @@ export const strings = {
     cancel: 'Cancelar',
     save: 'Salvar',
     saved: 'Janelas do dia ajustadas ✓',
-    startedNow: (start: string) => `Começando às ${start} ▶`,
     dayOffSet: 'Dia livre 🌴',
     restored: 'Rotina de volta ↺',
     weekendNote: '🌴 Fim de semana livre. Adicione uma janela pra estudar mesmo assim — só neste dia; os outros continuam de folga.',
     refusal: {
       closed: 'Dia encerrado 🔒',
       past: 'Esse dia já passou.',
-      'not-today': 'Só dá pra começar agora no dia de hoje.',
       'has-checks': 'Hoje já tem bloco marcado — dia livre é só antes de começar.',
       empty: 'Adicione pelo menos uma janela (ou declare o dia livre).',
       'invalid-window': 'Tem janela com o fim antes do início.',
       overlap: 'Duas janelas se sobrepõem.',
-      'nothing-left': 'Não sobrou janela pra hoje — o dia de estudo já acabou.',
     },
   },
   session: {

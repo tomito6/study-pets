@@ -24,7 +24,7 @@ export interface DragField<K = string> {
   anchors: DragAnchor[];
 }
 
-/** O arrasto anda de 5 em 5 minutos — o mesmo passo do "Começar agora". */
+/** O arrasto anda de 5 em 5 minutos — o passo em que o app pensa horário. */
 export const DRAG_STEP_MIN = 5;
 
 const MINS_IN_DAY = 24 * 60;

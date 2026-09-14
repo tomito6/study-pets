@@ -26,8 +26,11 @@ O que sobrou do pedido de 2026-09-07, depois que a **porta** pro ritmo entrou (2
 Configurações → Estrutura do dia, já rolado e com a seção acesa; o tutorial das Configurações explica a
 seção). A porta resolveu o "ninguém acha"; ela **não** responde as duas perguntas originais:
 
-(a) O pedido era **tirar** "▶ Começar agora" e "↺ Restaurar rotina" do modal. Tirando o Restaurar, como
-um dia editado volta pra rotina? Hoje ele é o único caminho — e é também como se desfaz um "Dia livre".
+(a) O pedido era **tirar** "▶ Começar agora" e "↺ Restaurar rotina" do modal. **O "Começar agora" saiu
+em 2026-09-14** (botão, caso de uso, função do domínio e testes — o Tomi pediu pela terceira vez). Sobra o
+Restaurar: tirando ele, como um dia editado volta pra rotina? Hoje ele é o único caminho — e é também como
+se desfaz um "Dia livre". Na mesma noite o bloco do ritmo no modal ganhou o título "Ritmo do pomodoro" e os
+três números em tiles (estava "lowkey demais").
 
 (b) Se o ritmo passar a ser **editável ali dentro**, ele muda a config global (e aí a "porta" bastava) ou
 o override daquele dia passa a carregar ritmo próprio? A segunda é a que o IDEIAS chama de interessante

@@ -1,6 +1,7 @@
 // "Janelas do dia": as janelas de estudo só deste dia — o mesmo editor das
-// Configurações, num modal. Mais os atalhos: "Começar agora" (só hoje), "Dia livre"
-// (com confirmação curta) e "Restaurar rotina" quando o dia está editado.
+// Configurações, num modal. Mais os atalhos: "Dia livre" (com confirmação curta) e
+// "Restaurar rotina" quando o dia está editado. O "▶ Começar agora" saiu em 2026-09-14,
+// a pedido do Tomi (era o item 1a do PENDENCIAS, pedido três vezes).
 
 import { useEffect, useState } from 'react';
 import {
@@ -11,12 +12,10 @@ import {
   setDayMode,
   setDayOff,
   setDayWindows,
-  startNow,
 } from '../../application/dayWindows';
 import type { DayWindowsRefusal } from '../../application/dayWindows';
 import { dayModeOf } from '../../application/plan';
 import { requestSettings } from '../../application/settings';
-import { dk } from '../../domain/time';
 import { state, useAppState } from '../../store/store';
 import type { DateKey, StudyWindow } from '../../domain/types';
 import { strings } from '../../shared/strings';
@@ -43,7 +42,6 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   }, [dateKey]);
 
   const key = dateKey ?? '';
-  const isToday = key === dk(new Date());
   const rest = key ? restKindKey(key) : null; // fim de semana pausado ou dia livre
   const off = rest !== null;
   const edited = key ? dayWindowsOverride(key) !== null : false;
@@ -61,15 +59,6 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
       return;
     }
     showToast(t.saved);
-    onClose();
-  };
-  const doStartNow = () => {
-    const r = startNow(key);
-    if (!r.ok) {
-      refuse(r.reason);
-      return;
-    }
-    showToast(t.startedNow(r.start));
     onClose();
   };
   const doOff = () => {
@@ -161,18 +150,23 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
       {/* O ritmo NÃO é editado aqui de propósito: ele é global (vale todo dia), e este
           modal é do dia — um campo que diz "do dia" e muda a semana inteira seria uma
           armadilha. O que faltava era o caminho: a seção vivia em Configurações →
-          Estrutura do dia e ninguém a achava (PENDENCIAS 4). O botão leva direto. */}
+          Estrutura do dia e ninguém a achava (PENDENCIAS 4). O botão leva direto.
+          Desde 2026-09-14 é um bloco com o MESMO nome da seção de destino ("Ritmo do
+          pomodoro") e os três números em tiles: uma linha miúda "RITMO · 25 · 5 · 20 min"
+          era lowkey demais pra se ler como pomodoro. */}
       <div className="dw-rhythm" id="day-windows-rhythm">
-        <div className="dw-rhythm-l">
-          <span className="dw-rhythm-k">{t.rhythm.label}</span>
-          <span className="dw-rhythm-v">{t.rhythm.value(pomo, shortBreak, longBreak)}</span>
+        <div className="dw-head">
+          <label>{t.rhythm.label}</label>
+          <button type="button" className="ghost-btn" id="day-windows-rhythm-btn" onClick={irAoRitmo}>{t.rhythm.change}</button>
         </div>
-        <button type="button" className="ghost-btn" id="day-windows-rhythm-btn" onClick={irAoRitmo}>{t.rhythm.change}</button>
+        <div className="dw-rhythm-tiles">
+          <div className="dw-rt accent"><b>{pomo}</b><span>{t.rhythm.study}</span></div>
+          <div className="dw-rt"><b>{shortBreak}</b><span>{t.rhythm.short}</span></div>
+          <div className="dw-rt"><b>{longBreak}</b><span>{t.rhythm.long}</span></div>
+        </div>
+        <p className="dw-rhythm-sub">{t.rhythm.sub}</p>
       </div>
       <div className="dw-actions">
-        {isToday && !off && (
-          <button type="button" className="ghost-btn" id="day-windows-start-now" onClick={doStartNow}>{t.startNow}</button>
-        )}
         {!off && !confirmOff && (
           <button type="button" className="ghost-btn" id="day-windows-off" onClick={() => setConfirmOff(true)}>{t.dayOff}</button>
         )}

@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CFG } from '../src/domain/config';
-import { configForDay, isDayOff, roundUpToStep, routineAfter, startNowWindows, stopDayAt, validateDayWindows } from '../src/domain/dayWindows';
+import { configForDay, isDayOff, routineAfter, stopDayAt, validateDayWindows } from '../src/domain/dayWindows';
 import { modeForDay } from '../src/domain/dayMode';
 import { extendDayTo, extendWindowsTo } from '../src/domain/endOfDay';
 
-const at = (hm: string) => new Date(`2026-09-02T${hm}:00`);
 const w = (start: string, end: string) => ({ start, end });
 
 describe('configForDay', () => {
@@ -39,43 +38,6 @@ describe('validateDayWindows', () => {
   it('janelas válidas passam, em qualquer ordem; encostadas não se sobrepõem', () => {
     expect(validateDayWindows([w('15:00', '20:00'), w('09:00', '12:00')])).toEqual({ ok: true });
     expect(validateDayWindows([w('09:00', '12:00'), w('12:00', '13:00')])).toEqual({ ok: true });
-  });
-});
-
-describe('startNowWindows — "começar agora"', () => {
-  it('arredonda pro próximo múltiplo de 5 min (o próprio, se já for)', () => {
-    expect(roundUpToStep(607)).toBe(610);
-    expect(roundUpToStep(610)).toBe(610);
-    expect(roundUpToStep(0)).toBe(0);
-  });
-
-  it('dentro da janela: ela passa a começar agora', () => {
-    expect(startNowWindows([w('09:00', '18:00')], at('10:07'))).toEqual({ ok: true, windows: [w('10:10', '18:00')], start: '10:10' });
-    expect(startNowWindows([w('09:00', '18:00')], at('10:10'))).toEqual({ ok: true, windows: [w('10:10', '18:00')], start: '10:10' });
-  });
-
-  it('antes da primeira janela: ela é puxada pra agora', () => {
-    expect(startNowWindows([w('09:00', '18:00')], at('08:03'))).toEqual({ ok: true, windows: [w('08:05', '18:00')], start: '08:05' });
-  });
-
-  it('num gap entre janelas: a que já passou fica, a próxima começa agora', () => {
-    const r = startNowWindows([w('15:00', '20:00'), w('09:00', '12:00')], at('13:20'));
-    expect(r).toEqual({ ok: true, windows: [w('09:00', '12:00'), w('13:20', '20:00')], start: '13:20' });
-  });
-
-  it('depois de tudo, ou com só uns minutos sobrando na última: não sobrou nada', () => {
-    expect(startNowWindows([w('09:00', '18:00')], at('18:00'))).toEqual({ ok: false, reason: 'nothing-left' });
-    expect(startNowWindows([w('09:00', '18:00')], at('20:30'))).toEqual({ ok: false, reason: 'nothing-left' });
-    expect(startNowWindows([w('09:00', '10:09')], at('10:07'))).toEqual({ ok: false, reason: 'nothing-left' }); // 10:10 já passa do fim
-  });
-
-  it('janela que acaba nos próximos minutos some e a seguinte começa agora', () => {
-    const r = startNowWindows([w('09:00', '10:09'), w('15:00', '20:00')], at('10:07'));
-    expect(r).toEqual({ ok: true, windows: [w('10:10', '20:00')], start: '10:10' });
-  });
-
-  it('janela inválida é ignorada; sem nenhuma válida não há o que começar', () => {
-    expect(startNowWindows([w('12:00', '10:00')], at('09:00'))).toEqual({ ok: false, reason: 'nothing-left' });
   });
 });
 

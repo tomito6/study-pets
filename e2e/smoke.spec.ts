@@ -243,22 +243,19 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
   });
 
-  test('25. janelas do dia: "Começar agora" muda o primeiro bloco de hoje, "Dia livre" esvazia, "Restaurar rotina" volta', async ({ page }) => {
+  test('25. janelas do dia: "Dia livre" esvazia, "Restaurar rotina" volta, e editar à mão marca o dia', async ({ page }) => {
     await abrirApp(page, '10:07');
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
 
-    // "Começar agora": o próximo múltiplo de 5 min é 10:10.
+    // O modal abre com a janela da rotina — e SEM "Começar agora" (saiu em 2026-09-14,
+    // a pedido do Tomi; o dia se ajusta editando a janela ou pelo modo ao vivo).
     await page.locator('#day-windows-btn').click();
     await expect(page.locator('#day-windows-panel')).toBeVisible();
     await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(1); // a janela da rotina, 09:00 → 18:00
-    await page.locator('#day-windows-start-now').click();
-    await expect(page.locator('#day-windows-panel')).toBeHidden();
-    await expect(page.locator('.block-row').first()).toContainText('10:10–10:35');
-    await expect(page.locator('#day-windows-btn')).toContainText('editado');
-    await expect(page.locator('#toast')).toContainText('10:10');
+    await expect(page.locator('#day-windows-start-now')).toHaveCount(0);
+    await expect(page.locator('#day-windows-panel')).not.toContainText('Começar agora');
 
     // "Dia livre" pede confirmação e esvazia o dia.
-    await page.locator('#day-windows-btn').click();
     await page.locator('#day-windows-off').click();
     await expect(page.locator('#day-windows-off-confirm-box')).toBeVisible();
     await page.locator('#day-windows-off-confirm').click();
@@ -284,6 +281,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-windows-panel .swc-end').fill('16:00');
     await page.locator('#day-windows-save').click();
     await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('#day-windows-btn')).toContainText('editado');
     // O almoço (13:00) continua aparecendo antes da janela; os estudos vão das 14:00 até 16:00.
     await expect(page.locator('.block-row').first()).toContainText('Almoço');
     await expect(page.locator('.block-row.cycle-block').first()).toContainText('14:00–14:25');
@@ -2216,9 +2214,11 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     await expect(page.locator('#tour-balloon')).toBeHidden();
 
-    // A porta mostra o ritmo em vigor — quem abre já sabe o que vai mudar.
+    // A porta mostra o ritmo em vigor — quem abre já sabe o que vai mudar. E se chama
+    // pelo nome da seção aonde leva: "Ritmo do pomodoro", com os três números em tiles.
     await page.locator('#day-windows-btn').click();
-    await expect(page.locator('#day-windows-rhythm')).toContainText('25 · 5 · 20');
+    await expect(page.locator('#day-windows-rhythm')).toContainText('Ritmo do pomodoro');
+    await expect(page.locator('#day-windows-rhythm .dw-rt')).toHaveText([/25\s*min de estudo/, /5\s*min de pausa/, /20\s*min de pausa longa/]);
 
     // E LEVA: o modal fecha, as Configurações abrem na segunda aba, na seção certa.
     await page.locator('#day-windows-rhythm-btn').click();
@@ -2381,7 +2381,8 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
 
     await page.locator('#day-windows-btn').click();
-    await expect(page.locator('#day-windows-rhythm')).toContainText('25 · 5');
+    await expect(page.locator('#day-windows-rhythm')).toContainText('Ritmo do pomodoro');
+    await expect(page.locator('#day-windows-rhythm .dw-rt').first()).toContainText('25');
     await page.locator('#day-windows-rhythm-btn').click();
 
     // O modal fecha, as Configurações abrem na aba certa, e a seção do ritmo acende.

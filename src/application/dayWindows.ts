@@ -11,12 +11,12 @@
 // continuam de folga — e "Restaurar rotina" devolve a folga.
 
 import { isChecked, isDayClosed } from '../domain/checks';
-import { routineAfter, startNowWindows, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
+import { routineAfter, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
 import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey } from '../domain/time';
-import type { DateKey, StudyBlock, StudyWindow, TimeString } from '../domain/types';
+import type { DateKey, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
@@ -26,15 +26,12 @@ import { scheduleSave } from './save';
 export type DayWindowsRefusal =
   | 'closed'
   | 'past'
-  | 'not-today'
   | 'has-checks'
   | 'empty'
   | 'invalid-window'
-  | 'overlap'
-  | 'nothing-left';
+  | 'overlap';
 
 export type DayWindowsResult = { ok: true } | { ok: false; reason: DayWindowsRefusal };
-export type StartNowOutcome = { ok: true; start: TimeString } | { ok: false; reason: DayWindowsRefusal };
 
 export const dayWindowsOverride = (dateKey: DateKey): DayWindowsOverride | null => state.windowOverrides[dateKey] ?? null;
 
@@ -153,17 +150,6 @@ export function setDayWindows(dateKey: DateKey, windows: StudyWindow[], now: Dat
   state.windowOverrides[dateKey] = { studyWindows: windows.map((w) => ({ start: w.start, end: w.end })) };
   commit(dateKey, before, now);
   return { ok: true };
-}
-
-/** "Começar agora" — só hoje. Devolve o novo início, pro toast. */
-export function startNow(dateKey: DateKey, now: Date = new Date()): StartNowOutcome {
-  if (dateKey !== dk(now)) return { ok: false, reason: 'not-today' };
-  const can = canEditDayWindows(dateKey, now);
-  if (!can.ok) return can;
-  const r = startNowWindows(effectiveWindows(dateKey), now);
-  if (!r.ok) return r;
-  const set = setDayWindows(dateKey, r.windows, now);
-  return set.ok ? { ok: true, start: r.start } : set;
 }
 
 /** Dia livre: sem blocos, e neutro na sequência (como fim de semana com `skipWeekends`). */
