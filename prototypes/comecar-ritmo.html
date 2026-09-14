@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>O Começar sem os numerozinhos</title>
+<style>
+@font-face{font-family:'DM Sans';src:url('../public/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap;}
+@font-face{font-family:'Lora';src:url('../public/fonts/lora-latin.woff2') format('woff2');font-weight:400 700;font-display:swap;}
+:root{--bg:#f6efe3;--bg2:#fffdf7;--bg3:#f2ead9;--flat-deep:#d8cfbb;--text:#40382e;--muted:#6e6455;--border:#d8cdbb;
+  --accent:#486244;--accent2:#4e6b48;--on-accent:#fffdf6;--accent-wash:rgba(72,98,68,.10);--accent-border:rgba(72,98,68,.45);
+  --radius:14px;--radius-sm:8px;--radius-xl:16px;--font-ui:'DM Sans',sans-serif;--font-title:'Lora',Georgia,serif}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 24px 50px;background:#efe7d8;color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.5}
+h1{font-family:var(--font-title);font-size:24px;font-weight:600;margin:0 0 4px}
+h2{font-family:var(--font-title);font-size:18px;font-weight:600;margin:30px 0 2px}
+.why{color:var(--muted);font-size:13px;margin:0 0 12px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(2,360px);gap:16px}
+.phone{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px;box-shadow:0 1px 2px rgba(64,56,46,.05)}
+.cap{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.cap b{color:var(--accent);letter-spacing:0;text-transform:none;font-size:12px;margin-left:6px}
+.bar{display:flex;gap:7px;justify-content:flex-end;margin:0 0 12px}
+.bar b{font-weight:500;font-size:12px;color:var(--accent);border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px}
+.bar b.on{background:var(--accent-wash);border-color:var(--accent-border);font-weight:600}
+.blk{display:flex;align-items:center;gap:10px;border:1px dashed var(--border);border-radius:12px;padding:11px 12px;margin-top:7px;font-size:12.5px;color:var(--muted)}
+.blk .h{width:78px}.blk .n{flex:1}
+.finish{margin-top:28px;width:100%;padding:14px;background:var(--accent);color:var(--on-accent);border:0;border-radius:var(--radius);font:600 14px var(--font-ui);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 0 var(--flat-deep)}
+.finish.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-border);box-shadow:none;font-weight:500}
+.hint{font-size:11.5px;color:var(--muted);margin:7px 0 0 2px}
+/* 1 · botão cheio */
+.v1{margin-top:10px;width:100%;height:52px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;gap:10px;position:relative;font:600 15px var(--font-ui);box-shadow:0 3px 0 var(--flat-deep)}
+.v1 .chip{position:absolute;right:8px;top:8px;height:36px;padding:0 12px;border-radius:99px;background:rgba(255,253,246,.16);display:flex;align-items:center;font:500 12px var(--font-ui);color:rgba(255,253,246,.92)}
+.v1 .ico{position:absolute;right:8px;top:8px;width:36px;height:36px;border-radius:50%;background:rgba(255,253,246,.16);display:flex;align-items:center;justify-content:center;font-size:15px;color:rgba(255,253,246,.92)}
+/* 3 · o card é o botão */
+.v3{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--accent);color:var(--on-accent);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:0 3px 0 var(--flat-deep)}
+.v3 .t{font-family:var(--font-title);font-size:19px;font-weight:600;line-height:1.1}
+.v3 .r{font:500 12px var(--font-ui);color:rgba(255,253,246,.78);text-align:right;line-height:1.3}
+.v3 .ico{width:34px;height:34px;border-radius:50%;background:rgba(255,253,246,.16);display:flex;align-items:center;justify-content:center;font-size:15px;color:rgba(255,253,246,.92)}
+.v3.center{justify-content:center}
+.pill{display:inline-block;font:500 11.5px var(--font-ui);color:var(--accent);border:1px solid var(--accent-border);border-radius:99px;padding:3px 10px;background:var(--bg2)}
+</style>
+</head>
+<body>
+<h1>O Começar sem os numerozinhos</h1>
+<p class="why">O que incomoda é o "25 · 5 · 20". Ele existia pra ser a porta pro ritmo, mas a porta já mora no "⏱ Ao vivo" (a linha "Ritmo … Mudar →") — a faixa não precisa repetir. Quatro tratamentos, nos dois esboços que você gostou. O "Encerrar o dia" em contorno nos dois últimos de cada, pra ver a diferença de peso.</p>
+
+<h2>1 · Botão cheio</h2>
+<div class="grid">
+  <div class="phone"><p class="cap">a<b>sem nada</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v1">▶ Começar</div>
+    <button class="finish">✓ Encerrar o dia</button>
+  </div>
+  <div class="phone"><p class="cap">b<b>só o pomodoro</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v1">▶ Começar<span class="chip">25 min</span></div>
+    <button class="finish">✓ Encerrar o dia</button>
+  </div>
+  <div class="phone"><p class="cap">c<b>em palavras, fora do botão</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v1">▶ Começar</div>
+    <p class="hint">Pomodoro de 25 min · pausa de 5</p>
+    <button class="finish ghost">✓ Encerrar o dia</button>
+  </div>
+  <div class="phone"><p class="cap">d<b>só um ícone que abre o ritmo</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v1">▶ Começar<span class="ico">⏱</span></div>
+    <button class="finish ghost">✓ Encerrar o dia</button>
+  </div>
+</div>
+
+<h2>3 · O card é o botão</h2>
+<div class="grid">
+  <div class="phone"><p class="cap">a<b>sem nada, centrado</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v3 center"><div class="t">▶ Começar</div></div>
+    <button class="finish">✓ Encerrar o dia</button>
+  </div>
+  <div class="phone"><p class="cap">b<b>só o pomodoro</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v3"><div class="t">▶ Começar</div><div class="r">25 min</div></div>
+    <button class="finish">✓ Encerrar o dia</button>
+  </div>
+  <div class="phone"><p class="cap">c<b>em palavras, dentro</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v3"><div class="t">▶ Começar</div><div class="r">pomodoro de 25 min<br>pausa de 5</div></div>
+    <button class="finish ghost">✓ Encerrar o dia</button>
+  </div>
+  <div class="phone"><p class="cap">d<b>só um ícone que abre o ritmo</b></p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v3"><div class="t">▶ Começar</div><div class="ico">⏱</div></div>
+    <button class="finish ghost">✓ Encerrar o dia</button>
+  </div>
+</div>
+</body>
+</html>

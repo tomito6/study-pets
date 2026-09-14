@@ -78,6 +78,7 @@
   --on-accent:#fffdf6;                /* tinta sobre o verde */
   --on-accent-alt:#fffdf6;
   --on-accent-login:#fffdf6;
+  --on-accent-wash:rgba(255,253,246,.16);
   --on-orange:#fffdf6;
   --on-gold:#fffdf6;
   --on-cycle:#fffdf6;
@@ -263,12 +264,14 @@
    afundar — a consequência lógica do gesto. */
 :root[data-theme="cafe"] .save-btn,
 :root[data-theme="cafe"] .finish-day-btn,
+:root[data-theme="cafe"] .lv-btn,
 :root[data-theme="cafe"] .error-reload,
 :root[data-theme="cafe"] .fs-card .fs-apply,
 :root[data-theme="cafe"] .tour-next,
 :root[data-theme="cafe"] .hc-start-btn{
   box-shadow:0 3px 0 var(--flat-deep);
 }
+:root[data-theme="cafe"] .lv-btn:active{box-shadow:0 2px 0 var(--flat-deep);}
 :root[data-theme="cafe"] .save-btn:active,
 :root[data-theme="cafe"] .finish-day-btn:active,
 :root[data-theme="cafe"] .error-reload:active,

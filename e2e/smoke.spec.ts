@@ -2047,7 +2047,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row', { hasText: 'Estudo' })).toHaveCount(0);
     await expect(page.locator('#live-start')).toBeVisible();
     await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo');
-    await expect(page.locator('#live-rhythm')).toContainText('25 · 5');
+    await expect(page.locator('#live-rhythm')).toHaveText('25 min'); // o selo: só a duração, sem a palavra
     // O dia NÃO começou: o convite é "Começar", e o kicker não conta pomodoro nenhum.
     // A refeição das 13h existe aqui (é compromisso, não corrida) e já fez o cartão
     // dizer "▶ Voltar · 0 pomodoros" quando a régua era "tem bloco" em vez de "tem estudo".

@@ -119,7 +119,8 @@ export const strings = {
       /** Depois de uma parada, uma linha só: o quanto já rolou (por check) e quando parou. */
       tally: (pomos: number, dur: string) => `${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
       stoppedAt: (at: string) => `parou às ${at}`,
-      rhythmValue: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
+      /** O selo dentro do botão: só a duração do bloco. Sem a palavra — a marca é de terceiro (ver docs/juridico.html). */
+      rhythmValue: (p: number) => `${p} min`,
       start: '▶ Começar',
       back: '▶ Voltar',
       refusal: (r: 'not-live' | 'closed' | 'past' | 'busy' | 'no-room') =>

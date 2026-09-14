@@ -54,6 +54,7 @@
     --on-accent:#0e0e0f;                   /* texto/ícone EM CIMA do accent */
     --on-accent-alt:#1a3a08;               /* 2ª variante (badges de nível) */
     --on-accent-login:#0a0a0b;             /* idem, na tela de login */
+    --on-accent-wash:rgba(14,14,15,.14);   /* um selo translúcido EM CIMA do accent (o "25 min" do botão Começar) */
     --on-orange:#0e0e0f;
     --on-gold:#0e0e0f;
     --on-cycle:#0e0e0f;                  /* texto sobre a cor do ciclo (padrão das 6) */
@@ -430,19 +431,20 @@
      que acontece é o botão levar pro modo foco. Agora são 148px: o título desceu
      de 22 pra 17px, a faixa do ritmo entre dois fios virou uma linha embaixo do
      botão, e a nota saiu (o tour do modo e o #live-hint do foco já a dizem). */
-  /* A FAIXA (opção B de prototypes/live-start-menor.html, 2026-09-14): texto à esquerda,
-     botão à direita, o ritmo ou o placar como subtítulo. 66–82px medidos a 393px, contra
-     os 150px do cartão compacto e os 269px do cartaz original. É a forma da barra do timer. */
-  .live-start{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);
-    border-radius:var(--radius-xl);padding:12px 12px 12px 15px;margin:10px 0 0;}
-  .lv-l{flex:1;min-width:0;text-align:left;}
-  /* Uma linha só, sem frase de convite: o ritmo (ou o placar) em texto comum. */
-  .lv-sub{display:block;font-family:var(--font-ui);font-size:13px;color:var(--muted);margin:0;line-height:1.35;}
-  .lv-rhythm{padding:0;background:none;border:0;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px;}
-  .lv-rhythm:hover{color:var(--accent);}
-  .lv-btn{flex:none;height:40px;padding:0 18px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
-    font-size:13.5px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
-  .lv-btn:hover{opacity:.92;}
+  /* O BOTÃO do dia ao vivo (esboço 1b de prototypes/comecar-4-esbocos.html, 2026-09-14): um
+     botão cheio na largura toda, 52px, com a duração do bloco num selo translúcido dentro; o
+     placar numa linha miúda embaixo depois de uma parada. A margem de baixo (14px) mais a do
+     .finish-day-wrap (14px) dão os 28px de folga que o "Encerrar o dia" pediu pra não ficar
+     colado. Veio depois do cartaz (269px), do cartão (150px) e da faixa (66px). */
+  .live-start{margin:10px 0 14px;}
+  .lv-btn{position:relative;width:100%;height:52px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+    display:flex;align-items:center;justify-content:center;padding:0 72px 0 20px;
+    font-size:15px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+  .lv-btn:hover{filter:var(--lift-hover);}
+  .lv-btn:active{transform:translateY(1px);}
+  .lv-chip{position:absolute;right:8px;top:8px;height:36px;padding:0 12px;border-radius:99px;background:var(--on-accent-wash);
+    display:flex;align-items:center;font-size:12px;font-weight:500;letter-spacing:.02em;color:var(--on-accent);opacity:.92;}
+  .lv-tally{font-family:var(--font-ui);font-size:11.5px;color:var(--muted);margin:7px 0 0 2px;}
   /* Os dois cards do padrão, em Configurações → Estrutura do dia. */
   .mode2{display:flex;gap:9px;}
   .mode2 .m{flex:1;display:block;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);

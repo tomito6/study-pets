@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>O botão Começar, quatro esboços</title>
+<style>
+@font-face{font-family:'DM Sans';src:url('../public/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap;}
+@font-face{font-family:'Lora';src:url('../public/fonts/lora-latin.woff2') format('woff2');font-weight:400 700;font-display:swap;}
+:root{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --flat:#e4decf; --flat-deep:#d8cfbb;
+  --text:#40382e; --muted:#6e6455;
+  --border:#d8cdbb; --hairline:rgba(64,56,46,.08);
+  --accent:#486244; --accent2:#4e6b48; --on-accent:#fffdf6;
+  --accent-wash:rgba(72,98,68,.10); --accent-border:rgba(72,98,68,.45);
+  --radius:14px; --radius-sm:8px; --radius-md:10px; --radius-xl:16px;
+  --font-ui:'DM Sans',sans-serif; --font-title:'Lora',Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 24px 60px;background:#efe7d8;color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.5}
+h1{font-family:var(--font-title);font-size:24px;font-weight:600;margin:0 0 4px}
+h2{font-family:var(--font-title);font-size:18px;font-weight:600;margin:34px 0 2px}
+.why{color:var(--muted);font-size:13px;margin:0 0 12px;max-width:720px}
+.row{display:flex;gap:18px;flex-wrap:wrap}
+.phone{width:360px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px;box-shadow:0 1px 2px rgba(64,56,46,.05)}
+.cap{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.bar{display:flex;gap:7px;justify-content:flex-end;margin:0 0 12px}
+.bar b{font-weight:500;font-size:12px;color:var(--accent);border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px;background:transparent}
+.bar b.on{background:var(--accent-wash);border-color:var(--accent-border);font-weight:600}
+.blk{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-top:7px;font-size:12.5px}
+.blk.ev{border-style:dashed;background:transparent;color:var(--muted)}
+.blk .h{font-variant-numeric:tabular-nums;color:var(--muted);width:78px}
+.blk .n{flex:1}
+.blk .chk{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+.blk .xp{color:var(--accent);font-size:11px}
+.finish{margin-top:28px;width:100%;padding:14px;background:var(--accent);color:var(--on-accent);border:0;border-radius:var(--radius);font:600 14px var(--font-ui);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 0 var(--flat-deep)}
+.meas{font-size:11px;color:var(--muted);margin:8px 0 0;font-variant-numeric:tabular-nums}
+.note{background:var(--bg3);border-radius:var(--radius-md);padding:12px 14px;font-size:13px;color:var(--muted);max-width:720px;margin:14px 0 0}
+
+/* ── 1 · Botão cheio ─────────────────────────────────────────────────── */
+.v1{margin-top:10px;width:100%;height:52px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;justify-content:center;gap:10px;padding:0 14px 0 20px;position:relative;
+  font:600 15px var(--font-ui);box-shadow:0 3px 0 var(--flat-deep)}
+.v1 .chip{position:absolute;right:8px;top:8px;height:36px;padding:0 12px;border-radius:99px;background:rgba(255,253,246,.16);
+  display:flex;align-items:center;font:500 12px var(--font-ui);color:rgba(255,253,246,.92);letter-spacing:.02em}
+.v1s{font-size:11.5px;color:var(--muted);margin:7px 0 0 2px}
+
+/* ── 2 · Ícone + faixa ───────────────────────────────────────────────── */
+.v2{margin-top:10px;display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);padding:10px 10px 10px 12px}
+.v2 .ic{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent-wash);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px}
+.v2 .tx{flex:1;min-width:0}
+.v2 .t{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.2}
+.v2 .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.v2 .b{flex:none;height:40px;padding:0 18px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);font:600 13.5px var(--font-ui);box-shadow:0 2px 0 var(--flat-deep)}
+
+/* ── 3 · O card é o botão ────────────────────────────────────────────── */
+.v3{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--accent);color:var(--on-accent);
+  border-radius:var(--radius-xl);padding:16px 18px;box-shadow:0 3px 0 var(--flat-deep)}
+.v3 .t{font-family:var(--font-title);font-size:19px;font-weight:600;line-height:1.1}
+.v3 .r{font:500 12px var(--font-ui);color:rgba(255,253,246,.78);text-align:right;line-height:1.3}
+
+/* ── 4 · Linha do plano ──────────────────────────────────────────────── */
+.v4{margin-top:7px;display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--accent-border);border-radius:12px;padding:9px 9px 9px 12px}
+.v4 .pl{color:var(--accent);font-size:12px;width:12px}
+.v4 .tx{flex:1;font-size:12.5px;color:var(--muted)}
+.v4 .tx b{color:var(--text);font-weight:600}
+.v4 .b{font:600 11px/1 var(--font-ui);padding:8px 13px;border-radius:99px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);white-space:nowrap}
+</style>
+</head>
+<body>
+<h1>O botão Começar, quatro esboços</h1>
+<p class="why">A faixa de hoje ("25 · 5 · 20 min" + botão) funciona mas é sem graça. Quatro caminhos, todos sem frase — só o ritmo, o botão e, depois de uma parada, o placar. Em todos, o "Encerrar o dia" desce de 14px pra <b>28px</b> abaixo, pra não ficar colado. Tokens, fontes e medidas de verdade; alturas medidas no navegador.</p>
+
+<h2>1 · Botão cheio</h2>
+<p class="why">Um botão só, na largura toda, com o ritmo dentro dele como um selo translúcido. Zero moldura em volta: o convite é o próprio botão. Depois da parada, o placar vira uma linha miúda embaixo.</p>
+<div class="row">
+  <div class="phone"><p class="cap">Dia que não começou</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v1" id="m1a">▶ Começar<span class="chip">25 · 5 · 20</span></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m1a"></p>
+  </div>
+  <div class="phone"><p class="cap">Depois de uma parada</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:12–09:37</span><span class="n">📖 Estudo 1</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:37–09:42</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="v1" id="m1b">▶ Voltar<span class="chip">25 · 5 · 20</span></div>
+    <p class="v1s">2 pomodoros · 50min · parou às 10:12</p>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m1b"></p>
+  </div>
+</div>
+
+<h2>2 · Ícone + faixa</h2>
+<p class="why">A faixa de hoje, com um rosto: um disco de ▶ à esquerda, o ritmo em negrito no meio, o botão à direita. É a forma da barra do timer com um ponto focal. Depois da parada, o placar toma o lugar do ritmo e a hora vira a segunda linha.</p>
+<div class="row">
+  <div class="phone"><p class="cap">Dia que não começou</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v2" id="m2a"><div class="ic">▶</div><div class="tx"><div class="t">25 · 5 · 20 min</div><div class="s">pomodoro · pausa · pausa longa</div></div><button class="b">Começar</button></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m2a"></p>
+  </div>
+  <div class="phone"><p class="cap">Depois de uma parada</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:12–09:37</span><span class="n">📖 Estudo 1</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:37–09:42</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="v2" id="m2b"><div class="ic">▶</div><div class="tx"><div class="t">2 pomodoros · 50min</div><div class="s">parou às 10:12</div></div><button class="b">Voltar</button></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m2b"></p>
+  </div>
+</div>
+
+<h2>3 · O card é o botão</h2>
+<p class="why">A faixa inteira é verde e clicável, sem botão dentro: "▶ Começar" em Lora à esquerda, o ritmo em tinta clara à direita. Um objeto só, o mais "botão bonito" dos quatro. Depois da parada, o placar fica onde estava o ritmo.</p>
+<div class="row">
+  <div class="phone"><p class="cap">Dia que não começou</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v3" id="m3a"><div class="t">▶ Começar</div><div class="r">25 · 5 · 20 min</div></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m3a"></p>
+  </div>
+  <div class="phone"><p class="cap">Depois de uma parada</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:12–09:37</span><span class="n">📖 Estudo 1</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:37–09:42</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="v3" id="m3b"><div class="t">▶ Voltar</div><div class="r">2 pomodoros · 50min<br>parou às 10:12</div></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m3b"></p>
+  </div>
+</div>
+
+<h2>4 · Linha do plano</h2>
+<p class="why">O convite vira uma linha da própria lista: a mesma caixa das linhas de bloco, com a borda em verde, o ▶ no lugar do check e a pílula "▶ Começar" igual à do "▶ Iniciar" que as linhas já têm. Não parece um cartaz nem uma barra: parece o próximo bloco, esperando. É o menor e o mais coerente com o resto.</p>
+<div class="row">
+  <div class="phone"><p class="cap">Dia que não começou</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="v4" id="m4a"><span class="pl">▶</span><span class="tx"><b>25 · 5 · 20 min</b></span><span class="b">▶ Começar</span></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m4a"></p>
+  </div>
+  <div class="phone"><p class="cap">Depois de uma parada</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:12–09:37</span><span class="n">📖 Estudo 1</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="chk">✓</span><span class="h">09:37–09:42</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="v4" id="m4b"><span class="pl">▶</span><span class="tx"><b>2 pomodoros · 50min</b> · parou às 10:12</span><span class="b">▶ Voltar</span></div>
+    <button class="finish">✓ Encerrar o dia</button>
+    <p class="meas" data-for="m4b"></p>
+  </div>
+</div>
+
+<p class="note">O "Encerrar o dia" desceu pra 28px de folga em todos (hoje são 14px). Se ainda parecer pesado, a outra alavanca é o peso, não a distância: ele em contorno (borda verde, fundo papel) e só o Começar cheio — um botão principal por tela.</p>
+
+<script>
+for (const p of document.querySelectorAll('.meas')) {
+  const el = document.getElementById(p.dataset.for);
+  const h = Math.round(el.getBoundingClientRect().height);
+  p.textContent = `altura: ${h}px`;
+}
+</script>
+</body>
+</html>
