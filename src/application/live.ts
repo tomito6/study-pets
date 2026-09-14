@@ -9,7 +9,7 @@
 import { isDayClosed } from '../domain/checks';
 import { pausedMinutes } from '../domain/pauses';
 import { dk, minsToTime, timeToMins } from '../domain/time';
-import type { LiveRhythm, StudyBlock } from '../domain/types';
+import type { LiveRhythm, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, state } from '../store/store';
 import { canEditDayWindows } from './dayWindows';
 import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks } from './plan';
@@ -29,6 +29,17 @@ const minuteOf = (d: Date): number => d.getHours() * 60 + d.getMinutes();
 
 /** As janelas de corrida já registradas hoje (as corridas anteriores do dia). */
 const runsOf = (dateKey: string) => (state.windowOverrides[dateKey]?.studyWindows ?? []).filter((w) => w.live);
+
+/**
+ * Há uma corrida ainda ABERTA no minuto de agora — a janela cobre `now`, mas nada roda.
+ * É o que sobra de um reload no meio de um bloco (o timer é runtime e morre com a
+ * página) ou de um "✕ Parar" pela barra. Nesse estado o cartão Começar não deve
+ * aparecer: a porta certa é o "▶ Iniciar" da linha do bloco, que retoma a mesma corrida.
+ */
+export function liveRunOpen(dateKey: string, now: Date = new Date()): boolean {
+  const m = minuteOf(now);
+  return runsOf(dateKey).some((w) => timeToMins(w.start) <= m && m < timeToMins(w.end));
+}
 
 function commit(now: Date): void {
   clearBlockCache();
@@ -51,7 +62,18 @@ export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
 
   const ritmo = liveRhythm();
   const inicio = minuteOf(now);
-  const anteriores = runsOf(dateKey).filter((w) => timeToMins(w.end) <= inicio);
+  // As corridas anteriores ficam. Uma que ainda COBRE agora (o timer morreu num reload,
+  // ou parou pelo ✕ da barra) é aparada em agora, nunca descartada: descartar levava
+  // junto os blocos já marcados dentro dela, e o XP do dia caía em silêncio (medido:
+  // +148 → +93 num "▶ Voltar" depois de um F5). Este é o único lugar fora de `chainLive`
+  // e do corte do "Parar por aqui" que escreve o fim de uma corrida — e só numa corrida
+  // em que nada roda, então a conta da pausa (`growLiveForPause`) nunca a vê crescer.
+  const anteriores: StudyWindow[] = [];
+  for (const w of runsOf(dateKey)) {
+    const fim = timeToMins(w.end);
+    if (fim <= inicio) anteriores.push(w);
+    else if (timeToMins(w.start) < inicio) anteriores.push({ ...w, end: minsToTime(inicio) });
+  }
   const janela = { start: minsToTime(inicio), end: minsToTime(inicio + ritmo.pomo), live: ritmo };
   state.windowOverrides[dateKey] = { studyWindows: [...anteriores, janela] };
   commit(now);

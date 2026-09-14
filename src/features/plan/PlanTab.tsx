@@ -37,6 +37,7 @@ import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { EventDragGhost } from './EventDragGhost';
+import { liveRunOpen } from '../../application/live';
 import { LiveStartCard, showLiveStart } from './LiveStartCard';
 import { useMinuteTick } from './useMinuteTick';
 import { WeekCards } from './WeekCards';
@@ -225,7 +226,9 @@ export function PlanTab() {
   const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
   const aoVivo = loaded && dayModeOf(viewKey) === 'live';
   // O cartão só aparece com nada rodando: com o relógio correndo quem está na frente é o foco.
-  const mostrarComecar = aoVivo && showLiveStart('live', viewKey, timerBlock, now);
+  // E com nenhuma corrida ainda aberta no minuto de agora (reload no meio de um bloco): ali a
+  // porta é o "▶ Iniciar" da linha, que retoma a MESMA corrida — o "▶ Voltar" abriria outra.
+  const mostrarComecar = aoVivo && showLiveStart('live', viewKey, timerBlock, now) && !liveRunOpen(viewKey, now);
 
   // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
   const selection = useGroupSelection({
