@@ -56,7 +56,7 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
       {/* O único lugar do app, fora das Configurações, que NOMEIA o ritmo — e o cartão
           acabou de pedir pra pessoa escolher um. Então ele também é porta: mesma da
           "🕘 Janelas do dia" (ver CLAUDE.md, "O ritmo tem porta"). */}
-      <button type="button" className="ls-rhythm" id="live-rhythm" onClick={() => requestSettings('ritmo')}>
+      <button type="button" className="ls-rhythm" id="live-rhythm" onClick={() => requestSettings('rhythm')}>
         {t.rhythmValue(pomo, shortBreak, longBreak)}
       </button>
     </div>

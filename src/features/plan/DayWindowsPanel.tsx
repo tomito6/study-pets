@@ -17,7 +17,7 @@ import type { DayWindowsRefusal } from '../../application/dayWindows';
 import { dayModeOf } from '../../application/plan';
 import { requestSettings } from '../../application/settings';
 import { dk } from '../../domain/time';
-import { state } from '../../store/store';
+import { state, useAppState } from '../../store/store';
 import type { DateKey, StudyWindow } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
@@ -83,6 +83,26 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
   const modo = key ? dayModeOf(key) : 'rotina';
+  const { pomo, shortBreak, longBreak } = useAppState((s2) => s2.config);
+  /**
+   * A porta pro ritmo: fecha o modal ANTES de pedir (dois modais abertos deixariam o
+   * overlay do dia por cima da página que acabou de abrir) e abre as Configurações já
+   * na seção do ritmo, acesa. E **salva o que o editor tem**, se tiver mudado: quem mexeu
+   * num horário e tocou no "Mudar →" perdia a edição, calado. Salvar aqui é o que a
+   * pessoa faria no clique seguinte; janela inválida é recusada e ninguém sai do lugar.
+   */
+  const irAoRitmo = (): void => {
+    if (sujo) {
+      const r = setDayWindows(key, windows);
+      if (!r.ok) {
+        refuse(r.reason);
+        return;
+      }
+      showToast(t.saved);
+    }
+    onClose();
+    requestSettings('rhythm');
+  };
   // Num dia que já tem corrida, a primeira delas diz desde quando o dia é ao vivo — é a
   // linha que uma barra de dois botões nunca poderia carregar.
   const desde = key ? (state.windowOverrides[key]?.studyWindows.find((w) => w.live)?.start ?? null) : null;
@@ -106,27 +126,6 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
 
-  /**
-   * A porta pro ritmo. Fecha ANTES de pedir, como o goImport do EventPanel: dois modais
-   * abertos ao mesmo tempo deixariam o overlay do dia por cima da página que acabou de abrir.
-   *
-   * E **salva o que o editor tem**, se tiver mudado: o botão fica logo abaixo de
-   * Cancelar/Salvar, e quem mexeu no horário e tocou nele perdia o que fez, calado. Salvar
-   * aqui é o que a pessoa faria no clique anterior, e o toast de sempre diz que salvou; se as
-   * janelas estiverem inválidas, a recusa aparece e ninguém sai do lugar.
-   */
-  const goRhythm = () => {
-    if (sujo) {
-      const r = setDayWindows(key, windows);
-      if (!r.ok) {
-        refuse(r.reason);
-        return;
-      }
-      showToast(t.saved);
-    }
-    onClose();
-    requestSettings('ritmo');
-  };
 
   return (
     <Modal id="day-windows-panel" open={!!dateKey} title={t.title} onClose={onClose}>
@@ -159,6 +158,17 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
           <button type="button" className="ghost-btn" id="day-windows-add" onClick={() => setWindows(appendWindow([]))}>{t.add}</button>
         </div>
       )}
+      {/* O ritmo NÃO é editado aqui de propósito: ele é global (vale todo dia), e este
+          modal é do dia — um campo que diz "do dia" e muda a semana inteira seria uma
+          armadilha. O que faltava era o caminho: a seção vivia em Configurações →
+          Estrutura do dia e ninguém a achava (PENDENCIAS 4). O botão leva direto. */}
+      <div className="dw-rhythm" id="day-windows-rhythm">
+        <div className="dw-rhythm-l">
+          <span className="dw-rhythm-k">{t.rhythm.label}</span>
+          <span className="dw-rhythm-v">{t.rhythm.value(pomo, shortBreak, longBreak)}</span>
+        </div>
+        <button type="button" className="ghost-btn" id="day-windows-rhythm-btn" onClick={irAoRitmo}>{t.rhythm.change}</button>
+      </div>
       <div className="dw-actions">
         {isToday && !off && (
           <button type="button" className="ghost-btn" id="day-windows-start-now" onClick={doStartNow}>{t.startNow}</button>
@@ -183,14 +193,6 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
         <button type="button" className="reset-btn" onClick={onClose}>{t.cancel}</button>
         <button type="button" className="save-btn" id="day-windows-save" onClick={save} disabled={windows.length === 0}>{t.save}</button>
       </div>
-      {/* O ritmo do pomodoro mora em Configurações → Estrutura do dia, e ninguém achava —
-          é a mesma história do "importe de um calendário" (ver CLAUDE.md, "Duas portas").
-          Este é o botão que a pessoa já aperta pra mexer no dia: a porta fica aqui, mostrando
-          o ritmo em vigor. Ela LEVA até lá; editar continua sendo lá, porque ritmo é da rotina
-          e não deste dia (a pergunta "o override carrega ritmo próprio?" continua aberta). */}
-      <button type="button" className="dw-rhythm-link" id="dw-rhythm" onClick={goRhythm}>
-        {t.rhythm(state.config.pomo, state.config.shortBreak, state.config.longBreak)}
-      </button>
     </Modal>
   );
 }

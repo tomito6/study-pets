@@ -23,6 +23,7 @@ import { derived, notify, state } from '../store/store';
 import { adoptStarter, needsStarter } from './pets';
 import { clearBlockCache, rebuildWeeks } from './plan';
 import { scheduleSave } from './save';
+import { requestSettings } from './settings';
 
 export function openOnboarding(): void {
   derived.onboardingOpen = true;
@@ -99,6 +100,13 @@ export function finishOnboarding(input: OnboardingInput, now: Date = new Date())
     skipWeekends: input.skipWeekends,
   };
   derived.onboardingOpen = false;
+  // A corrida de setup: o onboarding acabou de perguntar o horário, e o que falta é
+  // explicar o que aquilo monta. Só numa conta que nunca viu tour NENHUM — quem apagou
+  // o histórico já conhece o app, e `cancelSession` preserva `tutorialSeen` de propósito.
+  if (Object.keys(state.tutorialSeen).length === 0) {
+    derived.setupTour = true;
+    requestSettings(null);
+  }
   rebuildWeeks(now);
   clearBlockCache();
   scheduleSave();

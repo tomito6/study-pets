@@ -1320,8 +1320,37 @@
   /* importar calendário (.ics) — a seção e a tela de revisão */
   /* o destaque de quem chegou aqui pelo "Novo evento": acende e apaga sozinho */
   .st-section-lit .st-card{border-color:var(--accent2);box-shadow:0 0 0 3px var(--accent-wash);transition:box-shadow .4s,border-color .4s;}
-  .ev-import-link,.dw-rhythm-link{display:block;width:100%;margin-top:14px;padding:0;background:none;border:none;text-align:center;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
-  .ev-import-link:hover,.dw-rhythm-link:hover{color:var(--accent);}
+
+  /* ── o tour das Configurações ───────────────────────────────────────────
+     Cartão no rodapé, DENTRO da .settings-page (por isso não precisa de z-index
+     próprio nem de position:fixed — ver features/settings/SettingsTour.tsx). */
+  .st-tour{flex:none;border-top:1px solid var(--border);background:var(--bg2);padding:13px 20px 14px;}
+  .st-tour-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .st-tour-kicker{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .st-tour-count{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+  .st-tour-title{font-family:var(--font-title);font-size:16px;font-weight:600;margin:6px 0 3px;line-height:1.3;}
+  .st-tour-body{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 11px;}
+  .st-tour-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;}
+  .st-tour-skip{background:none;border:0;font-size:12.5px;color:var(--muted);cursor:pointer;font-family:var(--font-ui);padding:6px 4px;}
+  /* Na corrida de setup, no lugar do Pular: diz que tem fim, que é o que separa
+     "obrigatório porque é setup" de "preso". */
+  .st-tour-once{font-size:12px;color:var(--muted);margin-right:auto;}
+  .st-tour-skip:hover{color:var(--text);}
+  .st-tour-next{background:var(--accent);color:var(--on-accent);border:0;border-radius:99px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-ui);}
+  .st-tour-next:hover{opacity:.92;}
+
+  /* ── o ritmo dentro do modal "Janelas do dia" ────────────────────────────
+     Mostra o ritmo e leva até ele; não o edita (é global — ver DayWindowsPanel). */
+  .dw-rhythm{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    border-top:1px solid var(--hairline);margin-top:14px;padding-top:12px;}
+  .dw-rhythm-l{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .dw-rhythm-k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+  /* `.ghost-btn` é width:100% (ele nasceu pros botões empilhados do modal); aqui ele
+     divide a linha com o texto, então volta a ter a largura do próprio rótulo. */
+  .dw-rhythm .ghost-btn{width:auto;flex:none;padding:8px 14px;border-style:solid;}
+  .dw-rhythm-v{font-family:var(--font-mono);font-size:14px;color:var(--text);}
+  .ev-import-link{display:block;width:100%;margin-top:14px;padding:0;background:none;border:none;text-align:center;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .ev-import-link:hover{color:var(--accent);}
   .ics-how{margin-top:12px;font-size:11.5px;color:var(--muted);}
   .ics-how summary{cursor:pointer;color:var(--accent);font-size:12px;}
   .ics-how ul{margin:8px 0 0;padding-left:18px;line-height:1.6;}

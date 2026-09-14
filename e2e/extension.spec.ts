@@ -112,6 +112,16 @@ async function abrirApp(page: Page): Promise<void> {
   if (!(await page.locator('#onb-age').isChecked())) await page.locator('#onb-age').check();
   await page.locator('#onb-begin').click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
+  // A corrida de setup (2026-09-14): terminar o onboarding abre as Configurações com os seis
+  // cartões do tutorial e SEM "Pular" — e a página intercepta todo clique por baixo. O
+  // `passarSetup` do smoke atravessa isso; este helper ficou pra trás pela TERCEIRA vez, e os
+  // cinco testes bateram nos 90 s tentando clicar na engrenagem atrás da página aberta.
+  const setup = page.locator('#settings-tour');
+  if (await setup.isVisible().catch(() => false)) {
+    for (let i = 0; i < 6; i++) await page.locator('#settings-tour-next').click();
+    await expect(setup).toHaveCount(0);
+    await expect(page.locator('#settings-panel')).not.toHaveClass(/open/);
+  }
   await page.locator('#tour-skip').click({ timeout: 3000 }).catch(() => {});
 }
 

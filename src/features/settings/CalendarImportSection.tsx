@@ -95,7 +95,7 @@ export function CalendarImportSection({ highlight = false }: Props) {
   for (const s of plan?.skipped ?? []) skippedByReason.set(s.reason, (skippedByReason.get(s.reason) ?? 0) + 1);
 
   return (
-    <div className={'st-section' + (highlight ? ' st-section-lit' : '')}>
+    <div className={'st-section' + (highlight ? ' st-section-lit' : '')} id="st-sec-calendar">
       <div className="st-section-head"><div className="st-section-title">{t.title}</div></div>
       <div className="st-section-desc">{t.desc}</div>
       <div className="st-card">

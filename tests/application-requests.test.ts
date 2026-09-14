@@ -97,8 +97,8 @@ describe('Abrir Configurações pedido pela barra do laptop', () => {
 
     // A do ritmo é a única que mora na SEGUNDA aba — quem atende precisa trocar de aba
     // antes de rolar, senão a seção está em display:none e o scroll é um no-op mudo.
-    requestSettings('ritmo');
-    expect(derived.settingsRequest).toEqual({ focus: 'ritmo' });
+    requestSettings('rhythm');
+    expect(derived.settingsRequest).toEqual({ focus: 'rhythm' });
   });
 
   it('os dois pedidos são independentes: um não mexe no outro', () => {

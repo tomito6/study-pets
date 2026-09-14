@@ -4,6 +4,7 @@ import { cancelSession } from '../src/application/settings';
 import { currentTourArea, finishTour, restartTour } from '../src/application/tutorial';
 import { emptyPersistedState } from '../src/domain/persistence';
 import {
+  SETTINGS_TOUR,
   TOUR_AREAS,
   TOUR_MARGIN,
   TOUR_STEPS,
@@ -312,5 +313,34 @@ describe('casos de uso', () => {
     cancelSession();
     expect(state.tutorialSeen).toEqual({ plan: true });
     derived.onboardingOpen = false;
+  });
+});
+
+describe('o tour das Configurações', () => {
+  it('todo passo tem texto, e todo texto tem passo', () => {
+    const ids = SETTINGS_TOUR.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length); // sem id repetido
+    for (const s of SETTINGS_TOUR) {
+      const texto = strings.tutorial.settings.steps[s.id];
+      expect(texto, `passo ${s.id} sem texto`).toBeTruthy();
+      expect(texto.title.length).toBeGreaterThan(0);
+      expect(texto.body.length).toBeGreaterThan(0);
+      // O texto não pode escrever "undefined" — o mesmo cuidado que o sininho tem.
+      expect(`${texto.title} ${texto.body}`).not.toContain('undefined');
+    }
+    // Nada de texto órfão: um passo removido não pode deixar a frase pra trás.
+    expect(Object.keys(strings.tutorial.settings.steps).sort()).toEqual([...ids].sort());
+  });
+
+  it('a aba de cada passo existe, e a seção é um id de verdade', () => {
+    for (const s of SETTINGS_TOUR) {
+      expect(['day', 'general']).toContain(s.tab);
+      expect(s.section).toMatch(/^st-sec-[a-z]+$/);
+    }
+  });
+
+  it("'settings' é área de tour, então o 'visto' sobrevive à leitura do documento", () => {
+    expect(TOUR_AREAS).toContain('settings');
+    expect(normalizeTutorialSeen({ settings: true })).toEqual({ settings: true });
   });
 });

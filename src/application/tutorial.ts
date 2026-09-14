@@ -37,3 +37,13 @@ export function restartTour(): void {
   scheduleSave();
   notify();
 }
+
+/**
+ * A corrida de setup acabou (o "Entendi" do último cartão) ou a sessão caiu. Desarmar é
+ * só runtime: o "visto" de verdade é o `finishTour('settings')`, que persiste.
+ */
+export function clearSetupTour(): void {
+  if (!derived.setupTour) return;
+  derived.setupTour = false;
+  notify();
+}

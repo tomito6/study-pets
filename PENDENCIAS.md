@@ -16,12 +16,15 @@ Lista de coisas pra fazer no app. Diferente do `IDEIAS.md` (rabiscos exploratór
 > abaixo é o que **depende de você**: uma pergunta de escopo e as perguntas que os dois plans grandes
 > deixaram em aberto. A **Semana no celular** saiu da lista em 2026-09-14: você escolheu a direção C
 > dos cinco esboços (cartões que deslizam) e ela está implementada — ver "A Semana no celular" no CLAUDE.md.
+> E, vindo do `main` na mesma manhã, o **tutorial das Configurações** com a corrida de setup (ver "O tutorial
+> das Configurações" no CLAUDE.md) — a outra metade barata do item do ritmo.
 
 ## 1. Janelas do dia: o ritmo por dia
 
-O que sobrou do pedido de 2026-09-07, depois que a **porta** pro ritmo entrou (2026-09-14 — o
-`#dw-rhythm` no pé do modal leva até Configurações → Estrutura do dia, já rolado e aceso). A porta
-resolveu o "ninguém acha"; ela **não** responde as duas perguntas originais:
+O que sobrou do pedido de 2026-09-07, depois que a **porta** pro ritmo entrou (2026-09-14 — o modal
+"🕘 Janelas do dia" mostra o ritmo em vigor em `#day-windows-rhythm`, e o "Mudar →" leva até
+Configurações → Estrutura do dia, já rolado e com a seção acesa; o tutorial das Configurações explica a
+seção). A porta resolveu o "ninguém acha"; ela **não** responde as duas perguntas originais:
 
 (a) O pedido era **tirar** "▶ Começar agora" e "↺ Restaurar rotina" do modal. Tirando o Restaurar, como
 um dia editado volta pra rotina? Hoje ele é o único caminho — e é também como se desfaz um "Dia livre".

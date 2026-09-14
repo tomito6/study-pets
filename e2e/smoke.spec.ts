@@ -11,7 +11,7 @@ const DIA = '2026-09-02';
 
 /** Passa pelo onboarding: o personagem padrão, o gato como pet inicial (com o nome
  *  sugerido) e o período padrão. */
-async function passarOnboarding(page: Page) {
+async function passarOnboarding(page: Page, comSetup = true) {
   await expect(page.locator('#onboarding-panel')).toBeVisible();
   await page.locator('#onb-avatar-next').click();
   await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
@@ -25,14 +25,31 @@ async function passarOnboarding(page: Page) {
   }
   await page.locator('#onb-begin').click();
   await expect(page.locator('#onboarding-panel')).toBeHidden();
+  if (comSetup) await passarSetup(page);
+}
+
+/**
+ * A corrida de setup (2026-09-14): terminar o onboarding abre as Configurações com os
+ * seis cartões SEM "Pular". Não dá pra dispensar por atalho de propósito — é a trava —,
+ * então o helper faz o que a pessoa faz: seis cliques e volta pro Plano.
+ * De quebra, todo teste que passa por aqui prova que a corrida tem fim.
+ */
+async function passarSetup(page: Page) {
+  const cartao = page.locator('#settings-tour');
+  if (!(await cartao.isVisible().catch(() => false))) return;
+  await expect(page.locator('#settings-tour-once')).toBeVisible();
+  await expect(page.locator('#settings-tour-skip')).toHaveCount(0);
+  for (let i = 0; i < 6; i++) await page.locator('#settings-tour-next').click();
+  await expect(cartao).toHaveCount(0);
+  await expect(page.locator('#settings-panel')).not.toHaveClass(/open/);
 }
 
 /** Abre o app com o relógio fixo, espera o modo teste logar e passa pelo onboarding. */
-async function abrirApp(page: Page, hora = '17:30') {
+async function abrirApp(page: Page, hora = '17:30', comSetup = true) {
   await page.clock.setFixedTime(new Date(`${DIA}T${hora}:00`));
   await page.goto('/');
   await expect(page.locator('#app')).toBeVisible();
-  await passarOnboarding(page);
+  await passarOnboarding(page, comSetup);
 }
 
 /**
@@ -134,6 +151,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#onb-age').check(); // a declaração de idade destrava o botão
     await page.getByRole('button', { name: 'Começar' }).click();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
+    await passarSetup(page); // a corrida de setup abre no fim do onboarding
 
     await page.locator('#tab-perfil').click();
     await expect(page.locator('#ap-name')).toHaveText('Sibila');
@@ -1763,6 +1781,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#onb-age').check(); // a declaração de idade destrava o botão
     await page.getByRole('button', { name: 'Começar' }).click();
     await expect(page.locator('#onboarding-panel')).toBeHidden();
+    await passarSetup(page); // a corrida de setup abre no fim do onboarding
 
     // É a mesma aparência no Perfil…
     await page.locator('#tour-skip').click();
@@ -2143,7 +2162,7 @@ test.describe('Study Pets — smoke', () => {
   // sem nada explicando a ausência. Agora a aba de hoje tem marca (dentro da semana
   // visível) e, quando o dia visível não é hoje, uma linha diz isso e oferece a volta
   // (que é a única metade que funciona também em OUTRA semana, onde aba de hoje não há).
-  test('59. a aba de hoje tem marca, e quem está olhando outro dia tem o caminho de volta', async ({ page }) => {
+  test('63. a aba de hoje tem marca, e quem está olhando outro dia tem o caminho de volta', async ({ page }) => {
     const erros = vigiarErros(page);
     await abrirApp(page);
     await page.locator('#tour-skip').click();
@@ -2179,12 +2198,10 @@ test.describe('Study Pets — smoke', () => {
     expect(erros).toEqual([]);
   });
 
-  // PENDENCIAS "o ritmo ninguém acha": o ritmo do pomodoro mora em Configurações → Estrutura do dia, e
-  // ninguém acha. A saída "um balão no tour" foi medida e reprovada (o tour é por
-  // ÁREA, então o balão nasceria invisível pra toda conta que já viu o tour do
-  // Plano — inclusive a única que existe). A saída é a porta, que é o padrão que o
-  // app já usou quando o "+ Evento" ganhou a porta do calendário.
-  test('60. o ritmo do pomodoro tem porta: das Janelas do dia até a seção certa, já rolada e acesa', async ({ page }) => {
+  // A mesma porta do 60, medida por outro ângulo: a seção do ritmo tem que parar no MEIO
+  // do `.st-scroll` (um alvo de scroll errado passaria verde com `toBeInViewport`), e a
+  // porta do calendário — que não tinha teste — continua indo pro lugar dela.
+  test('60b. a porta do ritmo centra a seção no scroll, e a porta do calendário continua indo pro lugar dela', async ({ page }) => {
     const erros = vigiarErros(page);
     await abrirApp(page);
     await page.locator('#tour-skip').click();
@@ -2192,10 +2209,10 @@ test.describe('Study Pets — smoke', () => {
 
     // A porta mostra o ritmo em vigor — quem abre já sabe o que vai mudar.
     await page.locator('#day-windows-btn').click();
-    await expect(page.locator('#dw-rhythm')).toContainText('25 · 5 · 20');
+    await expect(page.locator('#day-windows-rhythm')).toContainText('25 · 5 · 20');
 
     // E LEVA: o modal fecha, as Configurações abrem na segunda aba, na seção certa.
-    await page.locator('#dw-rhythm').click();
+    await page.locator('#day-windows-rhythm-btn').click();
     await expect(page.locator('#day-windows-panel')).toBeHidden();
     await expect(page.locator('#settings-panel')).toBeVisible();
     await expect(page.locator('.settings-tab.active')).toContainText('Estrutura do dia');
@@ -2273,6 +2290,100 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#week-cards')).toHaveCount(0);
     await expect(page.locator('.day-tab.active')).toContainText('Sex');
     await expect(page.locator('.block-row').first()).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
+  // O tutorial das Configurações (2026-09-14): um cartão no rodapé da própria página,
+  // porque nenhum balão do tour renderiza lá (z-80 contra os z-200 da .settings-page).
+  // Ele troca de aba sozinho e acende a seção de que está falando.
+  // A corrida de setup (2026-09-14): terminar o onboarding abre as Configurações com os
+  // seis cartões e SEM "Pular". A trava mora na corrida, não na tela — por isso o mesmo
+  // tutorial, aberto por qualquer outra porta, continua tendo saída.
+  test('59. o tutorial das Configurações é obrigatório uma vez, e depois tem saída', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '09:12', false); // sem atravessar a corrida: é ela que este teste mede
+
+    // Ela abre sozinha, no fim do onboarding — ninguém pediu as Configurações.
+    await expect(page.locator('#settings-panel')).toHaveClass(/open/);
+    await expect(page.locator('#settings-tour')).toBeVisible();
+    await expect(page.locator('#settings-tour-count')).toHaveText('1/6');
+    // Sem "Pular", e sem "← Voltar": com qualquer um dos dois a trava não travaria.
+    await expect(page.locator('#settings-tour-skip')).toHaveCount(0);
+    await expect(page.locator('#settings-panel .st-back')).toHaveCount(0);
+    await expect(page.locator('#settings-tour-once')).toBeVisible();
+
+    // Passo 1 mora na "Estrutura do dia": a aba troca sozinha e a seção acende.
+    await expect(page.locator('#settings-panel .settings-tab[data-tab="day"]')).toHaveClass(/active/);
+    await expect(page.locator('#st-sec-windows')).toHaveClass(/st-section-lit/);
+    await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#st-sec-rhythm')).toHaveClass(/st-section-lit/);
+    await expect(page.locator('#st-sec-windows')).not.toHaveClass(/st-section-lit/);
+
+    // Até o passo 5, que vive na OUTRA aba — ela troca sozinha.
+    for (let i = 0; i < 3; i++) await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#settings-tour-count')).toHaveText('5/6');
+    await expect(page.locator('#settings-panel .settings-tab[data-tab="general"]')).toHaveClass(/active/);
+    await expect(page.locator('#st-sec-goal')).toHaveClass(/st-section-lit/);
+
+    // O último "Entendi" acaba a corrida E devolve a pessoa pro Plano dela.
+    await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#settings-tour-next')).toHaveText('Entendi');
+    await page.locator('#settings-tour-next').click();
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
+    await expect(page.locator('#settings-panel')).not.toHaveClass(/open/);
+    await expect(page.locator('#blocks-list')).toBeVisible();
+
+    // E não volta: abrir as Configurações de novo não traz cartão nenhum.
+    await page.locator('#tour-skip').click(); // o tour do Plano, que estava esperando
+    await page.locator('#fab-config').click();
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
+    await expect(page.locator('#settings-panel .st-back')).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
+  // A trava não pode pertencer à TELA: quem manda ver o tour de novo por curiosidade
+  // não pode ficar preso em seis cartões sem saída. É o mesmo tutorial, com Pular.
+  test('59b. pela porta lateral o mesmo tutorial tem "Pular" e "← Voltar"', async ({ page }) => {
+    await abrirApp(page, '09:12'); // atravessa a corrida obrigatória normalmente
+    await page.locator('#tour-skip').click();
+
+    // "Ver o tour de novo" zera o `tutorialSeen` inteiro — inclusive o das Configurações.
+    await page.locator('#fab-config').click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Geral' }).click();
+    await page.locator('#tour-restart').click();
+    await page.locator('#tour-skip').click(); // o balão do Plano volta junto
+
+    await page.locator('#fab-config').click();
+    await expect(page.locator('#settings-tour')).toBeVisible();
+    // Desta vez COM saída — as duas.
+    await expect(page.locator('#settings-tour-skip')).toBeVisible();
+    await expect(page.locator('#settings-panel .st-back')).toBeVisible();
+    await expect(page.locator('#settings-tour-once')).toHaveCount(0);
+    await page.locator('#settings-tour-skip').click();
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
+    await expect(page.locator('#settings-panel')).toHaveClass(/open/); // pular não fecha a página
+  });
+
+  // PENDENCIAS 4: o ritmo do pomodoro morava em Configurações → Estrutura do dia e
+  // ninguém o achava. O modal do dia passa a mostrá-lo e a levar até ele.
+  test('60. o "Janelas do dia" mostra o ritmo e leva direto até ele nas Configurações', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-rhythm')).toContainText('25 · 5');
+    await page.locator('#day-windows-rhythm-btn').click();
+
+    // O modal fecha, as Configurações abrem na aba certa, e a seção do ritmo acende.
+    // (a casca do Modal fica sempre no DOM; quem diz aberto/fechado é a classe .open)
+    await expect(page.locator('#day-windows-panel')).not.toHaveClass(/open/);
+    await expect(page.locator('#settings-panel')).toHaveClass(/open/);
+    await expect(page.locator('#settings-panel .settings-tab[data-tab="day"]')).toHaveClass(/active/);
+    await expect(page.locator('#st-sec-rhythm')).toHaveClass(/st-section-lit/);
+    await expect(page.locator('#cfg-pomo')).toBeVisible();
+    // Quem pediu UMA seção não é sequestrado pelo tutorial das Configurações.
+    await expect(page.locator('#settings-tour')).toHaveCount(0);
     expect(erros).toEqual([]);
   });
 });
