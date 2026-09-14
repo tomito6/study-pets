@@ -2462,9 +2462,12 @@ test.describe('Study Pets — smoke', () => {
     const parcial = page.locator('.block-row', { hasText: '09:12–09:2' });
     await expect(parcial).toHaveCount(1);
     await expect(parcial.locator('.check')).toHaveAttribute('aria-checked', 'true');
-    // E a faixa volta, dizendo quando parou e o que já rolou.
+    // E a faixa volta, dizendo o que já rolou — o QUANTO, nunca o QUANDO. A hora da parada já é
+    // o fim do último bloco da lista, logo acima; o Tomi pediu pra tirá-la do placar em 2026-09-13
+    // e ela voltou de carona duas vezes (b976416 como título, depois herdada pelo esboço 1b). Esta
+    // asserção NEGATIVA existe pra travar a decisão, não só pra deixar de contradizê-la.
     await expect(page.locator('#live-tally')).toContainText('1 pomodoro');
-    await expect(page.locator('#live-tally')).toContainText('parou às 09:2');
+    await expect(page.locator('#live-tally')).not.toContainText('parou às');
     await expect(page.locator('#live-start-btn')).toContainText('Voltar');
     // Com um estudo feito, o "Encerrar o dia" passa a existir.
     await expect(page.locator('.finish-day-btn')).toBeVisible();

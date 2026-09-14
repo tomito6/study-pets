@@ -116,9 +116,9 @@ export const strings = {
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
     /** A faixa do modo ao vivo (a opção B de `prototypes/live-start-menor.html`): texto à esquerda, botão à direita. */
     liveStart: {
-      /** Depois de uma parada, uma linha só: o quanto já rolou (por check) e quando parou. */
+      /** Depois de uma parada, uma linha só: o quanto já rolou, por check. A HORA da parada não
+          entra — ela é o fim do último bloco da lista, logo acima (pedido do Tomi em 2026-09-13). */
       tally: (pomos: number, dur: string) => `${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
-      stoppedAt: (at: string) => `parou às ${at}`,
       /** O selo dentro do botão: só a duração do bloco. Sem a palavra — a marca é de terceiro (ver docs/juridico.html). */
       rhythmValue: (p: number) => `${p} min`,
       start: '▶ Começar',

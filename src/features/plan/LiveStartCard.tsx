@@ -31,17 +31,18 @@ interface Props {
 }
 
 export function LiveStartCard({ dateKey, onStart }: Props) {
-  const { pomo, checks, override } = useAppState((s) => ({ pomo: s.config.pomo, checks: s.checks, override: s.windowOverrides[dateKey] }));
+  const { pomo, checks } = useAppState((s) => ({ pomo: s.config.pomo, checks: s.checks }));
   const blocos = blocksForDay(dateKey);
   const estudos = blocos.filter((b) => b.type === 'estudo');
   // O dia já teve corrida? A régua é ESTUDO, não "tem bloco": a refeição das 13h existe num
   // dia que nunca começou. E o que já rolou conta por CHECK, não por bloco: um bloco aparado
   // sem check (o ✕ da barra, um reload) não é pomodoro feito.
+  //
+  // A HORA em que parou não entra aqui, de propósito (pedido do Tomi em 2026-09-13): ela já é o
+  // fim do último bloco da lista, logo acima do cartão. O placar conta o QUANTO, não o quando.
   const jaRodou = estudos.length > 0;
   const feitos = estudos.filter((b) => isChecked(checks, dateKey, b.time));
   const minutos = feitos.reduce((soma, b) => soma + blockMins(b), 0);
-  // Quando parou: o fim da última corrida do dia (a janela `live` que termina mais tarde).
-  const parouAs = (override?.studyWindows ?? []).filter((w) => w.live).reduce<string | null>((m, w) => (m === null || w.end > m ? w.end : m), null);
 
   return (
     <div className="live-start" id="live-start">
@@ -52,7 +53,6 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
       {feitos.length > 0 && (
         <div className="lv-tally" id="live-tally">
           {t.tally(feitos.length, formatCompact(minutos))}
-          {parouAs ? ` · ${t.stoppedAt(parouAs)}` : ''}
         </div>
       )}
     </div>
