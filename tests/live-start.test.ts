@@ -116,3 +116,33 @@ describe('"Parar por aqui" no primeiro minuto de uma corrida', () => {
     expect(isChecked(state.checks, HOJE, '09:12')).toBe(true);
   });
 });
+
+// Item 4 da revisão: trocar um dia de ROTINA pra ao vivo à tarde apagava a manhã marcada —
+// o override sumia, `blocksForDay` virava só os compromissos, os checks ficavam órfãos e o XP
+// pendente caía a zero. Agora a rotina vivida vira corrida, aparada no fim do último bloco marcado.
+describe('trocar pra ao vivo depois de uma manhã de rotina marcada', () => {
+  it('o que foi marcado fica, como corrida; o que não aconteceu sai', async () => {
+    const { toggleBlockCheck } = await import('../src/application/checks');
+    vi.setSystemTime(em('09:30:00'));
+    expect(toggleBlockCheck(HOJE, blocksForDay(HOJE).find((b) => b.time === '09:00')!, em('09:30:00'))).not.toBeNull();
+    const antes = computeStatsNow(em('10:00:00')).todayXP;
+    expect(antes).toBe(50);
+
+    setDayMode(HOJE, 'live', em('10:00:00'));
+    expect(state.windowOverrides[HOJE]!.studyWindows).toEqual([{ start: '09:00', end: '09:25', live: { pomo: 25, shortBreak: 5, longBreak: 20 } }]);
+    expect(blocksForDay(HOJE).map((b) => `${b.time}–${b.endTime}`)).toEqual(['09:00–09:25']);
+    expect(isChecked(state.checks, HOJE, '09:00')).toBe(true);
+    expect(computeStatsNow(em('10:00:00')).todayXP).toBe(antes);
+
+    // E a tarde ao vivo emenda depois dela.
+    const r = startLive(HOJE, em('10:00:00'));
+    expect(r.ok && r.block).toMatchObject({ time: '10:00', endTime: '10:25' });
+    expect(state.windowOverrides[HOJE]!.studyWindows.map((w) => `${w.start}–${w.end}`)).toEqual(['09:00–09:25', '10:00–10:25']);
+  });
+
+  it('sem nada marcado, o dia ao vivo nasce vazio, como antes', () => {
+    setDayMode(HOJE, 'live', em('10:00:00'));
+    expect(state.windowOverrides[HOJE]).toBeUndefined();
+    expect(blocksForDay(HOJE).filter((b) => b.type === 'estudo')).toHaveLength(0);
+  });
+});

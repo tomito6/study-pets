@@ -10,14 +10,14 @@
 // é um dia livre implícito: abrir janelas nele vale só pra aquele sábado — os outros
 // continuam de folga — e "Restaurar rotina" devolve a folga.
 
-import { isDayClosed } from '../domain/checks';
-import { routineAfter, startNowWindows, validateDayWindows, windowsForDay } from '../domain/dayWindows';
+import { isChecked, isDayClosed } from '../domain/checks';
+import { routineAfter, startNowWindows, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
 import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, StudyBlock, StudyWindow, TimeString } from '../domain/types';
-import { notify, state } from '../store/store';
+import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
 import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks, restKindOf } from './plan';
@@ -70,6 +70,18 @@ function commit(dateKey: DateKey, before: StudyBlock[], now: Date): void {
  * devolveria XP que ninguém estudou. Indo pro ao vivo, o override some e o dia fica sem
  * plano dali pra frente; o que já aconteceu continua no lugar se houver corrida.
  */
+/** Onde a rotina de hoje vira corrida ao trocar pro ao vivo: agora, com bloco no timer; senão o fim do último bloco marcado; senão nada. */
+function liveCutFor(dateKey: DateKey, now: Date): Date | null {
+  if (derived.timerBlock && derived.timerDay === dateKey) return now;
+  const marcados = blocksForDay(dateKey).filter((b) => isChecked(state.checks, dateKey, b.time));
+  if (marcados.length === 0) return null;
+  const fim = marcados.reduce((m, b) => (b.endTime > m ? b.endTime : m), '00:00');
+  const [h, m] = fim.split(':').map(Number);
+  const corte = new Date(now);
+  corte.setHours(h as number, m as number, 0, 0);
+  return corte;
+}
+
 export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date()): DayWindowsResult {
   const can = canEditDayWindows(dateKey, now);
   if (!can.ok) return can;
@@ -88,9 +100,18 @@ export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date
     } else {
       delete state.windowOverrides[dateKey];
     }
-  } else {
+  } else if (corridas.length > 0) {
     // Ao vivo: o que já foi vivido fica; o resto do dia deixa de vir montado.
-    if (corridas.length > 0) state.windowOverrides[dateKey] = { studyWindows: corridas };
+    state.windowOverrides[dateKey] = { studyWindows: corridas };
+  } else {
+    // Sem corrida, mas com uma manhã de ROTINA já marcada: ela vira corrida, aparada no fim do
+    // último bloco marcado (ou em agora, se há um bloco no timer). Apagar o override, como era,
+    // tirava da tela os blocos marcados — checks órfãos, XP pendente a zero, "Plano reajustado:
+    // −N estudos" — pra quem só quis passar a tarde pro ao vivo. É o mesmo `stopDayAt` do
+    // "Parar por aqui": o que aconteceu fica, o que não aconteceu (os blocos sem check) sai.
+    const corte = dateKey === dk(now) ? liveCutFor(dateKey, now) : null;
+    const r = corte ? stopDayAt(effectiveWindows(dateKey), corte, { pomo: state.config.pomo, shortBreak: state.config.shortBreak, longBreak: state.config.longBreak }) : null;
+    if (r?.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
     else delete state.windowOverrides[dateKey];
   }
   // A escolha do dia só pode ser APAGADA quando o padrão já diz a mesma coisa —
