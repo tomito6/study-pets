@@ -62,6 +62,17 @@ export function hardcoreChained(next: StudyBlock, now: Date): void {
 }
 
 /** A sequência acabou (naturalmente, por desistência ou por logout): some tudo. */
+/**
+ * A sessão SAI do runtime mas FICA no dispositivo. É o que o logout implícito (token revogado,
+ * outra aba saiu) precisa: sem credencial não há como cobrar o abandono agora, e apagar a
+ * sessão aqui era a saída grátis do hardcore — o próximo boot desta conta, no mesmo aparelho,
+ * encontra a sessão e cobra, como se o app tivesse fechado.
+ */
+export function detachHardcoreSession(): void {
+  derived.hardcore = null;
+  disarmUnloadGuard();
+}
+
 export function endHardcoreSession(): void {
   derived.hardcore = null;
   const u = uid();

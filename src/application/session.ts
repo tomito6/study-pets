@@ -11,14 +11,14 @@ import { derived, markAuthReady, notify, state } from '../store/store';
 import { scheduleEndOfDayPrompt } from './dayEnd';
 import { startDayRollover, stopDayRollover } from './dayRollover';
 import { resumeHardcoreOnBoot } from './hardcore';
-import { endHardcoreSession } from './hardcoreRuntime';
+import { abandonHardcore, detachHardcoreSession, endHardcoreSession } from './hardcoreRuntime';
 import { resumePauseOnBoot } from './pause';
 import { abandonBlocking, watchExtension } from './siteBlock';
 import { openOnboarding } from './onboarding';
 import { dropExpiredSafetyNet } from './backup';
 import { applyPendingPetXP } from './pets';
 import { clearBlockCache, rebuildWeeks, viewToday } from './plan';
-import { blockSaves } from './save';
+import { blockSaves, saveNow } from './save';
 import { rememberDoc, subscribeRemote, unsubscribeRemote } from './sync';
 import { stopTimer, watchVisibility } from './timer';
 
@@ -72,7 +72,17 @@ export async function resetPassword(email: string): Promise<AuthActionResult> {
   return { ok: true };
 }
 
-export async function signOut(): Promise<void> {
+export async function signOut(now: Date = new Date()): Promise<void> {
+  // Sair com um estudo hardcore ARMADO é abandonar — a mesma conta de fechar o app, cobrada
+  // aqui, ANTES de o Firebase perder a credencial (depois do signOut nenhum save passa). Sem
+  // isto, "Sair · Entrar" era a saída grátis do hardcore: `resetToLoggedOut` apagava a sessão
+  // do dispositivo sem cobrar, e o boot seguinte não encontrava nada. Uma pausa (ou uma
+  // sessão em espera) sai de graça, como sempre: `abandonHardcore` só cobra estudo.
+  const hc = derived.hardcore;
+  if (hc) {
+    if (hc.armed && abandonHardcore(hc, now, 'fechou')) await saveNow();
+    endHardcoreSession();
+  }
   await auth.signOut();
 }
 
@@ -158,7 +168,10 @@ export function initAfterLoad(now: Date = new Date()): void {
 
 function resetToLoggedOut(): void {
   stopDayRollover();
-  if (derived.hardcore) endHardcoreSession(); // antes de perder o uid: limpa a sessão do dispositivo
+  // A sessão hardcore sai do runtime mas FICA no dispositivo: aqui já não há credencial pra
+  // cobrar o abandono (token revogado, outra aba saiu), e o próximo boot desta conta cobra —
+  // como se o app tivesse fechado. O "Sair" explícito passa por `signOut`, que cobra antes.
+  if (derived.hardcore) detachHardcoreSession();
   // Sair da conta NÃO é o fim do estudo: a extensão fica com o que tem até o alarme
   // do `until` (no máximo o resto do pomodoro). Antes daqui saía um `stopped`, e
   // "Sair · Entrar" era o desbloqueio de dois cliques que recarregar já não era.
