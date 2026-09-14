@@ -153,6 +153,19 @@ export const strings = {
     pausedTitle: (mins: number) => `O timer ficou ${mins} min pausado neste bloco — o fim inclui isso; o XP não`,
     /** Tela grande: o toggle Dia · Semana, a coluna da direita e a Semana. */
     view: { day: 'Dia', week: 'Semana' },
+    /** A Semana no celular: um cartão por dia, deslizando (features/plan/WeekCards.tsx). */
+    cards: {
+      today: 'hoje',
+      /** O que o dia tem reservado — e, se já rendeu, o que rendeu. */
+      planned: (plano: string) => `${plano} no plano`,
+      progress: (feito: string, plano: string) => `${feito} feito · ${plano} no plano`,
+      cycle: (n: number) => `Ciclo ${n}`,
+      count: (done: number, total: number) => `${done}/${total}`,
+      open: 'Abrir o dia',
+      empty: 'Sem blocos neste dia.',
+      rest: { weekend: '🌴 Fim de semana livre', off: '🌴 Dia livre' },
+      hint: 'Deslize pra ver os outros dias.',
+    },
     side: {
       today: 'Hoje',
       pendingCoins: (coins: number) => `+${coins} moedas · pendente`,

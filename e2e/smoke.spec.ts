@@ -2221,4 +2221,57 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#ics-import-btn')).toBeInViewport();
     expect(erros).toEqual([]);
   });
+
+  // PENDENCIAS "a Semana no celular": ela existia só acima de 1100px. O Tomi escolheu a
+  // direção C dos cinco esboços — um cartão por dia numa faixa que desliza, com o dia
+  // condensado em texto (uma linha por ciclo, uma por compromisso). As abas dos dias,
+  // que somiam no modo Semana, ficam: são elas que pilotam a faixa, nos dois sentidos.
+  test('62. a Semana no celular: cartões que deslizam, e a aba do dia anda junto', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+
+    // O toggle agora existe nesta largura (antes era montado só no laptop).
+    await page.locator('#view-week').click();
+    await expect(page.locator('#week-cards')).toBeVisible();
+    await expect(page.locator('.wk-card')).toHaveCount(7);
+    // A lista do Dia sai de cena; as abas dos dias ficam.
+    await expect(page.locator('.block-row')).toHaveCount(0);
+    await expect(page.locator('#day-tabs')).toBeVisible();
+
+    // O cartão de hoje: o dia condensado, sem rolar por dentro. Um dia padrão são os
+    // quatro ciclos e a refeição — a pausa longa não ganha linha de propósito.
+    const hoje = page.locator('.wk-card.today');
+    await expect(hoje).toContainText('hoje');
+    await expect(hoje).toContainText('no plano');
+    await expect(hoje.locator('.wk-line')).toHaveCount(5);
+    await expect(hoje.locator('.wk-line').first()).toContainText('Ciclo 1');
+    await expect(hoje.locator('.wk-line.evento')).toContainText('Almoço');
+
+    // Tocar numa aba centra o cartão daquele dia (a régua é a do snap, não um offset).
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    const centrado = await page.evaluate(() => {
+      const s = document.querySelector('#week-cards')!.getBoundingClientRect();
+      const c = document.querySelector('#week-cards')!.children[3].getBoundingClientRect();
+      return Math.abs(c.left + c.width / 2 - (s.left + s.width / 2));
+    });
+    expect(centrado, 'o cartão de quinta não ficou no meio da faixa').toBeLessThan(20);
+
+    // ...e deslizar muda a aba.
+    await page.evaluate(() => {
+      const s = document.querySelector('#week-cards')!;
+      const c = s.children[4] as HTMLElement;
+      s.scrollTo({ left: c.offsetLeft - (s as HTMLElement).offsetLeft, behavior: 'auto' });
+      s.dispatchEvent(new Event('scroll'));
+    });
+    await expect(page.locator('.day-tab.active')).toContainText('Sex');
+
+    // "Abrir o dia" volta pro Dia, naquele dia.
+    await page.locator('.wk-card').nth(4).locator('.wk-open').click();
+    await expect(page.locator('#week-cards')).toHaveCount(0);
+    await expect(page.locator('.day-tab.active')).toContainText('Sex');
+    await expect(page.locator('.block-row').first()).toBeVisible();
+    expect(erros).toEqual([]);
+  });
 });

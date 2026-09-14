@@ -39,6 +39,7 @@ import { DayWindowsPanel } from './DayWindowsPanel';
 import { EventDragGhost } from './EventDragGhost';
 import { LiveStartCard, showLiveStart } from './LiveStartCard';
 import { useMinuteTick } from './useMinuteTick';
+import { WeekCards } from './WeekCards';
 import { WeekView } from './WeekView';
 
 /** Qual modal do Plano está aberto. Estado local: quem abre é sempre um clique aqui dentro. */
@@ -127,14 +128,12 @@ function WeekDayPicker({ weeks, week, day, wide, mode, onMode, weekMode, todayKe
             <option key={w.n} value={w.n}>{t.weekOption(w.n, fmtDay(w.start), fmtDay(w.end))}</option>
           ))}
         </select>
-        {wide && (
-          <div className="view-mode" id="view-mode">
-            <button className={'vm-btn' + (mode === 'day' ? ' on' : '')} id="view-day" onClick={() => onMode('day')}>{t.view.day}</button>
-            <button className={'vm-btn' + (mode === 'week' ? ' on' : '')} id="view-week" onClick={() => onMode('week')}>{t.view.week}</button>
-          </div>
-        )}
+        <div className="view-mode" id="view-mode">
+          <button className={'vm-btn' + (mode === 'day' ? ' on' : '')} id="view-day" onClick={() => onMode('day')}>{t.view.day}</button>
+          <button className={'vm-btn' + (mode === 'week' ? ' on' : '')} id="view-week" onClick={() => onMode('week')}>{t.view.week}</button>
+        </div>
       </div>
-      {!weekMode && (
+      {(!weekMode || !wide) && (
         <div className="day-tabs" id="day-tabs">
           {t.days.map((label, i) => {
             const d = current ? new Date(current.start) : new Date();
@@ -208,7 +207,11 @@ export function PlanTab() {
   const closeModal = () => setModal({ kind: 'none' });
   const wide = useWide();
   const [mode, setMode] = useState<ViewMode>('day');
-  const weekMode = wide && mode === 'week';
+  // A Semana existe nas duas larguras desde 2026-09-14, com telas diferentes: a grade
+  // (`WeekView`) no laptop, os cartões que deslizam (`WeekCards`) no celular — ver
+  // "A Semana no celular" no CLAUDE.md. `weekMode` continua significando "a lista do Dia
+  // sai de cena", e é o que esconde a barra de ações e o "Encerrar o dia".
+  const weekMode = mode === 'week';
 
   const now = new Date();
   const todayKey = dk(now);
@@ -365,15 +368,26 @@ export function PlanTab() {
       </div>
       <WeekDayPicker weeks={weeks} week={week} day={day} wide={wide} mode={mode} onMode={setMode} weekMode={weekMode} todayKey={todayKey} />
       {weekMode ? (
-        <WeekView
-          week={week}
-          now={now}
-          drag={drag}
-          onPickDay={(i) => {
-            setDay(i);
-            setMode('day');
-          }}
-        />
+        wide ? (
+          <WeekView
+            week={week}
+            now={now}
+            drag={drag}
+            onPickDay={(i) => {
+              setDay(i);
+              setMode('day');
+            }}
+          />
+        ) : (
+          <WeekCards
+            week={week}
+            now={now}
+            onOpenDay={(i) => {
+              setDay(i);
+              setMode('day');
+            }}
+          />
+        )
       ) : (
         <>
       <OtherDayNote viewKey={viewKey} todayKey={todayKey} dayLabel={t.days[day]} />

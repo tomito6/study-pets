@@ -13,20 +13,11 @@ Lista de coisas pra fazer no app. Diferente do `IDEIAS.md` (rabiscos exploratór
 > quarto coube numa linha, e o nome das abas ficou decidido — nove itens em oito commits (a frase do
 > quarto e as abas dos dias vieram juntas), mais um commit com os buracos que a revisão da própria leva
 > achou. Todos com teste, menos a troca da frase, que é uma string. O que sobra
-> abaixo é o que **depende de você**: um esboço pra escolher, uma pergunta de escopo, e as perguntas que
-> os dois plans grandes deixaram em aberto.
+> abaixo é o que **depende de você**: uma pergunta de escopo e as perguntas que os dois plans grandes
+> deixaram em aberto. A **Semana no celular** saiu da lista em 2026-09-14: você escolheu a direção C
+> dos cinco esboços (cartões que deslizam) e ela está implementada — ver "A Semana no celular" no CLAUDE.md.
 
-## 1. A Semana no celular
-
-Em aberto desde 2026-09-06, e é a única pendência que **não dá pra fechar sem você**: ela pede uma
-escolha de forma, não uma decisão de sim/não. Já está descartado: grid de sete colunas rolando de lado.
-Já foi rejeitado: uma linha por dia com faixa horizontal das 9h às 19h.
-
-**Os esboços novos estão prontos**: `prototypes/semana-no-celular.html` (abre com dois cliques) tem cinco
-direções desenhadas em 390×844, cada uma com o que a pessoa faz com ela na rua, o que ela perde da Semana
-do laptop, e o custo em código. **Escolha uma** (ou diga o que pegar de cada) e ela vira tarefa executável.
-
-## 2. Janelas do dia: o ritmo por dia
+## 1. Janelas do dia: o ritmo por dia
 
 O que sobrou do pedido de 2026-09-07, depois que a **porta** pro ritmo entrou (2026-09-14 — o
 `#dw-rhythm` no pé do modal leva até Configurações → Estrutura do dia, já rolado e aceso). A porta
@@ -41,7 +32,7 @@ o override daquele dia passa a carregar ritmo próprio? A segunda é a que o IDE
 ritmo, e **o gerador passa a produzir planos diferentes pro mesmo dia conforme o override** — com a regra
 "mexer no gerador reescreve o passado" valendo por inteiro.
 
-## 3. Miúdos de conta, se um dia houver outro usuário
+## 2. Miúdos de conta, se um dia houver outro usuário
 
 **Adiado com gatilho** (2026-09-14): reabrir quando existir a **segunda conta por senha**. Hoje a única
 conta entra pelo Google (`provider: 'google'`), e conta Google já nasce com `emailVerified: true` — o
@@ -60,7 +51,7 @@ As duas armadilhas que o item não registrava, e que é pra isso que ele continu
   dois pontos. E nada de `fetchSignInMethodsForEmail` pra "descobrir o provedor" — é o oráculo de
   enumeração clássico, e o Firebase já o devolve vazio.
 
-## 4. Modo ao vivo: as três perguntas que sobraram
+## 3. Modo ao vivo: as três perguntas que sobraram
 
 O modo está **pronto** (2026-09-13, em seis etapas: `StudyWindow.live`, `dayModes`, os chips no modal do
 dia, o cartão `#live-start`, o "■ Parar por aqui" com XP proporcional, o padrão global com `since` e o
@@ -76,7 +67,7 @@ sozinhas. O custo de cada uma está medido no plan:
 3. **Os recordes passam a ser por minuto** (e não por bloco)? Num dia ao vivo os blocos têm o tamanho que
    a vida deu, e "melhor dia em blocos" vira uma régua torta.
 
-## 5. O vocabulário: as cinco perguntas que sobraram
+## 4. O vocabulário: as cinco perguntas que sobraram
 
 A decisão está tomada e a lista de execução está pronta — 111 trocas literais, antes e depois, em
 `plans/2026-09-13_0300_vocabulario.md`. Resumo: só o que o usuário lê (`schemaVersion` continua 4); não
