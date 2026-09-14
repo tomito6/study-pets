@@ -236,7 +236,7 @@ export function FocusOverlay() {
         )}
       </div>
       <HardcoreQuitModal open={quitOpen && !!hardcore} petName={hcPet?.name ?? null} blockName={cleanBlockName(block.name)} onClose={() => setQuitOpen(false)} />
-      <StopHereModal open={stopOpen && !hardcore} block={block} onClose={() => setStopOpen(false)} />
+      <StopHereModal open={stopOpen && !hardcore} block={block} pausedAt={pausedAt} onClose={() => setStopOpen(false)} />
     </div>
   );
 }

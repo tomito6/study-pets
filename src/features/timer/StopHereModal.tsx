@@ -8,6 +8,7 @@
 import { openFinishDay } from '../../application/dayEnd';
 import { stopHere } from '../../application/pause';
 import { calcXP, coinsForBlock } from '../../domain/progression';
+import { pausedMinutes } from '../../domain/pauses';
 import { blockMins } from '../../domain/time';
 import { cleanBlockName } from '../../domain/timer';
 import type { StudyBlock } from '../../domain/types';
@@ -18,12 +19,20 @@ import { useSecondTick } from './useSecondTick';
 
 const t = strings.timer;
 
-/** Minutos que o bloco em andamento já valeu, do início até agora (nunca negativo). */
-export function minutesSoFar(block: Pick<StudyBlock, 'time' | 'paused'>, now: Date): number {
+/**
+ * Minutos que o bloco em andamento já valeu, do início até agora (nunca negativo).
+ *
+ * Desconta as pausas já REGISTRADAS (`block.paused`) e a pausa ABERTA agora (`pausedAt`),
+ * que ainda não é registro: sem a segunda, pausado há 20 min com 5 estudados a folha dizia
+ * "25 min · +50 XP" e o bloco saía com 5 — `stopHere` registra a pausa antes do corte. A
+ * pausa aberta entra em minutos cheios, pra cima, como o plano fará (`pausedMinutes`).
+ */
+export function minutesSoFar(block: Pick<StudyBlock, 'time' | 'paused'>, now: Date, pausedAt: number | null = null): number {
   const [h, m] = block.time.split(':').map(Number);
   const inicio = (h as number) * 60 + (m as number);
   const agora = now.getHours() * 60 + now.getMinutes();
-  return Math.max(0, agora - inicio - (block.paused ?? 0));
+  const aberta = pausedAt != null ? pausedMinutes(Math.round((now.getTime() - pausedAt) / 1000)) : 0;
+  return Math.max(0, agora - inicio - (block.paused ?? 0) - aberta);
 }
 
 /**
@@ -41,15 +50,17 @@ export function stopHereNow(): void {
 interface Props {
   open: boolean;
   block: StudyBlock;
+  /** ms de quando o bloco foi pausado; null rodando (`derived.timerPausedAt`). */
+  pausedAt: number | null;
   onClose: () => void;
 }
 
-export function StopHereModal({ open, block, onClose }: Props) {
+export function StopHereModal({ open, block, pausedAt, onClose }: Props) {
   // Tique de minuto pela via do segundo: a conta muda na tela enquanto a folha está
   // aberta, senão o número envelhece na cara de quem está decidindo.
   useSecondTick(open);
   const now = new Date();
-  const mins = minutesSoFar(block, now);
+  const mins = minutesSoFar(block, now, pausedAt);
   const nome = cleanBlockName(block.name);
   const conta =
     mins >= 1 && block.type === 'estudo'
