@@ -113,16 +113,14 @@ export const strings = {
     dayWindows: '🕘 Janelas do dia',
     /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */
     dayLive: '⏱ Ao vivo',
-    /** O placar do dia, abaixo da lista num dia ao vivo — e a âncora do segundo balão. */
-    liveTally: (pomos: number, dur: string) =>
-      `Hoje · ${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
+    /** A faixa do modo ao vivo (a opção B de `prototypes/live-start-menor.html`): texto à esquerda, botão à direita. */
     liveStart: {
-      kicker: 'Hoje',
       title: 'Pronto quando você estiver.',
-      /** Depois de uma parada, o kicker conta o que já rolou — o QUANTO, não o quando:
-       *  a hora em que parou é o fim do último bloco da lista, logo acima do cartão. */
-      kickerDone: (pomos: number, dur: string) => `Hoje · ${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
+      /** Depois de uma parada, o título diz QUANDO parou — o fim da última corrida. */
+      stoppedAt: (at: string) => `Você parou às ${at}.`,
+      /** …e o subtítulo diz o quanto já rolou (por check, não por bloco). */
+      tally: (pomos: number, dur: string) => `${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur} hoje`,
       rhythmValue: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
       start: '▶ Começar',
       back: '▶ Voltar',

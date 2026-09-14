@@ -430,15 +430,19 @@
      que acontece é o botão levar pro modo foco. Agora são 148px: o título desceu
      de 22 pra 17px, a faixa do ritmo entre dois fios virou uma linha embaixo do
      botão, e a nota saiu (o tour do modo e o #live-hint do foco já a dizem). */
-  .live-start{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);
-    padding:16px 16px 15px;margin:10px 0 0;text-align:center;}
-  .ls-kicker{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
-  .ls-title{font-family:var(--font-title);font-size:17px;font-weight:600;margin:4px 0 12px;line-height:1.3;}
-  .ls-btn{width:100%;height:42px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
-    font-size:14px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
-  .ls-btn:hover{opacity:.92;}
-  .ls-rhythm{display:block;width:100%;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);margin:9px 0 0;padding:0;background:none;border:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
-  .ls-rhythm:hover{color:var(--accent);}
+  /* A FAIXA (opção B de prototypes/live-start-menor.html, 2026-09-14): texto à esquerda,
+     botão à direita, o ritmo ou o placar como subtítulo. 66–82px medidos a 393px, contra
+     os 150px do cartão compacto e os 269px do cartaz original. É a forma da barra do timer. */
+  .live-start{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);
+    border-radius:var(--radius-xl);padding:12px 12px 12px 15px;margin:10px 0 0;}
+  .lv-l{flex:1;min-width:0;text-align:left;}
+  .lv-title{font-family:var(--font-title);font-size:15.5px;font-weight:600;line-height:1.25;margin:0;}
+  .lv-sub{display:block;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);margin:3px 0 0;}
+  .lv-rhythm{padding:0;background:none;border:0;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px;}
+  .lv-rhythm:hover{color:var(--accent);}
+  .lv-btn{flex:none;height:40px;padding:0 18px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);
+    font-size:13.5px;font-weight:600;font-family:var(--font-ui);cursor:pointer;}
+  .lv-btn:hover{opacity:.92;}
   /* Os dois cards do padrão, em Configurações → Estrutura do dia. */
   .mode2{display:flex;gap:9px;}
   .mode2 .m{flex:1;display:block;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);

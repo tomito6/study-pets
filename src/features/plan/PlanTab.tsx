@@ -10,12 +10,11 @@ import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay, dayModeOf, viewToday } from '../../application/plan';
 import { continueBlock } from '../../application/pause';
 import { clearStartRequest, isTimerBlock, startContextFor, tryStartTimer } from '../../application/timer';
-import { isChecked, isDayClosed } from '../../domain/checks';
+import { isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
-import { blockMins as blockMinsOf, dateFromKey, dk, timeToMins } from '../../domain/time';
-import { formatCompact } from '../../domain/settings';
+import { dateFromKey, dk, timeToMins } from '../../domain/time';
 import { canStartBlock } from '../../domain/timer';
 import type { Stats } from '../../domain/stats';
 import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
@@ -226,7 +225,6 @@ export function PlanTab() {
   const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
   const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
   const aoVivo = loaded && dayModeOf(viewKey) === 'live';
-  const checks = useAppState((s) => s.checks);
   // O cartão só aparece com nada rodando: com o relógio correndo quem está na frente é o foco.
   // E com nenhuma corrida ainda aberta no minuto de agora (reload no meio de um bloco): ali a
   // porta é o "▶ Iniciar" da linha, que retoma a MESMA corrida — o "▶ Voltar" abriria outra.
@@ -475,17 +473,6 @@ export function PlanTab() {
       </div>
       {/* O placar do dia: o que substitui, fora do foco, a lista que a pessoa não olha
           enquanto o relógio corre. É também a âncora do segundo balão do tour. */}
-      {/* Conta por CHECK, não por bloco: um bloco aparado sem check não é pomodoro feito. */}
-      {aoVivo && blocks.some((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time)) && (
-        <div className="live-tally" id="live-tally">
-          {t.liveTally(
-            blocks.filter((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time)).length,
-            formatCompact(
-              blocks.filter((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time)).reduce((soma, b) => soma + blockMinsOf(b), 0),
-            ),
-          )}
-        </div>
-      )}
       {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} />}
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
         </>
