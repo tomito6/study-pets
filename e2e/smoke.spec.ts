@@ -2386,4 +2386,43 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#settings-tour')).toHaveCount(0);
     expect(erros).toEqual([]);
   });
+  // Item 6 da revisão de 2026-09-14: com o hardcore ligado, "▶ Começar" gravava a corrida
+  // ANTES do consentimento, e "Cancelar" deixava um bloco fantasma no plano (sem timer,
+  // sem check) — e o cartão contava mais um pomodoro. Agora o consentimento mostra uma
+  // prévia, e a corrida só é gravada ao confirmar.
+  test('64. modo ao vivo com hardcore: cancelar o consentimento não deixa bloco nenhum no plano', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+    await page.locator('#fab-config').click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Geral' }).click();
+    await page.locator('.st-switch', { has: page.locator('#cfg-hardcore') }).click(); // o input do switch é invisível: clica no trilho
+    await expect(page.locator('#cfg-hardcore')).toBeChecked();
+    await page.locator('#settings-panel .save-btn', { hasText: 'Salvar' }).click(); // salvar fecha a página
+    await expect(page.locator('#settings-panel')).not.toHaveClass(/open/);
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+    await page.locator('#tour-skip').click(); // o tour do modo ao vivo
+
+    await page.locator('#live-start-btn').click();
+    await expect(page.locator('#hardcore-start-confirm')).toBeVisible();
+    await expect(page.locator('#hardcore-start-block')).toContainText('Estudo 1');
+    await page.locator('#hardcore-start-confirm').getByRole('button', { name: 'Cancelar' }).click();
+    await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
+
+    // Nada foi gravado: sem estudo na lista, o cartão continua dizendo "Começar", e o
+    // kicker é o de um dia que não começou.
+    await expect(page.locator('.block-row', { hasText: 'Estudo' })).toHaveCount(0);
+    await expect(page.locator('#live-start-btn')).toContainText('Começar');
+    await expect(page.locator('#live-start .ls-kicker')).toHaveText('Hoje');
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+
+    // E confirmar grava exatamente o que a prévia mostrou.
+    await page.locator('#live-start-btn').click();
+    await page.locator('#hardcore-start-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toContainText('Estudo 1');
+    await expect(page.locator('.block-row', { hasText: '09:12–09:37' })).toHaveCount(1);
+    expect(erros).toEqual([]);
+  });
 });

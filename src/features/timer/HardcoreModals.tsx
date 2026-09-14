@@ -37,16 +37,27 @@ function siteBlockLine(): string | null {
 interface StartProps {
   /** O bloco que o usuário tocou; null = fechado. */
   block: StudyBlock | null;
+  /**
+   * O modo ao vivo: o bloco mostrado é uma PRÉVIA, e a corrida só é gravada ao confirmar
+   * (com ou sem hardcore). Devolve o bloco de verdade, ou null se a gravação foi recusada
+   * — e aí nada começa. "Cancelar" não chama isto, então não deixa nada no plano.
+   */
+  beforeStart?: (() => StudyBlock | null) | undefined;
   onClose: () => void;
 }
 
 /** "🔥 Modo hardcore — Estudo 3 · 25 min. Sair antes do fim custa −100 XP…" */
-export function HardcoreStartModal({ block, onClose }: StartProps) {
+export function HardcoreStartModal({ block, beforeStart, onClose }: StartProps) {
   const pet = activePet();
   const sites = block ? siteBlockLine() : null;
   const start = (hardcore: boolean) => {
     if (!block) return;
-    const r = hardcore ? startHardcore(block) : tryStartTimer(block);
+    const alvo = beforeStart ? beforeStart() : block;
+    if (!alvo) {
+      onClose();
+      return;
+    }
+    const r = hardcore ? startHardcore(alvo) : tryStartTimer(alvo);
     if (!r.ok) showToast(strings.timer.refusal(r));
     onClose();
   };

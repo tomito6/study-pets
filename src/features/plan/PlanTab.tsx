@@ -10,7 +10,7 @@ import { hardcoreEnabled } from '../../application/hardcore';
 import { blocksForDay, computeStatsNow, dateForWeekDay, dayModeOf, viewToday } from '../../application/plan';
 import { continueBlock } from '../../application/pause';
 import { clearStartRequest, isTimerBlock, startContextFor, tryStartTimer } from '../../application/timer';
-import { isDayClosed } from '../../domain/checks';
+import { isChecked, isDayClosed } from '../../domain/checks';
 import type { DragAnchor, DragField } from '../../domain/eventDrag';
 import { rangeOf } from '../../domain/groups';
 import { getLevelPct } from '../../domain/progression';
@@ -37,7 +37,7 @@ import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { EventDragGhost } from './EventDragGhost';
-import { liveRunOpen } from '../../application/live';
+import { liveRunOpen, previewLive, startLive } from '../../application/live';
 import { LiveStartCard, showLiveStart } from './LiveStartCard';
 import { useMinuteTick } from './useMinuteTick';
 import { WeekCards } from './WeekCards';
@@ -53,7 +53,8 @@ type PlanModal =
   /** Arrastou uma ocorrência de série: só este dia ou a série inteira? */
   | { kind: 'move'; move: PendingMove }
   /** Modo hardcore ligado: o consentimento antes de abrir o foco. */
-  | { kind: 'hardcore'; block: StudyBlock };
+  /** `beforeStart`: a corrida do modo ao vivo só é gravada depois do consentimento — ver `startLiveCard`. */
+  | { kind: 'hardcore'; block: StudyBlock; beforeStart?: () => StudyBlock | null };
 
 /** Dia (a lista de sempre) ou Semana (a agenda inteira). Só em tela grande; abaixo de 1100px é sempre Dia. */
 type ViewMode = 'day' | 'week';
@@ -225,6 +226,7 @@ export function PlanTab() {
   const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
   const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
   const aoVivo = loaded && dayModeOf(viewKey) === 'live';
+  const checks = useAppState((s) => s.checks);
   // O cartão só aparece com nada rodando: com o relógio correndo quem está na frente é o foco.
   // E com nenhuma corrida ainda aberta no minuto de agora (reload no meio de um bloco): ali a
   // porta é o "▶ Iniciar" da linha, que retoma a MESMA corrida — o "▶ Voltar" abriria outra.
@@ -321,6 +323,42 @@ export function PlanTab() {
       return;
     }
     const r = tryStartTimer(b, at);
+    if (!r.ok) showToast(strings.timer.refusal(r));
+  };
+
+  /**
+   * "▶ Começar" / "▶ Voltar" do cartão do modo ao vivo. A corrida NÃO existe ainda: o
+   * bloco que ela abriria vem de `previewLive` (sem escrever nada), passa pelas mesmas
+   * recusas da linha, e só é gravado (`startLive`) na hora de pôr no timer — DEPOIS do
+   * consentimento do hardcore, quando há. Gravar antes deixava um bloco fantasma no
+   * plano quando a pessoa cancelava o consentimento, e o cartão contava mais um pomodoro.
+   */
+  const startLiveCard = (at: Date) => {
+    const prev = previewLive(viewKey, at);
+    if (!prev.ok) {
+      showToast(t.liveStart.refusal(prev.reason));
+      return;
+    }
+    const can = canStartBlock(prev.block, viewKey, at, startContextFor(prev.block, viewKey));
+    if (!can.ok) {
+      showToast(strings.timer.refusal(can));
+      return;
+    }
+    const gravar = (): StudyBlock | null => {
+      const r = startLive(viewKey, new Date());
+      if (!r.ok) {
+        showToast(t.liveStart.refusal(r.reason));
+        return null;
+      }
+      return r.block;
+    };
+    if (hardcoreEnabled()) {
+      setModal({ kind: 'hardcore', block: prev.block, beforeStart: gravar });
+      return;
+    }
+    const bloco = gravar();
+    if (!bloco) return;
+    const r = tryStartTimer(bloco, at);
     if (!r.ok) showToast(strings.timer.refusal(r));
   };
 
@@ -437,15 +475,18 @@ export function PlanTab() {
       </div>
       {/* O placar do dia: o que substitui, fora do foco, a lista que a pessoa não olha
           enquanto o relógio corre. É também a âncora do segundo balão do tour. */}
-      {aoVivo && blocks.some((b) => b.type === 'estudo') && (
+      {/* Conta por CHECK, não por bloco: um bloco aparado sem check não é pomodoro feito. */}
+      {aoVivo && blocks.some((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time)) && (
         <div className="live-tally" id="live-tally">
           {t.liveTally(
-            blocks.filter((b) => b.type === 'estudo').length,
-            formatCompact(blocks.filter((b) => b.type === 'estudo').reduce((soma, b) => soma + blockMinsOf(b), 0)),
+            blocks.filter((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time)).length,
+            formatCompact(
+              blocks.filter((b) => b.type === 'estudo' && isChecked(checks, viewKey, b.time)).reduce((soma, b) => soma + blockMinsOf(b), 0),
+            ),
           )}
         </div>
       )}
-      {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startBlock} />}
+      {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} />}
       <FinishDay viewKey={viewKey} todayKey={todayKey} />
         </>
       )}
@@ -467,7 +508,7 @@ export function PlanTab() {
       <DayWindowsPanel dateKey={modal.kind === 'windows' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
       <EventMoveModal move={modal.kind === 'move' ? modal.move : null} onClose={closeModal} />
-      <HardcoreStartModal block={modal.kind === 'hardcore' ? modal.block : null} onClose={closeModal} />
+      <HardcoreStartModal block={modal.kind === 'hardcore' ? modal.block : null} beforeStart={modal.kind === 'hardcore' ? modal.beforeStart : undefined} onClose={closeModal} />
     </>
   );
 }

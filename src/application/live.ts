@@ -18,6 +18,9 @@ import { saveNow } from './save';
 export type LiveRefusal = 'not-live' | 'closed' | 'past' | 'busy' | 'no-room';
 export type LiveStart = { ok: true; block: StudyBlock } | { ok: false; reason: LiveRefusal };
 
+/** As janelas que a corrida de agora deixaria no dia: as anteriores (aparadas) e a nova. */
+type Candidata = { ok: true; anteriores: StudyWindow[]; janela: StudyWindow } | { ok: false; reason: LiveRefusal };
+
 /** O ritmo que a corrida de hoje roda: o da config, congelado na janela ao começar. */
 export const liveRhythm = (): LiveRhythm => ({
   pomo: state.config.pomo,
@@ -52,7 +55,7 @@ function commit(now: Date): void {
  * primeiro pomodoro — e não além, porque o que vem depois ainda não aconteceu. Quem a
  * estica, bloco a bloco, é `chainLive`.
  */
-export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
+function candidata(dateKey: string, now: Date): Candidata {
   if (dayModeOf(dateKey) !== 'live') return { ok: false, reason: 'not-live' };
   if (isDayClosed(state.closedDays, dateKey)) return { ok: false, reason: 'closed' };
   const can = canEditDayWindows(dateKey, now);
@@ -75,6 +78,35 @@ export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
     else if (timeToMins(w.start) < inicio) anteriores.push({ ...w, end: minsToTime(inicio) });
   }
   const janela = { start: minsToTime(inicio), end: minsToTime(inicio + ritmo.pomo), live: ritmo };
+  return { ok: true, anteriores, janela };
+}
+
+/**
+ * O que "▶ Começar" faria agora, SEM escrever nada: o bloco que nasceria, ou o motivo
+ * da recusa. É o que o consentimento do hardcore mostra antes de a corrida existir.
+ *
+ * Existe porque a corrida era gravada (e salva) antes do consentimento: "Cancelar" no
+ * modal deixava um bloco fantasma no plano — sem timer, sem check — e o cartão contava
+ * mais um pomodoro. O dia é gerado com o override candidato só pelo tempo de achar o
+ * bloco, e volta ao que era; o cache do gerador é limpo nas duas pontas.
+ */
+export function previewLive(dateKey: string, now: Date = new Date()): LiveStart {
+  const c = candidata(dateKey, now);
+  if (!c.ok) return c;
+  const antes = state.windowOverrides[dateKey];
+  state.windowOverrides[dateKey] = { studyWindows: [...c.anteriores, c.janela] };
+  clearBlockCache();
+  const bloco = blocksForDay(dateKey).find((b) => b.time === c.janela.start) ?? null;
+  if (antes) state.windowOverrides[dateKey] = antes;
+  else delete state.windowOverrides[dateKey];
+  clearBlockCache();
+  return bloco ? { ok: true, block: bloco } : { ok: false, reason: 'no-room' };
+}
+
+export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
+  const c = candidata(dateKey, now);
+  if (!c.ok) return c;
+  const { anteriores, janela } = c;
   state.windowOverrides[dateKey] = { studyWindows: [...anteriores, janela] };
   commit(now);
 

@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setDayMode } from '../src/application/dayWindows';
 import { liveRunOpen, startLive } from '../src/application/live';
 import { blocksForDay, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
-import { reconcileTimer, startTimer, stopTimer } from '../src/application/timer';
+import { startTimer, stopTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
 import { emptyPersistedState } from '../src/domain/persistence';
 import { derived, state } from '../src/store/store';
