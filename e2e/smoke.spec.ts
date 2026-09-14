@@ -1996,8 +1996,9 @@ test.describe('Study Pets — smoke', () => {
     // E o que já tinha acontecido continua lá, intacto.
     await expect(page.locator('.block-row', { hasText: '09:00–09:25' })).toBeVisible();
 
-    // O parcial vale os 12 minutos, não os 25 do plano.
-    await page.locator('.block-row', { hasText: '10:00–10:12' }).locator('.check').click();
+    // O parcial vale os 12 minutos, não os 25 do plano — e já sai creditado, sem ninguém
+    // marcar nada: a folha acabou de prometer "+24 XP" (2026-09-14).
+    await expect(page.locator('.block-row', { hasText: '10:00–10:12' }).locator('.check')).toHaveClass(/checked/);
     await expect(page.locator('#today-xp-val')).toContainText('+24 XP');
 
     // "Voltar ao padrão" devolve o resto do dia e NÃO cura o bloco parcial.

@@ -28,8 +28,10 @@ import { clearPauseSession, readPauseSession } from '../infrastructure/pauseSess
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
+import { checkBlock } from './checks';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { effectiveWindows } from './dayWindows';
+import { growLiveForPause } from './live';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from './plan';
 import { saveNow } from './save';
 import { adoptPausedBlock, pauseRuntime, reopenFocus, resumeRuntime, stopTimer } from './timer';
@@ -113,8 +115,14 @@ export function stopHere(now: Date = new Date()): StopHereResult {
   // O bloco parcial é o último do dia agora. Pode não existir (a parada caiu no primeiro
   // minuto de um bloco, e `place` não emite nada com menos de 1 min que valha).
   const parcial = blocksForDay(todayKey).filter((b) => b.type === 'estudo').pop() ?? null;
+  const meu = parcial && parcial.time === block.time ? parcial : null;
+  // E ele sai MARCADO. Sem isto o corte acontecia — o bloco encolhia pros minutos vividos —
+  // mas ninguém os creditava: a folha prometia "+24 XP", o Plano dizia "Hoje: —" e o dia
+  // fechava com zero. `checkBlock` passa pelo `canCheckBlock` de sempre (dia aberto, bloco
+  // já começado) e não remarca o que já estava marcado.
+  if (meu) checkBlock(todayKey, meu, now);
   stopTimer();
-  return { ok: true, block: parcial && parcial.time === block.time ? parcial : null, at: minuto(now) };
+  return { ok: true, block: meu, at: minuto(now) };
 }
 
 const minuto = (d: Date): string =>
@@ -147,7 +155,11 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
   const before = blocksForDay(todayKey);
   state.pauses[todayKey] = addPause(state.pauses[todayKey], record);
   clearBlockCache();
-  const after = blocksForDay(todayKey);
+  // Num dia ao vivo a janela é a corrida, e ela acaba no fim do bloco em andamento: o bloco
+  // esticado pela pausa bateria nesse fim e seria cortado. Esticar vem ANTES do remapeamento
+  // porque é ele que decide quais blocos existem — e só acrescenta espaço DEPOIS do bloco
+  // pausado, então nada do que veio antes se move.
+  const after = growLiveForPause(todayKey, block, blocksForDay(todayKey), now) ?? blocksForDay(todayKey);
 
   let dropped = 0;
   const pairs = pauseRemap(before, after, record.at);

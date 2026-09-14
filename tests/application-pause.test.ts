@@ -394,11 +394,11 @@ describe('stopHere — parar no meio do bloco', () => {
     expect(semFlag(blocksForDay(HOJE).filter((b) => b.endTime <= '10:00'))).toBe(antes);
   });
 
-  it('o XP do dia é o dos minutos que passaram, não o do plano que não aconteceu', () => {
+  it('o XP do dia é o dos minutos que passaram, não o do plano que não aconteceu — e sai creditado', () => {
     startTimer(estudo3, AGORA);
     stopHere(em('10:12:00'));
-    const parcial = blocksForDay(HOJE).find((b) => b.time === '10:00')!;
-    toggleBlockCheck(HOJE, parcial, em('10:12:30'));
+    // O parcial sai MARCADO desde 2026-09-14: a folha promete "+24 XP" e prometer sem
+    // creditar era mentira. Este teste marcava à mão; agora ele cobra que não precise.
     expect(computeStatsNow(em('10:12:30')).todayXP).toBe(24);
   });
 

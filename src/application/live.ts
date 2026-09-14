@@ -67,6 +67,36 @@ export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
 }
 
 /**
+ * A pausa do timer caiu DENTRO de uma corrida: a janela cresce pelos minutos que ela
+ * acrescentou ao plano.
+ *
+ * Numa rotina a janela é o dia inteiro e sobra espaço; numa corrida a janela vai só até o
+ * fim do bloco em andamento — ela não tem futuro, por definição. Sem esticar, o bloco
+ * esticado pela pausa bate no fim da janela e é CORTADO: o estudo encolhe (XP a menos do
+ * que a pessoa estudou) e, pior, nada nasce onde ele acabou, então `chainLive` não acha o
+ * bloco seguinte, a corrente para e o foco fecha no meio do dia.
+ *
+ * Devolve o dia regenerado quando esticou, `null` quando não havia corrida a esticar.
+ */
+export function growLiveForPause(dateKey: string, before: StudyBlock, after: StudyBlock[], now: Date = new Date()): StudyBlock[] | null {
+  const janelas = state.windowOverrides[dateKey]?.studyWindows;
+  if (!janelas) return null;
+  const inicio = timeToMins(before.time);
+  const idx = janelas.findIndex((w) => w.live && timeToMins(w.start) <= inicio && timeToMins(w.end) > inicio);
+  if (idx < 0) return null;
+  const depois = after.find((b) => b.time === before.time);
+  const cresceu = (depois?.paused ?? 0) - (before.paused ?? 0);
+  if (cresceu <= 0) return null; // pausa curta demais pra mexer no plano (ele anda em minutos cheios)
+  const copia = [...janelas];
+  const janela = janelas[idx]!;
+  copia[idx] = { ...janela, end: minsToTime(Math.min(timeToMins(janela.end) + cresceu, 24 * 60 - 1)) };
+  state.windowOverrides[dateKey] = { studyWindows: copia };
+  clearBlockCache();
+  void now;
+  return blocksForDay(dateKey);
+}
+
+/**
  * O bloco acabou: a corrida cresce pelo bloco seguinte e o timer emenda nele.
  *
  * A duração do próximo bloco **não é calculada aqui** — seria duplicar o ritmo do
@@ -78,7 +108,11 @@ export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
  */
 export function chainLive(dateKey: string, endedAt: string, now: Date = new Date()): StudyBlock | null {
   const janelas = state.windowOverrides[dateKey]?.studyWindows ?? [];
-  const idx = janelas.findIndex((w) => w.live && w.end === endedAt);
+  // A janela que CONTÉM o minuto em que o bloco acabou, não a que termina nele: uma pausa
+  // registrada no meio da corrida move esse minuto, e comparar o fim exato fazia a emenda
+  // devolver null — a corrente parava sozinha e o foco fechava no meio do dia.
+  const fim = timeToMins(endedAt);
+  const idx = janelas.findIndex((w) => w.live && timeToMins(w.start) <= fim && timeToMins(w.end) >= fim);
   if (idx < 0) return null;
   const atual = janelas[idx]!;
   const ritmo = atual.live!;
