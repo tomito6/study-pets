@@ -92,8 +92,17 @@ export function growLiveForPause(dateKey: string, before: StudyBlock, _after: St
   // aparece menor do que é — e crescer por esse número cresce de menos. Iterar também não
   // serve: cada volta revela só mais um pedaço, e a convergência é linear.
   //
-  // A conta fechada: a janela da corrida termina exatamente no fim do bloco em andamento
-  // (é `chainLive` que a estica, bloco a bloco), então
+  // A conta fechada tem UMA premissa, e ela é o invariante deste arquivo: **só `chainLive`
+  // escreve o fim de uma corrida**, e ele sempre apara no bloco que nasceu. Enquanto isso
+  // valer, a janela termina exatamente no fim do bloco em andamento. As duas janelas `live`
+  // que não obedecem não chegam aqui: a que o `stopDayAt` cria num dia de ROTINA cobre
+  // vários blocos, mas ali não há bloco rodando (tudo dentro dela já acabou); e o
+  // "Prolongar estudos" num dia ao vivo estica a corrida além do bloco — aí a conta cresce
+  // uma janela que já sobrava, o que não corta bloco nenhum, e esse caminho é justamente o
+  // que a pendência do prompt de fim de dia num dia ao vivo vai fechar. Quem inventar um
+  // terceiro escritor do fim da corrida tem que rever esta conta.
+  //
+  // Dito isso: a janela da corrida termina no fim do bloco em andamento, então
   //   fim = início + planejado + pausado_antes
   // e crescer por `pausado_total − pausado_antes` põe o fim exatamente onde o bloco
   // acabaria sem corte nenhum. Toda pausa de hoje registrada a partir do início deste
