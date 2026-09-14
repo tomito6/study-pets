@@ -8,6 +8,7 @@
 import { openFinishDay } from '../../application/dayEnd';
 import { stopHere } from '../../application/pause';
 import { calcXP, coinsForBlock } from '../../domain/progression';
+import { blockMins } from '../../domain/time';
 import { cleanBlockName } from '../../domain/timer';
 import type { StudyBlock } from '../../domain/types';
 import { Modal } from '../shell/Modal';
@@ -23,6 +24,18 @@ export function minutesSoFar(block: Pick<StudyBlock, 'time' | 'paused'>, now: Da
   const inicio = (h as number) * 60 + (m as number);
   const agora = now.getHours() * 60 + now.getMinutes();
   return Math.max(0, agora - inicio - (block.paused ?? 0));
+}
+
+/**
+ * "■ Parar por aqui" de verdade: o corte, e o toast que conta o ganho (nunca a perda). Serve a
+ * folha e o ✕ da barra do timer num dia ao vivo — parar pelo ✕ deixava o bloco INTEIRO no
+ * plano, sem check, o oposto exato do que a folha faz. O toast conta os minutos do bloco que
+ * ficou (`blockMins`), não os da conta da folha: com uma pausa aberta os dois divergiam.
+ */
+export function stopHereNow(): void {
+  const r = stopHere();
+  if (!r.ok) return; // sem timer, em espera, dia encerrado, nada vivido: o timer já parou, e não há o que contar
+  showToast(r.block ? t.stopped(r.at, cleanBlockName(r.block.name), blockMins(r.block), r.block.xp) : t.stoppedBare(r.at));
 }
 
 interface Props {
@@ -45,13 +58,7 @@ export function StopHereModal({ open, block, onClose }: Props) {
 
   const parar = (): void => {
     onClose();
-    const r = stopHere();
-    if (!r.ok) return;
-    showToast(
-      r.block
-        ? t.stopped(r.at, cleanBlockName(r.block.name), mins, r.block.xp)
-        : t.stoppedBare(r.at),
-    );
+    stopHereNow();
   };
 
   const encerrar = (): void => {

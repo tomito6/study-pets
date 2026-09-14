@@ -85,3 +85,34 @@ describe('liveRunOpen — o cartão Começar some enquanto uma corrida cobre ago
     expect(liveRunOpen(HOJE, em('10:20:00'))).toBe(false);
   });
 });
+
+// Parar no PRIMEIRO minuto da primeira corrida (a folha diz "Nada a registrar"): a corrida
+// recém-aberta tem que sumir. Antes ela ficava — 25 minutos inteiros no plano, sem check,
+// com "▶ Iniciar" na linha — e a faixa se escondia atrás dela (a janela ainda cobre agora).
+describe('"Parar por aqui" no primeiro minuto de uma corrida', () => {
+  it('desfaz a corrida recém-aberta: o dia volta a "não começou"', async () => {
+    const { stopHere } = await import('../src/application/pause');
+    setDayMode(HOJE, 'live', em('09:12:00'));
+    const r = startLive(HOJE, em('09:12:00'));
+    if (!r.ok) throw new Error('não começou');
+    startTimer(r.block, em('09:12:00'));
+    vi.setSystemTime(em('09:12:20'));
+    expect(stopHere(em('09:12:20'))).toEqual({ ok: false, reason: 'nothing-lived' });
+    expect(state.windowOverrides[HOJE]).toBeUndefined();
+    expect(blocksForDay(HOJE).filter((b) => b.type === 'estudo')).toHaveLength(0);
+    expect(derived.timerBlock).toBeNull();
+    expect(liveRunOpen(HOJE, em('09:12:20'))).toBe(false); // a faixa volta a aparecer, com "Começar"
+  });
+
+  it('com corridas anteriores, só a recém-aberta some', async () => {
+    const { stopHere } = await import('../src/application/pause');
+    corridaAbertaAs('10:20:00'); // 09:12–10:07, dois blocos ✓
+    const v = startLive(HOJE, em('10:20:00'));
+    if (!v.ok) throw new Error('não voltou');
+    startTimer(v.block, em('10:20:00'));
+    vi.setSystemTime(em('10:20:30'));
+    expect(stopHere(em('10:20:30')).ok).toBe(true); // a corrida anterior é "vivida": o corte é ok, e apara a nova em zero
+    expect(state.windowOverrides[HOJE]!.studyWindows.map((w) => `${w.start}–${w.end}`)).toEqual(['09:12–10:07']);
+    expect(isChecked(state.checks, HOJE, '09:12')).toBe(true);
+  });
+});

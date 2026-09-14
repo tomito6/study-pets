@@ -6,7 +6,7 @@
 // que está acontecendo (ou o próximo) e um botão pra entrar nele — a mesma porta do clique na lista.
 
 import { continueBlock, pauseTimer, resumeTimer } from '../../application/pause';
-import { blocksForDay } from '../../application/plan';
+import { blocksForDay, dayModeOf } from '../../application/plan';
 import { requestStartBlock, setVolume, startContextFor, stopTimer, toggleMute } from '../../application/timer';
 import { blockDurationMin, canStartBlock, cleanBlockName, timerProgress } from '../../domain/timer';
 import { dk } from '../../domain/time';
@@ -17,6 +17,7 @@ import { useWide } from '../../shared/useWide';
 import { useAppState } from '../../store/store';
 import { useMinuteTick } from '../plan/useMinuteTick';
 import { SiteBlockBadge } from './SiteBlockBadge';
+import { stopHereNow } from './StopHereModal';
 import { useSecondTick } from './useSecondTick';
 
 /** O estudo/pausa de hoje em andamento, ou o próximo que ainda dá pra iniciar. */
@@ -52,6 +53,11 @@ export function TimerBar() {
   // A porta de volta pro foco no laptop: o mesmo peso do "Iniciar" do cartão Agora. No celular
   // quem carrega esse botão é a linha do bloco, que tem folga — a barra não tem.
   const mostraContinuar = wide && !hardcore && !focusOpen && !!block;
+  // Num dia ao vivo (ou num bloco de corrida) o ✕ é o MESMO corte do "Parar por aqui": o dia
+  // acaba agora e os minutos que passaram valem. Parando pelo ✕ de sempre, a janela da corrida
+  // ficava esticada até o fim do bloco — 25 minutos inteiros no plano, sem check, o oposto do
+  // que a folha faz. Numa rotina o ✕ continua o de sempre: parar o timer, o plano fica.
+  const corrida = !!block && (!!block.live || dayModeOf(dk(now)) === 'live');
   const togglePause = () => {
     if (paused) {
       resumeTimer();
@@ -120,7 +126,12 @@ export function TimerBar() {
       {!hardcore && progress && !waiting && !mostraContinuar && (
         <button className="timer-pause" id="timer-pause" onClick={togglePause}>{paused ? t.resume : t.pause}</button>
       )}
-      {!hardcore && <button className="timer-stop" onClick={stopTimer}>{t.stop}</button>}
+      {!hardcore &&
+        (corrida ? (
+          <button className="timer-stop" id="timer-stop" onClick={stopHereNow}>{t.stopHereShort}</button>
+        ) : (
+          <button className="timer-stop" id="timer-stop" onClick={stopTimer}>{t.stop}</button>
+        ))}
     </div>
   );
 }

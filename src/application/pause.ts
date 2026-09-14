@@ -21,7 +21,7 @@ import { isDayClosed } from '../domain/checks';
 import { stopDayAt } from '../domain/dayWindows';
 import { addPause, parsePauseSession, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
 import { planDelta, planDeltaParts } from '../domain/planDelta';
-import { dk } from '../domain/time';
+import { dk, timeToMins } from '../domain/time';
 import { timerEnd, timerProgress } from '../domain/timer';
 import type { StudyBlock } from '../domain/types';
 import { clearPauseSession, readPauseSession } from '../infrastructure/pauseSession';
@@ -32,7 +32,7 @@ import { checkBlock } from './checks';
 import { rescheduleEndOfDayPrompt, suspendEndOfDayPrompt } from './dayEnd';
 import { effectiveWindows } from './dayWindows';
 import { growLiveForPause } from './live';
-import { blocksForDay, clearBlockCache, rebuildWeeks } from './plan';
+import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks } from './plan';
 import { saveNow } from './save';
 import { adoptPausedBlock, pauseRuntime, reopenFocus, resumeRuntime, stopTimer } from './timer';
 
@@ -102,6 +102,19 @@ export function stopHere(now: Date = new Date()): StopHereResult {
     longBreak: state.config.longBreak,
   });
   if (!corte.ok) {
+    // Nada vivido: a parada caiu no primeiro minuto do primeiro bloco do dia. Num dia ao vivo
+    // isso é a corrida recém-aberta — e ela tem que SUMIR, senão o bloco de 25 min fica inteiro
+    // no plano, sem check, com "▶ Iniciar" na linha e a faixa escondida atrás dele (a janela
+    // ainda cobre agora). O dia volta a "não começou". Numa rotina não há o que aparar.
+    if (dayModeOf(todayKey) === 'live') {
+      const agoraMin = now.getHours() * 60 + now.getMinutes();
+      const antes = (state.windowOverrides[todayKey]?.studyWindows ?? []).filter((w) => timeToMins(w.start) < agoraMin);
+      if (antes.length > 0) state.windowOverrides[todayKey] = { studyWindows: antes };
+      else delete state.windowOverrides[todayKey];
+      clearBlockCache();
+      rebuildWeeks(now);
+      void saveNow();
+    }
     stopTimer();
     return { ok: false, reason: 'nothing-lived' };
   }

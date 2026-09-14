@@ -2425,4 +2425,37 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row', { hasText: '09:12–09:37' })).toHaveCount(1);
     expect(erros).toEqual([]);
   });
+  // Item 7 da revisão de 2026-09-14: o ✕ da barra num dia ao vivo deixava o bloco INTEIRO no
+  // plano, sem check (a janela da corrida já tinha sido esticada até o fim dele) — o oposto do
+  // "Parar por aqui". Agora o ✕ ali é o mesmo corte: o bloco entra com os minutos que passaram,
+  // marcado, e a faixa diz quando parou.
+  test('65. o ✕ da barra num dia ao vivo corta em agora, como o "Parar por aqui"', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '09:12');
+    await page.locator('#tour-skip').click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+    await page.locator('#tour-skip').click(); // o tour do modo ao vivo
+    await page.locator('#live-start-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    // Oito minutos depois, pausa e sai do foco: a barra aparece, pausada.
+    await page.clock.setFixedTime(new Date('2026-09-02T09:20:00'));
+    await page.locator('#focus-pause').click();
+    await page.getByRole('button', { name: /Sair do foco/ }).click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#timer-stop')).toHaveText('■ Parar');
+
+    await page.locator('#timer-stop').click();
+    // O bloco ficou com os minutos vividos, marcado — não com os 25 do pomodoro.
+    await expect(page.locator('.block-row', { hasText: '09:12–09:37' })).toHaveCount(0);
+    const parcial = page.locator('.block-row', { hasText: '09:12–09:2' });
+    await expect(parcial).toHaveCount(1);
+    await expect(parcial.locator('.check')).toHaveAttribute('aria-checked', 'true');
+    // E a faixa volta, dizendo quando parou e o que já rolou.
+    await expect(page.locator('#live-start-title')).toContainText('Você parou às 09:2');
+    await expect(page.locator('#live-tally')).toContainText('1 pomodoro');
+    await expect(page.locator('#live-start-btn')).toContainText('Voltar');
+    expect(erros).toEqual([]);
+  });
 });
