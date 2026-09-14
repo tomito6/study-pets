@@ -29,7 +29,7 @@ import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { checkBlock } from './checks';
-import { rescheduleEndOfDayPrompt } from './dayEnd';
+import { rescheduleEndOfDayPrompt, suspendEndOfDayPrompt } from './dayEnd';
 import { effectiveWindows } from './dayWindows';
 import { growLiveForPause } from './live';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from './plan';
@@ -110,7 +110,7 @@ export function stopHere(now: Date = new Date()): StopHereResult {
   clearBlockCache();
   rebuildWeeks(now); // a data ganha dados — e notifica
   void saveNow(); // sem debounce: um F5 logo depois não pode perder o corte
-  rescheduleEndOfDayPrompt(now); // o último estudo de hoje passou a ser o parcial
+  suspendEndOfDayPrompt(); // parar é decisão explícita: o prompt não volta a perguntar no mesmo segundo
 
   // O bloco parcial é o último do dia agora. Pode não existir (a parada caiu no primeiro
   // minuto de um bloco, e `place` não emite nada com menos de 1 min que valha).

@@ -15,7 +15,7 @@ import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, notify, state } from '../store/store';
 import { applyPendingPetXP } from './pets';
-import { blocksForDay, clearBlockCache, computeStatsNow } from './plan';
+import { blocksForDay, clearBlockCache, computeStatsNow, dayModeOf } from './plan';
 import { scheduleSave } from './save';
 import { stopBlocking } from './siteBlock';
 import { stopTimer } from './timer';
@@ -90,8 +90,20 @@ function todayLastStudyEnd(now: Date): TimeString | null {
   return lastStudyEnd(blocksForDay(dk(now)));
 }
 
+/**
+ * Num dia AO VIVO o prompt não existe. O "último estudo do plano" ali é sempre o bloco
+ * que acabou de acontecer — o plano acaba onde a pessoa parou —, então qualquer coisa
+ * que reagende (retomar uma pausa, salvar Configurações, parar) o dispararia na hora:
+ * "🌙 Passou do horário — o último bloco (12:36) já passou" às 12:57, com o almoço pela
+ * frente. E o "Prolongar" dele esticaria a CORRIDA, inventando um plano num dia que não
+ * tem plano. As portas de encerrar continuam lá: o botão da lista e a folha do
+ * "Parar por aqui".
+ */
+const semPrompt = (now: Date): boolean => dayModeOf(dk(now)) === 'live';
+
 function checkEndOfDayPrompt(now: Date): void {
   if (promptShown) return;
+  if (semPrompt(now)) return;
   // Com o timer pausado o último estudo ainda vai mudar — quem retoma reagenda; um "encerrar?" em cima de um pomo pausado é a coisa errada na hora errada.
   if (derived.timerPausedAt != null) return;
   const todayKey = dk(now);
@@ -111,6 +123,7 @@ export function scheduleEndOfDayPrompt(now: Date = new Date()): void {
   clearPromptTimer();
   if (promptShown) return;
   if (isDayClosed(state.closedDays, dk(now))) return;
+  if (semPrompt(now)) return;
   const lastEnd = todayLastStudyEnd(now);
   if (!lastEnd) return;
   const delay = msUntil(lastEnd, now);
@@ -130,6 +143,18 @@ export function rescheduleEndOfDayPrompt(now: Date = new Date()): void {
   scheduleEndOfDayPrompt(now);
 }
 
+/**
+ * "■ Parar por aqui": o dia acabou de ser cortado em agora, e o último estudo passou a
+ * ser o parcial — reagendar por ele disparava o prompt no mesmo segundo, oferecendo o
+ * "Encerrar" que a folha acabou de oferecer. A parada é uma decisão explícita: o prompt
+ * fica calado até a próxima mudança de plano ("Voltar ao padrão", prolongar, salvar
+ * Configurações), que reagenda pelo caminho de sempre.
+ */
+export function suspendEndOfDayPrompt(): void {
+  clearPromptTimer();
+  promptShown = true;
+}
+
 export function openEndOfDayPrompt(now: Date = new Date()): void {
   set({ promptOpen: true, promptLastEnd: todayLastStudyEnd(now) || state.config.end || '18:00' });
 }
@@ -146,6 +171,9 @@ export const promptFinish = (): void => set({ promptOpen: false, confirmOpen: tr
 export function extendDay(newEnd: TimeString, now: Date = new Date()): void {
   if (!newEnd) return;
   const todayKey = dk(now);
+  // Num dia ao vivo não há o que prolongar: o override é a corrida, e esticá-la fabricava
+  // um plano inteiro (dez estudos futuros) dentro de um dia que só registra o que aconteceu.
+  if (dayModeOf(todayKey) === 'live') return;
   const ov = state.windowOverrides[todayKey];
   if (ov && ov.studyWindows.length > 0) state.windowOverrides[todayKey] = { studyWindows: extendWindowsTo(ov.studyWindows, newEnd) };
   else state.config = extendDayTo(state.config, newEnd);
