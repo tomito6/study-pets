@@ -4,9 +4,12 @@ import { canCheckBlock, previousCountingDay, previousDayKey } from '../domain/ch
 import { blockInGroup, countsForGroup, groupOf } from '../domain/groups';
 import { petLevel } from '../domain/pets';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
-import { blockMins } from '../domain/time';
+import { blockMins, dk } from '../domain/time';
+import { timerProgress } from '../domain/timer';
 import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/types';
-import { state } from '../store/store';
+import { strings } from '../shared/strings';
+import { showToast } from '../shared/toast';
+import { derived, state } from '../store/store';
 import { isRestDayKey } from './dayWindows';
 import { activePet } from './pets';
 import { blocksForDay, isBonusDayKey } from './plan';
@@ -97,10 +100,34 @@ function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, 
  * e o bônus decidido AGORA — o XP do pet é creditado só quando o dia fechar (ver
  * `computePendingPetXP`).
  */
+/**
+ * O bloco que está RODANDO agora no timer. Marcar à mão um bloco em andamento levava
+ * o bloco **cheio** no minuto 1, enquanto o "■ Parar por aqui" aos 12 minutos paga 24
+ * XP — o caminho honesto rendia menos que o atalho. Ele se fecha sozinho no fim (pelo
+ * foco) ou pelo "Parar por aqui", que paga o proporcional.
+ *
+ * A recusa vale só pra MARCAR: desmarcar continua livre, porque tirar não é ganhar.
+ * E vive só aqui, no caminho manual — `checkBlock`, que é o fim do bloco no foco,
+ * marca o mesmo bloco de propósito e não pode passar por esta guarda.
+ */
+const emAndamento = (dateKey: DateKey, block: StudyBlock, now: Date): boolean => {
+  const t = derived.timerBlock;
+  if (!t || dateKey !== dk(now) || t.time !== block.time) return false;
+  // Pausado conta: o bloco continua sendo o que você está vivendo, e liberar a marca
+  // na pausa devolveria o mesmo atalho pela porta de trás (pausar no minuto 1, marcar,
+  // levar o bloco cheio). Em espera NÃO conta — ali nada começou.
+  if (derived.timerPausedAt != null) return true;
+  return timerProgress(t, now, null, derived.timerEndsAt).phase === 'running';
+};
+
 export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
   if (!canCheckBlock(dateKey, block.time, { closedDays: state.closedDays, penalties: state.penalties, now })) return null;
 
   const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});
+  if (!day[block.time] && emAndamento(dateKey, block, now)) {
+    showToast(strings.plan.checkRunning);
+    return null;
+  }
   if (day[block.time]) {
     delete day[block.time];
     if (Object.keys(day).length === 0) delete state.checks[dateKey];

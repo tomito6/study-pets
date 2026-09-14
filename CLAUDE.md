@@ -204,6 +204,14 @@ Mais importantes que valores concretos. Estes você protege ao mexer no código:
   chegou 🔮" em vez de "Você desistiu"). Na tela só o **check** esmaece (`.check.not-yet`), nunca a linha:
   esmaecer 25 de 30 linhas daria cara de dia morto a um dia que está começando. Dia passado aceita
   qualquer horário — quem estuda longe do computador marca à noite.
+- **O bloco em ANDAMENTO também não aceita check à mão** (2026-09-15, o segundo portão que o plan do
+  modo ao vivo desenhou): marcar no minuto 1 levava o bloco **cheio**, enquanto o "■ Parar por aqui" aos
+  12 minutos paga 24 XP — o caminho honesto rendia menos que o atalho. Vale **rodando e pausado**: liberar
+  na pausa devolveria o mesmo atalho pela porta de trás. Em espera **não** vale, que é o estado em que
+  nada começou. Três amarras: a recusa é só pra **marcar** (desmarcar continua livre, porque tirar não é
+  ganhar); ela vive só no caminho **manual** (`toggleBlockCheck`) — `checkBlock`, que é o fim do bloco no
+  foco, marca o mesmo bloco de propósito; e o bloco marcado **antes** de virar o bloco do timer continua
+  valendo, sem crédito em dobro.
 - **Checks por horário, não por índice**: a chave dos checks é o `time` do bloco (`"09:00"`). Isso evita corrupção quando a config muda. Valor é `{ pet: instanceId | null, bonus: number }` — `pet` = **id da instância** equipada no momento do check (o pet adotado, não a espécie; pets migrados do formato antigo têm id igual ao da espécie, então checks antigos continuam batendo); `bonus` = multiplicador aditivo de XP (0, ou 0.05–0.15 conforme o nível do pet) decidido na hora pelas skills ativas. Retrocompat: `true` antigo é tratado como `{ pet: null, bonus: 0 }` por `checkPet()` / `xpFromCheck()`.
 - **Memoization em `generateBlocks`**: a função tem cache (chave = config do dia + eventos + pausas). Sempre que alterar config, eventos ou as pausas de um dia, chamar `clearBlockCache()`.
 - **Mexer no gerador reescreve o passado**: nada de plano é salvo. `computeStats` regenera cada dia a partir da config, dos eventos e das pausas, toda vez — então mudar `planner.ts` muda o histórico de dias já encerrados, retroativamente. As **chaves de check sobrevivem** (são por horário, e nenhuma mudança até hoje moveu o início de um bloco), mas um bloco que se **divide** faz um dia fechado perder minutos de "feito": o bloco novo nasce sem check. Um dia que batia a meta por pouco pode cair fora dela, e a sequência quebra sozinha — exatamente o que o app promete não fazer. Por isso, antes de mexer no gerador: gere o plano com a versão anterior (`git show HEAD:src/domain/planner.ts`) e com a nova, e **compare** — minutos de estudo por dia, chaves órfãs, blocos que encolhem — varrendo janelas × ritmos × eventos × pausas, não só rodando a suíte. Na mudança de 2026-09-10 (a sobra do fim da janela) isso mostrou que o dia real de uma conta com a refeição das 13h sai byte a byte igual, e que o estrago fica restrito a configs que ninguém usa.

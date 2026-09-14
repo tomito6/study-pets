@@ -96,13 +96,29 @@ describe('fim do bloco no modo foco', () => {
     expect(derived.timerCompleted).toMatchObject({ name: 'Pausa', type: 'pausa', xp: 5, coins: 0 });
   });
 
-  it('não desmarca um check feito à mão no meio do bloco', () => {
-    startTimer(bloco);
+  it('não credita de novo um bloco que já estava marcado quando o timer começou', () => {
+    // Marcar à mão o bloco que JÁ ESTÁ rodando deixou de ser possível (ver
+    // `emAndamento` em application/checks.ts). O caso que sobra, e que este teste
+    // guarda, é o contrário: marcou antes, e só depois resolveu rodar o bloco.
     toggleBlockCheck(HOJE, bloco, AGORA);
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(true);
+    startTimer(bloco);
     relogioEm('10:24:59');
     expect(isChecked(state.checks, HOJE, '10:00')).toBe(true);
     expect(derived.timerBlock).toMatchObject({ type: 'pausa', time: '10:25' });
     expect(derived.timerCompleted).toMatchObject({ name: 'Estudo 3', xp: 0, coins: 0 }); // nada a creditar de novo
+  });
+
+  it('o bloco em andamento não aceita check à mão — nem rodando, nem pausado', () => {
+    startTimer(bloco); // 10:10, Estudo 3 (10:00–10:25) rodando
+    expect(toggleBlockCheck(HOJE, bloco, AGORA)).toBeNull();
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(false);
+
+    // Pausar não é a porta dos fundos: marcar no minuto 1 levaria o bloco cheio,
+    // enquanto o "Parar por aqui" aos 12 minutos paga o proporcional.
+    pauseTimer(AGORA);
+    expect(toggleBlockCheck(HOJE, bloco, AGORA)).toBeNull();
+    expect(isChecked(state.checks, HOJE, '10:00')).toBe(false);
   });
 
   // Sair do foco com o relógio correndo deixou de existir (2026-09-12), então este estado

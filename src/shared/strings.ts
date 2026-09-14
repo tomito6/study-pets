@@ -109,6 +109,8 @@ export const strings = {
       sub: (studies: number, dur: string, xp: number, pending: boolean) =>
         `${studies} ${studies === 1 ? 'bloco' : 'blocos'} · ${dur} · +${xp} XP` + (pending ? ' no fim do dia' : ''),
     },
+    /** Recusa de marcar à mão o bloco que está correndo (ver application/checks.ts). */
+    checkRunning: 'Este bloco está rodando — ele se marca sozinho no fim ⏱',
     addEvent: '+ Evento',
     dayWindows: '🕘 Janelas do dia',
     /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */

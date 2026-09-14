@@ -40,7 +40,10 @@ ritmo, e **o gerador passa a produzir planos diferentes pro mesmo dia conforme o
 
 ## 2. Miúdos de conta, se um dia houver outro usuário
 
-**Adiado com gatilho** (2026-09-14): reabrir quando existir a **segunda conta por senha**. Hoje a única
+**Adiado com gatilho** (2026-09-14): reabrir quando existir a **segunda conta por senha**. *Quem
+repara e em qual sinal:* ninguém observa isso sozinho — o gatilho é o **Tomi** dizer que alguém entrou por
+e-mail/senha, ou `state.user.provider === 'password'` aparecer num documento. Sem dono e sem sinal, adiar
+com gatilho é adiar sem gatilho, e foi assim que o "parou às" voltou duas vezes. Hoje a única
 conta entra pelo Google (`provider: 'google'`), e conta Google já nasce com `emailVerified: true` — o
 lembrete de e-mail não verificado nunca apareceria, e o `linkWithCredential` só tem função quando alguém
 tenta criar senha num e-mail que já entrou pelo Google. Custo medido: lembrete ~110 min, link ~210 min.
@@ -68,8 +71,10 @@ sozinhas. O custo de cada uma está medido no plan:
 
 1. **O drop-off da Análise** é por *ciclo*; num dia ao vivo o ciclo é a corrida inteira. Passa a ser por
    *dias*, pra todo mundo?
-2. **O bloco em andamento deixa de aceitar check manual?** Num dia ao vivo o app marca sozinho ao fim de
-   cada pomodoro, e marcar à mão o bloco que está correndo é a única forma de discordar dele.
+2. ~~**O bloco em andamento deixa de aceitar check manual?**~~ **Feito em 2026-09-15** (o Tomi saiu e
+   pediu pra decidir sozinho): marcar no minuto 1 levava o bloco cheio enquanto o "Parar por aqui" aos 12
+   minutos paga 24 — o atalho rendia mais que o caminho honesto. Vale rodando e pausado; desmarcar
+   continua livre. Ver "O bloco em ANDAMENTO" no CLAUDE.md.
 3. **Os recordes passam a ser por minuto** (e não por bloco)? Num dia ao vivo os blocos têm o tamanho que
    a vida deu, e "melhor dia em blocos" vira uma régua torta.
 
