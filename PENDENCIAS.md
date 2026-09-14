@@ -91,9 +91,10 @@ com prazo. **Nada disso foi executado** — é um commit só, e ele depende dest
    estão fechadas, ou marca a data-limite e segue?
 5. **O hero do Perfil** passa a dizer o seu nome ("Tomás · Lv. 7 · Dedicado") no lugar de "Estudante"?
 
-Junto com a decisão vieram **dois bugs**, que continuam de pé e não dependem das cinco: **7 das 17 skills
-mentem** (a regra aceita evento, a descrição diz "estudo") e o "N estudos" do grupo e do ciclo conta
-evento. Os dois estão localizados no plan.
+Os **dois bugs** que vieram junto com a decisão foram **corrigidos em 2026-09-15**, fora do commit do
+vocabulário (nenhuma das cinco perguntas os tocava): as sete descrições que diziam "estudo" usando `counts`
+passaram a dizer "bloco", com um teste que deriva a régua da própria regra, e o "N estudos" do grupo e da
+faixa do ciclo virou "N blocos". O resto da lista continua esperando as cinco.
 
 ---
 

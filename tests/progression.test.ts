@@ -360,3 +360,34 @@ describe('skills: elegibilidade decidida no momento do check', () => {
     expect(bonusForCheck(blocoNoturno, HOJE, ctx({ activeSkill: null, petLevel: 30 }))).toBe(0);
   });
 });
+
+// O texto da skill tem que dizer a mesma coisa que a regra dela. Sete descrições diziam
+// "estudo" enquanto a regra aceitava evento (`counts`), então quem marcava a AULA como
+// último bloco do dia levava um bônus que o texto negava — e quem escolheu o pet POR
+// aquela skill foi informado errado. O catálogo é a fonte: este teste deriva a régua da
+// própria regra, então skill nova entra coberta sem ninguém lembrar de vir aqui.
+describe('a descrição da skill não pode mentir sobre a regra', () => {
+  /** As regras que aceitam estudo OU evento — o `counts` de `skillEligible`. */
+  const ACEITAM_EVENTO = new Set([
+    'last-study', 'meets-goal', 'in-group', 'completes-group', 'comeback', 'after-rest', 'bonus-day',
+  ]);
+  /** As que só valem pra estudo puro — o `study` de `skillEligible`. */
+  const SO_ESTUDO = new Set(['hour-range', 'first-study', 'nth-study', 'after']);
+
+  it('regra que aceita evento não diz "estudo"; regra de estudo puro não diz "bloco"', () => {
+    const vistas = new Set<string>();
+    for (const skill of Object.values(SKILLS)) {
+      const kind = skill.rule.kind;
+      vistas.add(kind);
+      if (ACEITAM_EVENTO.has(kind)) {
+        expect(skill.desc, `${skill.id} (${kind}) aceita evento e diz "estudo"`).not.toMatch(/estudo/i);
+        expect(skill.desc, `${skill.id} (${kind}) devia falar de bloco`).toMatch(/bloco/i);
+      } else if (SO_ESTUDO.has(kind)) {
+        expect(skill.desc, `${skill.id} (${kind}) é só estudo e diz "bloco"`).not.toMatch(/bloco/i);
+      }
+    }
+    // Regra nova sem veredito aqui é regra sem cobertura: obriga a passar neste teste.
+    const semVeredito = [...vistas].filter((k) => !ACEITAM_EVENTO.has(k) && !SO_ESTUDO.has(k));
+    expect(semVeredito, 'kind sem classificação — diga se ele aceita evento').toEqual(['event']);
+  });
+});

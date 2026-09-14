@@ -107,7 +107,7 @@ export const strings = {
     cycleCheer: {
       title: (name: string) => `✓ ${name} completo`,
       sub: (studies: number, dur: string, xp: number, pending: boolean) =>
-        `${studies} ${studies === 1 ? 'estudo' : 'estudos'} · ${dur} · +${xp} XP` + (pending ? ' no fim do dia' : ''),
+        `${studies} ${studies === 1 ? 'bloco' : 'blocos'} · ${dur} · +${xp} XP` + (pending ? ' no fim do dia' : ''),
     },
     addEvent: '+ Evento',
     dayWindows: '🕘 Janelas do dia',
@@ -189,7 +189,7 @@ export const strings = {
     panelNew: '✏️ Novo grupo',
     panelEdit: '✏️ Editar grupo',
     summary: (start: string, end: string, count: number, dur: string) =>
-      `${start} – ${end} · ${count === 1 ? '1 estudo' : `${count} estudos`} · ${dur}`,
+      `${start} – ${end} · ${count === 1 ? '1 bloco' : `${count} blocos`} · ${dur}`,
     range: (start: string, end: string) => `${start} – ${end}`,
     name: 'Nome',
     namePlaceholder: 'Ex: Análise II, Cap. 4 de Física...',
@@ -202,7 +202,7 @@ export const strings = {
     progress: (done: number, total: number) => `${done}/${total}`,
     progressDone: (done: number, total: number) => `✓ ${done}/${total}`,
     progressMins: (done: string, total: string) => `${done} de ${total}`,
-    noStudy: 'sem estudos neste trecho',
+    noStudy: 'sem estudo nem evento neste trecho',
     headerTitle: 'Toque pra editar o grupo',
     gripTitle: 'Arraste pra ajustar o trecho',
     refusal: {

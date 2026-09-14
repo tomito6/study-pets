@@ -1384,7 +1384,10 @@ test.describe('Study Pets — smoke', () => {
 
     await expect(page.locator('#group-panel')).toBeVisible();
     await expect(page.locator('#group-summary')).toContainText('09:00 – 10:25');
-    await expect(page.locator('#group-summary')).toContainText('3 estudos');
+    // "blocos", não "estudos": o contador soma estudo E evento (`countsForGroup`), e a
+    // palavra antiga negava o evento que ele conta.
+    await expect(page.locator('#group-summary')).toContainText('3 blocos');
+    await expect(page.locator('#group-summary')).not.toContainText('estudos');
     await page.locator('#grp-name').fill('Análise II');
     await page.locator('#grp-goal').fill('terminar a lista 3');
     await page.locator('#grp-save').click();
@@ -1721,7 +1724,7 @@ test.describe('Study Pets — smoke', () => {
     const faixa = page.locator('#cycle-cheer');
     await expect(faixa).toBeVisible();
     await expect(faixa).toContainText('Ciclo 1 completo');
-    await expect(faixa).toContainText('4 estudos · 1h40 · +200 XP no fim do dia');
+    await expect(faixa).toContainText('4 blocos · 1h40 · +200 XP no fim do dia');
     await expect(divisor).toHaveClass(/done/);
     await expect(divisor).toContainText('Ciclo 1 ✓ · 1h40');
 
@@ -1746,7 +1749,7 @@ test.describe('Study Pets — smoke', () => {
     const faixa = page.locator('#focus-done');
     await expect(faixa).toHaveClass(/cycle/);
     await expect(faixa).toContainText('Ciclo 1 completo');
-    await expect(faixa).toContainText('4 estudos · 1h40 · +200 XP no fim do dia');
+    await expect(faixa).toContainText('4 blocos · 1h40 · +200 XP no fim do dia');
     await expect(faixa.locator('.fd-pet')).toHaveAttribute('src', /idle\/pets\/cat\//);
     // E o foco seguiu no plano: emendou na pausa longa.
     await expect(page.locator('#focus-block-name')).toHaveText('Pausa longa');
@@ -1816,7 +1819,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#group-panel')).toBeVisible();
     expect(await page.evaluate(() => (window as unknown as { __ctx: boolean[] }).__ctx)).toEqual([true]);
     await expect(page.locator('#group-summary')).toContainText('09:00 – 09:55');
-    await expect(page.locator('#group-summary')).toContainText('2 estudos');
+    await expect(page.locator('#group-summary')).toContainText('2 blocos');
     await page.locator('#grp-save').click(); // sem nome → "Grupo"
     await expect(page.locator('.group-header')).toContainText('Grupo');
 

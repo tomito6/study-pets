@@ -474,7 +474,7 @@ Reagendamento: `scheduleEndOfDayPrompt()` é chamado em `initApp`, em `endPrompt
 
 ## Sistema de skills
 
-Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, tier, rule }`. `desc` guarda **só a condição** ("em estudos que começam a partir das 18h"); o texto que o usuário vê vem de `skillDesc(skill, nível)`, que põe o "+X% XP" na frente. Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma. **O bestiário (`bestiario.html`) desenha tudo isto** — ver "Bestiário" abaixo.
+Skills são um catálogo global (`SKILLS`, em `src/domain/progression.ts`): `{ id, name, desc, tier, rule }`. `desc` guarda **só a condição** ("em estudos que começam a partir das 18h"); o texto que o usuário vê vem de `skillDesc(skill, nível)`, que põe o "+X% XP" na frente. **A palavra do `desc` segue a regra, não o gosto** (2026-09-15): regra que usa `study` puro diz "estudo", regra que usa `counts` (estudo **ou** evento) diz "bloco". Sete descrições diziam "estudo" usando `counts` — Ponto final, Constância, Afinco, Empenho, Recomeço, Descansado e Hora extra —, então quem marcava a **aula** como último bloco do dia levava um bônus que o texto negava, e quem escolheu o pet *por* aquela skill foi informado errado. `tests/progression.test.ts` deriva a régua da própria regra e reprova a volta disso, inclusive pra skill nova (um `kind` sem veredito no teste falha de propósito). Cada **forma** de pet lista quais ids ela pode ter (`FORMS[form].skills`); a mesma skill pode aparecer em mais de uma forma. **O bestiário (`bestiario.html`) desenha tudo isto** — ver "Bestiário" abaixo.
 
 **O equilíbrio é o ponto (rebalanceado em 2026-09-09).** A regra que rege o catálogo:
 
@@ -492,9 +492,9 @@ Na prática toda skill rende ~2% do XP do dia no Lv. 1 e ~6% no teto — reconhe
 
 **As 17, por tier:**
 
-- **`alta` (acompanha o dia)** — `madrugador` (antes das 9h), `vespertino` (12h–18h), `noturno` (a partir das 18h), `maratona` (do 5º estudo do dia em diante), `recomeco` (**todo** estudo do dia em que se volta depois de um dia que contava e ficou em branco), `descansado` (todo estudo do dia seguinte a uma folga), `hora-extra` (estudo num dia de folga — o dia bônus), `afinco` (estudo dentro de um grupo de estudo).
+- **`alta` (acompanha o dia)** — `madrugador` (antes das 9h), `vespertino` (12h–18h), `noturno` (a partir das 18h), `maratona` (do 5º estudo do dia em diante), `recomeco` (**todo** bloco do dia em que se volta depois de um dia que contava e ficou em branco), `descansado` (todo bloco do dia seguinte a uma folga), `hora-extra` (bloco num dia de folga — o dia bônus), `afinco` (estudo dentro de um grupo de estudo).
 - **`media` (acontece às vezes)** — `lua-cheia` (a partir das 21h), `preguica` (estudo logo depois de uma pausa longa), `aula` (evento que conta como estudo).
-- **`baixa` (uma vez por dia)** — `fiel` (o primeiro estudo **marcado**), `ponto-final` (o último estudo **do plano**), `rumina` (logo depois de uma refeição: intervalo de `MEAL_MIN_MINS` = 30 min ou mais), `retomada` (logo depois de um evento — a volta da aula), `constancia` (o estudo que bate a meta do dia), `empenho` (o estudo que fecha um grupo).
+- **`baixa` (uma vez por dia)** — `fiel` (o primeiro estudo **marcado**), `ponto-final` (o último bloco **do plano**), `rumina` (logo depois de uma refeição: intervalo de `MEAL_MIN_MINS` = 30 min ou mais), `retomada` (logo depois de um evento — a volta da aula), `constancia` (o bloco que bate a meta do dia), `empenho` (o bloco que fecha um grupo).
 
 `recomeco` e `descansado` andam juntas de propósito: `previousCountingDay` (em `domain/checks.ts`) pula as folgas exatamente como `allDays()`, então **folga não é sumiço** — quem descansou de propósito cai na Descansado, quem sumiu cai no Recomeço. `recomeco` é o anti-streak do app: paga por voltar, nunca cobra por faltar.
 
@@ -631,5 +631,6 @@ Política de privacidade, termos de uso e Impressum vivem em `public/legal/`, co
 
 - **Nunca criar uma pasta por teste ou por feature.** Checkout separado (git worktree) só se for indispensável, e aí **sempre na pasta única `study-pets/teste`**, reaproveitada por qualquer branch — e **apagada assim que o teste terminar** (`git worktree remove --force teste`). Nem pasta irmã em `Projetos/`, nem `teste-<algo>`. Vale também pra tarefas agendadas
 - Atualizar este arquivo quando uma decisão de design mudar
+- **Trocar texto que o usuário lê = `grep` do literal nos testes ANTES de trocar.** O plan do vocabulário dizia "custa 4 asserções de e2e" e mesmo assim três passaram batido em 2026-09-15 (48, 49 e 12 afirmam a frase inteira, tipo `'4 estudos · 1h40 · +200 XP'`): contagem de plan não substitui a busca. E **vermelho nesta máquina só vira "carga" DEPOIS de rodar isolado** — isolar decide em segundos, e as três falhas daquele dia pareciam o conjunto clássico de flaky e eram regressão de verdade
 - Testar em `npm run dev:teste` antes de commitar (e `npm test` + `npm run typecheck`)
 - Quando notar algo aqui que não bate com o código, perguntar ao usuário antes de "corrigir" — pode ser que o design tenha evoluído de propósito

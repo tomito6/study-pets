@@ -197,8 +197,8 @@ export const SKILLS: Record<SkillId, SkillDefinition> = {
   // Num dia de 8 estudos, do 5º em diante são 4; num dia curto, nenhum. Nunca cobra o dia longo.
   maratona: { id: 'maratona', name: 'Maratona', desc: 'do 5º estudo do dia em diante', tier: 'alta', rule: { kind: 'nth-study', from: 5 } },
   fiel: { id: 'fiel', name: 'Fiel', desc: 'no primeiro estudo do dia', tier: 'baixa', rule: { kind: 'first-study' } },
-  'ponto-final': { id: 'ponto-final', name: 'Ponto final', desc: 'no último estudo do dia', tier: 'baixa', rule: { kind: 'last-study' } },
-  constancia: { id: 'constancia', name: 'Constância', desc: 'no estudo que bate a meta do dia', tier: 'baixa', rule: { kind: 'meets-goal' } },
+  'ponto-final': { id: 'ponto-final', name: 'Ponto final', desc: 'no último bloco do dia', tier: 'baixa', rule: { kind: 'last-study' } },
+  constancia: { id: 'constancia', name: 'Constância', desc: 'no bloco que bate a meta do dia', tier: 'baixa', rule: { kind: 'meets-goal' } },
 
   // --- os retornos difíceis (o bloco depois de parar)
   preguica: { id: 'preguica', name: 'Preguiça', desc: 'no estudo logo depois de uma pausa longa', tier: 'media', rule: { kind: 'after', what: 'long-break' } },
@@ -208,13 +208,13 @@ export const SKILLS: Record<SkillId, SkillDefinition> = {
 
   // --- o dia inteiro, quando o dia é especial
   // Recomeço e Descansado valem em TODO estudo daquele dia — por isso são `alta`.
-  recomeco: { id: 'recomeco', name: 'Recomeço', desc: 'nos estudos do dia em que você volta depois de um dia em branco', tier: 'alta', rule: { kind: 'comeback' } },
-  descansado: { id: 'descansado', name: 'Descansado', desc: 'nos estudos do dia seguinte a uma folga', tier: 'alta', rule: { kind: 'after-rest' } },
-  'hora-extra': { id: 'hora-extra', name: 'Hora extra', desc: 'em estudos num dia de folga', tier: 'alta', rule: { kind: 'bonus-day' } },
+  recomeco: { id: 'recomeco', name: 'Recomeço', desc: 'nos blocos do dia em que você volta depois de um dia em branco', tier: 'alta', rule: { kind: 'comeback' } },
+  descansado: { id: 'descansado', name: 'Descansado', desc: 'nos blocos do dia seguinte a uma folga', tier: 'alta', rule: { kind: 'after-rest' } },
+  'hora-extra': { id: 'hora-extra', name: 'Hora extra', desc: 'em blocos num dia de folga', tier: 'alta', rule: { kind: 'bonus-day' } },
 
   // --- os grupos de estudo (o trecho do dia com nome e objetivo)
-  afinco: { id: 'afinco', name: 'Afinco', desc: 'em estudos dentro de um grupo', tier: 'alta', rule: { kind: 'in-group' } },
-  empenho: { id: 'empenho', name: 'Empenho', desc: 'no estudo que completa um grupo', tier: 'baixa', rule: { kind: 'completes-group' } },
+  afinco: { id: 'afinco', name: 'Afinco', desc: 'em blocos dentro de um grupo', tier: 'alta', rule: { kind: 'in-group' } },
+  empenho: { id: 'empenho', name: 'Empenho', desc: 'no bloco que completa um grupo', tier: 'baixa', rule: { kind: 'completes-group' } },
 };
 
 /** Contexto necessário pra decidir o bônus no momento do check. */
@@ -290,7 +290,16 @@ export function skillEligible(
   if ((ctx.activatedAt || 0) > blockStart.getTime()) return false;
 
   const study = b.type === 'estudo';
-  /** Estudo ou evento — o que rende XP "de estudo". */
+  /**
+   * Estudo ou evento — o que rende XP "de estudo".
+   *
+   * **A palavra do `desc` segue esta linha**: regra que usa `study` puro diz "estudo",
+   * regra que usa `counts` diz "bloco". Sete descrições diziam "estudo" usando `counts`
+   * (Ponto final, Constância, Afinco, Empenho, Recomeço, Descansado e Hora extra), então
+   * quem marcava a AULA como último bloco do dia levava um bônus que o texto negava — e
+   * quem escolheu o pet por aquela skill foi informado errado. `tests/progression.test.ts`
+   * varre o catálogo e reprova a volta disso.
+   */
   const counts = study || b.type === 'event';
   const rule = skill.rule;
   switch (rule.kind) {
