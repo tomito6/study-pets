@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>O Encerrar o dia, duas versões</title>
+<style>
+@font-face{font-family:'DM Sans';src:url('../public/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap;}
+:root{--bg:#f6efe3;--bg2:#fffdf7;--flat-deep:#d8cfbb;--text:#40382e;--muted:#6e6455;--border:#d8cdbb;
+  --accent:#486244;--accent2:#4e6b48;--on-accent:#fffdf6;--accent-wash:rgba(72,98,68,.10);--accent-border:rgba(72,98,68,.45);
+  --radius:14px;--radius-sm:8px;--radius-xl:16px;--font-ui:'DM Sans',sans-serif}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 24px 50px;background:#efe7d8;color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.5}
+h1{font-size:22px;font-weight:600;margin:0 0 4px}
+h2{font-size:16px;font-weight:600;margin:26px 0 6px}
+.why{color:var(--muted);font-size:13px;margin:0 0 12px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(2,360px);gap:16px}
+.phone{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px;box-shadow:0 1px 2px rgba(64,56,46,.05);position:relative;min-height:560px;display:flex;flex-direction:column}
+.cap{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.cap b{color:var(--accent);letter-spacing:0;text-transform:none;font-size:12px;margin-left:6px}
+.bar{display:flex;gap:7px;justify-content:flex-end;margin:0 0 12px}
+.bar b{font-weight:500;font-size:12px;color:var(--accent);border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 10px}
+.bar b.on{background:var(--accent-wash);border-color:var(--accent-border);font-weight:600}
+.blk{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-top:7px;font-size:12.5px}
+.blk.ev{border-style:dashed;background:transparent;color:var(--muted)}
+.blk .h{width:78px;color:var(--muted)}.blk .n{flex:1}.blk .xp{color:var(--accent);font-size:11px}
+.blk .chk{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+.blk .box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);background:var(--bg2)}
+.more{font-size:11px;color:var(--muted);text-align:center;margin:10px 0 2px}
+.comecar{margin-top:10px;width:100%;height:52px;border:0;border-radius:99px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;position:relative;font:600 15px var(--font-ui);box-shadow:0 3px 0 var(--flat-deep)}
+.comecar .chip{position:absolute;right:8px;top:8px;height:36px;padding:0 12px;border-radius:99px;background:rgba(255,253,246,.16);display:flex;align-items:center;font:500 12px var(--font-ui);color:rgba(255,253,246,.92)}
+.foot{margin-top:auto;padding-top:28px;padding-bottom:64px}
+.foot.rot{margin-top:18px;padding-top:0}
+/* hoje */
+.f0{width:100%;padding:14px;background:var(--accent);color:var(--on-accent);border:0;border-radius:var(--radius);font:600 14px var(--font-ui);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 0 var(--flat-deep)}
+/* A — igual ao Começar */
+.fa{width:100%;height:52px;background:var(--accent);color:var(--on-accent);border:0;border-radius:99px;font:600 15px var(--font-ui);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 0 var(--flat-deep)}
+/* B — pílula em contorno */
+.fb{width:100%;height:52px;background:var(--bg2);color:var(--accent);border:1.5px solid var(--accent-border);border-radius:99px;font:600 15px var(--font-ui);display:flex;align-items:center;justify-content:center;gap:8px}
+.gear{position:absolute;right:14px;bottom:14px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 0 var(--flat-deep)}
+</style>
+</head>
+<body>
+<h1>O Encerrar o dia, duas versões</h1>
+<p class="why">Como ele fica hoje (cantos de 14px, 48px, texto 14px) contra as duas alternativas, nos dois lugares em que ele aparece: no pé da tela num dia ao vivo, e no fim da lista num dia de rotina.</p>
+
+<h2>Hoje</h2>
+<div class="grid">
+  <div class="phone"><p class="cap">Dia ao vivo</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="comecar">▶ Começar<span class="chip">25 min</span></div>
+    <div class="foot"><button class="f0">✓ Encerrar o dia</button></div>
+    <div class="gear">⚙</div>
+  </div>
+  <div class="phone"><p class="cap">Dia de rotina (fim da lista)</p>
+    <p class="more">…</p>
+    <div class="blk"><span class="chk">✓</span><span class="h">16:45–17:10</span><span class="n">📖 Estudo 15</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="box"></span><span class="h">17:10–17:15</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="blk"><span class="box"></span><span class="h">17:15–17:40</span><span class="n">📖 Estudo 16</span><span class="xp">+50 XP</span></div>
+    <div class="foot rot"><button class="f0">✓ Encerrar o dia</button></div>
+    <div class="gear">⚙</div>
+  </div>
+</div>
+
+<h2>A · Igual ao Começar</h2>
+<p class="why">Mesma pílula, mesma altura (52px), mesma fonte, mesma sombra. Dois botões cheios na mesma tela.</p>
+<div class="grid">
+  <div class="phone"><p class="cap">Dia ao vivo</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="comecar">▶ Começar<span class="chip">25 min</span></div>
+    <div class="foot"><button class="fa">✓ Encerrar o dia</button></div>
+    <div class="gear">⚙</div>
+  </div>
+  <div class="phone"><p class="cap">Dia de rotina (fim da lista)</p>
+    <p class="more">…</p>
+    <div class="blk"><span class="chk">✓</span><span class="h">16:45–17:10</span><span class="n">📖 Estudo 15</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="box"></span><span class="h">17:10–17:15</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="blk"><span class="box"></span><span class="h">17:15–17:40</span><span class="n">📖 Estudo 16</span><span class="xp">+50 XP</span></div>
+    <div class="foot rot"><button class="fa">✓ Encerrar o dia</button></div>
+    <div class="gear">⚙</div>
+  </div>
+</div>
+
+<h2>B · Pílula em contorno</h2>
+<p class="why">A mesma forma do Começar, mas em contorno: borda verde, fundo papel, texto verde. Fala a mesma língua sem disputar — um botão principal por tela.</p>
+<div class="grid">
+  <div class="phone"><p class="cap">Dia ao vivo</p>
+    <div class="bar"><b class="on">⏱ Ao vivo</b><b>Agrupar</b><b>+ Evento</b></div>
+    <div class="blk ev"><span class="h">13:00–14:00</span><span class="n">🍽️ Almoço</span><span>livre</span></div>
+    <div class="comecar">▶ Começar<span class="chip">25 min</span></div>
+    <div class="foot"><button class="fb">✓ Encerrar o dia</button></div>
+    <div class="gear">⚙</div>
+  </div>
+  <div class="phone"><p class="cap">Dia de rotina (fim da lista)</p>
+    <p class="more">…</p>
+    <div class="blk"><span class="chk">✓</span><span class="h">16:45–17:10</span><span class="n">📖 Estudo 15</span><span class="xp">+50 XP</span></div>
+    <div class="blk"><span class="box"></span><span class="h">17:10–17:15</span><span class="n">🧘 Pausa</span><span class="xp">+5 XP</span></div>
+    <div class="blk"><span class="box"></span><span class="h">17:15–17:40</span><span class="n">📖 Estudo 16</span><span class="xp">+50 XP</span></div>
+    <div class="foot rot"><button class="fb">✓ Encerrar o dia</button></div>
+    <div class="gear">⚙</div>
+  </div>
+</div>
+</body>
+</html>

@@ -263,7 +263,6 @@
 /* O CTA principal também é papel grosso: sombra chapada de 3px que vira 2px ao
    afundar — a consequência lógica do gesto. */
 :root[data-theme="cafe"] .save-btn,
-:root[data-theme="cafe"] .finish-day-btn,
 :root[data-theme="cafe"] .lv-btn,
 :root[data-theme="cafe"] .error-reload,
 :root[data-theme="cafe"] .fs-card .fs-apply,
@@ -273,7 +272,6 @@
 }
 :root[data-theme="cafe"] .lv-btn:active{box-shadow:0 2px 0 var(--flat-deep);}
 :root[data-theme="cafe"] .save-btn:active,
-:root[data-theme="cafe"] .finish-day-btn:active,
 :root[data-theme="cafe"] .error-reload:active,
 :root[data-theme="cafe"] .fs-card .fs-apply:active,
 :root[data-theme="cafe"] .tour-next:active,
