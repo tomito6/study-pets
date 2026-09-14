@@ -51,10 +51,14 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
 
   return (
     <div className="live-start" id="live-start">
+      {/* Sem frase de convite (o Tomi pediu, 2026-09-14): à esquerda só o ritmo — ou, depois de
+          uma parada, o placar e a hora — e à direita o botão. */}
       <div className="lv-l">
-        <div className="lv-title" id="live-start-title">{jaRodou && parouAs ? t.stoppedAt(parouAs) : t.title}</div>
         {feitos.length > 0 ? (
-          <div className="lv-sub" id="live-tally">{t.tally(feitos.length, formatCompact(minutos))}</div>
+          <div className="lv-sub" id="live-tally">
+            {t.tally(feitos.length, formatCompact(minutos))}
+            {parouAs ? ` · ${t.stoppedAt(parouAs)}` : ''}
+          </div>
         ) : (
           /* O único lugar do app, fora das Configurações, que NOMEIA o ritmo — e a faixa
              acabou de pedir pra pessoa escolher um. Então ele também é porta: a mesma da

@@ -116,11 +116,9 @@ export const strings = {
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
     /** A faixa do modo ao vivo (a opção B de `prototypes/live-start-menor.html`): texto à esquerda, botão à direita. */
     liveStart: {
-      title: 'Pronto quando você estiver.',
-      /** Depois de uma parada, o título diz QUANDO parou — o fim da última corrida. */
-      stoppedAt: (at: string) => `Você parou às ${at}.`,
-      /** …e o subtítulo diz o quanto já rolou (por check, não por bloco). */
-      tally: (pomos: number, dur: string) => `${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur} hoje`,
+      /** Depois de uma parada, uma linha só: o quanto já rolou (por check) e quando parou. */
+      tally: (pomos: number, dur: string) => `${pomos} ${pomos === 1 ? 'pomodoro' : 'pomodoros'} · ${dur}`,
+      stoppedAt: (at: string) => `parou às ${at}`,
       rhythmValue: (p: number, s: number, l: number) => `${p} · ${s} · ${l} min`,
       start: '▶ Começar',
       back: '▶ Voltar',

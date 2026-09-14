@@ -2052,7 +2052,7 @@ test.describe('Study Pets — smoke', () => {
     // A refeição das 13h existe aqui (é compromisso, não corrida) e já fez o cartão
     // dizer "▶ Voltar · 0 pomodoros" quando a régua era "tem bloco" em vez de "tem estudo".
     await expect(page.locator('#live-start-btn')).toContainText('Começar');
-    await expect(page.locator('#live-start-title')).toHaveText('Pronto quando você estiver.');
+    await expect(page.locator('#live-tally')).toHaveCount(0); // nada rolou: à esquerda só o ritmo
 
     // Começar abre a corrida: um bloco só, do minuto de agora até o fim do pomodoro.
     // (a lista continua no DOM, atrás do overlay)
@@ -2414,7 +2414,7 @@ test.describe('Study Pets — smoke', () => {
     // kicker é o de um dia que não começou.
     await expect(page.locator('.block-row', { hasText: 'Estudo' })).toHaveCount(0);
     await expect(page.locator('#live-start-btn')).toContainText('Começar');
-    await expect(page.locator('#live-start-title')).toHaveText('Pronto quando você estiver.');
+    await expect(page.locator('#live-tally')).toHaveCount(0);
     await expect(page.locator('#focus-overlay')).toBeHidden();
 
     // E confirmar grava exatamente o que a prévia mostrou.
@@ -2453,8 +2453,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(parcial).toHaveCount(1);
     await expect(parcial.locator('.check')).toHaveAttribute('aria-checked', 'true');
     // E a faixa volta, dizendo quando parou e o que já rolou.
-    await expect(page.locator('#live-start-title')).toContainText('Você parou às 09:2');
     await expect(page.locator('#live-tally')).toContainText('1 pomodoro');
+    await expect(page.locator('#live-tally')).toContainText('parou às 09:2');
     await expect(page.locator('#live-start-btn')).toContainText('Voltar');
     expect(erros).toEqual([]);
   });
