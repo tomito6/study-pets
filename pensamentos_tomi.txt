@@ -1,0 +1,19 @@
+Olha isso daqui eh meio um limbro entre coisas que eu pensei mas ainda nao consigo mandar no claude. Ou quando eu tiver ideias demais de uma vez, ou quando eu ainda preciso trabalhar a ideia mais:
+- P - : perguntado
+
+- A - : ainda nao
+
+15/09/2026-
+
+- A -  Seria interessante poder adcionar um evento que n tem necessariamente um horario no dia sabe. Esse evento ficarai demarcado encima de forma meio distinta.
+
+- P - Ter um jeito de olhar o treco "Como fica o dia" da rotina geral, e do dia espcecifico que voce ta olhando. Inclusvie "Estrutura do dia" pode ser exatamente isso do dia especifico que voce ta olhando, e Estrutura rotina, pode ser essa coisa mais geral, na qual tmb iria ter um grafico de "como fica o dia, mas opcionalmente pra todos os dias sa semana tmb. Me faca um esboco e mostre depois prf
+
+
+- A - sipa seria interessante ter um habit tracker tmb. Tipo nao seria o objetivo principal, mas assim daria pra ter uma coisinha extra (seria completamente monitorado pelo usuário e feito pelo usario) mas talvez teria como ser meio motivacional. Tipo ter umas frasesinhas tipo ("Todo mundo merece mais uma chance"), ("Sempre da pra se melhorar"). Nao esquente em ter errado, hoje voce faz melhor :). Esse treco de hábito tambem tem que ser marcado no dia (finais de semana vc pode marcar quando quiser). Entao teriam habitos de marcar e habitos de nao marcar (Tipo se vc quer parar e fzr alguma coisa, vc n marca o habito se vc n tiver feito, o que eh positive. E o de marcar eh quando voce faz o habito). Um premio pra isso que nao seja moedas e xp eu ainda teria que pensar.
+
+- A - So tem a opcao de pausar e dpeois sair do modo foco, achoq eu o botato de sair do foco deveria estar sempre quando nao estamos no modo hardcore
+
+
+
+- P - Foi implementado que os ciclos sao dropdown, mas to achando que seria interessante que os grupos talvez possam ser dropdown tmb. E que os grupos possam sim ser de so uma coisa. Tipo eu queria marcar que a pausa longa ia ser um momento onde eu iria lavar roupa. Como eu poderia fazer isso? talvez editar o nome da pausa? ou adcionar uma descricao. Eu to em duvida com todas as opcoes. Voce entendeu meu problema? Antes de procurar uma solucao eu gostaria que voce me descrevesse em que situacao eu me deparei com o problema e qual eh o problema.
