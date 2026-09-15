@@ -8,7 +8,7 @@ import { hasBlockStarted, isChecked, isDayClosed, isFutureDay } from '../../doma
 import { cleanBlockName as cleanName } from '../../domain/timer';
 import { isForfeited } from '../../domain/hardcore';
 import { blockInGroup, groupHeaderPositions, groupProgress } from '../../domain/groups';
-import { closedCycleOf, cycleSummary } from '../../domain/cycles';
+import { closedCycleOf, cycleHasPassed, cycleSummary } from '../../domain/cycles';
 import { formatCompact } from '../../domain/settings';
 import type { GroupHeaderPosition } from '../../domain/groups';
 import { dk, timeToMins } from '../../domain/time';
@@ -301,12 +301,15 @@ interface ListProps extends BlockActions {
   drag: EventDrag | null;
   now: Date;
   timerBlock: StudyBlock | null;
+  /** Ciclos que a pessoa recolheu neste dia. Só os que já passaram encolhem de fato (ver `cycleHasPassed`). */
+  collapsed: ReadonlySet<number>;
+  onToggleCycle: (cycle: number) => void;
   /** Dia sem blocos: o título (dia livre / fim de semana) e, se o dia é editável, como estudar mesmo assim. */
   /** A frase do dia sem blocos. `null` quando outra coisa ocupa o lugar (o cartão do modo ao vivo). */
   empty: { label: string; hint: string | null } | null;
 }
 
-export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
+export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, collapsed, onToggleCycle, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
   if (blocks.length === 0) {
     if (!empty) return null;
     return (
@@ -321,6 +324,15 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
   const dayChecks = state.checks[dateKey];
   const items: ReactNode[] = [];
   let lastCycle = -1;
+
+  // Recolher é só pra ciclo que já passou — e que não tem o bloco do timer (pausado, ele
+  // pode estar além do fim). Durante uma seleção de trecho todas as linhas aparecem: a
+  // seleção é por índice na lista, e uma linha escondida não se escolhe.
+  const timerInCycle = (cycle: number) =>
+    !!timerBlock && blocks.some((bl) => bl.cycle === cycle && bl.time === timerBlock.time && bl.endTime === timerBlock.endTime);
+  const canCollapse = (cycle: number) => !selection.active && cycleHasPassed(blocks, cycle, dateKey, now) && !timerInCycle(cycle);
+  const hiddenCycles = new Set<number>();
+  for (const c of collapsed) if (canCollapse(c)) hiddenCycles.add(c);
 
   // Grupos com membro abrem uma caixa no primeiro bloco membro; os membros são contíguos
   // (blocos são sequenciais e grupos não se sobrepõem), então a caixa fecha no primeiro bloco
@@ -356,9 +368,14 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
     for (const { group } of emptyAt.get(index) ?? []) items.push(boxFor(group, true));
   };
 
-  let box: { group: StudyGroup; first: number; last: number; children: ReactNode[] } | null = null;
+  let box: { group: StudyGroup; first: number; last: number; children: ReactNode[]; rows: number } | null = null;
   const closeBox = () => {
-    if (box) items.push(boxFor(box.group, false, box.children, { first: box.first, last: box.last }));
+    // Caixa cujas linhas estão todas recolhidas some junto — mas um divisor que caiu dentro
+    // dela fica na lista, senão o ciclo recolhido perderia o botão de voltar.
+    if (box) {
+      if (box.rows > 0) items.push(boxFor(box.group, false, box.children, { first: box.first, last: box.last }));
+      else items.push(...box.children);
+    }
     box = null;
   };
 
@@ -376,15 +393,50 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
       const nome = strings.plan.cycles[sIdx] ?? strings.plan.cycleFallback;
       const cycleHasNow =
         isToday && blocks.some((bl) => bl.cycle === b.cycle && isPomodoroPart(bl) && isHappeningNow(bl, now));
+      // O ciclo que já passou recolhe num toque no divisor (2026-09-15): quem estuda das 9 às 18
+      // tinha, à tarde, três levas feitas entre o topo da lista e o bloco de agora. Recolhido,
+      // o divisor diz o que ficou lá dentro ("Ciclo 1 · 3/4"); completo, ele já dizia tudo.
+      const cycle = b.cycle;
+      const collapsible = canCollapse(cycle);
+      const isCollapsed = hiddenCycles.has(cycle);
+      const label = resumo.complete
+        ? strings.plan.cycleDone(nome, formatCompact(resumo.minsDone))
+        : isCollapsed
+          ? strings.plan.cycleCollapsed(nome, resumo.done, resumo.total)
+          : nome;
       divider = (
         <div
-          key={`c-${b.cycle}-${i}`}
-          className={`cycle-divider s${sIdx}` + (cycleHasNow ? ' now-cycle' : '') + (resumo.complete ? ' done' : '')}
+          key={`c-${cycle}-${i}`}
+          className={
+            `cycle-divider s${sIdx}` +
+            (cycleHasNow ? ' now-cycle' : '') +
+            (resumo.complete ? ' done' : '') +
+            (collapsible ? ' collapsible' : '') +
+            (isCollapsed ? ' collapsed' : '')
+          }
+          data-cycle={cycle}
+          role={collapsible ? 'button' : undefined}
+          tabIndex={collapsible ? 0 : undefined}
+          aria-expanded={collapsible ? !isCollapsed : undefined}
+          aria-label={collapsible ? strings.plan.cycleToggle(nome, isCollapsed) : undefined}
+          onClick={collapsible ? () => onToggleCycle(cycle) : undefined}
+          onKeyDown={
+            collapsible
+              ? (e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  onToggleCycle(cycle);
+                }
+              : undefined
+          }
         >
           <div className="cd-line" />
-          <span className="cd-label">
-            {resumo.complete ? strings.plan.cycleDone(nome, formatCompact(resumo.minsDone)) : nome}
-          </span>
+          <span className="cd-label">{label}</span>
+          {collapsible && (
+            <span className="cd-chev" aria-hidden="true">
+              ▾
+            </span>
+          )}
           <div className="cd-line" />
         </div>
       );
@@ -394,12 +446,14 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
     if (start) {
       // Ciclo novo começando junto com o grupo: o divisor fica fora da caixa (ciclo > grupo).
       if (divider) items.push(divider);
-      box = { group: start.group, first: i, last: i, children: [] };
+      box = { group: start.group, first: i, last: i, children: [], rows: 0 };
     } else if (divider) {
       (box ? box.children : items).push(divider);
     }
 
     if (box) box.last = i;
+    if (b.cycle !== undefined && hiddenCycles.has(b.cycle)) return; // linha de ciclo recolhido: nem entra na lista
+    if (box) box.rows++;
     (box ? box.children : items).push(
       <BlockRow
         key={`${b.type}-${b.time}-${b.endTime}`}

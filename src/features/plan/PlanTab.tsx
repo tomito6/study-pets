@@ -213,6 +213,15 @@ export function PlanTab() {
   const closeModal = () => setModal({ kind: 'none' });
   const wide = useWide();
   const [mode, setMode] = useState<ViewMode>('day');
+  // Ciclos recolhidos, por dia. É `useState` daqui, e não da lista, porque o PlanTab fica
+  // montado ao trocar de aba (`display:none`): ir ao Perfil e voltar não desdobra o que a
+  // pessoa dobrou. Um reload desdobra — é conveniência da sessão, não dado.
+  const [collapsedCycles, setCollapsedCycles] = useState<Record<DateKey, number[]>>({});
+  const toggleCycle = (dateKey: DateKey, cycle: number) =>
+    setCollapsedCycles((prev) => {
+      const atual = prev[dateKey] ?? [];
+      return { ...prev, [dateKey]: atual.includes(cycle) ? atual.filter((c) => c !== cycle) : [...atual, cycle] };
+    });
   // A Semana existe nas duas larguras desde 2026-09-14, com telas diferentes: a grade
   // (`WeekView`) no laptop, os cartões que deslizam (`WeekCards`) no celular — ver
   // "A Semana no celular" no CLAUDE.md. `weekMode` continua significando "a lista do Dia
@@ -469,6 +478,8 @@ export function PlanTab() {
           drag={dayDrag}
           now={now}
           timerBlock={timerBlock}
+          collapsed={new Set(collapsedCycles[viewKey] ?? [])}
+          onToggleCycle={(cycle) => toggleCycle(viewKey, cycle)}
           empty={vazio}
           onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
           onEditGroup={openEditGroup}

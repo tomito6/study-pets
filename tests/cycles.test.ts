@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateBlocks } from '../src/domain/planner';
-import { closedCycleOf, countsForCycle, cycleSummary } from '../src/domain/cycles';
+import { closedCycleOf, countsForCycle, cycleHasPassed, cycleSummary } from '../src/domain/cycles';
 import { DEFAULT_CFG } from '../src/domain/config';
 import type { BlockType, CheckRecord, StudyBlock, TimeString } from '../src/domain/types';
 
@@ -125,5 +125,31 @@ describe('em cima de um plano de verdade', () => {
     // A segunda leva continua aberta.
     const segunda = blocks.find((x) => x.cycle === sessoes[1] && countsForCycle(x))!;
     expect(closedCycleOf(blocks, segunda, day)).toBeNull();
+  });
+});
+
+describe('cycleHasPassed — o ciclo que já ficou pra trás (o que pode recolher na lista)', () => {
+  const em = (hora: string) => new Date(`2026-09-02T${hora}:00`);
+
+  it('em dia passado, sempre; em dia futuro, nunca', () => {
+    expect(cycleHasPassed(dia, 0, '2026-09-01', em('08:00'))).toBe(true);
+    expect(cycleHasPassed(dia, 1, '2026-09-03', em('23:00'))).toBe(false);
+  });
+
+  it('hoje, só quando o último bloco dele (a pausa longa inclusive) já terminou', () => {
+    expect(cycleHasPassed(dia, 0, '2026-09-02', em('09:56'))).toBe(false); // a pausa longa das 09:55 ainda corre
+    expect(cycleHasPassed(dia, 0, '2026-09-02', em('10:10'))).toBe(true);
+    expect(cycleHasPassed(dia, 1, '2026-09-02', em('10:10'))).toBe(false);
+    expect(cycleHasPassed(dia, 1, '2026-09-02', em('11:05'))).toBe(true);
+  });
+
+  it('o evento que caiu na leva segura o ciclo aberto até acabar', () => {
+    const aula: StudyBlock = { time: '11:05', endTime: '12:00', name: '📅 Aula', type: 'event', xp: 110, cycle: 1 };
+    expect(cycleHasPassed([...dia, aula], 1, '2026-09-02', em('11:30'))).toBe(false);
+    expect(cycleHasPassed([...dia, aula], 1, '2026-09-02', em('12:00'))).toBe(true);
+  });
+
+  it('ciclo que não existe no dia não "passou"', () => {
+    expect(cycleHasPassed(dia, 7, '2026-09-02', em('23:00'))).toBe(false);
   });
 });

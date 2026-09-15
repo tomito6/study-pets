@@ -16,8 +16,8 @@
 // marcou tarde não perde o ciclo, ele só fica completo depois.
 
 import { xpFromCheck } from './progression';
-import { blockMins } from './time';
-import type { CheckRecord, StudyBlock, TimeString } from './types';
+import { blockMins, dk, timeToMins } from './time';
+import type { CheckRecord, DateKey, StudyBlock, TimeString } from './types';
 
 /** Estudo e evento fecham o ciclo; pausa e bloqueio só ocupam o espaço (igual aos grupos). */
 export const countsForCycle = (b: StudyBlock): boolean => b.type === 'estudo' || b.type === 'event';
@@ -85,4 +85,18 @@ export function closedCycleOf(
   const s = cycleSummary(blocks, block.cycle, dayChecks);
   if (!s.complete || s.total < MIN_BLOCKS_TO_CHEER) return null;
   return s;
+}
+
+/**
+ * O ciclo inteiro já ficou pra trás? Em dia passado, sempre; em dia futuro, nunca; hoje,
+ * quando o último bloco dele (pausa longa inclusive, e o evento que caiu na leva) já
+ * terminou. É o que deixa o divisor virar um botão de recolher (ver BlockList): o que
+ * já passou pode encolher; o que está acontecendo, e o que vem, fica aberto.
+ */
+export function cycleHasPassed(blocks: StudyBlock[], cycle: number, dateKey: DateKey, now: Date): boolean {
+  const today = dk(now);
+  if (dateKey !== today) return dateKey < today;
+  const agora = now.getHours() * 60 + now.getMinutes();
+  const membros = blocks.filter((b) => b.cycle === cycle);
+  return membros.length > 0 && membros.every((b) => timeToMins(b.endTime) <= agora);
 }

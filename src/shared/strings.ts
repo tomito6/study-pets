@@ -104,6 +104,9 @@ export const strings = {
     cycleFallback: 'Ciclo',
     /** A leva fechada: o divisor vira verde e uma faixa comemora (ver domain/cycles.ts). */
     cycleDone: (name: string, dur: string) => `${name} ✓ · ${dur}`,
+    /** O ciclo que já passou, recolhido: o que ficou lá dentro. Completo, o `cycleDone` já diz tudo. */
+    cycleCollapsed: (name: string, done: number, total: number) => `${name} · ${done}/${total}`,
+    cycleToggle: (name: string, collapsed: boolean) => (collapsed ? `Mostrar ${name}` : `Recolher ${name}`),
     cycleCheer: {
       title: (name: string) => `✓ ${name} completo`,
       sub: (studies: number, dur: string, xp: number, pending: boolean) =>

@@ -2555,4 +2555,45 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#sound-volume')).toHaveValue('0.3');
     expect(erros).toEqual([]);
   });
+
+  test('67. o ciclo que já passou recolhe num toque no divisor; o de agora e o que vem, não', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '12:00');
+    await page.locator('#tour-skip').click(); // o balão do tour cobre a barra do dia de propósito
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+    // Ao meio-dia o ciclo 1 (09:00–11:15, pausa longa inclusive) já passou; o ciclo 2 está acontecendo.
+    const c1 = page.locator('.cycle-divider').nth(0);
+    const c2 = page.locator('.cycle-divider').nth(1);
+    await expect(c1).toHaveClass(/collapsible/);
+    await expect(c1).toHaveAttribute('aria-expanded', 'true');
+    await expect(c2).toHaveClass(/now-cycle/);
+    await expect(c2).not.toHaveClass(/collapsible/);
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+
+    // Um toque recolhe: as linhas somem e o divisor diz o que ficou lá dentro.
+    await c1.click();
+    await expect(c1).toHaveClass(/collapsed/);
+    await expect(c1).toHaveAttribute('aria-expanded', 'false');
+    await expect(c1).toContainText('Ciclo 1 · 0/4');
+    await expect(page.locator('.block-row', { hasText: '09:00–09:25' })).toHaveCount(0);
+    await expect(page.locator('.block-row').first()).toContainText('10:55–11:15'); // a pausa longa já abre o ciclo 2
+
+    // Trocar de aba e voltar não desdobra. Ontem todo ciclo já passou e todos recolhem — cada dia com o seu.
+    await page.locator('#tab-perfil').click();
+    await page.locator('#tab-plano').click();
+    await expect(c1).toHaveClass(/collapsed/);
+    await page.locator('.day-tab', { hasText: 'Ter' }).click();
+    await expect(page.locator('.cycle-divider').first()).toHaveClass(/collapsible/);
+    await expect(page.locator('.cycle-divider').last()).toHaveClass(/collapsible/);
+    await expect(page.locator('.cycle-divider').first()).not.toHaveClass(/collapsed/);
+    await page.locator('.day-tab', { hasText: 'Qua' }).click();
+    await expect(c1).toHaveClass(/collapsed/);
+
+    // Pelo teclado também — e o segundo toque desdobra.
+    await c1.focus();
+    await page.keyboard.press('Enter');
+    await expect(c1).not.toHaveClass(/collapsed/);
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    expect(erros).toEqual([]);
+  });
 });
