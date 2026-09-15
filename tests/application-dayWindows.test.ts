@@ -132,9 +132,12 @@ describe('quem lê as janelas do dia', () => {
     expect(state.config.studyWindows).toEqual([w('09:00', '18:00')]);
   });
 
-  it('"Prolongar" sem override continua mudando a rotina', () => {
+  it('"Prolongar" sem override cria a janela só de hoje — a rotina (e amanhã) não muda', () => {
     extendDay('19:00', AGORA);
-    expect(state.config.end).toBe('19:00');
+    expect(state.windowOverrides[HOJE]).toEqual({ studyWindows: [w('09:00', '19:00')] });
+    expect(state.config.end).toBe('18:00');
+    expect(state.config.studyWindows).toEqual([w('09:00', '18:00')]);
+    expect(effectiveWindows(AMANHA)).toEqual([w('09:00', '18:00')]);
   });
 
   it('o XP do pet usa os blocos do dia como eram (janelas daquele dia), senão o check não bate com nada', () => {

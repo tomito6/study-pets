@@ -171,6 +171,10 @@ export function SettingsPage() {
       showToast(t.incomplete);
       return;
     }
+    // Hoje já tem fato (check, timer, pausa…): ritmo e janelas novos ficam pra amanhã, e a
+    // pessoa precisa ouvir isso — o "Plano reajustado" do dia visível não dispara, porque
+    // hoje não mudou.
+    if (r.plan === 'from-tomorrow') showToast(t.savedFromTomorrow);
     close();
   };
   // "Ver o tour de novo": zera o visto e fecha — o ⚙️ só existe no Plano, então o balão 1/3 aparece embaixo.

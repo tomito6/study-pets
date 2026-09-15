@@ -310,7 +310,7 @@ export const strings = {
       study: 'min de estudo',
       short: 'min de pausa',
       long: 'min de pausa longa',
-      sub: 'Vale pra todos os dias. Mudou hoje, mudou a semana.',
+      sub: 'Vale de hoje em diante. O que já passou fica como estava.',
       change: 'Mudar →',
     },
     title: '🕘 Janelas do dia',
@@ -629,6 +629,8 @@ export const strings = {
     reset: '↺ Padrão',
     save: 'Salvar',
     incomplete: 'Preencha todos os campos antes de salvar.',
+    /** Ritmo/janelas mudaram e hoje já tem fato: a mudança fica pra amanhã (ver domain/configHistory.ts). */
+    savedFromTomorrow: 'Salvo. Vale a partir de amanhã — o dia de hoje já começou e fica como está.',
     summary: {
       title: 'Como fica o dia',
       desc: 'Um dia com as janelas e o ritmo acima. Refeições e eventos entram pelo Plano.',
@@ -648,7 +650,7 @@ export const strings = {
     windows: {
       title: 'Janelas de estudo',
       add: '+ Adicionar',
-      desc: 'Os intervalos do dia em que você estuda. Valem para todos os dias — refeições e compromissos entram como eventos, no Plano.',
+      desc: 'Os intervalos do dia em que você estuda. Valem de hoje em diante — o que já passou fica como estava. Refeições e compromissos entram como eventos, no Plano.',
       startLabel: 'Início da janela',
       endLabel: 'Fim da janela',
       remove: 'Remover janela',
@@ -664,7 +666,7 @@ export const strings = {
     },
     rhythm: {
       title: 'Ritmo do pomodoro',
-      desc: 'A duração de cada bloco. A pausa longa entra a cada 4 pomodoros.',
+      desc: 'A duração de cada bloco. A pausa longa entra a cada 4 pomodoros. Mudar vale de hoje em diante — o que já passou fica como estava.',
       study: 'Estudo (min)',
       short: 'Pausa curta (min)',
       long: 'Pausa longa (min)',

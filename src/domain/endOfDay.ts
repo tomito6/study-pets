@@ -2,7 +2,7 @@
 // prolongar?", e como prolongar. Puro.
 
 import { timeToMins } from './time';
-import type { StudyBlock, StudyWindow, TimeString, UserConfig } from './types';
+import type { StudyBlock, StudyWindow, TimeString } from './types';
 
 /** Fim do último bloco de ESTUDO do dia (não pausa, não evento), ou null. */
 export function lastStudyEnd(blocks: StudyBlock[]): TimeString | null {
@@ -57,9 +57,4 @@ export function extendWindowsTo(windows: StudyWindow[], newEnd: TimeString): Stu
     last.end = newEnd;
   }
   return out;
-}
-
-/** Estende o dia na rotina: `end` e o fim da última janela de estudo. */
-export function extendDayTo(config: UserConfig, newEnd: TimeString): UserConfig {
-  return { ...config, end: newEnd, studyWindows: extendWindowsTo(config.studyWindows, newEnd) };
 }

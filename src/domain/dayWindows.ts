@@ -103,7 +103,9 @@ export function stopDayAt(windows: StudyWindow[], now: Date, ritmo: LiveRhythm):
     if (inicio >= corte) continue; // a janela inteira está no futuro: não aconteceu
     const fim = Math.min(timeToMins(w.end), corte);
     if (fim <= inicio) continue;
-    out.push({ start: w.start, end: minsToTime(fim), live: { ...ritmo } });
+    // Janela que já é corrida guarda o ritmo com que rodou: carimbar o de agora por cima
+    // reescreveria os blocos dela (e os checks) se o ritmo mudou entre uma corrida e a outra.
+    out.push({ start: w.start, end: minsToTime(fim), live: w.live ? { ...w.live } : { ...ritmo } });
   }
   // Nada vivido: parar antes do começo da primeira janela não deixa registro nenhum, e
   // uma lista vazia seria lida como "dia livre" (ver `isDayOff`) — que é outra coisa.

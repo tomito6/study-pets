@@ -6,16 +6,17 @@
 import { isDayClosed } from '../domain/checks';
 import { daySummary } from '../domain/daySummary';
 import type { DaySummary, ProgressSnapshot } from '../domain/daySummary';
-import { extendDayTo, extendWindowsTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
+import { windowsForDay } from '../domain/dayWindows';
+import { extendWindowsTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
 import { pausesTotal } from '../domain/pauses';
 import { getLevelIdx } from '../domain/progression';
-import { dk } from '../domain/time';
+import { dk, isWeekendKey } from '../domain/time';
 import type { TimeString } from '../domain/types';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, notify, state } from '../store/store';
 import { applyPendingPetXP } from './pets';
-import { blocksForDay, clearBlockCache, computeStatsNow, dayModeOf } from './plan';
+import { blocksForDay, clearBlockCache, computeStatsNow, configAtDay, dayModeOf } from './plan';
 import { scheduleSave } from './save';
 import { stopBlocking } from './siteBlock';
 import { stopTimer } from './timer';
@@ -165,8 +166,12 @@ export const closeEndOfDayPrompt = (): void => set({ promptOpen: false });
 export const promptFinish = (): void => set({ promptOpen: false, confirmOpen: true });
 
 /**
- * "Prolongar": novo fim do dia; a última janela de estudo estica até lá. Num dia
- * com as janelas editadas, é o override de hoje que estica — a rotina fica igual.
+ * "Prolongar": novo fim do dia; a última janela de estudo estica até lá — **como janela
+ * só de hoje** (`windowOverrides[hoje]`), nunca na rotina. Até 2026-09-15 um dia sem
+ * override esticava a rotina: prolongar hoje porque a tarde rendeu deixava amanhã e todos
+ * os dias seguintes terminando mais tarde. E com a história da config (domain/configHistory.ts)
+ * mexer na rotina nem chegaria a hoje quando hoje já está congelado. O que a pessoa pediu
+ * foi "hoje vai até mais tarde", e é isso que fica.
  */
 export function extendDay(newEnd: TimeString, now: Date = new Date()): void {
   if (!newEnd) return;
@@ -174,9 +179,9 @@ export function extendDay(newEnd: TimeString, now: Date = new Date()): void {
   // Num dia ao vivo não há o que prolongar: o override é a corrida, e esticá-la fabricava
   // um plano inteiro (dez estudos futuros) dentro de um dia que só registra o que aconteceu.
   if (dayModeOf(todayKey) === 'live') return;
-  const ov = state.windowOverrides[todayKey];
-  if (ov && ov.studyWindows.length > 0) state.windowOverrides[todayKey] = { studyWindows: extendWindowsTo(ov.studyWindows, newEnd) };
-  else state.config = extendDayTo(state.config, newEnd);
+  const windows = windowsForDay(configAtDay(todayKey), state.windowOverrides[todayKey], isWeekendKey(todayKey));
+  if (windows.length === 0) return; // dia livre / fim de semana pausado: não há janela pra esticar
+  state.windowOverrides[todayKey] = { studyWindows: extendWindowsTo(windows, newEnd) };
   clearBlockCache();
   scheduleSave();
   set({ promptOpen: false });

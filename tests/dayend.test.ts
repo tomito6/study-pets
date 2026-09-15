@@ -14,8 +14,7 @@ import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/
 import { initAfterLoad, loadUserData } from '../src/application/session';
 import { daySummary } from '../src/domain/daySummary';
 import type { PetInstance } from '../src/domain/types';
-import { extendDayTo, lastStudyEnd, shouldPromptEndOfDay, suggestedExtendTime } from '../src/domain/endOfDay';
-import { DEFAULT_CFG } from '../src/domain/config';
+import { extendWindowsTo, lastStudyEnd, shouldPromptEndOfDay, suggestedExtendTime } from '../src/domain/endOfDay';
 import { emptyPersistedState } from '../src/domain/persistence';
 import { users } from '../src/infrastructure';
 import { derived, state } from '../src/store/store';
@@ -74,10 +73,9 @@ describe('domínio do fim do dia', () => {
     expect(shouldPromptEndOfDay({ ...base, dayClosed: true })).toBe(false);
   });
 
-  it('prolongar estica a última janela; sugestão é agora + 1h', () => {
-    const cfg = extendDayTo({ ...DEFAULT_CFG, studyWindows: [{ start: '15:00', end: '18:00' }, { start: '09:00', end: '12:00' }] }, '20:00');
-    expect(cfg.end).toBe('20:00');
-    expect(cfg.studyWindows).toEqual([{ start: '15:00', end: '20:00' }, { start: '09:00', end: '12:00' }]);
+  it('prolongar estica a última janela (a que começa mais tarde); sugestão é agora + 1h', () => {
+    const janelas = extendWindowsTo([{ start: '15:00', end: '18:00' }, { start: '09:00', end: '12:00' }], '20:00');
+    expect(janelas).toEqual([{ start: '15:00', end: '20:00' }, { start: '09:00', end: '12:00' }]);
     expect(suggestedExtendTime(new Date('2026-09-02T17:45:00'))).toBe('18:45');
   });
 });
@@ -128,7 +126,9 @@ describe('prompt automático de fim de dia', () => {
     expect(derived.dayEnd.promptOpen).toBe(true);
 
     extendDay('19:00');
-    expect(state.config.end).toBe('19:00');
+    // Prolongar é só de hoje (janela do dia); a rotina não muda — ver extendDay.
+    expect(state.windowOverrides[HOJE]).toEqual({ studyWindows: [{ start: '09:00', end: '19:00' }] });
+    expect(state.config.end).toBe('18:00');
     expect(derived.dayEnd.promptOpen).toBe(false);
     expect(lastStudyEnd(blocksForDay(HOJE))! > '18:00').toBe(true);
   });

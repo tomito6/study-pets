@@ -12,7 +12,7 @@ import { showToast } from '../shared/toast';
 import { derived, state } from '../store/store';
 import { isRestDayKey } from './dayWindows';
 import { activePet } from './pets';
-import { blocksForDay, isBonusDayKey } from './plan';
+import { blocksForDay, configAtDay, isBonusDayKey } from './plan';
 import { scheduleSave } from './save';
 
 export interface CheckResult {
@@ -85,7 +85,7 @@ function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, 
     petLevel: pet ? petLevel(pet) : 1,
     ...dayContext(dateKey, block, day),
     dailyStudyMin: state.config.dailyStudyMin ?? 0,
-    longBreakMins: state.config.longBreak,
+    longBreakMins: configAtDay(dateKey).longBreak, // a pausa longa que valia naquele dia
     now,
   });
   const record = { pet: pet?.id ?? null, bonus };

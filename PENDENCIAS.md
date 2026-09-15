@@ -36,7 +36,10 @@ três números em tiles (estava "lowkey demais").
 o override daquele dia passa a carregar ritmo próprio? A segunda é a que o IDEIAS chama de interessante
 (ritmo por janela, ou até por grupo) e é a cara: `windowOverrides` ganha campo, `configForDay` ganha
 ritmo, e **o gerador passa a produzir planos diferentes pro mesmo dia conforme o override** — com a regra
-"mexer no gerador reescreve o passado" valendo por inteiro.
+"mexer no gerador reescreve o passado" valendo por inteiro. **Atualização 2026-09-15**: a história da config
+(`domain/configHistory.ts`) já congela o passado — mudar ritmo/janelas nas Configurações vale de hoje em
+diante, nunca pra trás —, então o ritmo por dia deixou de ser perigoso pra ontem; o que falta é o campo no
+override e a UI. Ver também o item 5.
 
 ## 2. Miúdos de conta, se um dia houver outro usuário
 
@@ -100,6 +103,28 @@ Os **dois bugs** que vieram junto com a decisão foram **corrigidos em 2026-09-1
 vocabulário (nenhuma das cinco perguntas os tocava): as sete descrições que diziam "estudo" usando `counts`
 passaram a dizer "bloco", com um teste que deriva a régua da própria regra, e o "N estudos" do grupo e da
 faixa do ciclo virou "N blocos". O resto da lista continua esperando as cinco.
+
+## 5. Ritmo do pomodoro por grupo ou por ciclo
+
+Pedido do Tomi em 2026-09-15: "ter a opção de mudar o pomodoro especificamente dos grupos ou dos ciclos".
+É a segunda metade do item 1(b) (ritmo por dia/janela), e o chão que faltava entrou no mesmo dia: a
+**história da config** (`domain/configHistory.ts`) — mudar o ritmo vale de hoje em diante e nunca reescreve
+o passado —, então "o gerador passa a produzir planos diferentes conforme o override" deixou de ser perigoso
+pra trás. O que sobra é decidir ONDE o ritmo mora e como ele entra no gerador:
+
+- **Por grupo**: o grupo já é um trecho `{start, end}` do dia. Ritmo no grupo = o gerador reagindo a uma
+  anotação, o que quebra "grupo nunca entra no `generateBlocks`" (CLAUDE.md). A alternativa que não quebra
+  nada: o grupo vira uma **janela própria** com ritmo (`StudyWindow` já carrega um em `live` — hoje esse campo
+  quer dizer duas coisas, "é corrida" e "este é o ritmo"), partindo a janela do dia no início e no fim do
+  grupo. Precisa decidir se o campo é `live` (com o significado de corrida junto) ou um `rhythm` separado
+  só de ritmo, e o que acontece com o grupo que muda de horário pela alça.
+- **Por ciclo**: ciclo é gerado, não guardado — não tem chave. "Ritmo deste ciclo" só pode ser "ritmo deste
+  trecho do dia" (a janela de novo) ou "ritmo a partir de agora" (o item 1(b)). **Confirmar com o Tomi qual dos
+  dois ele quer dizer** antes de desenhar.
+- **Onde na tela**: o painel do grupo (`#group-panel`) ganhando os três tiles do ritmo? O divisor do ciclo,
+  que desde 2026-09-15 já é um botão (recolher)? O modal "Janelas do dia" (1(b))? Uma porta só, de preferência.
+- **O passado**: mudar o ritmo de um grupo de hoje que já tem check segue a mesma regra da história (vale só
+  pro que ainda não aconteceu) — ou é recusado, como "Dia livre" recusa depois de um check. Decidir.
 
 ---
 

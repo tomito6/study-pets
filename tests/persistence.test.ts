@@ -327,6 +327,7 @@ describe('serializeState', () => {
     delete parcial.avatar;
     delete parcial.pauses;
     delete parcial.notifications;
+    delete parcial.configHistory;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -339,6 +340,7 @@ describe('serializeState', () => {
     expect(doc.avatar).toEqual(DEFAULT_AVATAR);
     expect(doc.pauses).toEqual({});
     expect(doc.notifications).toEqual([]);
+    expect(doc.configHistory).toEqual([]);
   });
 });
 
@@ -371,8 +373,19 @@ describe('ida e volta', () => {
         { id: 'dia:2026-09-01', kind: 'dia', at: 1_600_000_000_000, read: true, data: { dia: '2026-09-01', xp: 320, coins: 160 } },
       ],
       config: { ...DEFAULT_CFG, hardcore: { enabled: true }, siteBlock: { enabled: true, mode: 'blacklist', sites: ['youtube.com'] } },
+      configHistory: [
+        { until: '2026-08-31', studyWindows: [{ start: '10:00', end: '16:00', live: { pomo: 25, shortBreak: 5, longBreak: 20 } }], pomo: 25, shortBreak: 5, longBreak: 20 },
+      ],
     };
     expect(hydrateUserDoc(serializeState(estado))).toEqual(estado);
+  });
+
+  it('documento de antes da história da config abre com ela vazia — a config atual sempre valeu', () => {
+    expect(hydrateUserDoc({ schemaVersion: 5, checks: {} }).configHistory).toEqual([]);
+    expect(hydrateUserDoc({ configHistory: 'x' }).configHistory).toEqual([]);
+    expect(
+      hydrateUserDoc({ configHistory: [{ until: '2026-09-01', studyWindows: [], pomo: 25, shortBreak: 5, longBreak: 20 }] }).configHistory,
+    ).toEqual([{ until: '2026-09-01', studyWindows: [], pomo: 25, shortBreak: 5, longBreak: 20 }]);
   });
 
   it('documento sem a declaração de idade abre como "nunca foi perguntado"', () => {

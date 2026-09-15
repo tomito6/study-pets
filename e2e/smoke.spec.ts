@@ -2596,4 +2596,40 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
     expect(erros).toEqual([]);
   });
+
+  test('68. mudar o ritmo com um bloco de hoje já marcado vale só de amanhã — o passado não se mexe', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:30');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+    const primeiro = page.locator('.block-row').first();
+    await expect(primeiro).toContainText('09:00–09:25');
+    await primeiro.locator('.check').click();
+    await expect(primeiro.locator('.check')).toHaveClass(/checked/);
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await page.locator('#settings-panel .settings-tab[data-tab="day"]').click();
+    await page.locator('#cfg-pomo').fill('50');
+    await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('Vale a partir de amanhã');
+
+    // Hoje continua como estava, com o check no lugar. Amanhã já nasce com o pomodoro novo.
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    await expect(page.locator('.block-row').first().locator('.check')).toHaveClass(/checked/);
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
+    // E o "Janelas do dia" de hoje mostra o ritmo que vale HOJE, não o da config.
+    await page.locator('.day-tab', { hasText: 'Qua' }).click();
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-rhythm .dw-rt.accent b')).toHaveText('25');
+
+    // Sobrevive ao reload: a história vai no documento.
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
+    expect(erros).toEqual([]);
+  });
 });

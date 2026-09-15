@@ -1,6 +1,7 @@
 // O plano lido a partir do estado: semanas, blocos de cada dia e estatísticas.
 // Único lugar que liga o domínio ao store — React e legado consomem daqui.
 
+import { configAt } from '../domain/configHistory';
 import { configForDay, isBonusDay, restDayKind } from '../domain/dayWindows';
 import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
@@ -10,7 +11,7 @@ import { blockagesOnly, generateBlocks as generateBlocksPure } from '../domain/p
 import { computeStats, calcStreaks } from '../domain/stats';
 import type { Stats } from '../domain/stats';
 import { dk, isWeekendKey } from '../domain/time';
-import type { DateKey, PauseRecord, PlannerConfig, StudyBlock, StudyEvent } from '../domain/types';
+import type { DateKey, PauseRecord, PlannerConfig, StudyBlock, StudyEvent, UserConfig } from '../domain/types';
 import { buildWeeks, dateForWeekDay as dateForWeekDayIn, findWeek as findWeekIn, weekDays } from '../domain/weeks';
 import type { WeekDay } from '../domain/weeks';
 import { isDayClosed } from '../domain/checks';
@@ -126,6 +127,28 @@ export function getEventsForDate(dateKey: DateKey): StudyEvent[] {
 /** De que jeito este dia nasce: pela rotina (o padrão) ou ao vivo. */
 export const dayModeOf = (dateKey: DateKey): DayMode => modeForDay(dateKey, state.dayModes, state.dayModeDefault);
 
+/**
+ * A config que valia neste dia: a atual, ou a versão que valia antes de uma mudança de
+ * ritmo/janelas (ver domain/configHistory.ts). Tudo que gera ou lê o plano de um dia
+ * passa por aqui — nunca por `state.config` direto —, senão a mudança de dezembro
+ * reescreve setembro.
+ */
+export const configAtDay = (dateKey: DateKey): UserConfig => configAt(state.config, state.configHistory, dateKey);
+
+/**
+ * O dia já tem algo que o plano não pode mais mexer: check, encerramento, pausa registrada,
+ * desistência, corrida do modo ao vivo, ou o bloco que está no timer. É o que decide se uma
+ * mudança de config vale de hoje ou só de amanhã.
+ */
+export function dayHasFacts(dateKey: DateKey): boolean {
+  if (Object.keys(state.checks[dateKey] ?? {}).length > 0) return true;
+  if (isDayClosed(state.closedDays, dateKey)) return true;
+  if ((state.pauses?.[dateKey]?.length ?? 0) > 0) return true;
+  if ((state.penalties?.[dateKey]?.length ?? 0) > 0) return true;
+  if (state.windowOverrides[dateKey]?.studyWindows.some((w) => w.live)) return true;
+  return !!derived.timerBlock && derived.timerDay === dateKey;
+}
+
 export function blocksForDay(dateKey: DateKey): StudyBlock[] {
   if (restKindOf(dateKey) !== null) return []; // fim de semana pausado (sem janelas do dia) ou dia livre
   const windowOv = state.windowOverrides[dateKey];
@@ -139,7 +162,7 @@ export function blocksForDay(dateKey: DateKey): StudyBlock[] {
   // `cfg.start`/`cfg.end`, e `deriveStartEnd([])` devolve 09:00–18:00 — o dia que não
   // começou nasceria com o plano inteiro, 33 blocos que ninguém pediu.
   if (!windowOv && dayModeOf(dateKey) === 'live') return blockagesOnly(events);
-  const dayCfg = configForDay(state.config, windowOv); // as janelas só deste dia, se houver
+  const dayCfg = configForDay(configAtDay(dateKey), windowOv); // a config que valia no dia, com as janelas só dele, se houver
   return generateBlocks(dayCfg, events, state.pauses?.[dateKey] ?? []); // e as pausas do timer daquele dia
 }
 

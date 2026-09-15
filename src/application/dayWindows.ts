@@ -13,6 +13,7 @@
 import { isChecked, isDayClosed } from '../domain/checks';
 import { routineAfter, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
+import { rhythmOf } from '../domain/configHistory';
 import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey } from '../domain/time';
@@ -20,7 +21,7 @@ import type { DateKey, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
-import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks, restKindOf } from './plan';
+import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, rebuildWeeks, restKindOf } from './plan';
 import { scheduleSave } from './save';
 
 export type DayWindowsRefusal =
@@ -35,9 +36,9 @@ export type DayWindowsResult = { ok: true } | { ok: false; reason: DayWindowsRef
 
 export const dayWindowsOverride = (dateKey: DateKey): DayWindowsOverride | null => state.windowOverrides[dateKey] ?? null;
 
-/** As janelas que valem pro dia: as editadas; nenhuma no fim de semana pausado; senão as da rotina. */
+/** As janelas que valem pro dia: as editadas; nenhuma no fim de semana pausado; senão as da rotina — a que valia NAQUELE dia. */
 export const effectiveWindows = (dateKey: DateKey): StudyWindow[] =>
-  windowsForDay(state.config, dayWindowsOverride(dateKey), isWeekendKey(dateKey));
+  windowsForDay(configAtDay(dateKey), dayWindowsOverride(dateKey), isWeekendKey(dateKey));
 
 /** Por que o dia está sem blocos (fim de semana pausado / dia livre), ou null. */
 export const restKindKey = (dateKey: DateKey): RestKind | null => restKindOf(dateKey);
@@ -89,7 +90,7 @@ export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date
 
   if (mode === 'rotina') {
     if (corridas.length > 0 && dateKey === dk(now)) {
-      const r = routineAfter(corridas, state.config.studyWindows, now);
+      const r = routineAfter(corridas, configAtDay(dateKey).studyWindows, now);
       if (r.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
       else delete state.windowOverrides[dateKey];
     } else if (corridas.length > 0) {
@@ -107,7 +108,7 @@ export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date
     // −N estudos" — pra quem só quis passar a tarde pro ao vivo. É o mesmo `stopDayAt` do
     // "Parar por aqui": o que aconteceu fica, o que não aconteceu (os blocos sem check) sai.
     const corte = dateKey === dk(now) ? liveCutFor(dateKey, now) : null;
-    const r = corte ? stopDayAt(effectiveWindows(dateKey), corte, { pomo: state.config.pomo, shortBreak: state.config.shortBreak, longBreak: state.config.longBreak }) : null;
+    const r = corte ? stopDayAt(effectiveWindows(dateKey), corte, rhythmOf(configAtDay(dateKey))) : null;
     if (r?.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
     else delete state.windowOverrides[dateKey];
   }
@@ -181,7 +182,7 @@ export function clearDayWindows(dateKey: DateKey, now: Date = new Date()): DayWi
   const before = blocksForDay(dateKey);
   const corridas = atual.studyWindows.filter((w) => w.live);
   if (corridas.length > 0 && dateKey === dk(now)) {
-    const r = routineAfter(corridas, state.config.studyWindows, now);
+    const r = routineAfter(corridas, configAtDay(dateKey).studyWindows, now);
     if (r.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
     else delete state.windowOverrides[dateKey];
   } else {

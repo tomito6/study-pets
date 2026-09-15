@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_CFG } from '../src/domain/config';
 import { configForDay, isDayOff, routineAfter, stopDayAt, validateDayWindows } from '../src/domain/dayWindows';
 import { modeForDay } from '../src/domain/dayMode';
-import { extendDayTo, extendWindowsTo } from '../src/domain/endOfDay';
+import { extendWindowsTo } from '../src/domain/endOfDay';
 
 const w = (start: string, end: string) => ({ start, end });
 
@@ -46,12 +46,6 @@ describe('prolongar', () => {
     expect(extendWindowsTo([w('09:00', '12:00'), w('15:00', '18:00')], '19:30')).toEqual([w('09:00', '12:00'), w('15:00', '19:30')]);
     expect(extendWindowsTo([], '19:30')).toEqual([]);
   });
-
-  it('extendDayTo continua mudando end e a última janela da rotina', () => {
-    const cfg = extendDayTo(DEFAULT_CFG, '19:00');
-    expect(cfg.end).toBe('19:00');
-    expect(cfg.studyWindows).toEqual([w('09:00', '19:00')]);
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -90,6 +84,15 @@ describe('stopDayAt — parar no meio do dia', () => {
     const outro = { pomo: 50, shortBreak: 10, longBreak: 20 };
     const r = stopDayAt([{ start: '09:00', end: '18:00' }], em('10:12'), outro);
     expect(r.ok && r.windows[0]!.live).toEqual(outro);
+  });
+
+  it('janela que já é corrida guarda o ritmo dela — carimbar o de agora por cima reescreveria os blocos', () => {
+    const outro = { pomo: 50, shortBreak: 10, longBreak: 20 };
+    const r = stopDayAt([{ start: '09:00', end: '10:12', live: R }, { start: '11:00', end: '18:00' }], em('11:30'), outro);
+    expect(r).toEqual({
+      ok: true,
+      windows: [{ start: '09:00', end: '10:12', live: R }, { start: '11:00', end: '11:30', live: outro }],
+    });
   });
 });
 

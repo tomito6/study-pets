@@ -18,6 +18,7 @@
 // relógio depois de retomar é `derived.timerEndsAt` — ver `timerEnd`.
 
 import { isDayClosed } from '../domain/checks';
+import { rhythmOf } from '../domain/configHistory';
 import { stopDayAt } from '../domain/dayWindows';
 import { addPause, parsePauseSession, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
 import { planDelta, planDeltaParts } from '../domain/planDelta';
@@ -32,7 +33,7 @@ import { checkBlock } from './checks';
 import { rescheduleEndOfDayPrompt, suspendEndOfDayPrompt } from './dayEnd';
 import { effectiveWindows } from './dayWindows';
 import { growLiveForPause } from './live';
-import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks } from './plan';
+import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, rebuildWeeks } from './plan';
 import { saveNow } from './save';
 import { adoptPausedBlock, pauseRuntime, reopenFocus, resumeRuntime, stopTimer } from './timer';
 
@@ -96,11 +97,10 @@ export function stopHere(now: Date = new Date()): StopHereResult {
     return { ok: true, block: null, at: minuto(now) };
   }
 
-  const corte = stopDayAt(effectiveWindows(todayKey), now, {
-    pomo: state.config.pomo,
-    shortBreak: state.config.shortBreak,
-    longBreak: state.config.longBreak,
-  });
+  // O ritmo é o do DIA (a config que valia hoje), não o da config atual: quem mudou o pomodoro
+  // à tarde com a manhã já marcada tem a manhã gerada pela versão de antes — e é ela que a
+  // corrida carimba. Janela que já é corrida guarda o ritmo dela (ver `stopDayAt`).
+  const corte = stopDayAt(effectiveWindows(todayKey), now, rhythmOf(configAtDay(todayKey)));
   if (!corte.ok) {
     // Nada vivido: a parada caiu no primeiro minuto do primeiro bloco do dia. Num dia ao vivo
     // isso é a corrida recém-aberta — e ela tem que SUMIR, senão o bloco de 25 min fica inteiro

@@ -2,9 +2,11 @@
 
 import { takeSafetyNet } from './backup';
 import { DEFAULT_CFG } from '../domain/config';
+import { recordConfigChange } from '../domain/configHistory';
 import { emptyPets } from '../domain/persistence';
 import { hasMissingNumbers, normalizeConfig } from '../domain/settings';
 import type { ConfigDraft } from '../domain/settings';
+import { dk } from '../domain/time';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, notify, state } from '../store/store';
@@ -12,21 +14,36 @@ import type { SettingsRequest } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
 import { openOnboarding } from './onboarding';
-import { blocksForDay, clearBlockCache, currentDayKey, rebuildWeeks } from './plan';
+import { blocksForDay, clearBlockCache, currentDayKey, dayHasFacts, rebuildWeeks } from './plan';
 import { scheduleSave } from './save';
 
-export type SaveSettingsResult = { ok: true } | { ok: false; reason: 'incomplete' };
+/** O que a mudança faz com o plano: nada (só campos fora do gerador), vale de hoje, ou só de amanhã (hoje já tem fato). */
+export type PlanChange = 'unchanged' | 'from-today' | 'from-tomorrow';
+export type SaveSettingsResult = { ok: true; plan: PlanChange } | { ok: false; reason: 'incomplete' };
 
 /**
  * Salva a rotina. `periodStart` é fixo por sessão: vem do estado, nunca do
  * formulário. Campo numérico vazio não é salvo — antes isso gravava NaN.
+ *
+ * **Ritmo e janelas novos valem de hoje em diante, nunca pra trás** (2026-09-15): a config
+ * que deixa de valer vai pra `configHistory` com o último dia em que valeu, e cada dia é
+ * gerado pela versão que valia nele (ver domain/configHistory.ts). Hoje só entra na
+ * mudança se ainda não tem fato nenhum (`dayHasFacts`); senão fica como está e a
+ * mudança vale de amanhã — e a tela avisa.
  */
-export function saveSettings(draft: ConfigDraft): SaveSettingsResult {
+export function saveSettings(draft: ConfigDraft, now: Date = new Date()): SaveSettingsResult {
   const newCfg = normalizeConfig(draft, state.config.periodStart);
   if (hasMissingNumbers(newCfg)) return { ok: false, reason: 'incomplete' };
 
   const visibleKey = currentDayKey();
   const before = blocksForDay(visibleKey);
+  const today = dk(now);
+  const change = recordConfigChange(state.configHistory, state.config, newCfg, {
+    today,
+    todayHasFacts: dayHasFacts(today),
+    periodStart: state.config.periodStart,
+  });
+  if (change) state.configHistory = change.history;
   state.config = newCfg;
   rebuildWeeks();
   clearBlockCache();
@@ -35,7 +52,7 @@ export function saveSettings(draft: ConfigDraft): SaveSettingsResult {
   // Config mudou → o último bloco pode ter mudado → o prompt de fim de dia reagenda.
   rescheduleEndOfDayPrompt();
   notifyPlanDelta(visibleKey, before);
-  return { ok: true };
+  return { ok: true, plan: !change ? 'unchanged' : change.appliesFrom === today ? 'from-today' : 'from-tomorrow' };
 }
 
 /** Zera tudo e reabre o onboarding — a única forma de redefinir o `periodStart`. */
@@ -48,6 +65,7 @@ export function cancelSession(now: Date = new Date()): void {
   state.eventSeries = [];
   state.closedDays = {};
   state.config = { ...DEFAULT_CFG };
+  state.configHistory = []; // as versões antigas falam de dias que acabaram de deixar de existir
   state.pets = emptyPets();
   state.coinsSpent = 0;
   state.groups = {};

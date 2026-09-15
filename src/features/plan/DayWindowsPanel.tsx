@@ -14,7 +14,7 @@ import {
   setDayWindows,
 } from '../../application/dayWindows';
 import type { DayWindowsRefusal } from '../../application/dayWindows';
-import { dayModeOf } from '../../application/plan';
+import { configAtDay, dayModeOf } from '../../application/plan';
 import { requestSettings } from '../../application/settings';
 import { state, useAppState } from '../../store/store';
 import type { DateKey, StudyWindow } from '../../domain/types';
@@ -72,7 +72,11 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
   const modo = key ? dayModeOf(key) : 'rotina';
-  const { pomo, shortBreak, longBreak } = useAppState((s2) => s2.config);
+  // O ritmo que VALE neste dia: a config atual, ou a versão que valia antes de uma mudança
+  // (ver domain/configHistory.ts) — num dia passado os tiles mostram o pomodoro com que ele
+  // foi gerado. O `useAppState` só assina a config; quem responde é `configAtDay`.
+  useAppState((s2) => s2.config);
+  const { pomo, shortBreak, longBreak } = key ? configAtDay(key) : state.config;
   /**
    * A porta pro ritmo: fecha o modal ANTES de pedir (dois modais abertos deixariam o
    * overlay do dia por cima da página que acabou de abrir) e abre as Configurações já
