@@ -7,6 +7,7 @@
 
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const raiz = new URL('../', import.meta.url);
@@ -63,13 +64,13 @@ describe('fontes servidas pelo próprio domínio', () => {
     const varrer = (dir: URL) => {
       for (const item of readdirSync(dir, { withFileTypes: true })) {
         if (item.isDirectory()) varrer(new URL(`${item.name}/`, dir));
-        else if (item.name.endsWith('.css')) css.push(new URL(item.name, dir).pathname);
+        else if (item.name.endsWith('.css')) css.push(fileURLToPath(new URL(item.name, dir)));
       }
     };
     varrer(new URL('src/styles/', raiz));
     varrer(new URL('public/legal/', raiz)); // as páginas estáticas têm CSS próprio
     expect(css.length).toBeGreaterThanOrEqual(4);
-    for (const caminho of [...css, new URL('index.html', raiz).pathname]) {
+    for (const caminho of [...css, fileURLToPath(new URL('index.html', raiz))]) {
       const texto = readFileSync(caminho, 'utf8');
       expect(texto, `${caminho} fala com o Google Fonts`).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);
     }

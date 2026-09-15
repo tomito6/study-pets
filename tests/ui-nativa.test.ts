@@ -4,6 +4,7 @@
 // Lista escrita à mão não protegeria: a varredura é pela árvore inteira de src/.
 
 import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const raiz = new URL('../', import.meta.url);
@@ -13,7 +14,7 @@ function fontes(): string[] {
   const varrer = (dir: URL) => {
     for (const item of readdirSync(dir, { withFileTypes: true })) {
       if (item.isDirectory()) varrer(new URL(`${item.name}/`, dir));
-      else if (/\.tsx?$/.test(item.name)) achados.push(new URL(item.name, dir).pathname);
+      else if (/\.tsx?$/.test(item.name)) achados.push(fileURLToPath(new URL(item.name, dir)));
     }
   };
   varrer(new URL('src/', raiz));
