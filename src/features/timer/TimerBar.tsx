@@ -7,7 +7,8 @@
 
 import { continueBlock, pauseTimer, resumeTimer } from '../../application/pause';
 import { blocksForDay, dayModeOf } from '../../application/plan';
-import { requestStartBlock, setVolume, startContextFor, stopTimer, toggleMute } from '../../application/timer';
+import { setVolume, toggleMute } from '../../application/alerts';
+import { requestStartBlock, startContextFor, stopTimer } from '../../application/timer';
 import { blockDurationMin, canStartBlock, cleanBlockName, timerProgress } from '../../domain/timer';
 import { dk } from '../../domain/time';
 import type { StudyBlock } from '../../domain/types';

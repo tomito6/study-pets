@@ -20,6 +20,26 @@ export function requestNotificationPermission(): void {
   if (hasApi() && Notification.permission === 'default') void Notification.requestPermission();
 }
 
+/** O estado da permissão, ou `unsupported` onde a API não existe (e a decisão nem se coloca). */
+export type NotificationStatus = NotificationPermission | 'unsupported';
+
+export function notificationPermission(): NotificationStatus {
+  return hasApi() ? Notification.permission : 'unsupported';
+}
+
+/**
+ * Pede a permissão e devolve o que ficou decidido. Sem a API devolve `unsupported`; se o
+ * navegador lançar (alguns só aceitam o pedido de dentro de um gesto), o estado atual.
+ */
+export async function askNotificationPermission(): Promise<NotificationStatus> {
+  if (!hasApi()) return 'unsupported';
+  try {
+    return await Notification.requestPermission();
+  } catch {
+    return Notification.permission;
+  }
+}
+
 /**
  * O service worker registrado nesta página, se houver.
  *

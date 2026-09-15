@@ -3,7 +3,7 @@
 
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
-import { playSound } from '../../application/timer';
+import { playSound } from '../../application/alerts';
 import { hasBlockStarted, isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { cleanBlockName as cleanName } from '../../domain/timer';
 import { isForfeited } from '../../domain/hardcore';

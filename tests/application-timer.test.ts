@@ -7,7 +7,7 @@ import { checkBlock, toggleBlockCheck } from '../src/application/checks';
 import { blocksForDay, clearBlockCache, rebuildWeeks } from '../src/application/plan';
 import { mealSeries } from '../src/domain/eventPresets';
 import { pauseTimer, resumeTimer } from '../src/application/pause';
-import { closeFocus, reconcileTimer, reopenFocus, setVolume, startTimer, stopTimer, toggleMute, tryStartTimer } from '../src/application/timer';
+import { closeFocus, reconcileTimer, reopenFocus, startTimer, stopTimer, tryStartTimer } from '../src/application/timer';
 import { isChecked } from '../src/domain/checks';
 import { emptyPersistedState } from '../src/domain/persistence';
 import type { StudyBlock } from '../src/domain/types';
@@ -335,18 +335,5 @@ describe('ciclo de vida', () => {
     expect(derived.timerCompleted).not.toBeNull();
     startTimer({ ...bloco, time: '10:30', endTime: '10:55' });
     expect(derived.timerCompleted).toBeNull();
-  });
-});
-
-describe('áudio', () => {
-  it('mudo alterna; volume 0 silencia e volume > 0 reativa', () => {
-    toggleMute();
-    expect(derived.audio.muted).toBe(true);
-    toggleMute();
-    expect(derived.audio.muted).toBe(false);
-    setVolume(0);
-    expect(derived.audio).toEqual({ volume: 0, muted: true });
-    setVolume(0.4);
-    expect(derived.audio).toEqual({ volume: 0.4, muted: false });
   });
 });

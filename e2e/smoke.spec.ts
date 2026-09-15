@@ -2476,4 +2476,83 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.finish-day-btn')).toBeVisible();
     expect(erros).toEqual([]);
   });
+
+  // O único controle de volume morava na barra do timer — e desde que o foco fica aberto
+  // enquanto o relógio corre (2026-09-12), a barra só aparece pausada: quem queria baixar o som
+  // não achava onde, e achou que os sons tinham sido desligados (pedido do Tomi, 2026-09-15).
+  test('66. sons e notificações: o volume tem casa nas Configurações, toca na hora, e sobrevive ao reload', async ({ page }) => {
+    // Um espião no Web Audio ANTES do app carregar: conta os osciladores (um som = várias
+    // notas) e registra em que estado cada contexto nasceu — `suspended` é o silêncio calado
+    // que o `primeAudio` existe pra evitar.
+    await page.addInitScript(() => {
+      type Espia = { ctxs: number; osc: number; states: string[] };
+      const w = window as unknown as { __spAudio: Espia };
+      w.__spAudio = { ctxs: 0, osc: 0, states: [] };
+      const Original = window.AudioContext;
+      window.AudioContext = class extends Original {
+        constructor(opts?: AudioContextOptions) {
+          super(opts);
+          w.__spAudio.ctxs++;
+          w.__spAudio.states.push(this.state);
+        }
+        override createOscillator(): OscillatorNode {
+          w.__spAudio.osc++;
+          return super.createOscillator();
+        }
+      };
+    });
+    const audio = () => page.evaluate(() => (window as unknown as { __spAudio: { ctxs: number; osc: number; states: string[] } }).__spAudio);
+    const gravado = () => page.evaluate(() => JSON.parse(localStorage.getItem('sp-audio') ?? 'null'));
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    const secao = page.locator('#st-sec-sound');
+    await secao.scrollIntoViewIfNeeded();
+    await expect(secao).toBeVisible();
+    await expect(page.locator('#sound-volume')).toHaveValue('0.7');
+    await expect(page.locator('#sound-volume-val')).toHaveText('70%');
+
+    // "▶ Ouvir" toca o "deu certo" (quatro notas), num contexto criado no clique: rodando, não suspenso.
+    await page.locator('#sound-test').click();
+    await expect.poll(async () => (await audio()).osc).toBe(4);
+    expect((await audio()).states).toEqual(['running']);
+
+    // Oito passos pra baixo no slider: 30%. Cada tecla solta toca um check (duas notas), pra ouvir o volume novo.
+    await page.locator('#sound-volume').focus();
+    for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('#sound-volume')).toHaveValue('0.3');
+    await expect(page.locator('#sound-volume-val')).toHaveText('30%');
+    await expect.poll(async () => (await audio()).osc).toBe(4 + 8 * 2);
+    // Gravado NESTE dispositivo, não no documento.
+    expect(await gravado()).toEqual({ volume: 0.3, muted: false });
+
+    // Desligado: "Ouvir" não toca nada, o slider apaga, e o mudo também fica gravado.
+    await page.locator('.st-switch', { has: page.locator('#cfg-sound') }).click(); // o input do switch é invisível: clica no trilho
+    await expect(page.locator('#cfg-sound')).not.toBeChecked();
+    await expect(page.locator('#sound-volume')).toBeDisabled();
+    const antes = (await audio()).osc;
+    await page.locator('#sound-test').click();
+    await expect.poll(() => gravado()).toEqual({ volume: 0.3, muted: true });
+    expect((await audio()).osc).toBe(antes);
+    await page.locator('.st-switch', { has: page.locator('#cfg-sound') }).click();
+    await expect(page.locator('#cfg-sound')).toBeChecked();
+
+    // A notificação do navegador: o status é dito com todas as letras.
+    await expect(page.locator('#notif-perm-status')).toHaveAttribute('data-status', /^(default|denied|granted)$/);
+
+    // Sobrevive ao reload — e a barra do timer lê o MESMO valor: dois controles, uma preferência.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await page.locator('#focus-pause').click(); // pra ver a barra é preciso pausar: rodando não há saída do foco
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    await expect(page.locator('#vol-slider')).toHaveValue('0.3');
+    await page.getByRole('button', { name: 'Configurações' }).click();
+    await expect(page.locator('#sound-volume')).toHaveValue('0.3');
+    expect(erros).toEqual([]);
+  });
 });

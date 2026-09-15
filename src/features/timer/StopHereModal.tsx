@@ -5,6 +5,7 @@
 // É filha do `#focus-overlay` (z-300 contra o z-200 do `.panel-overlay`), como o
 // `HardcoreQuitModal` — senão ela abriria ATRÁS do foco.
 
+import { playSound } from '../../application/alerts';
 import { openFinishDay } from '../../application/dayEnd';
 import { stopHere } from '../../application/pause';
 import { calcXP, coinsForBlock } from '../../domain/progression';
@@ -44,6 +45,10 @@ export function minutesSoFar(block: Pick<StudyBlock, 'time' | 'paused'>, now: Da
 export function stopHereNow(): void {
   const r = stopHere();
   if (!r.ok) return; // sem timer, em espera, dia encerrado, nada vivido: o timer já parou, e não há o que contar
+  // O bloco parcial entrou marcado: é um check como o da lista, e soa como ele. Num dia ao
+  // vivo é assim que a maioria das corridas termina — sem isto o modo inteiro acabava mudo,
+  // enquanto o fim natural de um bloco na rotina toca o "deu certo".
+  if (r.block) playSound('check');
   showToast(r.block ? t.stopped(r.at, cleanBlockName(r.block.name), blockMins(r.block), r.block.xp) : t.stoppedBare(r.at));
 }
 

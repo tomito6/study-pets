@@ -27,6 +27,7 @@ import { SiteBlockSection } from './SiteBlockSection';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
 import { AvatarPicker } from './AvatarPicker';
 import { SettingsTour } from './SettingsTour';
+import { SoundSection } from './SoundSection';
 import { ThemePicker } from './ThemePicker';
 
 const t = strings.settings;
@@ -377,6 +378,8 @@ export function SettingsPage() {
               <AvatarPicker active={open && stab === 'general'} />
 
               <ThemePicker />
+
+              <SoundSection />
 
               <div className="st-section">
                 <div className="st-section-head"><div className="st-section-title">{t.tour.title}</div></div>

@@ -1,4 +1,5 @@
-// O timer: qual bloco está rodando, o modo foco e o áudio.
+// O timer: qual bloco está rodando e o modo foco. (O áudio mora em application/alerts.ts;
+// daqui ele só é tocado — e preparado nos gestos que começam ou retomam um bloco.)
 //
 // O estado é só "qual bloco" (derived.timerBlock). O restante é derivado do
 // relógio pelos componentes, a cada segundo, SEM passar pelo store — um
@@ -32,8 +33,6 @@ import { dk } from '../domain/time';
 import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerEnd, timerProgress } from '../domain/timer';
 import type { StartCheck, StartContext } from '../domain/timer';
 import type { DateKey, StudyBlock } from '../domain/types';
-import { playSound as playSoundInfra } from '../infrastructure/audio/sounds';
-import type { SoundType } from '../infrastructure/audio/sounds';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
 import { clearPauseSession, writePauseSession } from '../infrastructure/pauseSession';
 import type { Unsubscribe } from '../infrastructure/ports';
@@ -42,6 +41,7 @@ import { reacquireWakeLockIfWanted, releaseWakeLock, requestWakeLock } from '../
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
+import { playSound, primeAudio } from './alerts';
 import { checkBlock } from './checks';
 import { abandonHardcore, armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { chainLive } from './live';
@@ -192,6 +192,7 @@ export function pauseRuntime(now: Date): void {
  * implica foco aberto (ver `closeFocus`).
  */
 export function resumeRuntime(block: StudyBlock, now: Date, endsAt: number | null = null): void {
+  primeAudio(); // "▶ Retomar" / "▶ Continuar" são gestos: o contexto de áudio acorda aqui
   clearPause();
   derived.timerEndsAt = endsAt;
   derived.timerBlock = block;
@@ -232,6 +233,10 @@ export function startTimer(block: StudyBlock, now: Date = new Date()): void {
   // continuou (a mesma regra do "✕ Parar"). Silencioso, porém, isso some do histórico sem
   // ninguém ver — e desde que o foco só se fecha pausado, é o estado normal da lista.
   if (derived.timerPausedAt != null && derived.timerBlock) showToast(strings.timer.pauseDropped);
+  // Iniciar vem de um gesto (a linha, o cartão Agora, o "▶ Começar" do ao vivo, o consentimento
+  // do hardcore): é a hora de criar o contexto de áudio, senão o fim do bloco toca em silêncio.
+  // No boot (a sessão hardcore que voltou) não há gesto e isto não faz mal — ver `primeAudio`.
+  primeAudio();
   derived.timerCompleted = null;
   runBlock(block, now);
   syncBlocking(now);
@@ -384,24 +389,8 @@ export const isTimerBlock = (b: Pick<StudyBlock, 'time' | 'endTime'>): boolean =
  */
 export function reopenFocus(): void {
   if (!derived.timerBlock || derived.focusOpen) return;
+  primeAudio();
   derived.focusOpen = true;
   if (derived.timerPausedAt == null) void requestWakeLock();
-  notify();
-}
-
-// ---- áudio ----
-
-export function playSound(type: SoundType): void {
-  playSoundInfra(type, derived.audio);
-}
-
-export function toggleMute(): void {
-  derived.audio = { ...derived.audio, muted: !derived.audio.muted };
-  notify();
-}
-
-/** Volume 0 silencia; qualquer outro valor reativa — como o slider antigo. */
-export function setVolume(volume: number): void {
-  derived.audio = { volume, muted: volume === 0 };
   notify();
 }

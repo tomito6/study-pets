@@ -1123,6 +1123,16 @@
 
   /* zona de perigo */
   .st-card.st-danger{border-color:var(--danger-border);}
+  /* Sons e notificações: o slider de volume da seção (o da barra do timer é o .vol-slider, de 60px). */
+  .st-volume{margin-top:14px;}
+  .st-volume.off{opacity:.45;}
+  .st-volume-row{display:flex;align-items:center;gap:12px;margin-top:6px;}
+  .st-vol-slider{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:var(--border);outline:none;cursor:pointer;}
+  .st-vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;}
+  .st-vol-slider::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:var(--accent);cursor:pointer;}
+  .st-vol-slider:focus-visible{box-shadow:0 0 0 3px var(--accent-glow-ring);}
+  .st-vol-val{font-family:var(--font-mono);font-size:12px;color:var(--text);min-width:38px;text-align:right;}
+  .st-sound-notif{margin-top:0;}
   .st-danger-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .st-danger-row .dr-txt{flex:1;min-width:190px;}
   .st-danger-row .dr-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}

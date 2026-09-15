@@ -727,6 +727,30 @@ export const strings = {
       desc: 'A cara do app. Só cor e tipografia mudam — o plano, os horários e os dados continuam iguais.',
       hint: 'Vale só neste dispositivo. Pra comparar rápido, dá pra abrir o app com ?tema=cafe no fim do endereço.',
     },
+    /** Configurações → Geral → "Sons e notificações" (features/settings/SoundSection.tsx). */
+    sound: {
+      title: 'Sons e notificações',
+      desc: 'O que o app faz quando um bloco termina — no dia de rotina e no modo ao vivo, do mesmo jeito.',
+      toggle: 'Sons do app',
+      toggleSub: 'O check, o fim do bloco e a leva fechada.',
+      volume: 'Volume',
+      /** "70%" — o número ao lado do slider. */
+      pct: (v: number) => `${Math.round(v * 100)}%`,
+      testTitle: 'Ouvir como fica',
+      testDesc: 'Toca o som do fim do bloco no volume de agora.',
+      testButton: '▶ Ouvir',
+      hint: 'Vale só neste dispositivo: o celular e o laptop podem ter volumes diferentes.',
+      notif: {
+        title: 'Notificação do navegador',
+        status: {
+          granted: '✓ Permitida — o fim do bloco avisa mesmo com a aba atrás de outra.',
+          denied: 'Bloqueada no navegador. Pra liberar, é no cadeado ao lado do endereço.',
+          default: 'Ainda não pedida. O app pede quando você inicia o primeiro bloco — ou agora:',
+          unsupported: 'Este navegador não tem notificações.',
+        } as Record<'granted' | 'denied' | 'default' | 'unsupported', string>,
+        button: 'Permitir',
+      },
+    },
     tour: {
       title: 'Tutorial',
       desc: 'Os balões que apresentam cada aba na primeira vez que você entra nela.',
