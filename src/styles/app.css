@@ -474,6 +474,9 @@
   .block-name{font-size:13px;color:var(--text);flex:1;}
   /* "⏸ 7 min": o timer ficou pausado dentro do bloco (o fim inclui a pausa; o XP não). */
   .block-paused{font-size:10px;font-family:var(--font-mono);color:var(--muted);white-space:nowrap;}
+  /* A nota no bloco: a frase da pessoa, miúda, depois do nome (ver BlockList). */
+  .block-note{color:var(--muted);font-weight:400;font-size:12px;}
+  .block-note.editable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}
   .block-xp{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:99px;white-space:nowrap;}
   /* O botão da linha de agora (Iniciar / Continuar): o mesmo peso nos dois estados — é a
      mesma porta, e "voltar" não pode parecer menos importante que "começar". Fica no lugar
@@ -839,6 +842,7 @@
   .focus-chip.pausa { background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
   .focus-chip .fc-dot { width:6px; height:6px; background:currentColor; border-radius:50%; display:inline-block; }
   .focus-block-name { color:var(--text); font-family:var(--font-title); font-size:clamp(16px, 2.6vmin, 22px); font-weight:600; margin-top:10px; }
+  .focus-block-note { color:var(--muted); font-size:clamp(12px, 1.9vmin, 15px); margin-top:4px; }
   .focus-pomo-label { color:var(--muted); font-size:clamp(12px, 1.8vmin, 15px); margin-top:2px; }
   .focus-timer-wrap { position:relative; width:clamp(220px, 55vmin, 380px); height:clamp(220px, 55vmin, 380px); margin:0 auto 4px; }
   .focus-timer-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
@@ -1602,6 +1606,7 @@
     .timer-stop{order:5;border:0;padding:0;font-size:calc(12 * var(--s));color:var(--accent);text-align:left;}
     .timer-stop:hover,.timer-pause:hover{color:var(--text);}
     .block-paused{font-size:calc(10 * var(--s));}
+    .block-note{font-size:calc(12 * var(--s));}
     /* a coluna é um painel da altura da janela: Hoje/Meta e o quarto em cima (rolam por dentro se não couberem,
        sem barra), o cartão Agora sempre no pé. O quarto encolhe com a altura da janela (clamp em vh). */
     .plan-col{grid-column:1;grid-row:2 / 4;align-self:start;position:sticky;zoom:var(--col-k);top:calc(var(--topbar-h) / var(--col-k));height:calc((100vh - var(--topbar-h)) / var(--col-k));display:flex;flex-direction:column;align-items:stretch;}

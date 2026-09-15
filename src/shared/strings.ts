@@ -187,8 +187,8 @@ export const strings = {
   groups: {
     button: 'Agrupar',
     cancel: 'Cancelar',
-    hintFirst: 'Toque no primeiro bloco do grupo',
-    hintLast: 'Agora toque no último bloco',
+    hintFirst: 'Toque no primeiro bloco do grupo — ou num bloco só, pra uma nota',
+    hintLast: 'Agora toque no último bloco (o mesmo bloco vira nota)',
     hintDrag: 'Arraste até o último bloco e solte',
     hintResize: 'Solte pra ajustar o trecho',
     panelNew: '✏️ Novo grupo',
@@ -216,6 +216,23 @@ export const strings = {
       overlap: 'Já existe um grupo nesse trecho.',
       'no-study': 'Escolha um trecho com pelo menos um estudo.',
       'not-found': 'Esse grupo não existe mais.',
+    },
+  },
+  /** A nota no bloco: uma frase presa a uma linha só (ver domain/notes.ts). Abre pela seleção de UMA linha. */
+  notes: {
+    panelNew: '📝 Nota no bloco',
+    panelEdit: '📝 Editar nota',
+    summary: (name: string, start: string, end: string) => `${name} · ${start} – ${end}`,
+    label: 'O que você vai fazer aqui?',
+    placeholder: 'Ex: lavar roupa, revisar a lista 3…',
+    hint: 'Uma frase curta na linha do bloco. O plano não muda.',
+    cancel: 'Cancelar',
+    save: 'Salvar',
+    delete: 'Apagar nota',
+    deleted: 'Nota apagada',
+    editTitle: 'Toque pra editar a nota',
+    refusal: {
+      closed: 'Dia encerrado 🔒',
     },
   },
   events: {

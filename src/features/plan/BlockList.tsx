@@ -3,6 +3,7 @@
 
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
+import { blockNote } from '../../application/notes';
 import { playSound } from '../../application/alerts';
 import { hasBlockStarted, isChecked, isDayClosed, isFutureDay } from '../../domain/checks';
 import { cleanBlockName as cleanName } from '../../domain/timer';
@@ -50,6 +51,8 @@ function CheckIcon() {
 export interface BlockActions {
   onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
   onEditGroup: (group: StudyGroup) => void;
+  /** Tocar na nota da linha: editar (ver NotePanel). */
+  onEditNote: (dateKey: DateKey, block: StudyBlock) => void;
   onStartBlock: (block: StudyBlock, now: Date) => void;
 }
 
@@ -69,7 +72,7 @@ interface RowProps extends BlockActions {
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onStartBlock }: RowProps) {
+function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onEditNote, onStartBlock }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -83,6 +86,8 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   const future = isFutureDay(dateKey, now);
   // Abandonado no modo hardcore: sem check, sem timer, e fica marcado como "desistiu".
   const forfeited = (isE || isP) && isForfeited(state.penalties, dateKey, b.time);
+  // A nota no bloco: a frase que a pessoa prendeu a esta linha ("lavar roupa"). Por horário, como o check.
+  const nota = blockNote(dateKey, b);
 
   const className =
     'block-row' +
@@ -182,7 +187,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   // um bloco pelo teclado, nem saber pelo leitor de tela o que cada linha é. O
   // `#active-pet-card` já fazia certo (role=button, Enter/Espaço) — é o mesmo padrão.
   const acionavel = clickable || isE || isP;
-  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}` + (acao ? `, ${strings.timer.actionLabel[acao]}` : '');
+  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}` + (nota ? `, ${nota}` : '') + (acao ? `, ${strings.timer.actionLabel[acao]}` : '');
   const onRowKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -227,7 +232,27 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
       <span className="block-time">
         {b.time}–{b.endTime}
       </span>
-      <span className="block-name">{b.name}</span>
+      <span className="block-name">
+        {b.name}
+        {nota && (
+          <span
+            className={'block-note' + (closed ? '' : ' editable')}
+            title={closed ? undefined : strings.notes.editTitle}
+            onClick={
+              closed
+                ? undefined
+                : (e) => {
+                    if (selection.active) return; // em seleção o toque é da seleção: sobe pra linha
+                    e.stopPropagation();
+                    onEditNote(dateKey, b);
+                  }
+            }
+          >
+            {' · '}
+            {nota}
+          </span>
+        )}
+      </span>
       {/* O timer ficou pausado dentro deste bloco: o fim inclui a pausa, o XP não — a etiqueta é o que fecha a conta. */}
       {b.paused ? <span className="block-paused" title={t.pausedTitle(b.paused)}>{t.pausedTag(b.paused)}</span> : null}
       {/* O botão ocupa o lugar do selo de XP: medido a 375px, os dois juntos espremem o nome
@@ -309,7 +334,7 @@ interface ListProps extends BlockActions {
   empty: { label: string; hint: string | null } | null;
 }
 
-export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, collapsed, onToggleCycle, empty, onDeleteEvent, onEditGroup, onStartBlock }: ListProps) {
+export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, collapsed, onToggleCycle, empty, onDeleteEvent, onEditGroup, onEditNote, onStartBlock }: ListProps) {
   if (blocks.length === 0) {
     if (!empty) return null;
     return (
@@ -469,6 +494,7 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
         timerBlock={timerBlock}
         onDeleteEvent={onDeleteEvent}
         onEditGroup={onEditGroup}
+        onEditNote={onEditNote}
         onStartBlock={onStartBlock}
       />,
     );

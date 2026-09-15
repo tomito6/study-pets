@@ -161,12 +161,14 @@ describe('retomar', () => {
   it('check adiantado que veio do documento, e grupos, acompanham os blocos que deslizaram', () => {
     state.checks[HOJE] = { '10:30': { pet: null, bonus: 0 } }; // o Estudo 4, marcado antes da hora
     expect(addGroup(HOJE, { start: '10:00', end: '10:55', name: 'Análise', goal: '' }).ok).toBe(true);
+    state.notes[HOJE] = { '10:30': 'lavar roupa' }; // a nota do Estudo 4
     startTimer(estudo3, AGORA);
     pauseTimer(AGORA);
     vi.setSystemTime(em('10:17:00'));
     resumeTimer(em('10:17:00'));
     expect(state.checks[HOJE]).toEqual({ '10:37': { pet: null, bonus: 0 } }); // o Estudo 4 agora é 10:37–11:02
     expect(state.groups[HOJE]![0]).toMatchObject({ start: '10:00', end: '11:02' });
+    expect(state.notes[HOJE]).toEqual({ '10:37': 'lavar roupa' }); // a nota segue o bloco
   });
 
   it('a pausa que atravessa o fim do bloco (contra o fim da janela) para o timer sem check nem emenda', () => {

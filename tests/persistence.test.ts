@@ -328,6 +328,7 @@ describe('serializeState', () => {
     delete parcial.pauses;
     delete parcial.notifications;
     delete parcial.configHistory;
+    delete parcial.notes;
     const doc = serializeState(parcial as never);
     expect(doc.eventSeries).toEqual([]);
     expect(doc.closedDays).toEqual({});
@@ -341,6 +342,7 @@ describe('serializeState', () => {
     expect(doc.pauses).toEqual({});
     expect(doc.notifications).toEqual([]);
     expect(doc.configHistory).toEqual([]);
+    expect(doc.notes).toEqual({});
   });
 });
 
@@ -363,6 +365,7 @@ describe('ida e volta', () => {
       },
       coinsSpent: 300,
       groups: { '2026-09-01': [{ id: 'grp_1', start: '09:00', end: '10:25', name: 'Análise II', goal: 'lista 3' }] },
+      notes: { '2026-09-02': { '10:55': 'lavar roupa' } },
       windowOverrides: { '2026-09-01': { studyWindows: [] }, '2026-09-03': { studyWindows: [{ start: '10:10', end: '12:00' }] } },
       tutorialSeen: { plan: true, analytics: true },
       avatar: { skin: 'ebano', hair: 'ruivo', style: 'cacheado', body: 'curvo' },

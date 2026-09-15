@@ -34,6 +34,8 @@ import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
 import { normalizeNotifications } from './notifications';
 import type { Notification } from './notifications';
+import { normalizeNotes } from './notes';
+import type { NotesByDate } from './notes';
 import { normalizePauses } from './pauses';
 import { migrateSiteBlock } from './siteBlock';
 import { legacyPetInstance, normalizePetInstance, petForm } from './pets';
@@ -83,6 +85,11 @@ export interface PersistedState {
   coinsSpent: number;
   /** Grupos de estudo por dia (nome + objetivo num trecho). */
   groups: GroupsByDate;
+  /**
+   * Uma frase sua presa a um bloco só, por dia e por horário ("lavar roupa" na pausa longa).
+   * Anotação por horário, como checks e grupos — nunca entra no gerador (ver domain/notes.ts).
+   */
+  notes: NotesByDate;
   /** Janelas de estudo só de um dia; lista vazia = dia livre (ver domain/dayWindows.ts). */
   windowOverrides: WindowOverrides;
   /**
@@ -181,6 +188,7 @@ export function emptyPersistedState(): PersistedState {
     pets: emptyPets(),
     coinsSpent: 0,
     groups: {},
+    notes: {},
     windowOverrides: {},
     dayModes: {},
     dayModeDefault: null,
@@ -324,6 +332,7 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     closedDays: isObj(d.closedDays) ? (d.closedDays as Record<DateKey, boolean>) : {},
     coinsSpent: typeof d.coinsSpent === 'number' ? d.coinsSpent : 0,
     groups: hydrateGroups(d.groups),
+    notes: normalizeNotes(d.notes), // doc de antes das notas: nenhuma
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     dayModes: normalizeDayModes(d.dayModes),
     dayModeDefault: normalizeDayModeDefault(d.dayModeDefault),
@@ -362,6 +371,7 @@ export function serializeState(s: PersistedState): UserDoc {
     },
     coinsSpent: s.coinsSpent || 0,
     groups: s.groups || {},
+    notes: s.notes || {},
     windowOverrides: s.windowOverrides || {},
     dayModes: s.dayModes || {},
     dayModeDefault: s.dayModeDefault ?? null,

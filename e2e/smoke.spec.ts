@@ -1823,8 +1823,20 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#grp-save').click(); // sem nome → "Grupo"
     await expect(page.locator('.group-header')).toContainText('Grupo');
 
-    // Trecho já ocupado por um grupo: recusa com aviso, sem abrir o painel.
+    // Botão direito numa linha só é uma NOTA, não um grupo de um bloco (2026-09-15) — mesmo dentro de um grupo.
     await linhas.nth(1).click({ button: 'right' });
+    await expect(page.locator('#note-panel')).toBeVisible();
+    await expect(page.locator('#group-panel')).toBeHidden();
+    await page.locator('#note-panel .panel-close').click();
+    await expect(page.locator('#note-panel')).toBeHidden();
+
+    // Trecho já ocupado por um grupo: recusa com aviso, sem abrir o painel.
+    const fora = await linhas.nth(3).boundingBox();
+    if (!fora) throw new Error('linha sem posição na tela');
+    await page.mouse.move(ate.x + ate.width / 2, ate.y + ate.height / 2);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(fora.x + fora.width / 2, fora.y + fora.height / 2, { steps: 6 });
+    await page.mouse.up({ button: 'right' });
     await expect(page.locator('#toast')).toContainText('Já existe um grupo');
     await expect(page.locator('#group-panel')).toBeHidden();
   });
@@ -2630,6 +2642,48 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
     await page.locator('.day-tab', { hasText: 'Qui' }).click();
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
+    expect(erros).toEqual([]);
+  });
+
+  test('69. uma linha só é uma nota: "lavar roupa" na pausa longa, e ela vai junto pro foco', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:30');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+    const pausaLonga = page.locator('.block-row', { hasText: '10:55–11:15' });
+
+    // Pelo "Agrupar": o mesmo bloco duas vezes abre a nota, não um grupo de um bloco.
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await pausaLonga.locator('.block-name').click();
+    await expect(page.locator('#group-hint')).toContainText('último bloco');
+    await pausaLonga.locator('.block-name').click();
+    await expect(page.locator('#note-panel')).toBeVisible();
+    await expect(page.locator('#note-summary')).toContainText('Pausa longa · 10:55 – 11:15');
+    await page.locator('#note-text').fill('lavar roupa');
+    await page.locator('#note-save').click();
+    await expect(page.locator('#note-panel')).toBeHidden();
+    await expect(pausaLonga).toContainText('lavar roupa');
+    await expect(page.locator('.group-box')).toHaveCount(0); // nota não é caixa
+
+    // O foco mostra a nota no "Em seguida" (o Estudo 4 emenda na pausa longa).
+    await page.locator('.block-row', { hasText: '10:30–10:55' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-next-name')).toContainText('Pausa longa · lavar roupa');
+    await page.locator('#focus-pause').click(); // pra ver a barra é preciso pausar: rodando não há saída do foco
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await page.locator('#timer-stop').click();
+
+    // Sobrevive ao reload; tocar na nota edita; Apagar tira.
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(pausaLonga).toContainText('lavar roupa');
+    await pausaLonga.locator('.block-note').click();
+    await expect(page.locator('#note-panel')).toBeVisible();
+    await expect(page.locator('#note-text')).toHaveValue('lavar roupa');
+    await page.locator('#note-delete').click();
+    await expect(page.locator('#note-panel')).toBeHidden();
+    await expect(pausaLonga).not.toContainText('lavar roupa');
     expect(erros).toEqual([]);
   });
 });

@@ -100,10 +100,12 @@ describe('cancelSession', () => {
     state.windowOverrides = { '2026-09-01': { studyWindows: [] } };
     state.tutorialSeen = { plan: true };
     state.configHistory = [{ until: '2026-09-01', studyWindows: [{ start: '09:00', end: '18:00' }], pomo: 25, shortBreak: 5, longBreak: 20 }];
+    state.notes = { '2026-09-01': { '10:55': 'lavar roupa' } };
     cancelSession();
     expect(state.checks).toEqual({});
     expect(state.windowOverrides).toEqual({});
     expect(state.configHistory).toEqual([]); // as versões antigas falam de dias que deixaram de existir
+    expect(state.notes).toEqual({});
     expect(state.tutorialSeen).toEqual({ plan: true }); // o tour visto fica: quem cancelou já conhece o app
     expect(state.pets).toEqual({ owned: [], active: null, activeSince: 0, xpProcessedUntil: null });
     expect(state.coinsSpent).toBe(0);

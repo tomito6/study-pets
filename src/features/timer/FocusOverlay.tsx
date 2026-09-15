@@ -16,6 +16,7 @@
 
 import { useEffect, useState } from 'react';
 import { quitHardcore } from '../../application/hardcore';
+import { blockNote } from '../../application/notes';
 import { pauseTimer, resumeTimer } from '../../application/pause';
 import { activePet, petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
@@ -52,8 +53,9 @@ const CYCLE_BANNER_MS = 6500;
 const cycleNameOf = (n: number): string => strings.plan.cycles[n % NUM_CYCLES] ?? strings.plan.cycleFallback;
 
 export function FocusOverlay() {
-  const { block, open, completed, hardcore, pausedAt, endsAt } = useAppState((_, d) => ({
+  const { block, timerDay, open, completed, hardcore, pausedAt, endsAt } = useAppState((_, d) => ({
     block: d.timerBlock,
+    timerDay: d.timerDay,
     open: d.focusOpen,
     completed: d.timerCompleted,
     hardcore: d.hardcore,
@@ -98,6 +100,10 @@ export function FocusOverlay() {
   const durMin = blockDurationMin(block);
   const coins = block.type === 'estudo' ? coinsForStudyBlock(durMin) : 0;
   const next = nextBlockAfter(dayBlocks, block);
+  // A nota do bloco ("lavar roupa") vai junto pro foco — é aqui que a pessoa está quando a hora chega.
+  const diaDoTimer = timerDay ?? currentDayKey();
+  const nota = blockNote(diaDoTimer, block);
+  const notaNext = next ? blockNote(diaDoTimer, next) : null;
   const p = timerProgress(block, now, pausedAt, endsAt);
   const waiting = p.phase === 'waiting';
   const paused = p.phase === 'paused';
@@ -148,6 +154,7 @@ export function FocusOverlay() {
             <span id="focus-chip-text">{t.chip(cycleName)}</span>
           </div>
           <div className="focus-block-name" id="focus-block-name">{cleanBlockName(block.name)}</div>
+          {nota && <div className="focus-block-note" id="focus-block-note">{nota}</div>}
           <div className="focus-pomo-label" id="focus-pomo-label">
             {isPausa ? t.breakOf(durMin) : t.pomodoroOf(durMin)}
           </div>
@@ -187,7 +194,7 @@ export function FocusOverlay() {
         <div className="focus-next" id="focus-next">
           <div className="focus-next-label">{t.next}</div>
           <div className="focus-next-sep" />
-          <div className="focus-next-name" id="focus-next-name">{next ? cleanBlockName(next.name) : t.endOfDay}</div>
+          <div className="focus-next-name" id="focus-next-name">{next ? cleanBlockName(next.name) + (notaNext ? ` · ${notaNext}` : '') : t.endOfDay}</div>
           <div className="focus-next-dur" id="focus-next-dur">{next ? t.minutes(blockDurationMin(next)) : '—'}</div>
         </div>
         {/* A linha do tour DENTRO do foco: nenhum balão renderiza aqui (z-index 80 contra os

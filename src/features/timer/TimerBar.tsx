@@ -5,6 +5,7 @@
 // Em tela grande (layout B7), sem timer rodando ela vira o cartão "Agora · Iniciar": o bloco de hoje
 // que está acontecendo (ou o próximo) e um botão pra entrar nele — a mesma porta do clique na lista.
 
+import { blockNote } from '../../application/notes';
 import { continueBlock, pauseTimer, resumeTimer } from '../../application/pause';
 import { blocksForDay, dayModeOf } from '../../application/plan';
 import { setVolume, toggleMute } from '../../application/alerts';
@@ -32,8 +33,9 @@ function agoraBlock(now: Date): StudyBlock | null {
 }
 
 export function TimerBar() {
-  const { block, tab, audio, hardcore, pausedAt, endsAt, focusOpen } = useAppState((s, d) => ({
+  const { block, timerDay, tab, audio, hardcore, pausedAt, endsAt, focusOpen } = useAppState((s, d) => ({
     block: d.timerBlock,
+    timerDay: d.timerDay,
     focusOpen: d.focusOpen,
     tab: s.uiTab,
     audio: d.audio,
@@ -75,10 +77,11 @@ export function TimerBar() {
     const running = timerProgress(b, now).phase === 'running';
     // O PlanTab atende: com hardcore ligado abre o consentimento, senão inicia (e mostra o motivo se recusar).
     const start = () => requestStartBlock(b);
+    const notaAgora = blockNote(dk(now), b);
     return (
       <div className="timer-bar idle" id="timer-bar">
         <div className="agora-k">{running ? t.now.kicker(b.time) : t.now.next(b.time)}</div>
-        <div className="timer-block-name" id="timer-block-name">{cleanBlockName(b.name)}</div>
+        <div className="timer-block-name" id="timer-block-name">{cleanBlockName(b.name) + (notaAgora ? ` · ${notaAgora}` : '')}</div>
         <div className="agora-dur">{t.now.dur(blockDurationMin(b), b.type)}</div>
         <button className="agora-start" id="agora-start" onClick={start}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
@@ -88,13 +91,14 @@ export function TimerBar() {
     );
   }
 
+  const nota = block ? blockNote(timerDay ?? dk(now), block) : null; // a nota do bloco vai junto na barra
   return (
     <div className={'timer-bar' + (active ? ' active' : '')} id="timer-bar">
       <div>
         <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
           {paused && progress ? t.pausedFor(progress.pausedDisplay) : waiting ? t.startsIn : t.inProgress}
         </div>
-        <div className="timer-block-name" id="timer-block-name">{block ? cleanBlockName(block.name) : '—'}</div>
+        <div className="timer-block-name" id="timer-block-name">{block ? cleanBlockName(block.name) + (nota ? ` · ${nota}` : '') : '—'}</div>
         <SiteBlockBadge id="timer-site-block" className="site-block-badge bar-sb" />
       </div>
       <div className={'timer-time' + (progress?.ending ? ' ending' : '') + (waiting ? ' waiting' : '') + (paused ? ' paused' : '')} id="timer-display">

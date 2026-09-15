@@ -20,6 +20,7 @@
 import { isDayClosed } from '../domain/checks';
 import { rhythmOf } from '../domain/configHistory';
 import { stopDayAt } from '../domain/dayWindows';
+import { remapNotesForPause } from '../domain/notes';
 import { addPause, parsePauseSession, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
 import { planDelta, planDeltaParts } from '../domain/planDelta';
 import { dk, timeToMins } from '../domain/time';
@@ -183,6 +184,12 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
     else delete state.checks[todayKey];
     const groups = state.groups[todayKey];
     if (groups && groups.length > 0) state.groups[todayKey] = remapGroupsForPause(groups, pairs);
+    const notas = state.notes[todayKey];
+    if (notas && Object.keys(notas).length > 0) {
+      const n = remapNotesForPause(notas, pairs); // a nota segue o bloco, como o check
+      if (Object.keys(n.notes).length > 0) state.notes[todayKey] = n.notes;
+      else delete state.notes[todayKey];
+    }
   }
   rebuildWeeks(now); // a data ganha dados (a pausa) — e notifica
   void saveNow(); // sem debounce: o registro e os checks remapeados vão juntos, e um F5 logo depois não perde a pausa
