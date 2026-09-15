@@ -224,7 +224,7 @@ export const strings = {
     panelEdit: '📝 Editar nota',
     summary: (name: string, start: string, end: string) => `${name} · ${start} – ${end}`,
     label: 'O que você vai fazer aqui?',
-    placeholder: 'Ex: lavar roupa, revisar a lista 3…',
+    placeholder: 'Ex: meditar, lavar roupa…',
     hint: 'Uma frase curta na linha do bloco. O plano não muda.',
     cancel: 'Cancelar',
     save: 'Salvar',
