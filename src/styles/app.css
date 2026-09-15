@@ -1520,6 +1520,12 @@
     .finish-day-wrap{position:static;margin:calc(28 * var(--s)) 0 4px;}
     .analytics-page,.profile-page{grid-column:1 / -1;grid-row:2 / 4;max-width:calc(980 * var(--s));margin:0 auto;width:100%;}
     .analytics-page,.profile-page{zoom:calc(100vw / 1480px);padding:26px 0 100px;}
+    /* Os modais centrados (a folha do bloco, evento, grupo, loja…) escalam INTEIROS no laptop (2026-09-15, pedido
+       do Tomi: "aumente a escala em uns 50%", e depois "10% menor"): 1,35× a 1916px — a tela dele —, proporcional à largura como o resto
+       do layout, e nunca menor que 1 (a 1100px fica como no celular). O max-height desfaz o zoom, senão 90vh × 1,5
+       sairia da tela num modal alto (onboarding, loja). O 1.043 é 1,35 × 1480 / 1916. */
+    .panel-overlay.center{--modal-k:max(1, calc(1.043 * 100vw / 1480px));}
+    .panel-overlay.center .panel-sheet{zoom:var(--modal-k);max-height:calc(90vh / var(--modal-k));}
     .xp-card,.stats-row{display:none;}
 
     /* semana e dias: texto, não caixa */
