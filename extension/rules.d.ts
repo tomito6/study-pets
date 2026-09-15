@@ -42,3 +42,29 @@ export function isLive(state: BlockingExtPayload | null | undefined, now: number
 export function isBlocked(url: string, payload: BlockingExtPayload | null | undefined): boolean;
 export function buildRules(payload: BlockingExtPayload | null | undefined): DnrRule[];
 export function ackFor(state: BlockingExtPayload | null | undefined): BlockingExtAck;
+
+/** O payload do timer — `TimerPayload` em `src/infrastructure/extensionBridge.ts`. */
+export type TimerExtPayload =
+  | { v: 1; running: false }
+  | {
+      v: 1;
+      running: true;
+      endsAt: number;
+      title: string;
+      body: string;
+      sound: 'estudo' | 'pausa_curta' | 'pausa_longa' | 'sucesso';
+      audio: { volume: number; muted: boolean };
+      appUrl: string;
+    };
+
+export interface TimerExtAck {
+  armed: boolean;
+  endsAt: number;
+}
+
+export const TIMER_VERSION: 1;
+export function isTimerSupported(payload: unknown): boolean;
+export function isTimerLive(timer: TimerExtPayload | null | undefined, now: number): boolean;
+export function isTimerDue(timer: TimerExtPayload | null | undefined, now: number): boolean;
+export function timerAckFor(timer: TimerExtPayload | null | undefined): TimerExtAck;
+export function isAppUrl(url: string | undefined, appUrl: string | undefined): boolean;

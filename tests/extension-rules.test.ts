@@ -2,7 +2,7 @@
 // estado do bloqueio vira, e quais URLs abertas caem nele.
 
 import { describe, expect, it } from 'vitest';
-import { ALWAYS_ALLOWED, ackFor, allowedFor, buildRules, domainMatches, hostOf, isBlocked, isLive, isSupported } from '../extension/rules.js';
+import { ALWAYS_ALLOWED, ackFor, allowedFor, buildRules, domainMatches, hostOf, isBlocked, isLive, isSupported , isAppUrl, isTimerDue, isTimerLive, isTimerSupported, timerAckFor } from '../extension/rules.js';
 import type { BlockingExtPayload } from '../extension/rules.js';
 
 const base: BlockingExtPayload = {
@@ -112,5 +112,48 @@ describe('ackFor — o que o app recebe de volta', () => {
   it('nada aplicado vira o ack vazio', () => {
     expect(ackFor(null)).toEqual({ applied: false, until: 0, sites: 0, mode: null, test: false });
     expect(ackFor({ ...base, active: false })).toEqual({ applied: false, until: 0, sites: 0, mode: null, test: false });
+  });
+});
+
+describe('o alarme do fim do bloco — os ajudantes puros', () => {
+  const timer = {
+    v: 1 as const,
+    running: true as const,
+    endsAt: 1_000,
+    title: 't',
+    body: 'Estudo 3',
+    sound: 'sucesso' as const,
+    audio: { volume: 0.7, muted: false },
+    appUrl: 'http://localhost:5174',
+  };
+
+  it('vivo enquanto o fim não chegou; vencido a partir dele', () => {
+    expect(isTimerLive(timer, 999)).toBe(true);
+    expect(isTimerLive(timer, 1_000)).toBe(false);
+    expect(isTimerDue(timer, 999)).toBe(false);
+    expect(isTimerDue(timer, 1_000)).toBe(true);
+    expect(isTimerLive({ v: 1, running: false }, 0)).toBe(false);
+    expect(isTimerDue({ v: 1, running: false }, 5_000)).toBe(false);
+    expect(isTimerLive(null, 0)).toBe(false);
+  });
+
+  it('só a versão que a extensão entende', () => {
+    expect(isTimerSupported(timer)).toBe(true);
+    expect(isTimerSupported({ ...timer, v: 2 })).toBe(false);
+    expect(isTimerSupported(null)).toBe(false);
+  });
+
+  it('o ack diz o que ficou armado', () => {
+    expect(timerAckFor(timer)).toEqual({ armed: true, endsAt: 1_000 });
+    expect(timerAckFor({ v: 1, running: false })).toEqual({ armed: false, endsAt: 0 });
+    expect(timerAckFor(null)).toEqual({ armed: false, endsAt: 0 });
+  });
+
+  it('a aba em frente é a do app? pelo host, ignorando www, caminho e porta', () => {
+    expect(isAppUrl('http://localhost:5174/?x=1', 'http://localhost:5174')).toBe(true);
+    expect(isAppUrl('https://www.plano-estudos-one.vercel.app/legal/x', 'https://plano-estudos-one.vercel.app')).toBe(true);
+    expect(isAppUrl('https://wikipedia.org/', 'https://plano-estudos-one.vercel.app')).toBe(false);
+    expect(isAppUrl(undefined, 'https://plano-estudos-one.vercel.app')).toBe(false);
+    expect(isAppUrl('chrome://extensions', 'https://plano-estudos-one.vercel.app')).toBe(false);
   });
 });

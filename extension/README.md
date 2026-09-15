@@ -1,10 +1,17 @@
-# Study Pets — a extensão que bloqueia sites
+# Study Pets — a extensão que bloqueia sites e avisa o fim do bloco
 
 Uma página web não consegue bloquear site nenhum no seu computador. Esta extensão é a
 parte que consegue: **enquanto um estudo está rodando no Study Pets**, os sites da sua
 lista (Configurações → Geral → **Bloqueio de sites**) mostram o seu pet te esperando em
 vez da página, com a contagem do que falta. Na pausa ela libera; no fim do bloco, some
 sozinha.
+
+E, desde a 0.3.0, ela é também **o despertador**: quando o bloco termina e a aba do Study
+Pets não está na sua frente (outra aba, outra janela, outro programa, ou a aba foi
+descartada pelo navegador), é a extensão que toca o som e mostra a notificação — na hora
+certa, porque o alarme dela não é estrangulado nem descartado como uma aba de fundo.
+Com a aba do app na frente, quem avisa é o próprio app, como sempre. Isso funciona **com
+o bloqueio de sites desligado**: basta a extensão estar instalada.
 
 Funciona **com ou sem o modo hardcore** — bloquear site e perder XP são coisas separadas.
 
@@ -21,6 +28,23 @@ Bloqueio de sites: deve aparecer **"✓ Extensão encontrada"** com a versão.
 
 > Atualizou os arquivos do app ou da extensão? Clique em **↻** na extensão em
 > `chrome://extensions` e recarregue a aba do Study Pets.
+
+## O aviso do fim do bloco
+
+Comece um estudo, troque de aba (ou vá pro PDF) e espere o fim: sai a notificação do
+sistema ("📖 Estudo concluído! Hora da pausa." · Estudo 3) e toca o som do app, no volume
+que está nas Configurações do app. Clicar na notificação traz a aba do Study Pets. No
+popup do ícone aparece "⏰ Avisa às 10:25 · Estudo 3" enquanto há um alarme armado.
+
+- **Com a aba do app na frente** (janela focada, aba ativa), a extensão fica quieta: o app
+  toca e notifica ele mesmo. Nunca os dois.
+- **Pausado não há alarme** (não se sabe quando vai acabar); retomar arma de novo.
+- **Mudo no app** = notificação silenciosa e nenhum som aqui também.
+- **Recarregar a aba do app não desarma.** Se o navegador descartou a aba no meio do
+  estudo, o app perde o timer (ele não sobrevive a reload), mas o alarme continua aqui — e
+  avisa na hora.
+- O **Focus Assist / Não perturbe** do Windows esconde notificações de qualquer origem,
+  inclusive esta. O som ainda sai.
 
 ## Como saber que está funcionando
 
@@ -59,6 +83,9 @@ e o login do Google/Firebase (`rules.js`, `ALWAYS_ALLOWED`).
 - **Só página inteira** (`main_frame`): um site que embute um vídeo do YouTube continua
   funcionando; abrir o YouTube, não.
 - **Não bloqueia aplicativo** — Spotify, jogo, o que for fora do navegador.
+- **Não é o timer.** O relógio continua no app; a extensão só recebe "avise às 10:25" e
+  avisa. Fechar o navegador inteiro no meio do bloco: ao reabrir, se o fim foi há menos de
+  30 min, ela ainda avisa; se foi há horas, esquece.
 - Firefox suporta Manifest V3 com diferenças (`background.scripts`, permissões); não foi
   testado.
 
@@ -81,6 +108,17 @@ e o login do Google/Firebase (`rules.js`, `ALWAYS_ALLOWED`).
 - `blocked.html` é a tela: sprite do pet (os frames vêm do próprio app), o bloco, a
   contagem, e "Voltar pro Study Pets". Não tem botão de desbloquear — a saída é no app.
 - `popup.html` é o que o ícone abre.
+- **O alarme do fim do bloco**: o app publica `study-pets:timer` (`{ running, endsAt,
+  title, body, sound, audio, appUrl }` — o texto vem pronto, o som vem nomeado, o volume é
+  o do app), o `content.js` repassa, o `background.js` arma um `chrome.alarms` pro
+  `endsAt` e devolve o ack `{ armed, endsAt }` — é o ack que autoriza o app a se calar
+  no fim do bloco. No alarme: se o app está em frente (janela focada e aba ativa), nada;
+  senão `chrome.notifications` (clique = trazer a aba) e o som pela página **offscreen**
+  `alarm.html` (um service worker não tem Web Audio; `alarm.js` é um porte dos sons do
+  app). O fim que venceu e ainda não foi avisado é avisado na mensagem seguinte do app,
+  antes de trocar o alarme — senão o app em frente, que termina o bloco um segundo depois
+  do fim e já manda o bloco seguinte, substituiria o alarme antes de ele disparar.
+  Permissões novas: `notifications` e `offscreen`.
 
 O teste de ponta a ponta num navegador de verdade (extensão carregada, site de mentira,
 regra aplicada) é `npm run test:ext` na raiz do repositório.

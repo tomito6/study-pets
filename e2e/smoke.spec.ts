@@ -2721,4 +2721,73 @@ test.describe('Study Pets — smoke', () => {
     await expect(pausaLonga).not.toContainText('lavar roupa');
     expect(erros).toEqual([]);
   });
+
+  test('70. o fim do bloco pela extensão: o app publica o timer, e com o ack dela e a aba sem foco ele se cala', async ({ page }) => {
+    // O espião do 66: conta os osciladores — som do app = notas; a extensão toca as dela fora daqui.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __spOsc: number; __spTimer: unknown[] };
+      w.__spOsc = 0;
+      w.__spTimer = [];
+      const Original = window.AudioContext;
+      window.AudioContext = class extends Original {
+        override createOscillator(): OscillatorNode {
+          w.__spOsc++;
+          return super.createOscillator();
+        }
+      };
+      window.addEventListener('study-pets:timer', (e) => w.__spTimer.push(JSON.parse((e as CustomEvent).detail)));
+    });
+    const osc = () => page.evaluate(() => (window as unknown as { __spOsc: number }).__spOsc);
+    const publicado = () => page.evaluate(() => (window as unknown as { __spTimer: Record<string, unknown>[] }).__spTimer.at(-1));
+    const ack = (endsAt: number) =>
+      page.evaluate((endsAt) => window.dispatchEvent(new CustomEvent('study-pets:timer-ack', { detail: JSON.stringify({ armed: true, endsAt }) })), endsAt);
+    const emFoco = (sim: boolean) => page.evaluate((sim) => Object.defineProperty(document, 'hasFocus', { value: () => sim, configurable: true }), sim);
+    const ms = (hms: string) => new Date(`${DIA}T${hms}`).getTime();
+
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    expect(await publicado()).toBeUndefined(); // uma carga que nunca armou nada não desarma
+
+    // Iniciar: o aviso pronto — quando, o texto, o som do foco, o volume deste dispositivo.
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    expect(await publicado()).toEqual({
+      v: 1,
+      running: true,
+      endsAt: ms('10:25:00'),
+      title: '📖 Estudo concluído! Hora da pausa.',
+      body: 'Estudo 3',
+      sound: 'sucesso',
+      audio: { volume: 0.7, muted: false },
+      appUrl: 'http://localhost:' + new URL(page.url()).port,
+    });
+
+    // Pausar desarma; retomar 3 min depois rearma com o fim ajustado (10:28).
+    await page.locator('#focus-pause').click();
+    await expect(page.locator('#focus-time-sub')).toContainText('pausado');
+    expect(await publicado()).toEqual({ v: 1, running: false });
+    await page.clock.setFixedTime(new Date(`${DIA}T10:13:00`));
+    await page.locator('#focus-pause').click();
+    await expect(page.locator('#toast')).toContainText('Pausa de 3 min');
+    expect(await publicado()).toMatchObject({ running: true, endsAt: ms('10:28:00'), body: 'Estudo 3' });
+
+    // A extensão confirma o alarme pras 10:28, e a aba não está em frente: no fim do bloco o app
+    // marca o check e emenda na pausa, mas NÃO toca — a extensão avisou na hora exata.
+    await ack(ms('10:28:00'));
+    await emFoco(false);
+    const antes = await osc();
+    await page.clock.setFixedTime(new Date(`${DIA}T10:28:01`));
+    await expect(page.locator('#focus-overlay')).toContainText('Pausa');
+    await expect(page.locator('#focus-done')).toContainText('Estudo 3 concluído');
+    expect(await osc()).toBe(antes);
+    expect(await publicado()).toMatchObject({ running: true, endsAt: ms('10:33:00'), title: '🧘 Pausa concluída! Hora de estudar.', body: 'Pausa' });
+
+    // Com a aba em frente é o app que avisa, ack ou não: o fim da pausa toca aqui.
+    await ack(ms('10:33:00'));
+    await emFoco(true);
+    await page.clock.setFixedTime(new Date(`${DIA}T10:33:01`));
+    // O overlay já dizia "Em seguida · Estudo 4" durante a pausa: o fim é a faixa "concluída".
+    await expect(page.locator('#focus-done')).toContainText('Pausa concluída');
+    await expect.poll(() => osc()).toBeGreaterThan(antes);
+  });
 });

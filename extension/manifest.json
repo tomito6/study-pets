@@ -1,19 +1,53 @@
 {
   "manifest_version": 3,
   "name": "Study Pets",
-  "version": "0.2.0",
-  "description": "Enquanto um estudo roda no Study Pets, os sites da sua lista mostram seu pet em vez da página.",
-  "permissions": ["declarativeNetRequest", "storage", "alarms", "tabs"],
-  "host_permissions": ["<all_urls>"],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_icon": { "192": "icon-192.png" } },
+  "version": "0.3.0",
+  "description": "Enquanto um estudo roda no Study Pets, os sites da sua lista mostram seu pet em vez da página — e o fim do bloco é avisado mesmo com a aba do app em segundo plano.",
+  "permissions": [
+    "declarativeNetRequest",
+    "storage",
+    "alarms",
+    "tabs",
+    "notifications",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "192": "icon-192.png"
+    }
+  },
   "content_scripts": [
     {
-      "matches": ["https://plano-estudos-one.vercel.app/*", "http://localhost/*", "http://127.0.0.1/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://plano-estudos-one.vercel.app/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_start"
     }
   ],
-  "web_accessible_resources": [{ "resources": ["blocked.html"], "matches": ["<all_urls>"] }],
-  "icons": { "192": "icon-192.png" }
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "192": "icon-192.png"
+  }
 }

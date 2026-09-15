@@ -4,7 +4,7 @@
 // porque o app pode ainda não ter carregado).
 
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { EXT_ACK_EVENT, EXT_ATTR, EXT_QUERY_EVENT, EXT_STATE_EVENT, parseBlockingAck } from '../src/infrastructure/extensionBridge';
+import { EXT_ACK_EVENT, EXT_ATTR, EXT_QUERY_EVENT, EXT_STATE_EVENT, EXT_TIMER_ACK_EVENT, EXT_TIMER_EVENT, parseBlockingAck } from '../src/infrastructure/extensionBridge';
 
 const sent: unknown[] = [];
 const acks: unknown[] = [];
@@ -64,5 +64,25 @@ describe('content.js', () => {
     win.dispatchEvent(new CustomEvent(EXT_STATE_EVENT, { detail: 'lixo' }));
     win.dispatchEvent(new CustomEvent(EXT_STATE_EVENT));
     expect(sent).toHaveLength(1);
+  });
+});
+
+describe('content.js — o timer', () => {
+  it('repassa o timer publicado pelo app pro service worker e devolve o ack pra página', async () => {
+    const acksTimer: unknown[] = [];
+    win.addEventListener(EXT_TIMER_ACK_EVENT, (e) => acksTimer.push((e as CustomEvent).detail));
+    const payload = { v: 1, running: true, endsAt: 5, title: 't', body: 'Estudo 3', sound: 'sucesso', audio: { volume: 0.7, muted: false }, appUrl: 'http://localhost:5174' };
+    win.dispatchEvent(new CustomEvent(EXT_TIMER_EVENT, { detail: JSON.stringify(payload) }));
+    expect(sent.at(-1)).toEqual({ type: 'timer', payload });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(acksTimer).toHaveLength(1);
+    expect(typeof acksTimer[0]).toBe('string'); // JSON: os dois mundos não trocam objetos
+  });
+
+  it('detail que não é JSON (ou não é objeto) não é repassado', () => {
+    const antes = sent.length;
+    win.dispatchEvent(new CustomEvent(EXT_TIMER_EVENT, { detail: 'nada' }));
+    win.dispatchEvent(new CustomEvent(EXT_TIMER_EVENT, { detail: '7' }));
+    expect(sent.length).toBe(antes);
   });
 });

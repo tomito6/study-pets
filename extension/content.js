@@ -37,3 +37,22 @@ const ask = () => window.dispatchEvent(new CustomEvent('study-pets:blocking?'));
 ask();
 setTimeout(ask, 2000);
 setTimeout(ask, 8000);
+
+// O timer: o app publica "avise às 10:25 com isto" (ou "nada rodando"), o service worker
+// arma o alarme e devolve o ack — é ele que diz ao app "pode se calar, eu aviso".
+window.addEventListener('study-pets:timer', (e) => {
+  let payload;
+  try {
+    payload = JSON.parse(e.detail);
+  } catch {
+    return;
+  }
+  if (!payload || typeof payload !== 'object') return;
+  chrome.runtime
+    .sendMessage({ type: 'timer', payload })
+    .then((ack) => {
+      if (!ack || typeof ack !== 'object') return;
+      window.dispatchEvent(new CustomEvent('study-pets:timer-ack', { detail: JSON.stringify(ack) }));
+    })
+    .catch(() => {});
+});

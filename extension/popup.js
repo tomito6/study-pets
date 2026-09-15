@@ -8,8 +8,18 @@ const hhmm = (ms) => {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+/** O alarme do fim do bloco: "⏰ Avisa às 10:25 · Estudo 3", se há um armado. */
+function showTimer(timer) {
+  const live = timer && timer.running === true && typeof timer.endsAt === 'number' && timer.endsAt > Date.now();
+  if (!live) return;
+  $('timer').textContent = `⏰ Avisa às ${hhmm(timer.endsAt)}` + (timer.body ? ` · ${timer.body}` : '');
+  $('timer').hidden = false;
+}
+
 async function main() {
-  const { blocking } = await chrome.storage.local.get('blocking');
+  const { blocking, timer } = await chrome.storage.local.get(['blocking', 'timer']);
+  showTimer(timer);
+  if (!blocking && timer && timer.appUrl) $('open').href = timer.appUrl;
   const live = blocking && blocking.active && typeof blocking.until === 'number' && blocking.until > Date.now();
   if (blocking && blocking.appUrl) $('open').href = blocking.appUrl;
   if (!live) {

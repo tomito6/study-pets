@@ -42,6 +42,7 @@ import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { playSound, primeAudio } from './alerts';
+import { alarmDelegated } from './timerAlarm';
 import { checkBlock } from './checks';
 import { abandonHardcore, armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { chainLive } from './live';
@@ -279,11 +280,15 @@ function finishTimer(now: Date = new Date()): void {
   }
   const todayKey = dk(now);
   const n = strings.timer.notification;
-  void pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
+  // A extensão armou o alarme pra este fim e a aba não está em frente: ela já avisou na hora
+  // exata, com som e notificação, e este código pode estar chegando um minuto atrasado pelo
+  // estrangulamento da aba de fundo. Quem avisa é um só — ver `timerAlarm.ts`.
+  const delegated = alarmDelegated(block, now);
+  if (!delegated) void pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
 
   if (derived.focusOpen && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
     const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
-    playSound('sucesso');
+    if (!delegated) playSound('sucesso');
     // No modo ao vivo o plano não tem futuro: a emenda GERA o bloco seguinte esticando a
     // corrida, em vez de procurá-lo numa lista que acaba agora. Sem isto o tracker pararia
     // sozinho a cada pomodoro — o oposto exato da feature. Vem ANTES da leva porque é ela
@@ -314,7 +319,7 @@ function finishTimer(now: Date = new Date()): void {
       return;
     }
     showToast(strings.timer.completed(completed));
-  } else {
+  } else if (!delegated) {
     playSound(soundForBlock(block));
   }
   if (derived.hardcore) endHardcoreSession(); // a sequência acabou por conta própria: nada a cobrar

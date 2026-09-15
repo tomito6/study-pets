@@ -135,3 +135,81 @@ export function extensionVersion(): string | null {
   const v = document.documentElement.dataset[EXT_ATTR];
   return v && v.includes('.') ? v : null;
 }
+
+// ---------------------------------------------------------------- o alarme do fim do bloco
+
+/** App → extensão: o que o timer está fazendo — "avise às 10:25 com isto" ou "nada rodando". */
+export const EXT_TIMER_EVENT = 'study-pets:timer';
+/** Extensão → app: "armei o alarme pras 10:25" (ou não). */
+export const EXT_TIMER_ACK_EVENT = 'study-pets:timer-ack';
+/** A versão do payload do timer. A extensão ignora o que não for esta. */
+export const TIMER_VERSION = 1;
+
+export type TimerSoundName = 'estudo' | 'pausa_curta' | 'pausa_longa' | 'sucesso';
+
+/**
+ * O que a extensão precisa pra avisar o fim do bloco no lugar do app: QUANDO, o texto
+ * pronto (título e corpo — quem escreve é o app, a extensão continua burra), QUAL som e
+ * em que volume (a preferência deste dispositivo, que ela não tem como ler), e a URL do
+ * app, pra conferir se ele está em frente e pra abrir no clique da notificação.
+ *
+ * `running: false` desarma: o app parou, pausou ou nunca teve nada. Recarregar a página
+ * NÃO manda isto — uma carga que nunca armou nada não desarma o que a anterior armou —,
+ * então a aba descartada pelo navegador no meio do estudo ainda é avisada na hora.
+ */
+export type TimerPayload =
+  | { v: 1; running: false }
+  | {
+      v: 1;
+      running: true;
+      /** ms de quando o bloco termina — o alarme da extensão dispara aí. */
+      endsAt: number;
+      title: string;
+      body: string;
+      sound: TimerSoundName;
+      audio: { volume: number; muted: boolean };
+      appUrl: string;
+    };
+
+/** O que a extensão diz ter armado. */
+export interface TimerAck {
+  armed: boolean;
+  /** ms do alarme armado; 0 quando nada está armado. */
+  endsAt: number;
+}
+
+export function publishTimer(payload: TimerPayload): void {
+  if (typeof window === 'undefined' || typeof CustomEvent === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent(EXT_TIMER_EVENT, { detail: JSON.stringify(payload) }));
+  } catch {
+    // sem extensão ninguém escuta
+  }
+}
+
+/** O ack cru (JSON no `detail`) validado. `null` se não é nosso. */
+export function parseTimerAck(raw: unknown): TimerAck | null {
+  if (typeof raw !== 'string') return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const r = parsed as Record<string, unknown>;
+  return {
+    armed: r.armed === true,
+    endsAt: typeof r.endsAt === 'number' && Number.isFinite(r.endsAt) ? r.endsAt : 0,
+  };
+}
+
+export function onTimerAck(cb: (ack: TimerAck) => void): Unsubscribe {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (e: Event) => {
+    const ack = parseTimerAck((e as CustomEvent).detail);
+    if (ack) cb(ack);
+  };
+  window.addEventListener(EXT_TIMER_ACK_EVENT, handler);
+  return () => window.removeEventListener(EXT_TIMER_ACK_EVENT, handler);
+}

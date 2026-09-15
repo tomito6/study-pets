@@ -14,6 +14,7 @@ import { resumeHardcoreOnBoot } from './hardcore';
 import { abandonHardcore, detachHardcoreSession, endHardcoreSession } from './hardcoreRuntime';
 import { resumePauseOnBoot } from './pause';
 import { abandonBlocking, watchExtension } from './siteBlock';
+import { watchTimerAlarm } from './timerAlarm';
 import { openOnboarding } from './onboarding';
 import { dropExpiredSafetyNet } from './backup';
 import { applyPendingPetXP } from './pets';
@@ -199,6 +200,7 @@ export function startSession(): void {
   started = true;
   watchVisibility(); // o timer se acerta com o relógio ao voltar pra aba / destravar o celular
   watchExtension(); // a extensão pergunta o estado ao carregar, e confirma o que aplicou
+  watchTimerAlarm(); // e recebe o timer, pra avisar o fim do bloco com a aba em segundo plano
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       blockSaves(true); // travado até a leitura confirmar que o estado é o desta conta

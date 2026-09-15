@@ -89,3 +89,31 @@ export function ackFor(state) {
     test: state.test === true,
   };
 }
+
+// ---------------------------------------------------------------- o alarme do fim do bloco
+//
+// O app publica o timer ("avise às 10:25 com este título, este som, neste volume") e
+// o service worker arma um `chrome.alarms` — que dispara na hora certa com a aba do
+// app em segundo plano, estrangulada ou descartada. O payload é o `TimerPayload` de
+// `src/infrastructure/extensionBridge.ts`.
+
+/** A versão do payload do timer que esta extensão entende. */
+export const TIMER_VERSION = 1;
+
+export const isTimerSupported = (payload) => !!payload && payload.v === TIMER_VERSION;
+
+/** O timer guardado ainda tem um fim por vir? */
+export const isTimerLive = (timer, now) => !!timer && timer.running === true && typeof timer.endsAt === 'number' && timer.endsAt > now;
+
+/** O timer guardado já passou do fim — e ninguém avisou ainda (senão não estaria guardado). */
+export const isTimerDue = (timer, now) => !!timer && timer.running === true && typeof timer.endsAt === 'number' && timer.endsAt <= now;
+
+/** O que o app recebe de volta: o que a extensão de fato armou. */
+export const timerAckFor = (timer) => (timer && timer.running === true ? { armed: true, endsAt: timer.endsAt } : { armed: false, endsAt: 0 });
+
+/** A URL é a do app (o mesmo host)? Pra saber se a aba em frente é o Study Pets. */
+export function isAppUrl(url, appUrl) {
+  const host = hostOf(url);
+  const app = hostOf(appUrl || '');
+  return !!host && !!app && host === app;
+}
