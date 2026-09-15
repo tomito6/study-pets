@@ -1,7 +1,7 @@
 // A lista de blocos do dia: divisores de sessão, caixas de grupo e linhas com check.
 // Mesmas classes do markup antigo — o CSS e o smoke test dependem delas.
 
-import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import type { KeyboardEvent, MouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { toggleBlockCheck } from '../../application/checks';
 import { blockNote } from '../../application/notes';
 import { playSound } from '../../application/alerts';
@@ -20,6 +20,8 @@ import { state } from '../../store/store';
 import { GroupBox } from '../groups/GroupBox';
 import type { GroupSelection, RowSelectionProps } from '../groups/useGroupSelection';
 import type { EventDrag, HandleProps } from '../events/useEventDrag';
+import { useBlockGesture } from './useBlockGesture';
+import type { BlockGestureProps } from './useBlockGesture';
 import { spawnCheckRipple, spawnFloatGain, spawnCycleCheer } from './feedback';
 
 const NUM_CYCLES = 6;
@@ -51,8 +53,8 @@ function CheckIcon() {
 export interface BlockActions {
   onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
   onEditGroup: (group: StudyGroup) => void;
-  /** Tocar na nota da linha: editar (ver NotePanel). */
-  onEditNote: (dateKey: DateKey, block: StudyBlock) => void;
+  /** Botão direito, dedo segurado ou toque na nota: a folha do bloco (ver BlockSheet). */
+  onOpenSheet: (dateKey: DateKey, block: StudyBlock) => void;
   onStartBlock: (block: StudyBlock, now: Date) => void;
 }
 
@@ -72,7 +74,7 @@ interface RowProps extends BlockActions {
   timerBlock: StudyBlock | null;
 }
 
-function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onEditNote, onStartBlock }: RowProps) {
+function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, now, isToday, timerBlock, onDeleteEvent, onOpenSheet, onStartBlock }: RowProps) {
   const t = strings.plan;
   const isE = b.type === 'estudo';
   const isP = b.type === 'pausa';
@@ -88,6 +90,8 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   const forfeited = (isE || isP) && isForfeited(state.penalties, dateKey, b.time);
   // A nota no bloco: a frase que a pessoa prendeu a esta linha ("lavar roupa"). Por horário, como o check.
   const nota = blockNote(dateKey, b);
+  // Botão direito ou dedo segurado: a folha do bloco — estudo e pausa; o evento tem o modal dele no toque.
+  const gesture = useBlockGesture(() => onOpenSheet(dateKey, b), isE || isP);
 
   const className =
     'block-row' +
@@ -107,6 +111,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
     (drag?.isDragging(dateKey, b) ? ' dragging' : '');
 
   const onRowClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (gesture.consumeClick()) return; // o rastro do toque longo que acabou de abrir a folha
     if (drag?.consumeClick()) return; // o clique que fecha um arrasto não abre o modal
     if (selection.handleClick(idx)) return;
     if ((e.target as HTMLElement).closest('.check')) return;
@@ -201,7 +206,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   // Evento e intervalo se arrastam; estudo e pausa são gerados pelo planner.
   const source = { dateKey, block: b };
   const dragProps = drag && clickable ? drag.handleProps(source) : null;
-  const rowProps = mergePointer(selection.rowProps(idx), dragProps);
+  const rowProps = mergePointer(selection.rowProps(idx), dragProps, isE || isP ? gesture.props : null);
 
   return (
     <div
@@ -244,7 +249,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
                 : (e) => {
                     if (selection.active) return; // em seleção o toque é da seleção: sobe pra linha
                     e.stopPropagation();
-                    onEditNote(dateKey, b);
+                    onOpenSheet(dateKey, b);
                   }
             }
           >
@@ -290,31 +295,30 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   );
 }
 
+type PointerHandlers = Pick<BlockGestureProps, 'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerCancel'>;
+type RowPointerProps = RowSelectionProps & Partial<PointerHandlers> & Partial<Pick<BlockGestureProps, 'onContextMenu'>>;
+
 /**
- * As duas máquinas de ponteiro vivem na mesma linha: a seleção de grupo (botão
- * direito, toque longo) e o arrasto de evento (mouse com botão esquerdo, ou a
- * alça). Cada uma ignora o que não é dela, então basta chamar as duas.
+ * Três coisas escutam o ponteiro na mesma linha: a seleção de grupo (hoje só o hover do
+ * mouse, pelo botão "Agrupar"), o arrasto de evento (mouse com botão esquerdo, ou a alça)
+ * e o gesto da folha do bloco (botão direito, dedo segurado). Cada uma ignora o que não é
+ * dela, então basta chamar todas.
  */
-function mergePointer(sel: RowSelectionProps, drag: HandleProps | null): RowSelectionProps {
-  if (!drag) return sel;
+function mergePointer(sel: RowSelectionProps, drag: HandleProps | null, gesture: BlockGestureProps | null): RowPointerProps {
+  const ouvintes: PointerHandlers[] = [];
+  if (drag) ouvintes.push(drag);
+  if (gesture) ouvintes.push(gesture);
+  if (ouvintes.length === 0) return sel;
+  const cada = (k: keyof PointerHandlers) => (e: ReactPointerEvent<HTMLElement>) => {
+    for (const o of ouvintes) o[k](e);
+  };
   return {
     ...sel,
-    onPointerDown: (e) => {
-      sel.onPointerDown(e);
-      drag.onPointerDown(e);
-    },
-    onPointerMove: (e) => {
-      sel.onPointerMove(e);
-      drag.onPointerMove(e);
-    },
-    onPointerUp: (e) => {
-      sel.onPointerUp(e);
-      drag.onPointerUp(e);
-    },
-    onPointerCancel: (e) => {
-      sel.onPointerCancel(e);
-      drag.onPointerCancel(e);
-    },
+    onPointerDown: cada('onPointerDown'),
+    onPointerMove: cada('onPointerMove'),
+    onPointerUp: cada('onPointerUp'),
+    onPointerCancel: cada('onPointerCancel'),
+    ...(gesture ? { onContextMenu: gesture.onContextMenu } : {}),
   };
 }
 
@@ -334,7 +338,7 @@ interface ListProps extends BlockActions {
   empty: { label: string; hint: string | null } | null;
 }
 
-export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, collapsed, onToggleCycle, empty, onDeleteEvent, onEditGroup, onEditNote, onStartBlock }: ListProps) {
+export function BlockList({ dateKey, blocks, groups, selection, drag, now, timerBlock, collapsed, onToggleCycle, empty, onDeleteEvent, onEditGroup, onOpenSheet, onStartBlock }: ListProps) {
   if (blocks.length === 0) {
     if (!empty) return null;
     return (
@@ -494,7 +498,7 @@ export function BlockList({ dateKey, blocks, groups, selection, drag, now, timer
         timerBlock={timerBlock}
         onDeleteEvent={onDeleteEvent}
         onEditGroup={onEditGroup}
-        onEditNote={onEditNote}
+        onOpenSheet={onOpenSheet}
         onStartBlock={onStartBlock}
       />,
     );

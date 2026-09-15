@@ -477,6 +477,11 @@
   /* A nota no bloco: a frase da pessoa, miúda, depois do nome (ver BlockList). */
   .block-note{color:var(--muted);font-weight:400;font-size:12px;}
   .block-note.editable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}
+  /* A folha do bloco: os fatos em linhas rótulo · valor (ver BlockSheet). */
+  .bs-facts{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;padding:12px 14px;background:var(--bg3);border-radius:var(--radius-sm);font-size:13px;}
+  .bs-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+  .bs-k{color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.06em;white-space:nowrap;}
+  .bs-v{color:var(--text);text-align:right;}
   .block-xp{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:99px;white-space:nowrap;}
   /* O botão da linha de agora (Iniciar / Continuar): o mesmo peso nos dois estados — é a
      mesma porta, e "voltar" não pode parecer menos importante que "começar". Fica no lugar

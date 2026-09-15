@@ -35,7 +35,7 @@ import { useGroupSelection } from '../groups/useGroupSelection';
 import { HardcoreStartModal } from '../timer/HardcoreModals';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
-import { NotePanel, type NoteTarget } from './NotePanel';
+import { BlockSheet, type BlockSheetTarget } from './BlockSheet';
 import { EventDragGhost } from './EventDragGhost';
 import { liveRunOpen, previewLive, startLive } from '../../application/live';
 import { LiveStartCard, showLiveStart } from './LiveStartCard';
@@ -50,8 +50,8 @@ type PlanModal =
   | { kind: 'delete'; target: EventToDelete }
   | { kind: 'windows'; dateKey: DateKey }
   | { kind: 'group'; target: GroupTarget }
-  /** Uma linha só: a nota no bloco (ver NotePanel). */
-  | { kind: 'note'; target: NoteTarget }
+  /** A folha do bloco: botão direito, dedo segurado ou toque na nota (ver BlockSheet). */
+  | { kind: 'sheet'; target: BlockSheetTarget }
   /** Arrastou uma ocorrência de série: só este dia ou a série inteira? */
   | { kind: 'move'; move: PendingMove }
   /** Modo hardcore ligado: o consentimento antes de abrir o foco. */
@@ -252,12 +252,11 @@ export function PlanTab() {
   const selection = useGroupSelection({
     enabled: canGroup,
     onRange: (from, to) => {
-      // Uma linha só é uma NOTA, não um grupo (2026-09-15): "lavar roupa" na pausa longa,
-      // "lista 3" no Estudo 3. O gesto já significa "quero dizer algo sobre este trecho"; o
-      // tamanho do trecho decide o tamanho do que se diz. Grupo passa a ter no mínimo duas linhas.
+      // Grupo é de duas linhas ou mais. Uma linha só não vira grupo de um bloco (era a nota que
+      // faltava) — e a nota mora na folha do bloco, que abre pelo botão direito ou pelo dedo
+      // segurado; o aviso ensina o gesto.
       if (from === to) {
-        const b = blocks[from];
-        if (b) setModal({ kind: 'note', target: { dateKey: viewKey, block: b } });
+        showToast(tg.oneBlock);
         return;
       }
       const range = rangeOf(blocks.slice(from, to + 1));
@@ -419,7 +418,6 @@ export function PlanTab() {
 
   const hint =
     selection.mode.kind === 'armed' ? tg.hintFirst
-    : selection.mode.kind === 'anchored' && selection.mode.drag ? tg.hintDrag
     : selection.mode.kind === 'resizing' ? tg.hintResize
     : tg.hintLast;
 
@@ -494,7 +492,7 @@ export function PlanTab() {
           empty={vazio}
           onDeleteEvent={(dateKey, block) => setModal({ kind: 'delete', target: { dateKey, block } })}
           onEditGroup={openEditGroup}
-          onEditNote={(dateKey, block) => setModal({ kind: 'note', target: { dateKey, block } })}
+          onOpenSheet={(dateKey, block) => setModal({ kind: 'sheet', target: { dateKey, block } })}
           onStartBlock={startBlock}
         />
         <SelectionRect range={selection.range} listId="blocks-list" />
@@ -527,7 +525,7 @@ export function PlanTab() {
       />
       <DayWindowsPanel dateKey={modal.kind === 'windows' ? modal.dateKey : null} onClose={closeModal} />
       <GroupPanel target={modal.kind === 'group' ? modal.target : null} onClose={closeModal} />
-      <NotePanel target={modal.kind === 'note' ? modal.target : null} onClose={closeModal} />
+      <BlockSheet target={modal.kind === 'sheet' ? modal.target : null} onClose={closeModal} />
       <EventMoveModal move={modal.kind === 'move' ? modal.move : null} onClose={closeModal} />
       <HardcoreStartModal block={modal.kind === 'hardcore' ? modal.block : null} beforeStart={modal.kind === 'hardcore' ? modal.beforeStart : undefined} onClose={closeModal} />
     </>

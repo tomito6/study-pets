@@ -187,9 +187,10 @@ export const strings = {
   groups: {
     button: 'Agrupar',
     cancel: 'Cancelar',
-    hintFirst: 'Toque no primeiro bloco do grupo — ou num bloco só, pra uma nota',
-    hintLast: 'Agora toque no último bloco (o mesmo bloco vira nota)',
-    hintDrag: 'Arraste até o último bloco e solte',
+    hintFirst: 'Toque no primeiro bloco do grupo',
+    hintLast: 'Agora toque no último bloco',
+    /** O mesmo bloco duas vezes: grupo é de dois ou mais — e o aviso ensina onde mora a nota. */
+    oneBlock: 'Grupo é de dois blocos ou mais. Pra anotar um bloco só, segure o dedo nele (ou botão direito).',
     hintResize: 'Solte pra ajustar o trecho',
     panelNew: '✏️ Novo grupo',
     panelEdit: '✏️ Editar grupo',
@@ -218,22 +219,33 @@ export const strings = {
       'not-found': 'Esse grupo não existe mais.',
     },
   },
-  /** A nota no bloco: uma frase presa a uma linha só (ver domain/notes.ts). Abre pela seleção de UMA linha. */
+  /** A nota no bloco: uma frase presa a uma linha só (ver domain/notes.ts). Mora na folha do bloco. */
   notes: {
-    panelNew: '📝 Nota no bloco',
-    panelEdit: '📝 Editar nota',
-    summary: (name: string, start: string, end: string) => `${name} · ${start} – ${end}`,
-    label: 'O que você vai fazer aqui?',
+    label: 'Nota — o que você vai fazer aqui?',
     placeholder: 'Ex: meditar, lavar roupa…',
     hint: 'Uma frase curta na linha do bloco. O plano não muda.',
-    cancel: 'Cancelar',
     save: 'Salvar',
     delete: 'Apagar nota',
     deleted: 'Nota apagada',
-    editTitle: 'Toque pra editar a nota',
+    editTitle: 'Toque pra abrir a folha do bloco',
     refusal: {
       closed: 'Dia encerrado 🔒',
     },
+  },
+  /** A folha do bloco (ver domain/blockSheet.ts): botão direito ou dedo segurado numa linha de estudo/pausa. */
+  blockSheet: {
+    time: 'Horário',
+    duration: 'Duração',
+    mins: (m: number) => `${m} min`,
+    paused: (m: number) => `⏸ ${m} min pausados`,
+    cycle: 'Ciclo',
+    onFinish: 'Ao concluir',
+    earned: 'Entrou',
+    gain: (xp: number, coins: number) => (coins > 0 ? `+${xp} XP · +${coins} 🪙` : `+${xp} XP`),
+    bonus: (pct: number) => `+${pct}% da skill`,
+    group: 'Grupo',
+    close: 'Fechar',
+    readOnly: 'Dia encerrado: a nota fica como está.',
   },
   events: {
     panel: {

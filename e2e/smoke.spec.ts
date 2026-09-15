@@ -1797,8 +1797,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#avatar-picker [data-body="curvo"]')).toHaveClass(/selected/);
   });
 
-  test('12. arrastar com o botão direito seleciona o trecho', async ({ page }) => {
-    // O menu de contexto do browser nunca pode aparecer — nem em cima do modal que abre ao soltar.
+  test('12. o botão direito numa linha abre a folha do bloco, sem o menu do navegador; o grupo é só pelo botão', async ({ page }) => {
+    // O menu de contexto do browser nunca pode aparecer — nem em cima da folha que abre.
     await page.addInitScript(() => {
       const w = window as unknown as { __ctx: boolean[] };
       w.__ctx = [];
@@ -1806,39 +1806,60 @@ test.describe('Study Pets — smoke', () => {
     });
     await abrirApp(page);
     const linhas = page.locator('.block-row');
+
+    // Botão direito no Estudo 1: a folha, com os fatos do bloco — e nenhuma seleção.
+    await linhas.nth(0).click({ button: 'right' });
+    await expect(page.locator('#block-sheet')).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __ctx: boolean[] }).__ctx)).toEqual([true]);
+    await expect(page.locator('#block-sheet h2')).toContainText('Estudo 1');
+    await expect(page.locator('#bs-time')).toContainText('09:00 – 09:25');
+    await expect(page.locator('#bs-duration')).toContainText('25 min');
+    await expect(page.locator('#bs-gain')).toContainText('+50 XP · +25');
+    await expect(page.locator('#bs-group')).toHaveCount(0);
+    await expect(page.locator('.block-row.selecting')).toHaveCount(0);
+    await page.locator('#bs-close').click();
+    await expect(page.locator('#block-sheet')).toBeHidden();
+
+    // Arrastar com o botão direito não seleciona mais nada (o soltar ainda abre a folha da linha de baixo).
     const de = await linhas.nth(0).boundingBox();
     const ate = await linhas.nth(2).boundingBox();
     if (!de || !ate) throw new Error('linhas sem posição na tela');
-
     await page.mouse.move(de.x + de.width / 2, de.y + de.height / 2);
     await page.mouse.down({ button: 'right' });
     await page.mouse.move(ate.x + ate.width / 2, ate.y + ate.height / 2, { steps: 6 });
-    await expect(page.locator('.block-row.selecting')).toHaveCount(3);
+    await expect(page.locator('.block-row.selecting')).toHaveCount(0);
     await page.mouse.up({ button: 'right' });
+    await expect(page.locator('#group-panel')).toBeHidden();
+    await expect(page.locator('#block-sheet')).toBeVisible();
+    await page.locator('#bs-close').click();
 
+    // O grupo é pelo botão: toca no primeiro, toca no último.
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await linhas.nth(0).locator('.block-name').click();
+    await linhas.nth(2).locator('.block-name').click();
     await expect(page.locator('#group-panel')).toBeVisible();
-    expect(await page.evaluate(() => (window as unknown as { __ctx: boolean[] }).__ctx)).toEqual([true]);
     await expect(page.locator('#group-summary')).toContainText('09:00 – 09:55');
     await expect(page.locator('#group-summary')).toContainText('2 blocos');
     await page.locator('#grp-save').click(); // sem nome → "Grupo"
     await expect(page.locator('.group-header')).toContainText('Grupo');
 
-    // Botão direito numa linha só é uma NOTA, não um grupo de um bloco (2026-09-15) — mesmo dentro de um grupo.
-    await linhas.nth(1).click({ button: 'right' });
-    await expect(page.locator('#note-panel')).toBeVisible();
+    // O mesmo bloco duas vezes não vira grupo de um bloco: o aviso ensina onde mora a nota.
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await linhas.nth(4).locator('.block-name').click();
+    await linhas.nth(4).locator('.block-name').click();
+    await expect(page.locator('#toast')).toContainText('dois blocos ou mais');
     await expect(page.locator('#group-panel')).toBeHidden();
-    await page.locator('#note-panel .panel-close').click();
-    await expect(page.locator('#note-panel')).toBeHidden();
 
     // Trecho já ocupado por um grupo: recusa com aviso, sem abrir o painel.
-    const fora = await linhas.nth(3).boundingBox();
-    if (!fora) throw new Error('linha sem posição na tela');
-    await page.mouse.move(ate.x + ate.width / 2, ate.y + ate.height / 2);
-    await page.mouse.down({ button: 'right' });
-    await page.mouse.move(fora.x + fora.width / 2, fora.y + fora.height / 2, { steps: 6 });
-    await page.mouse.up({ button: 'right' });
+    await page.getByRole('button', { name: 'Agrupar' }).click();
+    await linhas.nth(1).locator('.block-name').click();
+    await linhas.nth(3).locator('.block-name').click();
     await expect(page.locator('#toast')).toContainText('Já existe um grupo');
     await expect(page.locator('#group-panel')).toBeHidden();
+
+    // E a folha de um bloco dentro do grupo diz o grupo.
+    await linhas.nth(0).click({ button: 'right' });
+    await expect(page.locator('#bs-group')).toContainText('Grupo');
   });
 
   // Tela alta: a linha alvo precisa ficar longe da faixa de rolagem automática (64px do fundo),
@@ -1908,50 +1929,65 @@ test.describe('Study Pets — smoke', () => {
       return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
     };
 
-    test('13. toque longo arrasta a seleção; soltar sem arrastar volta ao toque no último', async ({ page }) => {
+    test('13. o dedo segurado abre a folha do bloco; a seleção de grupo é só pelo botão, toque no primeiro e no último', async ({ page }) => {
       await abrirApp(page);
       const cdp = await page.context().newCDPSession(page);
       const toque = (type: 'touchStart' | 'touchMove' | 'touchEnd', p?: { x: number; y: number }) =>
         cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [p] : [] });
 
-      // Segura na linha 0, espera o toque longo, arrasta até a linha 2 e solta.
+      // Segura na linha 0: a folha do Estudo 1 abre no toque longo, e soltar não a fecha nem abre o foco.
       const a = await centro(page, 0);
-      const b = await centro(page, 2);
       await toque('touchStart', a);
       await page.waitForTimeout(600);
-      await expect(page.locator('#group-hint')).toContainText('Arraste');
-      for (let s = 1; s <= 6; s++) await toque('touchMove', { x: a.x, y: a.y + ((b.y - a.y) * s) / 6 });
-      await expect(page.locator('.block-row.selecting')).toHaveCount(3);
-      await expect(page.locator('.selection-rect')).toBeVisible();
+      await expect(page.locator('#block-sheet')).toBeVisible();
       await toque('touchEnd');
-      await expect(page.locator('#group-panel')).toBeVisible();
-      await expect(page.locator('#group-summary')).toContainText('09:00 – 09:55');
-      await page.locator('#group-panel .panel-close').click();
+      await page.waitForTimeout(300);
+      await expect(page.locator('#block-sheet')).toBeVisible();
+      await expect(page.locator('#focus-overlay')).toBeHidden();
+      await expect(page.locator('.block-row.selecting')).toHaveCount(0);
+      await expect(page.locator('#bs-time')).toContainText('09:00 – 09:25');
+      await page.locator('#bs-close').tap();
+      await expect(page.locator('#block-sheet')).toBeHidden();
 
-      // Toque longo e solta no lugar: continua esperando o toque no último bloco.
-      const c = await centro(page, 6);
-      await toque('touchStart', c);
-      await page.waitForTimeout(600);
+      // Segura e escorrega o dedo: era scroll — nada abre, nada seleciona.
+      const b = await centro(page, 2);
+      await toque('touchStart', a);
+      await page.waitForTimeout(150);
+      for (let s = 1; s <= 6; s++) await toque('touchMove', { x: a.x, y: a.y + ((b.y - a.y) * s) / 6 });
+      await page.waitForTimeout(500);
       await toque('touchEnd');
+      await expect(page.locator('#block-sheet')).toBeHidden();
+      await expect(page.locator('.block-row.selecting')).toHaveCount(0);
+
+      // O grupo é pelo botão: toque no primeiro, toque no último.
+      await page.getByRole('button', { name: 'Agrupar' }).tap();
+      await expect(page.locator('#group-hint')).toContainText('primeiro bloco');
+      await page.locator('.block-row').nth(6).locator('.block-name').tap();
       await expect(page.locator('#group-hint')).toContainText('último bloco');
       await page.locator('.block-row').nth(8).locator('.block-name').tap();
       await expect(page.locator('#group-panel')).toBeVisible();
       await expect(page.locator('#group-summary')).toContainText('10:30 – 11:40');
     });
 
-    test('14. arrastando até a borda de baixo, a página rola sozinha', async ({ page }) => {
+    test('14. arrastando a alça até a borda de baixo, a página rola sozinha', async ({ page }) => {
       await abrirApp(page);
+      await page.getByRole('button', { name: 'Agrupar' }).tap();
+      await page.locator('.block-row').nth(0).locator('.block-name').tap();
+      await page.locator('.block-row').nth(2).locator('.block-name').tap();
+      await page.locator('#grp-save').tap();
+      await expect(page.locator('.group-header')).toContainText('0/2');
+      const alca = await page.locator('.gb-grip-bottom').boundingBox();
+      if (!alca) throw new Error('alça sem posição na tela');
       const cdp = await page.context().newCDPSession(page);
-      const a = await centro(page, 0);
+      const a = { x: alca.x + alca.width / 2, y: alca.y + alca.height / 2 };
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [a] });
-      await page.waitForTimeout(600);
       const antes = await page.evaluate(() => window.scrollY);
       const h = page.viewportSize()!.height;
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: a.x, y: h - 20 }] });
       await page.waitForTimeout(400);
       expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(antes + 50);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      await expect(page.locator('#group-panel')).toBeVisible(); // soltou longe da âncora: virou grupo
+      await expect(page.locator('.group-header')).not.toContainText('0/2'); // o trecho cresceu com o arrasto
     });
 
     test('44. a alça do evento arrasta com o dedo, sem virar seleção de grupo', async ({ page }) => {
@@ -2652,16 +2688,15 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#tour-balloon')).toBeHidden();
     const pausaLonga = page.locator('.block-row', { hasText: '10:55–11:15' });
 
-    // Pelo "Agrupar": o mesmo bloco duas vezes abre a nota, não um grupo de um bloco.
-    await page.getByRole('button', { name: 'Agrupar' }).click();
-    await pausaLonga.locator('.block-name').click();
-    await expect(page.locator('#group-hint')).toContainText('último bloco');
-    await pausaLonga.locator('.block-name').click();
-    await expect(page.locator('#note-panel')).toBeVisible();
-    await expect(page.locator('#note-summary')).toContainText('Pausa longa · 10:55 – 11:15');
+    // Botão direito na pausa longa: a folha do bloco, e a nota dentro dela.
+    await pausaLonga.click({ button: 'right' });
+    await expect(page.locator('#block-sheet')).toBeVisible();
+    await expect(page.locator('#block-sheet h2')).toContainText('Pausa longa');
+    await expect(page.locator('#bs-time')).toContainText('10:55 – 11:15');
+    await expect(page.locator('#bs-gain')).toContainText('+20 XP');
     await page.locator('#note-text').fill('lavar roupa');
     await page.locator('#note-save').click();
-    await expect(page.locator('#note-panel')).toBeHidden();
+    await expect(page.locator('#block-sheet')).toBeHidden();
     await expect(pausaLonga).toContainText('lavar roupa');
     await expect(page.locator('.group-box')).toHaveCount(0); // nota não é caixa
 
@@ -2679,10 +2714,10 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await expect(pausaLonga).toContainText('lavar roupa');
     await pausaLonga.locator('.block-note').click();
-    await expect(page.locator('#note-panel')).toBeVisible();
+    await expect(page.locator('#block-sheet')).toBeVisible();
     await expect(page.locator('#note-text')).toHaveValue('lavar roupa');
     await page.locator('#note-delete').click();
-    await expect(page.locator('#note-panel')).toBeHidden();
+    await expect(page.locator('#block-sheet')).toBeHidden();
     await expect(pausaLonga).not.toContainText('lavar roupa');
     expect(erros).toEqual([]);
   });
