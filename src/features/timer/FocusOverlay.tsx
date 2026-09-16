@@ -2,7 +2,10 @@
 // Sem "pular" — decisão consciente do produto (pular é fugir do plano). "⏸ Pausar"
 // existe desde 2026-09-10: a vida interrompe, e o relógio congela até "▶ Retomar"
 // (fora do hardcore, e só com o bloco rodando). "← Sair do foco" só fecha o
-// overlay; o timer segue na barra.
+// overlay; o timer segue na barra — num estudo só pausado, numa pausa também
+// rodando (2026-09-16: a pausa é a vida entrando, ninguém deveria congelá-la
+// pra olhar o plano). A pausa que acaba com o foco fechado emenda igual, e o
+// foco volta com o estudo.
 //
 // No modo hardcore não há "Sair do foco": a única porta é "Desistir…" (com a conta
 // na confirmação), "Parar aqui" numa pausa ou "Cancelar" enquanto espera — os dois
@@ -128,8 +131,9 @@ export function FocusOverlay() {
           <span id="focus-clock">{formatClock(now)}</span>
           {hardcore ? (
             <span className="focus-hc-chip" id="focus-hardcore">{th.chip}</span>
-          ) : paused ? (
-            /* Sair só existe PAUSADO: com o relógio correndo, o foco é o compromisso (ver `closeFocus`). */
+          ) : paused || (isPausa && !waiting) ? (
+            /* Num estudo, sair só existe PAUSADO: com o relógio correndo, o foco é o compromisso.
+               Numa pausa rodando é livre — ver `closeFocus`. Em espera a saída é Cancelar. */
             <button className="focus-exit" onClick={() => closeFocus()}>{t.exit}</button>
           ) : null}
         </div>

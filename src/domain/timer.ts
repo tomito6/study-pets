@@ -178,6 +178,16 @@ export function soundForBlock(block: Pick<StudyBlock, 'type' | 'name'>): TimerSo
   return block.name.includes('longa') ? 'pausa_longa' : 'pausa_curta';
 }
 
+/**
+ * O fim deste bloco é "o do foco" (check sozinho, "deu certo", emenda no seguinte)? Com o
+ * foco aberto, sempre. Numa PAUSA, também com ele fechado: dela dá pra sair sem pausar
+ * (2026-09-16), e sair não pode custar a emenda nem o check. É a pergunta que o fim do
+ * bloco faz no app e que a extensão precisa responder igual — o som que ela toca é o que
+ * o app tocaria.
+ */
+export const finishesAsFocus = (block: Pick<StudyBlock, 'type'>, focusOpen: boolean): boolean =>
+  focusOpen || block.type === 'pausa';
+
 const sameBlock = (a: Pick<StudyBlock, 'time' | 'endTime'>, b: Pick<StudyBlock, 'time' | 'endTime'>) =>
   a.time === b.time && a.endTime === b.endTime;
 

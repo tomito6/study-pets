@@ -262,7 +262,7 @@ describe('retomar', () => {
     expect(timerProgress(bloco, em('10:13:00'), null, derived.timerEndsAt).display).toBe('12:00'); // não 15:00
   });
 
-  // Sair do foco só existe pausado (2026-09-12), e retomar traz o foco de volta: o relógio
+  // Num estudo, sair do foco só existe pausado (2026-09-12), e retomar traz o foco de volta: o relógio
   // correndo implica foco aberto. A pausa em si funciona igual dos dois lados.
   it('dá pra sair do foco pausado; retomar reabre o foco e a pausa vira registro igual', () => {
     startTimer(estudo3, AGORA);

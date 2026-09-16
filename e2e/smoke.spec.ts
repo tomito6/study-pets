@@ -590,7 +590,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).toHaveClass(/active/);
     await expect(page.locator('#timer-display')).toHaveText(/^1[45]:\d\d$/); // ~15 min restantes
 
-    // Sair do foco só existe PAUSADO (2026-09-12): com o relógio correndo, o foco é o compromisso.
+    // Num ESTUDO, sair do foco só existe PAUSADO (2026-09-12): com o relógio correndo, o foco é o
+    // compromisso. (Numa pausa a saída é livre — teste 72.)
     await expect(page.locator('.focus-exit')).toHaveCount(0);
     await page.locator('#focus-pause').click();
     await page.locator('.focus-exit').click();
@@ -628,10 +629,11 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-done')).toHaveText('✓ Estudo 3 concluído · +50 XP · +25 🪙');
     await expect(page.locator('#focus-overlay')).toBeVisible();
 
-    await page.locator('#focus-pause').click(); // pra sair do foco, pausa antes
+    // Emendou numa pausa: dali dá pra sair do foco SEM pausar (2026-09-16) — o relógio segue.
     await page.locator('.focus-exit').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
     await expect(estudo3.locator('.check')).toHaveClass(/checked/);
-    // No nome do bloco, não na barra inteira: "Pausado · 00:00" também contém "Pausa".
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
     await expect(page.locator('#timer-block-name')).toHaveText('Pausa');
   });
 
@@ -657,7 +659,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#toast')).toContainText('Pausa de 3 min');
     await expect(page.locator('.focus-scene-xp')).toHaveText('+50 XP'); // esticar pela pausa não muda o que o bloco vale
 
-    // Pra ver o plano é preciso pausar: rodando não há saída do foco (2026-09-12). Pausar de
+    // Pra ver o plano no meio de um ESTUDO é preciso pausar: rodando não há saída (2026-09-12). Pausar de
     // novo às 10:15 não registra nada por si — só retomar registra —, então a conta segue igual.
     await page.clock.setFixedTime(new Date(`${DIA}T10:15:00`));
     await expect(page.locator('.focus-exit')).toHaveCount(0);
@@ -725,6 +727,36 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // o relógio voltou de onde parou
   });
 
+  // 2026-09-16, pedido do Tomi: "sair do modo foco durante a pausa sem ter que pausar a pausa".
+  // O compromisso é com o estudo; a pausa é a vida entrando — congelá-la pra olhar o plano era o
+  // app cobrando por um café. E sair não pode custar a emenda: a pausa que acaba com o foco
+  // fechado marca, emenda no estudo e o foco volta com ele.
+  test('72. na pausa dá pra sair do foco sem pausar: o relógio segue, e o fim da pausa traz o foco de volta com o estudo', async ({ page }) => {
+    await abrirApp(page, '10:26');
+    await page.locator('#tour-skip').click();
+    // A pausa das 10:25–10:30 é o bloco de agora: o "▶ Iniciar" dela abre o foco na pausa.
+    const pausa = page.locator('.block-row', { hasText: '10:25–10:30' });
+    await pausa.locator('.block-action').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toHaveText('Pausa');
+
+    // "← Sair do foco" está lá com o relógio CORRENDO — num estudo ele só existe pausado (teste 4).
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#timer-bar')).toHaveClass(/active/);
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento'); // e não "Pausado": sair não congelou nada
+    await expect(page.locator('#timer-display')).toHaveText(/^0[34]:\d\d$/);
+    await expect(pausa.locator('.block-action')).toHaveText('▶ Continuar'); // a volta continua sendo a linha
+    await expect(page.locator('#timer-pause')).toHaveText(/Pausar/); // pausar a pausa continua existindo, só não é obrigatório
+
+    // A pausa acaba com o foco fechado: marca, emenda no Estudo 4 e o foco volta junto com ele.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:30:01`));
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toHaveText('Estudo 4');
+    await expect(page.locator('#focus-done')).toHaveText('✓ Pausa concluída · +5 XP');
+    await expect(pausa.locator('.check')).toHaveClass(/checked/);
+  });
+
   /**
    * Dia 1 fechado com 7 estudos (350 XP; o gato inicial vai pro Lv. 5), dia 2 às 10:10 com o
    * modo hardcore ligado em Configurações → Geral. O que os testes 28 e 29 precisam pra ter
@@ -773,7 +805,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-hardcore')).toBeVisible();
-    // `.focus-exit` some em qualquer foco não pausado desde 2026-09-12 — o que distingue o
+    // `.focus-exit` some num estudo não pausado desde 2026-09-12 — o que distingue o
     // hardcore é não ter NEM pausa NEM parar: a saída é só "Desistir…", e custa.
     await expect(page.locator('#focus-pause')).toHaveCount(0); // sem "Pausar"
     await expect(page.locator('.focus-exit')).toHaveCount(0); // sem "Sair do foco"

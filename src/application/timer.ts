@@ -30,7 +30,7 @@ import { isForfeited } from '../domain/hardcore';
 import { pauseSessionFor } from '../domain/pauses';
 import { closedCycleOf } from '../domain/cycles';
 import { dk } from '../domain/time';
-import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerEnd, timerProgress } from '../domain/timer';
+import { canStartBlock, chainedBlockAfter, cleanBlockName, finishesAsFocus, soundForBlock, timerEnd, timerProgress } from '../domain/timer';
 import type { StartCheck, StartContext } from '../domain/timer';
 import type { DateKey, StudyBlock } from '../domain/types';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
@@ -268,6 +268,11 @@ export function tryStartTimer(block: StudyBlock, now: Date = new Date()): StartC
  * Fim natural do bloco. No foco: check automático, som de "deu certo" e emenda
  * no próximo bloco — ou fecha, se a sequência acabou. Fora do foco: som do tipo
  * e notificação, e o timer some.
+ *
+ * A pausa é a exceção (2026-09-16): dela dá pra sair do foco com o relógio correndo
+ * (ver `closeFocus`), e o fim dela com o foco fechado é o MESMO fim do foco aberto —
+ * marca, emenda no estudo e o foco volta junto com ele (`runBlock` abre). Senão sair
+ * pra olhar o plano na pausa custaria a emenda e o check dela, um preço escondido.
  */
 function finishTimer(now: Date = new Date()): void {
   const block = derived.timerBlock;
@@ -286,7 +291,7 @@ function finishTimer(now: Date = new Date()): void {
   const delegated = alarmDelegated(block, now);
   if (!delegated) void pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
 
-  if (derived.focusOpen && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
+  if (finishesAsFocus(block, derived.focusOpen) && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
     const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
     if (!delegated) playSound('sucesso');
     // No modo ao vivo o plano não tem futuro: a emenda GERA o bloco seguinte esticando a
@@ -366,17 +371,27 @@ export function stopTimer(): void {
 /**
  * "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo).
  *
- * **Só pausado** (2026-09-12). Enquanto o relógio corre, o foco É o compromisso — sair
- * dali não servia a nada que a própria tela não mostre (o próximo bloco, o ganho, o
- * relógio), e servia a tudo que o app pede pra fazer de olhos abertos: mexer no plano no
- * meio de um estudo. Quem precisa mexer pausa antes, e a pausa é honesta — vira registro
- * e o dia desliza. Em espera a saída é "✕ Cancelar" (`stopTimer`), que desarma o timer:
- * não há o que congelar antes da hora. No hardcore nada disso existe.
+ * **Num estudo, só pausado** (2026-09-12). Enquanto o relógio corre, o foco É o
+ * compromisso — sair dali não servia a nada que a própria tela não mostre (o próximo
+ * bloco, o ganho, o relógio), e servia a tudo que o app pede pra fazer de olhos abertos:
+ * mexer no plano no meio de um estudo. Quem precisa mexer pausa antes, e a pausa é
+ * honesta — vira registro e o dia desliza. Em espera a saída é "✕ Cancelar" (`stopTimer`),
+ * que desarma o timer: não há o que congelar antes da hora. No hardcore nada disso existe.
+ *
+ * **Numa pausa rodando, é livre** (2026-09-16, pedido do Tomi: "sair do modo foco durante
+ * a pausa sem ter que pausar a pausa"). O compromisso é com o estudo; a pausa é a vida
+ * entrando — e obrigar a congelar uma pausa pra olhar o plano era o app cobrando por um
+ * café. O relógio segue: quando a pausa acaba, ela marca, emenda no estudo e o foco volta
+ * com ele (ver `finishTimer`). Em espera continua sendo Cancelar.
  */
 export function closeFocus(now: Date = new Date()): void {
   if (!derived.focusOpen || derived.hardcore) return;
   const block = derived.timerBlock;
-  if (block && timerProgress(block, now, derived.timerPausedAt, derived.timerEndsAt).phase !== 'paused') return;
+  if (block) {
+    const phase = timerProgress(block, now, derived.timerPausedAt, derived.timerEndsAt).phase;
+    const pausaRodando = block.type === 'pausa' && phase === 'running';
+    if (phase !== 'paused' && !pausaRodando) return;
+  }
   derived.focusOpen = false;
   releaseWakeLock();
   notify();

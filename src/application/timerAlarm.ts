@@ -27,7 +27,7 @@
 // e voltado — não pode calar o alarme que a carga anterior armou. Esse é justamente o
 // caso em que só a extensão sabe que o bloco terminou.
 
-import { cleanBlockName, soundForBlock, timerEnd } from '../domain/timer';
+import { cleanBlockName, finishesAsFocus, soundForBlock, timerEnd } from '../domain/timer';
 import type { StudyBlock } from '../domain/types';
 import { onExtensionQuery, onTimerAck, publishTimer } from '../infrastructure/extensionBridge';
 import type { TimerPayload } from '../infrastructure/extensionBridge';
@@ -55,8 +55,9 @@ export function desiredTimerPayload(now: Date = new Date()): TimerPayload {
     endsAt: timerEnd(block, now, derived.timerEndsAt).getTime(),
     title: block.type === 'estudo' ? n.study : n.break,
     body: cleanBlockName(block.name),
-    // O mesmo som que o app tocaria: "deu certo" dentro do foco, o do tipo fora dele.
-    sound: derived.focusOpen ? 'sucesso' : soundForBlock(block),
+    // O mesmo som que o app tocaria: "deu certo" dentro do foco (e numa pausa de que se saiu,
+    // que emenda igual), o do tipo fora dele.
+    sound: finishesAsFocus(block, derived.focusOpen) ? 'sucesso' : soundForBlock(block),
     audio: { volume: derived.audio.volume, muted: derived.audio.muted },
     appUrl: appUrl(),
   };

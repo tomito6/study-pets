@@ -127,8 +127,10 @@ export function TimerBar() {
       {/* No hardcore o foco cobre tudo, e nem "Pausar" nem "Parar" existem — a saída é "Desistir" lá dentro. */}
       {/* Com o "Continuar" na tela, "Retomar" seria o mesmo botão duas vezes: retomar reabre o
           foco desde 2026-09-12. No celular ele fica — é a saída de quem está olhando outro dia,
-          onde a linha do bloco não existe. */}
-      {!hardcore && progress && !waiting && !mostraContinuar && (
+          onde a linha do bloco não existe. "Pausar", porém, fica nos dois: é a barra de uma
+          pausa RODANDO com o foco fechado (a única saída livre, desde 2026-09-16), e ali
+          pausar e continuar são atos diferentes. */}
+      {!hardcore && progress && !waiting && !(mostraContinuar && paused) && (
         <button className="timer-pause" id="timer-pause" onClick={togglePause}>{paused ? t.resume : t.pause}</button>
       )}
       {!hardcore &&
