@@ -800,6 +800,9 @@
   .finish-day-btn:hover { background:var(--accent-wash); border-color:var(--accent); }
   .finish-day-banner { width:100%; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); color:var(--muted); font-size:13px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
   .finish-day-banner .fdb-check { color:var(--accent); font-size:16px; }
+  /* O desfazer do banner. Discreto (o dia encerrado é o estado normal), mas com alvo de dedo — não um link de 11px. */
+  .fdb-reopen { margin-left:4px; padding:8px 14px; background:transparent; color:var(--accent); border:1px solid var(--accent-border); border-radius:99px; font-size:12px; font-weight:600; font-family:var(--font-ui); cursor:pointer; transition:background .15s,border-color .15s; }
+  .fdb-reopen:hover { background:var(--accent-wash); border-color:var(--accent); }
   .block-row.day-closed { opacity:var(--fade-closed); }
   .block-row.day-closed .check { cursor:default; }
   .block-row.day-future { opacity:var(--fade-future); cursor:default; }
@@ -1594,6 +1597,7 @@
     .empty-day-hint{font-size:calc(12 * var(--s));}
     .finish-day-btn{font-size:calc(15 * var(--s));height:calc(52 * var(--s));padding:0 calc(20 * var(--s));}
     .finish-day-banner{font-size:calc(14 * var(--s));padding:calc(14 * var(--s));}
+    .fdb-reopen{font-size:calc(12 * var(--s));padding:calc(8 * var(--s)) calc(14 * var(--s));}
 
     /* a coluna da esquerda (.plan-col): o timer é a única caixa; o resto é rótulo e valor */
     .timer-bar{position:relative;top:auto;flex-shrink:0;margin:calc(18 * var(--s)) 0 calc(24 * var(--s));background:var(--bg2);border:0;border-radius:var(--radius-xl);padding:calc(24 * var(--s));flex-direction:column;align-items:stretch;gap:calc(6 * var(--s));}

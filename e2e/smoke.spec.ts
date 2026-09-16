@@ -878,6 +878,40 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#char-coins')).toHaveText('25');
   });
 
+  test('71. reabrir o dia desfaz o encerramento — e o pet não paga duas vezes', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    await checksDeEstudo(page).first().click();
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.locator('#xp-total')).toHaveText('50');
+
+    // O desfazer mora no banner do dia encerrado.
+    await page.locator('#reopen-day-btn').click();
+    await expect(page.locator('#toast')).toContainText('Dia reaberto');
+    await expect(page.locator('.finish-day-btn')).toBeVisible();
+    await expect(page.locator('#xp-total'), 'o XP volta a ser pendente').toHaveText('0');
+    await expect(page.locator('#today-xp-val')).toContainText('+50 XP');
+    // O check de antes fica; o dia volta a aceitar toque.
+    await expect(checksDeEstudo(page).first()).toHaveClass(/checked/);
+    await checksDeEstudo(page).nth(1).click();
+    await expect(checksDeEstudo(page).nth(1)).toHaveClass(/checked/);
+
+    await page.locator('.finish-day-btn').click();
+    await page.locator('#finish-day-confirm').getByRole('button', { name: 'Encerrar dia' }).click();
+    await page.locator('#day-summary-panel').getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.locator('#xp-total')).toHaveText('100');
+    // O XP do pet é o único acumulado: dois estudos de 25 min valem 100, nem em dobro nem de graça.
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pets?.owned?.[0]?.xp))
+      .toBe(100);
+    // E a linha do sininho conta o dia como ele ficou, não como estava no primeiro encerramento.
+    await page.locator('#notif-btn').click();
+    await expect(page.locator('#notif-list')).toContainText('+100 XP');
+    await expect(page.locator('#notif-list')).not.toContainText('+50 XP');
+  });
+
   test('48. o sininho guarda o que o dia deixou, e o selo apaga depois de aberto', async ({ page }) => {
     await abrirApp(page);
     await page.locator('#tour-skip').click();

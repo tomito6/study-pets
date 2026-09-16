@@ -1,7 +1,7 @@
 // Casos de uso dos pets: XP pendente, saldo, adotar (com nome), equipar, skills,
 // renomear e evoluir. Pet aqui é sempre a instância adotada (ver domain/pets.ts).
 
-import { computePendingPetXP, isDayClosed } from '../domain/checks';
+import { computePendingPetXP, isDayClosed, previousDayKey } from '../domain/checks';
 import { emptyPets } from '../domain/persistence';
 import { PETS, canEvolveNow, coinBalance as coinBalanceOf, evolve, newPetInstance, normalizePetName, petForm, petLevel } from '../domain/pets';
 import type { EvolveRefusal } from '../domain/pets';
@@ -101,6 +101,40 @@ export function applyPendingPetXP(now: Date = new Date()): void {
     ],
     now,
   );
+}
+
+/**
+ * Desfaz nos pets o crédito de UM dia — o inverso exato do que `applyPendingPetXP`
+ * fez quando aquele dia entrou na conta. É o que "reabrir o dia" precisa desmontar:
+ * o XP do usuário e as moedas são derivados dos checks e se corrigem sozinhos, mas o
+ * do pet é acumulado, e sem isto o dia pagaria duas vezes ao ser encerrado de novo.
+ *
+ * A conta não é reimplementada: é a MESMA função do domínio, com a janela do dia
+ * (`(ontem, dia]`) e o dia dado como fechado. Uma segunda conta aqui poderia divergir
+ * da primeira, e a diferença ficaria no XP do pet pra sempre.
+ *
+ * `xpProcessedUntil` volta pra ontem — nunca mais pra trás: um lote de vários dias
+ * (quem passou uma semana sem abrir o app) continua pago, só este dia sai.
+ */
+export function revertPetXPForDay(dayKey: DateKey): void {
+  if (!state.pets || state.pets.xpProcessedUntil !== dayKey) return; // este dia nunca chegou a ser creditado
+  const ontem = previousDayKey(dayKey);
+  const pending = computePendingPetXP({
+    checks: state.checks,
+    xpProcessedUntil: ontem,
+    todayKey: dayKey,
+    yesterdayKey: ontem,
+    dayClosed: () => true, // o dia já saiu de `closedDays`; a janela aqui é dele, por definição
+    getBlocks: blocksForDay,
+  });
+  state.pets.xpProcessedUntil = ontem;
+  if (!pending) return;
+  for (const id of Object.keys(pending.gains)) {
+    const pet = petById(id);
+    // Piso em 0: entre encerrar e reabrir, uma desistência no hardcore pode ter
+    // levado XP do mesmo pet.
+    if (pet) pet.xp = Math.max(0, (pet.xp || 0) - pending.gains[id]!);
+  }
 }
 
 export function coinBalance(now: Date = new Date()): number {

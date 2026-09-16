@@ -8,6 +8,7 @@ import { daySummary } from '../domain/daySummary';
 import type { DaySummary, ProgressSnapshot } from '../domain/daySummary';
 import { windowsForDay } from '../domain/dayWindows';
 import { extendWindowsTo, lastStudyEnd, msUntil, shouldPromptEndOfDay } from '../domain/endOfDay';
+import { dropDayCredit } from '../domain/notifications';
 import { pausesTotal } from '../domain/pauses';
 import { getLevelIdx } from '../domain/progression';
 import { dk, isWeekendKey } from '../domain/time';
@@ -15,9 +16,9 @@ import type { TimeString } from '../domain/types';
 import { showToast } from '../shared/toast';
 import { strings } from '../shared/strings';
 import { derived, notify, state } from '../store/store';
-import { applyPendingPetXP } from './pets';
+import { applyPendingPetXP, revertPetXPForDay } from './pets';
 import { blocksForDay, clearBlockCache, computeStatsNow, configAtDay, dayModeOf } from './plan';
-import { scheduleSave } from './save';
+import { saveNow, scheduleSave } from './save';
 import { stopBlocking } from './siteBlock';
 import { stopTimer } from './timer';
 
@@ -53,8 +54,9 @@ function snapshot(now: Date): ProgressSnapshot {
 }
 
 /**
- * Decisão final: trava os checks de hoje, credita o XP dos pets na hora, e
- * devolve o resumo (que também vai pro store, pra UI mostrar).
+ * Trava os checks de hoje, credita o XP dos pets na hora, e devolve o resumo (que
+ * também vai pro store, pra UI mostrar). Dá pra desfazer enquanto ainda for hoje —
+ * ver `reopenDay` logo abaixo.
  */
 export function closeDay(now: Date = new Date()): DaySummary {
   const todayKey = dk(now);
@@ -74,6 +76,53 @@ export function closeDay(now: Date = new Date()): DaySummary {
   const summary = daySummary(before, snapshot(now), state.pets.owned, pausesTotal(state.pauses?.[todayKey]));
   set({ confirmOpen: false, promptOpen: false, summary });
   return summary;
+}
+
+// ---------------------------------------------------------------- reabrir
+
+/**
+ * Reabrir existe só em HOJE, e só num dia encerrado.
+ *
+ * Amanhã este dia já é passado, e passado o app trata como escrito — mexer nele
+ * seria reescrever histórico, que é o mesmo motivo pelo qual o "Encerrar o dia"
+ * também só aparece em hoje. Dentro do dia, porém, encerrar é um clique só, e um
+ * clique não pode custar o resto do dia: o app promete não fazer ninguém se sentir
+ * mal por mudar de ideia, e o botão fica logo abaixo da lista.
+ */
+export function canReopenDay(now: Date = new Date()): boolean {
+  return isDayClosed(state.closedDays, dk(now));
+}
+
+/**
+ * Desfaz o encerramento de hoje. Três coisas voltam, e uma não volta.
+ *
+ * Voltam: os checks aceitam toque de novo (`closedDays`), o XP e as moedas do
+ * usuário voltam a ser PENDENTES — eles são derivados dos checks, então basta o dia
+ * reabrir —, e o crédito que os pets receberam é devolvido. O do pet é o único
+ * acumulado: sem devolvê-lo, ou o dia pagaria duas vezes ao ser encerrado de novo,
+ * ou (com `xpProcessedUntil` já em hoje) os blocos marcados daqui em diante não
+ * pagariam nada.
+ *
+ * Não volta o runtime: o timer que o encerramento parou e o bloqueio de sites que
+ * ele soltou continuam parados. Reabrir é sobre o registro do dia, não sobre voltar
+ * no tempo.
+ */
+export function reopenDay(now: Date = new Date()): boolean {
+  const todayKey = dk(now);
+  if (!canReopenDay(now)) return false;
+  delete state.closedDays[todayKey];
+  revertPetXPForDay(todayKey);
+  // As linhas que o crédito deste dia deixou no sininho saem junto: id repetido faz
+  // a linha ANTIGA vencer, então ela continuaria dizendo o ganho de antes depois de
+  // o dia fechar de novo com mais blocos marcados.
+  state.notifications = dropDayCredit(state.notifications ?? [], todayKey);
+  // O prompt fica calado até a próxima mudança de plano. Reabrir às 18:05 e levar um
+  // "🌙 Passou do horário" no mesmo segundo seria o app discordando de si mesmo — é a
+  // mesma decisão do "■ Parar por aqui".
+  suspendEndOfDayPrompt();
+  set({ confirmOpen: false, promptOpen: false, summary: null });
+  void saveNow(); // o conserto de um clique errado não espera o debounce
+  return true;
 }
 
 // ---------------------------------------------------------------- prompt automático

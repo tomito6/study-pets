@@ -19,7 +19,7 @@ import { canStartBlock } from '../../domain/timer';
 import type { Stats } from '../../domain/stats';
 import type { DateKey, StudyBlock, StudyGroup } from '../../domain/types';
 import type { Week } from '../../domain/weeks';
-import { openFinishDay } from '../../application/dayEnd';
+import { openFinishDay, reopenDay } from '../../application/dayEnd';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { useWide } from '../../shared/useWide';
@@ -187,14 +187,25 @@ function OtherDayNote({ viewKey, todayKey, dayLabel }: { viewKey: DateKey; today
  * `hidden`: num dia AO VIVO o botão só existe depois de um estudo FEITO (ver `PlanTab`). O dia
  * encerrado ignora isso: o banner "✓ Dia encerrado" aparece sempre. O wrap vazio fica no DOM
  * nos dois casos — é a âncora do terceiro balão do tour do Plano, e o e2e o procura.
+ *
+ * O banner carrega o "↩ Reabrir": encerrar é um clique, e desfazê-lo enquanto ainda é
+ * hoje também deve ser (ver `reopenDay` em application/dayEnd.ts). Sem modal — reabrir
+ * não perde nada, e o "Encerrar o dia" volta pro mesmo lugar.
  */
 function FinishDay({ viewKey, todayKey, hidden }: { viewKey: string; todayKey: string; hidden: boolean }) {
   const closed = useAppState((s) => isDayClosed(s.closedDays, viewKey));
+  // O banner só existe em hoje, então reabrir daqui é sempre hoje.
+  const onReopen = () => { if (reopenDay()) showToast(t.dayReopened); };
   if (viewKey !== todayKey || (hidden && !closed)) return <div className="finish-day-wrap" id="finish-day-wrap" />;
   return (
     <div className="finish-day-wrap" id="finish-day-wrap">
       {closed ? (
-        <div className="finish-day-banner"><span className="fdb-check">✓</span>{t.dayClosedBanner}</div>
+        <div className="finish-day-banner">
+          <span className="fdb-check">✓</span>
+          <span>{t.dayClosedBanner}</span>
+          {/* O desfazer fica NO banner: é onde a pessoa está olhando quando descobre o clique errado. */}
+          <button className="fdb-reopen" id="reopen-day-btn" title={t.reopenDayTitle} onClick={onReopen}>{t.reopenDay}</button>
+        </div>
       ) : (
         <button className="finish-day-btn" onClick={openFinishDay}>
           <span>✓</span><span>{t.finishDay}</span>

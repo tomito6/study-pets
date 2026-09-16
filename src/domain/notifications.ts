@@ -124,6 +124,28 @@ export function markAllRead(list: readonly Notification[]): Notification[] {
   return list.map((n) => (n.read ? n : { ...n, read: true }));
 }
 
+/**
+ * Os kinds que o crédito de UM dia emite (ver `creditedDaysNotices` e `petNotices`
+ * em domain/progressNotices.ts). Todos carregam a chave do dia num segmento do id,
+ * que é o que permite desfazê-los sem adivinhar.
+ */
+const KINDS_DO_CREDITO: readonly NotifKind[] = ['dia', 'sequencia', 'nivel', 'pet-nivel', 'pet-evolucao'];
+
+/**
+ * Tira da lista o que o crédito de `dayKey` deixou — o que "reabrir o dia" desfaz.
+ *
+ * Sem isto, reabrir e encerrar de novo deixaria a linha ANTIGA vencer (é o que
+ * `addNotifications` faz com id repetido, de propósito): o sininho continuaria
+ * dizendo "+390 XP · 1h30" depois de o dia fechar com 500 XP e duas horas.
+ *
+ * `horas:` fica de propósito: fala do TOTAL, não do dia. Ele volta a ser verdade
+ * assim que o dia fecha de novo, e apagá-lo faria o marco ser anunciado duas vezes.
+ */
+export function dropDayCredit(list: readonly Notification[], dayKey: DateKey): Notification[] {
+  const fica = (n: Notification): boolean => !(KINDS_DO_CREDITO.includes(n.kind) && n.id.split(':').includes(dayKey));
+  return list.every(fica) ? (list as Notification[]) : list.filter(fica);
+}
+
 /** Documento cru → lista. Tolera campo ausente, tipo errado e id repetido. */
 export function normalizeNotifications(raw: unknown, cap: number = MAX_NOTIFICATIONS): Notification[] {
   if (!Array.isArray(raw)) return [];

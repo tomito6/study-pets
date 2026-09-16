@@ -148,6 +148,11 @@ export const strings = {
     dayClosed: 'Dia encerrado 🔒',
     finishDay: 'Encerrar o dia',
     dayClosedBanner: 'Dia encerrado',
+    /** No banner do dia encerrado: o desfazer, enquanto ainda for hoje. */
+    reopenDay: '↩ Reabrir',
+    reopenDayTitle: 'Encerrou sem querer? Reabra e continue o dia',
+    /** O toast de quem reabriu: o XP some dos totais, e isso precisa ser dito antes de assustar. */
+    dayReopened: 'Dia reaberto — o XP volta a ser pendente até você encerrar de novo.',
     floatXp: (xp: number) => `+${xp} XP`,
     floatCoins: (coins: number) => `+${coins} 🪙`,
     /** Na linha do bloco: quanto o timer ficou pausado dentro dele. */
@@ -498,7 +503,7 @@ export const strings = {
   dayEnd: {
     confirmTitle: 'Encerrar o dia?',
     confirmText: ['Isso vai ', 'creditar o XP', ' dos blocos marcados de hoje (no usuário e no pet equipado) e ', 'travar os checks', ' deste dia.'],
-    confirmFinal: 'Decisão final — não dá pra reabrir o dia depois.',
+    confirmFinal: 'Dá pra reabrir enquanto ainda for hoje. Depois da meia-noite, não.',
     cancel: 'Cancelar',
     confirm: 'Encerrar dia',
     summaryTitle: '🎉 Dia encerrado',
@@ -513,7 +518,7 @@ export const strings = {
     promptTitle: '🌙 Passou do horário',
     promptIntro: (lastEnd: string) => `O último bloco de estudo (${lastEnd}) já passou. O que você quer fazer?`,
     promptFinishTitle: 'Encerrar o dia',
-    promptFinishSub: 'Creditar XP, travar checks. Decisão final.',
+    promptFinishSub: 'Creditar XP, travar checks. Dá pra reabrir hoje.',
     promptExtendTitle: 'Prolongar estudos',
     promptExtendSub: 'Mudar o horário de fim do dia.',
     newEnd: 'Novo horário de fim',
