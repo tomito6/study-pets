@@ -7,7 +7,8 @@
 
 import { deriveStartEnd, isValidWindow } from './settings';
 import { minsToTime, timeToMins } from './time';
-import type { DateKey, LiveRhythm, StudyWindow, UserConfig } from './types';
+import { pausedMinutes } from './pauses';
+import type { DateKey, LiveRhythm, PauseRecord, StudyWindow, TimeString, UserConfig } from './types';
 
 /** As janelas de um dia. Lista vazia = dia livre (o plano fica sem blocos). */
 export interface DayWindowsOverride {
@@ -138,3 +139,35 @@ export function routineAfter(corridas: StudyWindow[], rotina: StudyWindow[], now
   return { ok: true, windows: out.sort((a, b) => timeToMins(a.start) - timeToMins(b.start)) };
 }
 
+
+/**
+ * A corrida do modo ao vivo crescendo pelos minutos que uma pausa acrescentou ao bloco em
+ * andamento — a conta pura por trás de `growLiveForPause` (application/live.ts), que é quem
+ * escreve; a prévia de "retomar agora" (`pauseOutlookNow`) usa a mesma conta sem escrever.
+ *
+ * A janela da corrida termina exatamente no fim do bloco em andamento (só `chainLive` escreve
+ * esse fim), então crescer por `pausado_total − pausado_antes` põe o fim onde o bloco acabaria
+ * sem corte nenhum. O total é medido pelos REGISTROS, não pelo bloco regenerado: o gerador
+ * conta os minutos pausados só até o corte, e uma pausa que atravessa o fim da corrida
+ * apareceria menor do que é. Toda pausa a partir do início do bloco é dele: o timer só deixa
+ * pausar o bloco que está rodando.
+ *
+ * `null` se o bloco não está numa corrida, ou se a pausa ainda não completou um minuto.
+ */
+export function grownRunWindows(
+  windows: StudyWindow[],
+  blockStart: TimeString,
+  alreadyPaused: number,
+  pauses: PauseRecord[],
+): StudyWindow[] | null {
+  const inicio = timeToMins(blockStart);
+  const idx = windows.findIndex((w) => w.live && timeToMins(w.start) <= inicio && timeToMins(w.end) > inicio);
+  if (idx < 0) return null;
+  const meus = pauses.filter((r) => timeToMins(r.at) >= inicio);
+  const cresceu = pausedMinutes(meus.reduce((soma, r) => soma + r.secs, 0)) - alreadyPaused;
+  if (cresceu <= 0) return null;
+  const out = [...windows];
+  const janela = windows[idx]!;
+  out[idx] = { ...janela, end: minsToTime(Math.min(timeToMins(janela.end) + cresceu, 24 * 60 - 1)) };
+  return out;
+}

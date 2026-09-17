@@ -11,6 +11,7 @@ import {
   blockAt,
   normalizePauses,
   parsePauseSession,
+  pauseOutlook,
   pauseRecordFor,
   pauseRemap,
   pauseSessionFor,
@@ -18,6 +19,7 @@ import {
   remapChecksForPause,
   remapGroupsForPause,
 } from '../src/domain/pauses';
+import { grownRunWindows } from '../src/domain/dayWindows';
 import { generateBlocks } from '../src/domain/planner';
 import { blockMins } from '../src/domain/time';
 import type { PlannerConfig, StudyBlock, StudyEvent, StudyGroup } from '../src/domain/types';
@@ -185,6 +187,109 @@ describe('remapChecksForPause / remapGroupsForPause', () => {
     const kept = [...p].reverse().find((x) => x.after)!.after!;
     const [g] = remapGroupsForPause([{ id: 'x', start: '10:00', end: last.endTime, name: 'x', goal: '' }], p);
     expect(g!.end).toBe(kept.endTime);
+  });
+});
+
+describe('pauseOutlook — o que a pausa fez (ou faria) com o plano', () => {
+  // Plano padrão (09:00–17:30, pomo 25/5/15, almoço 13:00): Estudo 3 é 10:00–10:25. Entre o
+  // Estudo 7 e o almoço a pausa curta não cabe com um pomo inteiro, então o gerador cola o
+  // Estudo 8 (12:35–13:00) no 7 — é ele que paga quando o dia anda.
+  const estudo3 = { time: '10:00' };
+  const reuniao: StudyEvent = { name: '👥 Reunião', start: '10:25', end: '11:00', countsAsStudy: false };
+
+  it('com espaço: o dia anda, e quem paga é o último estudo antes da parede (o almoço), pelo nome', () => {
+    const before = generateBlocks(cfg, [almoco]);
+    const after = generateBlocks(cfg, [almoco], [{ at: '10:10', secs: 180 }]);
+    const o = pauseOutlook(before, after, estudo3);
+    expect(o).toMatchObject({ block: 'Estudo 3', grew: 3, lost: 0, minsAfter: 25, wall: null });
+    expect(o.squeezed).toEqual([{ name: 'Estudo 8', mins: 22 }]); // 12:35–13:00 virou 12:38–13:00
+  });
+
+  it('colado num compromisso: o bloco não cresce, cada minuto pausado sai dele, e a parede é o compromisso', () => {
+    const before = generateBlocks(cfg, [reuniao, almoco]);
+    const after = generateBlocks(cfg, [reuniao, almoco], [{ at: '10:10', secs: 180 }]);
+    expect(pauseOutlook(before, after, estudo3)).toEqual({
+      block: 'Estudo 3',
+      grew: 0,
+      lost: 3,
+      minsAfter: 22,
+      wall: { kind: 'event', name: '👥 Reunião', at: '10:25' },
+      squeezed: [],
+    });
+  });
+
+  it('o 📅 que o gerador põe no evento sem ícone sai do nome da parede', () => {
+    const aula: StudyEvent = { name: 'Aula de Cálculo', start: '10:25', end: '12:00', countsAsStudy: true };
+    const before = generateBlocks(cfg, [aula, almoco]);
+    const after = generateBlocks(cfg, [aula, almoco], [{ at: '10:10', secs: 60 }]);
+    expect(pauseOutlook(before, after, estudo3).wall).toEqual({ kind: 'event', name: 'Aula de Cálculo', at: '10:25' });
+  });
+
+  it('colado no fim da janela: a parede é a janela', () => {
+    const curto: PlannerConfig = { ...cfg, studyWindows: [{ start: '09:00', end: '10:25' }], end: '10:25' };
+    const before = generateBlocks(curto, []);
+    const after = generateBlocks(curto, [], [{ at: '10:10', secs: 180 }]);
+    expect(pauseOutlook(before, after, estudo3)).toMatchObject({ grew: 0, lost: 3, minsAfter: 22, wall: { kind: 'window', at: '10:25' }, squeezed: [] });
+  });
+
+  it('com uma pausa curta entre o bloco e o compromisso, o bloco come a pausa primeiro e só depois encolhe', () => {
+    const reuniao1030 = { ...reuniao, start: '10:30' };
+    const before = generateBlocks(cfg, [reuniao1030, almoco]);
+    const after = generateBlocks(cfg, [reuniao1030, almoco], [{ at: '10:10', secs: 360 }]);
+    // 6 min: 5 comeram a pausa das 10:25 (o dia anda 5), 1 saiu do estudo. A pausa comida não é estudo: não entra em squeezed.
+    expect(pauseOutlook(before, after, estudo3)).toMatchObject({ grew: 5, lost: 1, minsAfter: 24, wall: { kind: 'event', at: '10:30' }, squeezed: [] });
+  });
+
+  it('a pausa que começa no primeiro minuto e cobre o bloco inteiro: ele sai do plano, e a parede ainda é dita', () => {
+    const before = generateBlocks(cfg, [reuniao, almoco]);
+    const after = generateBlocks(cfg, [reuniao, almoco], [{ at: '10:00', secs: 1500 }]);
+    expect(after.find((b) => b.time === '10:00')).toBeUndefined();
+    expect(pauseOutlook(before, after, estudo3)).toMatchObject({ block: 'Estudo 3', grew: 0, lost: 25, minsAfter: 0, wall: { kind: 'event', name: '👥 Reunião', at: '10:25' } });
+  });
+
+  it('o estudo posterior que a pausa empurrou pra fora do plano entra em squeezed com 0', () => {
+    // Janela até 10:55: Estudo 3 10:00–10:25, Pausa 10:25–10:30, Estudo 4 10:30–10:55.
+    const curto: PlannerConfig = { ...cfg, studyWindows: [{ start: '09:00', end: '10:55' }], end: '10:55' };
+    const before = generateBlocks(curto, []);
+    expect(before.map((b) => b.time + ' ' + b.type)).toContain('10:30 estudo');
+    // 20 min de pausa no Estudo 3: ele vai até 10:45; a pausa curta não cabe mais (sobrariam 5 min, menos de meio
+    // pomo), e a sobra de 10 min estica o próprio Estudo 3 até 10:55 — regra do gerador pra sobra pequena no fim da
+    // janela. O 3 cresce 30 e passa a valer 35; o Estudo 4 saiu do plano, e é isso que squeezed conta.
+    const after = generateBlocks(curto, [], [{ at: '10:10', secs: 1200 }]);
+    const o = pauseOutlook(before, after, estudo3);
+    expect(o).toMatchObject({ grew: 30, lost: 0, minsAfter: 35, wall: null });
+    expect(o.squeezed).toEqual([{ name: 'Estudo 4', mins: 0 }]);
+  });
+
+  it('uma segunda pausa que não completa mais um minuto não mexe em nada', () => {
+    const before = generateBlocks(cfg, [almoco], [{ at: '10:10', secs: 30 }]);
+    const after = generateBlocks(cfg, [almoco], [{ at: '10:10', secs: 30 }, { at: '10:12', secs: 20 }]);
+    expect(pauseOutlook(before, after, estudo3)).toMatchObject({ grew: 0, lost: 0, minsAfter: 25, wall: null, squeezed: [] });
+  });
+
+  it('minuto fora de qualquer estudo/pausa: nada a dizer', () => {
+    const plan = generateBlocks(cfg, [almoco]);
+    expect(pauseOutlook(plan, plan, { time: '13:30' })).toEqual({ block: '', grew: 0, lost: 0, minsAfter: 0, wall: null, squeezed: [] });
+  });
+});
+
+describe('grownRunWindows — a corrida do modo ao vivo cresce pela pausa, sem escrever', () => {
+  const ritmo = { pomo: 25, shortBreak: 5, longBreak: 15 };
+
+  it('cresce a janela que contém o bloco pelos minutos pausados que ainda não entraram nela', () => {
+    expect(grownRunWindows([{ start: '09:12', end: '09:37', live: ritmo }], '09:12', 0, [{ at: '09:20', secs: 180 }])).toEqual([
+      { start: '09:12', end: '09:40', live: ritmo },
+    ]);
+    // O que o bloco já tinha de pausado não conta duas vezes; pausas de antes do bloco não são dele.
+    expect(
+      grownRunWindows([{ start: '09:12', end: '09:40', live: ritmo }], '09:12', 3, [{ at: '09:00', secs: 600 }, { at: '09:20', secs: 180 }, { at: '09:30', secs: 120 }]),
+    ).toEqual([{ start: '09:12', end: '09:42', live: ritmo }]);
+  });
+
+  it('fora de corrida, ou sem um minuto inteiro a acrescentar: null', () => {
+    expect(grownRunWindows([{ start: '09:00', end: '18:00' }], '10:00', 0, [{ at: '10:10', secs: 180 }])).toBeNull();
+    expect(grownRunWindows([{ start: '09:12', end: '09:37', live: ritmo }], '09:12', 1, [{ at: '09:20', secs: 30 }])).toBeNull();
+    expect(grownRunWindows([{ start: '09:12', end: '09:37', live: ritmo }], '10:00', 0, [{ at: '10:10', secs: 180 }])).toBeNull();
   });
 });
 

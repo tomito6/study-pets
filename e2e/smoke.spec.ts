@@ -700,6 +700,9 @@ test.describe('Study Pets — smoke', () => {
     await page.clock.setFixedTime(new Date(`${DIA}T10:12:30`));
     await expect(page.locator('#focus-time-sub')).toContainText('pausado · 02:30');
     await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // não andou
+    // Enquanto pausado, o foco já diz o que retomar faz: aqui há espaço, então é o dia que anda (a 74 cobre a parede).
+    await expect(page.locator('#focus-pause-outlook')).toContainText('Ao retomar, o dia anda 3 min');
+    await expect(page.locator('#focus-pause-outlook')).not.toHaveClass(/warn/);
 
     // Retomar às 10:13: a pausa vira 3 min, o bloco vai até 10:28 (com o mesmo XP), a pausa seguinte começa às 10:28.
     await page.clock.setFixedTime(new Date(`${DIA}T10:13:00`));
@@ -745,6 +748,58 @@ test.describe('Study Pets — smoke', () => {
     await expect
       .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses?.['2026-09-02']))
       .toEqual([{ at: '10:10', secs: 180 }, { at: '10:15', secs: 300 }]);
+  });
+
+  test('74. pausar colado num compromisso: o bloco encolhe, o foco e a barra dizem isso, e o toast conta a verdade', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    // Uma reunião às 10:25, colada no Estudo 3 (10:00–10:25): o estudo não tem pra onde crescer.
+    await page.locator('#add-event-btn').click();
+    await page.locator('#ev-name').fill('Reunião');
+    await page.locator('#ev-start').fill('10:25');
+    await page.locator('#ev-end').fill('11:00');
+    await page.locator('#ev-save').click();
+    await expect(page.locator('#event-panel')).toBeHidden();
+    await expect(page.locator('.block-row.event-row', { hasText: 'Reunião' })).toContainText('10:25–11:00');
+
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00');
+    await expect(page.locator('#focus-pause-outlook')).toHaveCount(0); // rodando, nada a prever
+
+    // Pausar: a linha aparece na hora e acompanha o minuto — o bloco já vale menos, e o ganho no pé da cena também.
+    await page.locator('#focus-pause').click();
+    const linha = page.locator('#focus-pause-outlook');
+    await expect(linha).toHaveClass(/warn/);
+    await expect(linha).toContainText('Estudo 3 encolhe enquanto pausado');
+    await expect(linha).toContainText('agora vale 24 min'); // 1 s pausado já é 1 min pro plano (arredonda pra cima)
+    await expect(linha).toContainText('Reunião das 10:25 não espera');
+    await page.clock.setFixedTime(new Date(`${DIA}T10:13:00`));
+    await expect(linha).toContainText('agora vale 22 min'); // 10 estudados + 12 que restam
+    await expect(page.locator('.focus-scene-xp')).toHaveText('+44 XP');
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00'); // o congelado continua congelado; a linha é que conta a perda
+
+    // Fora do foco, a barra diz o mesmo, curto.
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-pause-outlook')).toContainText('Reunião às 10:25');
+    await expect(page.locator('#timer-pause-outlook')).toContainText('Estudo 3 vale 22 min');
+
+    // Retomar: o toast diz que o estudo encolheu — não que o dia andou —, e o relógio volta com 12:00.
+    await page.locator('#timer-pause').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#toast')).toContainText('Pausa de 3 min · Estudo 3 fica com 22 min · a Reunião das 10:25 não espera');
+    await expect(page.locator('#toast')).not.toContainText('o dia anda');
+    await expect(page.locator('#focus-time-big')).toHaveText('12:00');
+    await expect(page.locator('#focus-pause-outlook')).toHaveCount(0);
+
+    // A pausa que atravessa a reunião: o bloco acaba pausado, e o toast diz com quantos minutos ele ficou.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:14:00`));
+    await page.locator('#focus-pause').click();
+    await page.clock.setFixedTime(new Date(`${DIA}T10:30:00`));
+    await expect(linha).toContainText('agora vale 11 min');
+    await page.locator('#focus-pause').click(); // ▶ Retomar, já depois das 10:25
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('Estudo 3 ficou com 11 min');
+    await expect(page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-paused')).toHaveText('⏸ 14 min');
   });
 
   test('53. o botão da linha: "Iniciar" leva pro foco e "Continuar" traz de volta, sem comer a pausa', async ({ page }) => {

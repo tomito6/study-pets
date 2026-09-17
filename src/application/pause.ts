@@ -19,13 +19,15 @@
 
 import { isDayClosed } from '../domain/checks';
 import { rhythmOf } from '../domain/configHistory';
-import { stopDayAt } from '../domain/dayWindows';
+import { configForDay, grownRunWindows, stopDayAt } from '../domain/dayWindows';
+import type { DayWindowsOverride } from '../domain/dayWindows';
 import { remapNotesForPause } from '../domain/notes';
-import { addPause, parsePauseSession, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
-import { planDelta, planDeltaParts } from '../domain/planDelta';
+import { addPause, parsePauseSession, pauseOutlook, pauseRecordFor, pauseRemap, remapChecksForPause, remapGroupsForPause } from '../domain/pauses';
+import type { PauseOutlook } from '../domain/pauses';
+import { planDelta } from '../domain/planDelta';
 import { dk, timeToMins } from '../domain/time';
 import { timerEnd, timerProgress } from '../domain/timer';
-import type { StudyBlock } from '../domain/types';
+import type { DateKey, PauseRecord, StudyBlock } from '../domain/types';
 import { clearPauseSession, readPauseSession } from '../infrastructure/pauseSession';
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
@@ -34,7 +36,7 @@ import { checkBlock } from './checks';
 import { rescheduleEndOfDayPrompt, suspendEndOfDayPrompt } from './dayEnd';
 import { effectiveWindows } from './dayWindows';
 import { growLiveForPause } from './live';
-import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, rebuildWeeks } from './plan';
+import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, generateBlocks, getEventsForDate, rebuildWeeks } from './plan';
 import { saveNow } from './save';
 import { adoptPausedBlock, pauseRuntime, reopenFocus, resumeRuntime, stopTimer } from './timer';
 
@@ -174,6 +176,7 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
   // porque é ele que decide quais blocos existem — e só acrescenta espaço DEPOIS do bloco
   // pausado, então nada do que veio antes se move.
   const after = growLiveForPause(todayKey, block, blocksForDay(todayKey), now) ?? blocksForDay(todayKey);
+  const outlook = pauseOutlook(before, after, block);
 
   let dropped = 0;
   const pairs = pauseRemap(before, after, record.at);
@@ -197,19 +200,49 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
 
   const regenerated = after.find((b) => isPomodoroPart(b) && b.time === block.time) ?? null;
   if (!regenerated || timerProgress(regenerated, now, null, endsAt).done) {
-    // A pausa atravessou o fim do bloco (um evento fixo, o fim da janela): para sem marcar — quem quiser marca à mão.
+    // A pausa atravessou o fim do bloco (um evento fixo, o fim da janela): para sem marcar — quem
+    // quiser marca à mão. O toast diz com quantos minutos o bloco ficou (os que a pessoa estudou
+    // antes de pausar), ou que ele saiu do plano — aí não há o que marcar.
     derived.timerPausedAt = null;
     if (regenerated) derived.timerBlock = regenerated;
     stopTimer();
-    showToast(strings.timer.pauseEnded);
+    showToast(strings.timer.pauseEnded(outlook.block, outlook.minsAfter));
     return 'ended';
   }
   resumeRuntime(regenerated, now, endsAt);
-  // Quanto o dia andou DE FATO: os minutos que o bloco cresceu. Com os segundos somados
-  // antes de arredondar, uma pausa curta atrás da outra pode não mexer no plano nenhuma vez.
-  const deslocou = (regenerated.paused ?? 0) - (block.paused ?? 0);
-  showToast(strings.timer.pauseRecorded(record.secs, deslocou, planDeltaParts(planDelta(before, after)), dropped));
+  // O que a pausa fez com o plano, lido dos dois planos (`pauseOutlook`): o dia andou (o bloco
+  // cresceu), ou o bloco encolheu porque estava colado num compromisso ou no fim da janela e
+  // não tinha pra onde crescer — e quem mais encolheu pra abrir espaço. Até 2026-09-17 o toast
+  // media só `paused` e dizia "o dia anda 6 min" quando o dia não andava nada.
+  showToast(strings.timer.pauseRecorded(record.secs, outlook, planDelta(before, after).newEnd, dropped));
   return 'resumed';
+}
+
+/** O dia gerado com estas janelas e estas pausas — o mesmo gerador do `blocksForDay`, sem tocar no estado. */
+function planWith(dateKey: DateKey, ov: DayWindowsOverride | null | undefined, pauses: PauseRecord[]): StudyBlock[] {
+  return generateBlocks(configForDay(configAtDay(dateKey), ov), getEventsForDate(dateKey), pauses);
+}
+
+/**
+ * O que "▶ Retomar" AGORA faria com o plano — sem escrever nada. É o que o foco e a barra
+ * mostram enquanto o relógio está congelado: o caso comum é "o dia anda N min"; mas um bloco
+ * colado num compromisso (o estudo das 10:00 com a reunião às 10:25) ou no fim da janela não
+ * tem pra onde crescer, e cada minuto pausado sai DELE — a pessoa precisa saber disso
+ * enquanto decide, não no toast de depois. O dia é regenerado com a pausa aberta como se ela
+ * acabasse agora (e, numa corrida, com a janela crescida como `growLiveForPause` fará), pelo
+ * MESMO gerador — nunca uma conta paralela. `null` sem pausa aberta, ou pausa de outro dia.
+ */
+export function pauseOutlookNow(now: Date = new Date()): PauseOutlook | null {
+  const block = derived.timerBlock;
+  const pausedAt = derived.timerPausedAt;
+  if (!block || pausedAt == null) return null;
+  const todayKey = dk(now);
+  if (dk(new Date(pausedAt)) !== todayKey) return null;
+  const pauses = addPause(state.pauses[todayKey], pauseRecordFor(new Date(pausedAt), now));
+  const ov = state.windowOverrides[todayKey];
+  const grown = ov ? grownRunWindows(ov.studyWindows, block.time, block.paused ?? 0, pauses) : null;
+  const after = planWith(todayKey, grown ? { studyWindows: grown } : ov, pauses);
+  return pauseOutlook(blocksForDay(todayKey), after, block);
 }
 
 /**

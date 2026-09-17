@@ -20,7 +20,7 @@
 import { useEffect, useState } from 'react';
 import { quitHardcore } from '../../application/hardcore';
 import { blockNote } from '../../application/notes';
-import { pauseTimer, resumeTimer } from '../../application/pause';
+import { pauseOutlookNow, pauseTimer, resumeTimer } from '../../application/pause';
 import { activePet, petById } from '../../application/pets';
 import { blocksForDay, currentDayKey } from '../../application/plan';
 import { isDayClosed } from '../../domain/checks';
@@ -29,7 +29,7 @@ import { finishTour } from '../../application/tutorial';
 import { dk } from '../../domain/time';
 import { closeFocus, stopTimer } from '../../application/timer';
 import { petForm } from '../../domain/pets';
-import { coinsForStudyBlock } from '../../domain/progression';
+import { calcXP, coinsForStudyBlock } from '../../domain/progression';
 import { formatCompact } from '../../domain/settings';
 import {
   blockDurationMin,
@@ -101,15 +101,24 @@ export function FocusOverlay() {
   const cheerPet = completed?.cycle ? activePet() : null;
   const petSprite = cheerPet ? petForm(cheerPet).sprite(0) : null;
   const durMin = blockDurationMin(block);
-  const coins = block.type === 'estudo' ? coinsForStudyBlock(durMin) : 0;
+  const p = timerProgress(block, now, pausedAt, endsAt);
+  const waiting = p.phase === 'waiting';
+  const paused = p.phase === 'paused';
+  // Pausado: o que retomar agora faria com o plano (`pauseOutlookNow`). Contra um compromisso
+  // colado no bloco, ou o fim da janela, o bloco não tem pra onde crescer e cada minuto pausado
+  // sai DELE — a linha abaixo do relógio diz isso com o valor de agora, e o ganho no pé da cena
+  // acompanha: "+50 XP" enquanto o bloco já vale 24 seria o número velho na cara de quem pausou.
+  const outlook = paused ? pauseOutlookNow(now) : null;
+  const outlookLine = outlook ? t.outlook(outlook) : null;
+  const encolheu = !!outlook && outlook.lost > 0;
+  const minsQueValem = encolheu ? outlook.minsAfter : durMin;
+  const xpNaTela = encolheu ? (block.type === 'estudo' ? calcXP(minsQueValem) : Math.max(1, minsQueValem)) : block.xp || 0;
+  const coins = block.type === 'estudo' ? coinsForStudyBlock(minsQueValem) : 0;
   const next = nextBlockAfter(dayBlocks, block);
   // A nota do bloco ("lavar roupa") vai junto pro foco — é aqui que a pessoa está quando a hora chega.
   const diaDoTimer = timerDay ?? currentDayKey();
   const nota = blockNote(diaDoTimer, block);
   const notaNext = next ? blockNote(diaDoTimer, next) : null;
-  const p = timerProgress(block, now, pausedAt, endsAt);
-  const waiting = p.phase === 'waiting';
-  const paused = p.phase === 'paused';
   const th = strings.hardcore.focus;
   // O dia pode ter sido encerrado por baixo (outro dispositivo): aí pausar é recusado, e sem
   // isto não sobraria porta nenhuma — o "✕ Parar" está debaixo do overlay.
@@ -185,10 +194,13 @@ export function FocusOverlay() {
             </div>
           </div>
         </div>
+        {outlookLine && (
+          <div className={'focus-pause-outlook' + (encolheu ? ' warn' : '')} id="focus-pause-outlook">{outlookLine}</div>
+        )}
         <div className="focus-scene">
           <div className="focus-scene-stage" id="focus-scene-stage" />
           <div className="focus-scene-foot" id="focus-scene-foot">
-            <span className="focus-scene-xp">{strings.plan.xpGain(block.xp || 0)}</span>
+            <span className="focus-scene-xp">{strings.plan.xpGain(xpNaTela)}</span>
             {' · '}
             <span className="focus-scene-coins">{strings.plan.floatCoins(coins)}</span>
             {t.onComplete}

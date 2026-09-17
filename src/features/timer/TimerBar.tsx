@@ -6,7 +6,7 @@
 // que está acontecendo (ou o próximo) e um botão pra entrar nele — a mesma porta do clique na lista.
 
 import { blockNote } from '../../application/notes';
-import { continueBlock, pauseTimer, resumeTimer } from '../../application/pause';
+import { continueBlock, pauseOutlookNow, pauseTimer, resumeTimer } from '../../application/pause';
 import { blocksForDay, dayModeOf } from '../../application/plan';
 import { setVolume, toggleMute } from '../../application/alerts';
 import { requestStartBlock, startContextFor, stopTimer } from '../../application/timer';
@@ -53,6 +53,10 @@ export function TimerBar() {
   const waiting = progress?.phase === 'waiting';
   const paused = progress?.phase === 'paused';
   const t = strings.timer;
+  // Pausado contra uma parede (um compromisso colado no bloco, o fim da janela): o bloco está
+  // encolhendo, e a barra é o que a pessoa vê quando saiu do foco pausada. Só o caso que custa —
+  // "o dia anda" fica pro foco, a barra não tem folga.
+  const outlook = paused ? pauseOutlookNow(now) : null;
   // A porta de volta pro foco no laptop: o mesmo peso do "Iniciar" do cartão Agora. No celular
   // quem carrega esse botão é a linha do bloco, que tem folga — a barra não tem.
   const mostraContinuar = wide && !hardcore && !focusOpen && !!block;
@@ -100,6 +104,9 @@ export function TimerBar() {
         </div>
         <div className="timer-block-name" id="timer-block-name">{block ? cleanBlockName(block.name) + (nota ? ` · ${nota}` : '') : '—'}</div>
         <SiteBlockBadge id="timer-site-block" className="site-block-badge bar-sb" />
+        {outlook && outlook.lost > 0 && outlook.wall && (
+          <div className="pause-outlook bar-po" id="timer-pause-outlook">{t.pauseWallShort(outlook.block, outlook.minsAfter, outlook.wall)}</div>
+        )}
       </div>
       <div className={'timer-time' + (progress?.ending ? ' ending' : '') + (waiting ? ' waiting' : '') + (paused ? ' paused' : '')} id="timer-display">
         {progress ? (waiting ? progress.untilStartDisplay : progress.display) : '00:00'}

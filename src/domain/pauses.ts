@@ -8,7 +8,8 @@
 // entre o plano de antes e o de depois — o que os checks e os grupos chaveados por
 // horário precisam pra acompanhar os blocos que deslizaram.
 
-import { minsToTime, timeToMins } from './time';
+import { blockMins, minsToTime, timeToMins } from './time';
+import { cleanBlockName, eventDisplayName } from './timer';
 import type { CheckRecord, DateKey, PauseRecord, PausesByDate, StudyBlock, StudyGroup, TimeString } from './types';
 
 const isTime = (v: unknown): v is TimeString => typeof v === 'string' && /^\d{2}:\d{2}$/.test(v);
@@ -200,4 +201,76 @@ export function remapGroupsForPause(groups: StudyGroup[], pairs: PausePair[]): S
   return groups
     .map((g) => ({ ...g, start: starts.get(g.start) ?? g.start, end: ends.get(g.end) ?? g.end }))
     .sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+}
+
+// ---------------------------------------------------------------- o que a pausa faz com o plano
+
+/** O que impediu o bloco pausado de crescer: o compromisso colado nele, ou o fim da janela. */
+export type PauseWall = { kind: 'event'; name: string; at: TimeString } | { kind: 'window'; at: TimeString };
+
+export interface PauseSqueeze {
+  /** O estudo, como aparece na lista ("Estudo 8"). */
+  name: string;
+  /** Os minutos que valem depois; 0 = saiu do plano. */
+  mins: number;
+}
+
+/**
+ * O que uma pausa fez (ou faria) com o plano, lido dos dois planos — nunca de uma conta
+ * paralela ao gerador. Serve o toast de retomar e a linha que o foco mostra enquanto o
+ * relógio está congelado.
+ */
+export interface PauseOutlook {
+  /** O bloco pausado, como aparece na lista ("Estudo 3"). */
+  block: string;
+  /** Quanto o bloco pausado cresceu no plano — o quanto o dia anda. */
+  grew: number;
+  /** Quanto o bloco pausado perdeu de duração que vale: não tinha pra onde crescer. */
+  lost: number;
+  /** A duração que vale do bloco pausado depois (0 = sumiu). */
+  minsAfter: number;
+  /** O que cortou o bloco pausado, quando `lost > 0`. */
+  wall: PauseWall | null;
+  /** Estudos DEPOIS do pausado, na cadeia, que encolheram ou sumiram pra abrir espaço. */
+  squeezed: PauseSqueeze[];
+}
+
+const isBlockage = (b: Pick<StudyBlock, 'type'>): boolean => b.type === 'event' || b.type === 'intervalo';
+
+/** O compromisso que começa exatamente em `at`, ou o fim da janela. Eventos não se movem, então `after` serve. */
+function wallAt(after: StudyBlock[], at: TimeString): PauseWall {
+  const ev = after.find((b) => isBlockage(b) && b.time === at);
+  return ev ? { kind: 'event', name: eventDisplayName(ev.name), at } : { kind: 'window', at };
+}
+
+/**
+ * Quanto o dia andou e quem pagou por isso. O caso comum é o dia andar: o bloco pausado
+ * cresce, a cadeia depois dele desliza, e o último estudo antes da parede (o fim da janela,
+ * a refeição) encolhe — `grew` e `squeezed`. Mas um bloco COLADO num compromisso (o estudo
+ * das 10:00 com a aula às 10:25) não tem pra onde crescer: cada minuto pausado sai dele.
+ * Aí `lost` conta, e `wall` diz quem não esperou. Até 2026-09-17 esse caso era contado
+ * como "o dia anda 6 min" — o dia não andava nada; o estudo é que encolhia, calado.
+ *
+ * Os nomes já saem prontos pra tela ("Estudo 3", "👥 Reunião"): o 📖 do gerador e o 📅 do
+ * evento sem ícone próprio saem, o ícone que a pessoa escreveu no nome fica.
+ */
+export function pauseOutlook(before: StudyBlock[], after: StudyBlock[], block: Pick<StudyBlock, 'time'>): PauseOutlook {
+  const pairs = pauseRemap(before, after, block.time);
+  const head = pairs?.[0];
+  if (!head) return { block: '', grew: 0, lost: 0, minsAfter: 0, wall: null, squeezed: [] };
+  const b0 = head.before;
+  const a0 = head.after;
+  const minsAfter = a0 ? blockMins(a0) : 0;
+  const lost = Math.max(0, blockMins(b0) - minsAfter);
+  const grew = a0 ? Math.max(0, timeToMins(a0.endTime) - timeToMins(b0.endTime)) : 0;
+  // Onde o corte caiu: o fim do bloco regenerado — ou, se ele sumiu inteiro, o fim da
+  // cadeia que sumiu com ele (o gerador seguiu daí: ou emitiu o compromisso, ou a janela acabou).
+  const cutAt = a0 ? a0.endTime : pairs[pairs.length - 1]!.before.endTime;
+  const squeezed: PauseSqueeze[] = [];
+  for (const { before: b, after: a } of pairs.slice(1)) {
+    if (b.type !== 'estudo') continue;
+    if (!a) squeezed.push({ name: cleanBlockName(b.name), mins: 0 });
+    else if (blockMins(a) < blockMins(b)) squeezed.push({ name: cleanBlockName(b.name), mins: blockMins(a) });
+  }
+  return { block: cleanBlockName(b0.name), grew, lost, minsAfter, wall: lost > 0 ? wallAt(after, cutAt) : null, squeezed };
 }

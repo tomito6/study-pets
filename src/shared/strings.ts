@@ -4,6 +4,22 @@
 
 /** Os números e nomes de uma notificação (ver domain/notifications.ts). Estrutural de
  *  propósito: `strings.ts` não importa domínio. */
+/**
+ * O que uma pausa do timer faz com o plano (ver domain/pauses.ts `PauseOutlook`): o bloco
+ * pausado cresceu (`grew`, o dia anda), ou encolheu porque estava colado num compromisso ou
+ * no fim da janela (`lost`, com `wall` dizendo quem não esperou), e quem mais encolheu.
+ * Estrutural de propósito.
+ */
+type PauseWallText = { kind: 'event'; name: string; at: string } | { kind: 'window'; at: string };
+interface PauseOutlookText {
+  block: string;
+  grew: number;
+  lost: number;
+  minsAfter: number;
+  wall: PauseWallText | null;
+  squeezed: { name: string; mins: number }[];
+}
+
 /** "2026-09-10" → "10/09 · ". Vazio se não houver data. */
 const curtaData = (dia?: string): string => (dia && dia.length === 10 ? `${dia.slice(8, 10)}/${dia.slice(5, 7)} · ` : '');
 
@@ -945,16 +961,36 @@ export const strings = {
     mute: 'Silenciar',
     /** "45s", "2 min" — a pausa em segundos vira frase sem fingir precisão que o plano não tem. */
     pauseLength: (secs: number) => (secs < 60 ? `${secs}s` : `${Math.ceil(secs / 60)} min`),
+    /** Quem não esperou: o compromisso colado no bloco, ou o fim da janela (ver `PauseWall`). */
+    pauseWall: (w: PauseWallText) => (w.kind === 'event' ? `a ${w.name} das ${w.at} não espera` : `a janela acaba às ${w.at}`),
+    /** "Estudo 3 fica com 12 min" / "Estudo 8 saiu do plano" — quem encolheu, e com quanto ficou. */
+    pauseShrunk: (name: string, mins: number) => (mins > 0 ? `${name} fica com ${mins} min` : `${name} saiu do plano`),
     /**
-     * Ao retomar: quanto a pausa durou de verdade, quanto o dia andou de verdade (pode ser
-     * zero — dez toques em sete segundos não completam um minuto) e o que mudou no plano.
+     * Ao retomar: quanto a pausa durou de verdade e o que ela fez com o plano — o dia anda (o
+     * bloco cresceu), ou o bloco encolheu porque não tinha pra onde crescer (um compromisso
+     * colado nele, ou o fim da janela), e quem mais encolheu pra abrir espaço. Pode ser nada:
+     * dez toques em sete segundos não completam um minuto. Até 2026-09-17 dizia "o dia anda
+     * 6 min" também quando o dia não andava — o estudo é que encolhia.
      */
-    pauseRecorded: (secs: number, deslocou: number, parts: string[], droppedChecks: number) =>
-      `⏸ Pausa de ${strings.timer.pauseLength(secs)}` +
-      (deslocou > 0 ? ` · o dia anda ${deslocou} min` : ' · o plano não se mexe') +
-      (parts.length ? ` · ${parts.join(' · ')}` : '') +
-      (droppedChecks > 0 ? ` · ${droppedChecks === 1 ? '1 check ficou sem bloco' : `${droppedChecks} checks ficaram sem bloco`}` : ''),
-    pauseEnded: 'O bloco terminou durante a pausa — marque à mão se quiser ✓',
+    pauseRecorded: (secs: number, o: PauseOutlookText, newEnd: string | null, droppedChecks: number) => {
+      const parts = [`⏸ Pausa de ${strings.timer.pauseLength(secs)}`];
+      if (o.grew > 0) parts.push(`o dia anda ${o.grew} min`);
+      if (o.lost > 0) parts.push(strings.timer.pauseShrunk(o.block, o.minsAfter));
+      if (o.grew === 0 && o.lost === 0) parts.push('o plano não se mexe');
+      if (o.wall) parts.push(strings.timer.pauseWall(o.wall));
+      if (newEnd) parts.push(`termina às ${newEnd}`);
+      for (const q of o.squeezed) parts.push(strings.timer.pauseShrunk(q.name, q.mins));
+      if (droppedChecks > 0) parts.push(droppedChecks === 1 ? '1 check ficou sem bloco' : `${droppedChecks} checks ficaram sem bloco`);
+      return parts.join(' · ');
+    },
+    /** O bloco acabou durante a pausa: com quantos minutos ficou (os de antes de pausar), ou que saiu do plano — aí não há o que marcar. */
+    pauseEnded: (block: string, mins: number) =>
+      mins > 0
+        ? `O bloco terminou durante a pausa — ${block} ficou com ${mins} min; marque à mão se quiser ✓`
+        : `A pausa cobriu ${block} inteiro: ele saiu do plano`,
+    /** Na barra, pausado contra uma parede: curto, porque é a linha mais apertada do app. */
+    pauseWallShort: (block: string, mins: number, w: PauseWallText) =>
+      `⏳ ${w.kind === 'event' ? `${w.name} às ${w.at}` : `janela até ${w.at}`} · ${block} vale ${mins} min`,
     /** Começar outro bloco larga a pausa aberta: a mesma regra do "✕ Parar", mas dita em voz alta. */
     pauseDropped: '⏸ Pausa descartada: você começou outro bloco',
     pauseMidnight: 'A pausa atravessou a meia-noite: o timer foi encerrado 🌙',
@@ -989,6 +1025,19 @@ export const strings = {
       completed: (pct: number) => `${pct}% concluído`,
       startsAt: (time: string) => `começa às ${time}`,
       pausedFor: (since: string) => `pausado · ${since}`,
+      /**
+       * Enquanto pausado: o que retomar agora faz com o plano (ver `pauseOutlookNow`). O caso
+       * comum é o dia andar; contra um compromisso colado no bloco (ou o fim da janela) o bloco
+       * encolhe enquanto pausado, e a linha diz quanto ele vale AGORA — a informação que faltava
+       * na hora de decidir entre esperar, retomar e "Parar por aqui". `null` = nada a dizer.
+       */
+      outlook: (o: PauseOutlookText): string | null => {
+        const quem = o.wall ? ` · ${strings.timer.pauseWall(o.wall)}` : '';
+        if (o.lost > 0 && o.minsAfter > 0) return `${o.block} encolhe enquanto pausado · agora vale ${o.minsAfter} min${quem}`;
+        if (o.lost > 0) return `${o.block} já não tem minutos · ao retomar, o timer para${quem}`;
+        if (o.grew > 0) return [`Ao retomar, o dia anda ${o.grew} min`, ...o.squeezed.map((q) => strings.timer.pauseShrunk(q.name, q.mins))].join(' · ');
+        return null;
+      },
       onComplete: ' ao concluir',
       next: 'Em seguida',
       endOfDay: 'Fim do dia 🌙',

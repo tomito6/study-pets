@@ -9,6 +9,7 @@
 import type { RestKind } from './dayWindows';
 import { summarizePlan } from './settings';
 import type { PlanSummary } from './settings';
+import { eventDisplayName } from './timer';
 import type { DateKey, StudyBlock, TimeString } from './types';
 
 export interface WeekPreviewDay {
@@ -44,7 +45,8 @@ export interface WeekTotals {
 }
 
 /** O 📅 que o gerador põe na frente de evento sem ícone próprio não é nome — sai da legenda. */
-export const eventDisplayName = (blockName: string): string => blockName.replace(/^📅\s*/u, '');
+// `eventDisplayName` mora em `domain/timer.ts`, junto de `cleanBlockName` (os dois são "o nome como aparece"); fica exportado daqui pra quem já importava.
+export { eventDisplayName };
 
 /**
  * Os compromissos da semana, agrupados por nome + horário, na ordem em que aparecem.

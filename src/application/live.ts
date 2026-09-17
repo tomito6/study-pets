@@ -7,10 +7,10 @@
 // só os dois verbos do modo: começar, e emendar no bloco seguinte.
 
 import { isDayClosed } from '../domain/checks';
-import { pausedMinutes } from '../domain/pauses';
 import { dk, minsToTime, timeToMins } from '../domain/time';
 import type { LiveRhythm, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, state } from '../store/store';
+import { grownRunWindows } from '../domain/dayWindows';
 import { canEditDayWindows } from './dayWindows';
 import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks } from './plan';
 import { saveNow } from './save';
@@ -136,38 +136,21 @@ export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
 export function growLiveForPause(dateKey: string, before: StudyBlock, _after: StudyBlock[], now: Date = new Date()): StudyBlock[] | null {
   const janelas = state.windowOverrides[dateKey]?.studyWindows;
   if (!janelas) return null;
-  const inicio = timeToMins(before.time);
-  const idx = janelas.findIndex((w) => w.live && timeToMins(w.start) <= inicio && timeToMins(w.end) > inicio);
-  if (idx < 0) return null;
-
-  // Quanto crescer se mede pela pausa DE VERDADE, não pelo bloco já regenerado: o
-  // `place` do gerador conta os minutos pausados só até o corte da janela
-  // (`min(p.at + p.mins, cut) − p.at`), então uma pausa que atravessa o fim da corrida
-  // aparece menor do que é — e crescer por esse número cresce de menos. Iterar também não
-  // serve: cada volta revela só mais um pedaço, e a convergência é linear.
-  //
-  // A conta fechada tem UMA premissa, e ela é o invariante deste arquivo: **só `chainLive`
-  // escreve o fim de uma corrida**, e ele sempre apara no bloco que nasceu. Enquanto isso
-  // valer, a janela termina exatamente no fim do bloco em andamento. As duas janelas `live`
-  // que não obedecem não chegam aqui: a que o `stopDayAt` cria num dia de ROTINA cobre
-  // vários blocos, mas ali não há bloco rodando (tudo dentro dela já acabou); e o
-  // "Prolongar estudos" num dia ao vivo estica a corrida além do bloco — aí a conta cresce
-  // uma janela que já sobrava, o que não corta bloco nenhum, e esse caminho é justamente o
-  // que a pendência do prompt de fim de dia num dia ao vivo vai fechar. Quem inventar um
-  // terceiro escritor do fim da corrida tem que rever esta conta.
-  //
-  // Dito isso: a janela da corrida termina no fim do bloco em andamento, então
-  //   fim = início + planejado + pausado_antes
-  // e crescer por `pausado_total − pausado_antes` põe o fim exatamente onde o bloco
-  // acabaria sem corte nenhum. Toda pausa de hoje registrada a partir do início deste
-  // bloco é dele: o timer só deixa pausar o bloco que está rodando.
-  const meus = (state.pauses[dateKey] ?? []).filter((r) => timeToMins(r.at) >= inicio);
-  const cresceu = pausedMinutes(meus.reduce((soma, r) => soma + r.secs, 0)) - (before.paused ?? 0);
-  if (cresceu <= 0) return null; // pausa curta demais pra mexer no plano (ele anda em minutos cheios)
-
-  const copia = [...janelas];
-  const janela = janelas[idx]!;
-  copia[idx] = { ...janela, end: minsToTime(Math.min(timeToMins(janela.end) + cresceu, 24 * 60 - 1)) };
+  // A conta é `grownRunWindows` (domain/dayWindows.ts): mede o crescimento pela pausa DE
+  // VERDADE, não pelo bloco regenerado — o `place` do gerador conta os minutos pausados só
+  // até o corte da janela, então uma pausa que atravessa o fim da corrida aparece menor do
+  // que é, e crescer por esse número cresce de menos. Iterar também não serve: cada volta
+  // revela só mais um pedaço. A conta fecha em uma passada porque a janela da corrida termina
+  // exatamente no fim do bloco em andamento — o invariante deste arquivo: **só `chainLive`
+  // escreve o fim de uma corrida**, e ele sempre apara no bloco que nasceu. As duas janelas
+  // `live` que não obedecem não chegam aqui: a que o `stopDayAt` cria num dia de ROTINA
+  // cobre vários blocos, mas ali não há bloco rodando; e o "Prolongar estudos" num dia ao
+  // vivo estica a corrida além do bloco — aí a conta cresce uma janela que já sobrava, o
+  // que não corta bloco nenhum. Quem inventar um terceiro escritor do fim da corrida tem
+  // que rever esta conta. A mesma função serve a prévia de "retomar agora" (`pauseOutlookNow`),
+  // que precisa saber onde a corrida terminaria SEM escrever nada.
+  const copia = grownRunWindows(janelas, before.time, before.paused ?? 0, state.pauses[dateKey] ?? []);
+  if (!copia) return null; // fora de corrida, ou pausa curta demais pra mexer no plano (ele anda em minutos cheios)
   state.windowOverrides[dateKey] = { studyWindows: copia };
   clearBlockCache();
   void now;

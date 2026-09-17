@@ -20,6 +20,9 @@ export const blockDurationMin = blockMins;
 /** Nome sem os emojis de tipo — como aparece no timer e na notificação. */
 export const cleanBlockName = (name: string): string => name.replace(/📖|🧘|☕/g, '').trim();
 
+/** O nome de um evento sem o 📅 que o gerador põe em quem não tem ícone próprio — o ícone que a pessoa escreveu fica. */
+export const eventDisplayName = (blockName: string): string => blockName.replace(/^📅\s*/u, '');
+
 /** Um `Date` de hoje (segundo `now`) no horário "HH:MM". */
 export function todayAt(time: string, now: Date): Date {
   const [h, m] = time.split(':').map(Number);
