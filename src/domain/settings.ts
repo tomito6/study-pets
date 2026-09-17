@@ -6,7 +6,7 @@ import { normalizeHardcoreConfig } from './hardcore';
 import { normalizeSiteBlockConfig, normalizeSites } from './siteBlock';
 import { calcActualEnd, generateBlocks } from './planner';
 import { blockMins, timeToMins } from './time';
-import type { DateKey, PlannerConfig, SiteBlockMode, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
+import type { DateKey, PlannerConfig, SiteBlockMode, StudyBlock, StudyEvent, StudyWindow, TimeString, UserConfig } from './types';
 
 /** O formulário como o usuário digita — números em string pra permitir campo vazio. */
 export interface ConfigDraft {
@@ -167,6 +167,56 @@ export function summarizeConfig(cfg: PlannerConfig): ConfigSummary {
     end: cfg.end,
     diffMins,
   };
+}
+
+// ---------------------------------------------------------------- o resumo de um plano
+
+/**
+ * O que se lê de um plano JÁ GERADO — o de um dia de verdade, com a refeição, a aula e
+ * o yoga dele (o "Como fica o dia" do modal 🕘 Estrutura do dia, e cada linha de "Como
+ * fica a semana"). `summarizeConfig` continua sendo o da rotina: só janelas e ritmo.
+ */
+export interface PlanSummary {
+  /** Blocos de estudo (o mini conta). */
+  pomos: number;
+  studyMins: number;
+  /** Eventos que contam como estudo (a aula). */
+  eventMins: number;
+  pauseMins: number;
+  totalXP: number;
+  /** Onde termina o último bloco que vale (estudo ou evento com XP); null sem nenhum. */
+  lastStudyEnd: TimeString | null;
+  /** O bloqueio que vem depois disso (o yoga das 17h), se houver. */
+  after: { name: string; end: TimeString } | null;
+}
+
+export function summarizePlan(blocks: StudyBlock[]): PlanSummary {
+  const s: PlanSummary = { pomos: 0, studyMins: 0, eventMins: 0, pauseMins: 0, totalXP: 0, lastStudyEnd: null, after: null };
+  let lastEnd = -1;
+  for (const b of blocks) {
+    const dur = blockMins(b);
+    if (b.type === 'estudo') {
+      s.pomos++;
+      s.studyMins += dur;
+    } else if (b.type === 'event') {
+      s.eventMins += dur;
+    } else if (b.type === 'pausa') {
+      s.pauseMins += dur;
+    }
+    s.totalXP += b.xp || 0;
+    if (b.type === 'estudo' || b.type === 'event') {
+      const e = timeToMins(b.endTime);
+      if (e > lastEnd) {
+        lastEnd = e;
+        s.lastStudyEnd = b.endTime;
+      }
+    }
+  }
+  if (s.lastStudyEnd !== null) {
+    const next = blocks.find((b) => b.type === 'intervalo' && timeToMins(b.time) >= lastEnd);
+    if (next) s.after = { name: next.name, end: next.endTime };
+  }
+  return s;
 }
 
 // ---------------------------------------------------------------- encaixar estudo

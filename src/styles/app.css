@@ -1294,6 +1294,45 @@
   .dtl-legend i.pause{background:var(--timeline-pause);border:1px solid var(--border);}
   .dtl-legend i.event{background:var(--blue);}
   .dtl-legend i.interval{background:var(--hatch-a);}
+
+  /* COMO FICA A SEMANA (features/settings/WeekPreview.tsx, Configurações → Estrutura da rotina):
+     sete réguas na mesma escala — a Direção A de prototypes/estrutura-da-rotina.html. O compromisso
+     carrega o NOME dentro do segmento quando cabe; senão fica só na legenda (nunca um emoji no lugar). */
+  .wk-mode{display:inline-flex;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-md);padding:2px;flex-shrink:0;}
+  .wk-mode button{background:none;border:0;border-radius:var(--radius-sm);padding:4px 9px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:color .15s,background .15s;}
+  .wk-mode button.on{background:var(--accent-wash);color:var(--accent);}
+  .wk-rows{display:flex;flex-direction:column;gap:5px;}
+  .wk-row{display:grid;grid-template-columns:34px 1fr 54px;align-items:center;gap:8px;}
+  .wk-day{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+  .wk-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--orange);}
+  .wk-track{position:relative;height:18px;background:var(--track);border-radius:5px;overflow:hidden;}
+  .wk-row.rest .wk-track{background:repeating-linear-gradient(135deg,var(--hatch-a) 0 4px,var(--hatch-b) 4px 8px);opacity:.55;}
+  .wk-track em{font-style:normal;font-size:9.5px;color:var(--text-dim);position:absolute;left:8px;top:2px;}
+  .wk-seg{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .wk-seg.study{background:var(--accent);}
+  .wk-seg.pause{background:var(--timeline-pause);}
+  .wk-seg.event{background:var(--blue);}
+  .wk-seg.interval{background:repeating-linear-gradient(135deg,var(--hatch-a) 0 4px,var(--hatch-b) 4px 8px);}
+  .wk-seg i{font-style:normal;font-size:9px;line-height:1;color:var(--on-accent);white-space:nowrap;padding:0 3px;}
+  .wk-seg.interval i{color:var(--text);}
+  .wk-total{font-size:11.5px;text-align:right;color:var(--text);line-height:1.1;font-family:var(--font-mono);}
+  .wk-total small{display:block;font-size:9px;color:var(--blue);}
+  .wk-row.rest .wk-total{color:var(--text-dim);}
+  .wk-row.axis{height:14px;}
+  .wk-row.axis .dtl-hours{margin-top:0;height:12px;}
+  .wk-legend{font-size:10.5px;color:var(--muted);margin-top:10px;line-height:1.6;}
+  .wk-legend .k{text-transform:uppercase;letter-spacing:.06em;font-size:9.5px;font-weight:600;margin-right:4px;}
+  .wk-ev{display:inline-block;margin-right:10px;white-space:nowrap;}
+  .wk-ev i{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--hatch-a);margin-right:5px;vertical-align:-1px;}
+  .wk-ev.xp i{background:var(--blue);}
+  .wk-sum{font-size:11.5px;color:var(--muted);border-top:1px solid var(--hairline);margin-top:10px;padding-top:9px;}
+  .wk-sum b{color:var(--accent);font-size:13px;font-family:var(--font-mono);}
+
+  /* "Como fica o dia" dentro do modal 🕘 Estrutura do dia (features/settings/DayPreview.tsx). */
+  .dw-preview{border-top:1px solid var(--hairline);margin-top:14px;padding-top:14px;}
+  .dw-preview .dw-head label{text-transform:uppercase;font-size:12px;letter-spacing:.05em;color:var(--muted);}
+  .dw-preview .st-summary{margin-top:10px;}
+  .dw-preview-note{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.45;}
   .focus-hc-quit { background:transparent; border:1px solid var(--danger-outline); color:var(--danger-soft); border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
   .focus-hc-quit:hover { background:var(--danger-bg-2); border-color:var(--danger); }
   .focus-hc-free { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
@@ -1398,7 +1437,6 @@
   .dw-rt b{font-family:var(--font-mono);font-size:20px;font-weight:500;color:var(--text);line-height:1.1;}
   .dw-rt.accent b{color:var(--accent);}
   .dw-rt span{font-size:10.5px;color:var(--muted);line-height:1.3;}
-  .dw-rhythm-sub{font-size:11.5px;color:var(--muted);margin:8px 0 0;line-height:1.4;}
   .ev-import-link{display:block;width:100%;margin-top:14px;padding:0;background:none;border:none;text-align:center;font-family:var(--font-ui);font-size:11.5px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
   .ev-import-link:hover{color:var(--accent);}
   .ics-how{margin-top:12px;font-size:11.5px;color:var(--muted);}

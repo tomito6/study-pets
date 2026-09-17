@@ -1,5 +1,7 @@
-// "Janelas do dia": as janelas de estudo só deste dia — o mesmo editor das
-// Configurações, num modal. Mais os atalhos: "Dia livre" (com confirmação curta) e
+// "🕘 Estrutura do dia" (era "Janelas do dia" até 2026-09-17): as janelas de estudo só
+// deste dia — o mesmo editor das Configurações, num modal — e, desde o Arranjo 1 de
+// prototypes/estrutura-da-rotina.html, o "Como fica o dia" DESTE dia, com os eventos de
+// verdade, reagindo ao editor antes do Salvar (features/settings/DayPreview.tsx). Mais os atalhos: "Dia livre" (com confirmação curta) e
 // "Restaurar rotina" quando o dia está editado. O "▶ Começar agora" saiu em 2026-09-14,
 // a pedido do Tomi (era o item 1a do PENDENCIAS, pedido três vezes).
 
@@ -8,6 +10,7 @@ import {
   clearDayWindows,
   dayWindowsOverride,
   effectiveWindows,
+  previewDayPlan,
   restKindKey,
   setDayMode,
   setDayOff,
@@ -17,11 +20,14 @@ import type { DayWindowsRefusal } from '../../application/dayWindows';
 import { configAtDay, dayModeOf } from '../../application/plan';
 import { requestSettings } from '../../application/settings';
 import { state, useAppState } from '../../store/store';
+import { dk } from '../../domain/time';
 import type { DateKey, StudyWindow } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
+import { DayPreview } from '../settings/DayPreview';
 import { StudyWindowsEditor, appendWindow } from '../settings/StudyWindowsEditor';
 import { Modal } from '../shell/Modal';
+import { useMinuteTick } from './useMinuteTick';
 
 const t = strings.dayWindows;
 
@@ -72,6 +78,13 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
   const modo = key ? dayModeOf(key) : 'rotina';
+  // "Como fica o dia": o plano deste dia com as janelas que o editor tem AGORA — a
+  // prévia reage antes de salvar (mudar o início pra 10:00 já mostra os pomos que cabem).
+  // O "agora" só existe se o dia é hoje, e o tique do minuto o move pela régua.
+  useMinuteTick();
+  const agora = new Date();
+  const hoje = key !== '' && key === dk(agora);
+  const previewBlocks = key ? previewDayPlan(key, windows) : [];
   // O ritmo que VALE neste dia: a config atual, ou a versão que valia antes de uma mudança
   // (ver domain/configHistory.ts) — num dia passado os tiles mostram o pomodoro com que ele
   // foi gerado. O `useAppState` só assina a config; quem responde é `configAtDay`.
@@ -168,8 +181,8 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
           <div className="dw-rt"><b>{shortBreak}</b><span>{t.rhythm.short}</span></div>
           <div className="dw-rt"><b>{longBreak}</b><span>{t.rhythm.long}</span></div>
         </div>
-        <p className="dw-rhythm-sub">{t.rhythm.sub}</p>
       </div>
+      <DayPreview blocks={previewBlocks} nowMins={hoje ? agora.getHours() * 60 + agora.getMinutes() : null} live={modo === 'live'} />
       <div className="dw-actions">
         {!off && !confirmOff && (
           <button type="button" className="ghost-btn" id="day-windows-off" onClick={() => setConfirmOff(true)}>{t.dayOff}</button>

@@ -20,6 +20,7 @@ import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { state, useAppState } from '../../store/store';
 import { ConfigPreview } from './ConfigPreview';
+import { WeekPreview } from './WeekPreview';
 import { CancelSessionModal, DeleteAccountModal } from './DangerModals';
 import { FitStudyModal } from './FitStudyModal';
 import { CalendarImportSection } from './CalendarImportSection';
@@ -73,7 +74,7 @@ export function SettingsPage() {
   const [tourSuspenso, setTourSuspenso] = useState(false);
   const openSettings = () => {
     setDraft(draftFromConfig(state.config));
-    setStab('general'); // abre no Geral — a primeira aba; "Estrutura do dia" é a segunda
+    setStab('general'); // abre no Geral — a primeira aba; "Estrutura da rotina" é a segunda
     setOpen(true);
     setTourSuspenso(false);
   };
@@ -242,7 +243,7 @@ export function SettingsPage() {
         </div>
         <div className="st-scroll" ref={scrollRef}>
           <div className="st-body">
-            {/* ---------------- Estrutura do dia (id interno `day`, por compatibilidade) ---------------- */}
+            {/* ---------------- Estrutura da rotina (id interno `day`, por compatibilidade — chamava-se "Estrutura do dia" até 2026-09-17) ---------------- */}
             <div className={'settings-tab-content' + (stab === 'day' ? ' active' : '')} data-tab-content="day">
               {/* O modo vem primeiro: ele decide se as janelas abaixo valem pra um dia novo.
                   Escreve DIRETO, fora do rascunho — `normalizeConfig` monta a config campo a
@@ -320,6 +321,9 @@ export function SettingsPage() {
                 <div className="st-section-desc">{t.summary.desc}</div>
                 <ConfigPreview cfg={cfgPreview} />
               </div>
+
+              {/* E a semana inteira, com o que se repete: a Direção A dos esboços de 2026-09-16. */}
+              <WeekPreview cfg={cfgPreview} sectionClass={secao('st-sec-week')} />
             </div>
 
             {/* ---------------- Geral ---------------- */}

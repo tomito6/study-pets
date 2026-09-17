@@ -289,6 +289,56 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('.block-row.cycle-block').last()).toContainText('15:30–16:00');
   });
 
+  // Arranjo 1 + Direção A dos esboços de 2026-09-16 (prototypes/estrutura-da-rotina.html):
+  // o modal do dia ("🕘 Estrutura do dia", era "Janelas do dia") mostra COMO FICA o dia
+  // visível, com os eventos de verdade e reagindo ao editor antes de salvar; e a aba das
+  // Configurações ("Estrutura da rotina", era "Estrutura do dia") ganha a semana inteira.
+  test('73. estrutura do dia no modal (reage ao editor antes de salvar) e a semana na aba da rotina', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:07');
+    await page.locator('#tour-skip').click();
+
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-panel')).toContainText('Estrutura do dia');
+    const previa = page.locator('#day-preview');
+    await expect(previa.locator('#day-preview-timeline')).toBeVisible();
+    // A rotina padrão com o almoço das 13h: 16 pomos, 6h25 de estudo, termina às 18:00 — e o
+    // "agora" está na régua, porque é hoje.
+    await expect(previa.locator('.sts-tile').first()).toContainText('16');
+    await expect(previa).toContainText('6h25');
+    await expect(previa.locator('#day-preview-note')).toContainText('Termina às 18:00');
+    await expect(previa.locator('.dtl-now')).toHaveCount(1);
+    // Editar o início pra 14:00 muda a prévia ANTES de salvar.
+    await page.locator('#day-windows-panel .swc-start').fill('14:00');
+    await expect(previa.locator('.sts-tile').first()).not.toContainText('16');
+    await expect(previa.locator('#day-preview-note')).toContainText('Termina às 18:00');
+    // Fechar sem salvar: o dia continua o de sempre.
+    await page.locator('#day-windows-panel .panel-close').click();
+    await expect(page.locator('#day-windows-panel')).not.toHaveClass(/open/);
+    await expect(page.locator('#day-windows-btn')).not.toContainText('editado');
+
+    // A semana, na aba renomeada.
+    await page.locator('#fab-config').click();
+    await page.locator('#settings-panel .settings-tab[data-tab="day"]').click();
+    await expect(page.locator('.settings-tab.active')).toContainText('Estrutura da rotina');
+    const semana = page.locator('#week-preview');
+    await expect(semana.locator('.wk-row[data-day]')).toHaveCount(7);
+    await expect(semana.locator('.wk-row[data-day="0"] .wk-total')).toContainText('6h25');
+    // O almoço de todo dia entra na legenda pelo nome, sem depender de emoji.
+    await expect(semana.locator('#week-legend')).toContainText('Almoço');
+    await expect(semana.locator('#week-legend')).toContainText('todo dia');
+    await expect(semana.locator('#week-total')).toContainText('pomos');
+    // "Esta semana": nada foi editado, então a quarta (hoje) continua igual à rotina.
+    await page.locator('#week-mode-semana').click();
+    await expect(semana.locator('.wk-row[data-day]')).toHaveCount(7);
+    await expect(semana.locator('.wk-row[data-day="2"] .wk-total')).toContainText('6h25');
+    // O rascunho manda na rotina: mudar o pomo pra 50 muda a semana antes de salvar.
+    await page.locator('#week-mode-rotina').click();
+    await page.locator('#cfg-pomo').fill('50');
+    await expect(semana.locator('.wk-row[data-day="0"] .wk-total')).not.toContainText('6h25');
+    expect(erros).toEqual([]);
+  });
+
   test('30. fim de semana pausado: dá pra abrir janelas só naquele sábado, e "Restaurar rotina" devolve a folga', async ({ page }) => {
     await abrirApp(page);
     await page.locator('#tour-skip').click(); // o balão do tour cobre as abas dos dias de propósito
@@ -304,7 +354,7 @@ test.describe('Study Pets — smoke', () => {
     // Sábado: sem blocos, com a dica de como estudar mesmo assim.
     await page.locator('.day-tab', { hasText: 'Sáb' }).click();
     await expect(page.locator('.empty-day')).toContainText('Fim de semana');
-    await expect(page.locator('.empty-day-hint')).toContainText('Janelas do dia');
+    await expect(page.locator('.empty-day-hint')).toContainText('Estrutura do dia');
     await expect(page.locator('.block-row')).toHaveCount(0);
 
     // Abre uma janela só neste sábado.
@@ -2238,7 +2288,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     // Ontem tem plano (é o dia 01 da semana; o app abre na segunda).
     await page.locator('#fab-config').click();
-    await page.locator('#settings-panel').getByRole('button', { name: 'Estrutura do dia' }).click();
+    await page.locator('#settings-panel').getByRole('button', { name: 'Estrutura da rotina' }).click();
     await page.locator('#cfg-day-mode-live').click();
     await page.locator('#settings-panel').getByRole('button', { name: '← Voltar' }).click();
 
@@ -2341,7 +2391,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#day-windows-rhythm-btn').click();
     await expect(page.locator('#day-windows-panel')).toBeHidden();
     await expect(page.locator('#settings-panel')).toBeVisible();
-    await expect(page.locator('.settings-tab.active')).toContainText('Estrutura do dia');
+    await expect(page.locator('.settings-tab.active')).toContainText('Estrutura da rotina');
     await expect(page.locator('#settings-panel .st-section-lit')).toBeVisible();
     // A seção do ritmo é a TERCEIRA da aba e o `toBeInViewport` sozinho não prova nada —
     // dependendo da altura da janela ela já está visível sem rolagem nenhuma, e um alvo de

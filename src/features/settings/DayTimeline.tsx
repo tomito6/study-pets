@@ -15,16 +15,18 @@ interface Props {
   blocks: StudyBlock[];
   /** Minutos desde a meia-noite do "agora", pra marcar na régua; omitido = sem marca. */
   nowMins?: number | null;
+  /** A régua da rotina (Configurações) e a do dia (o modal) coexistem no DOM: cada uma com o seu id. */
+  id?: string;
 }
 
-export function DayTimeline({ blocks, nowMins = null }: Props) {
+export function DayTimeline({ blocks, nowMins = null, id = 'day-timeline' }: Props) {
   const tl = timelineOf(blocks);
   if (!tl) return null;
   const now = nowMins === null ? null : timelinePosition(tl, nowMins);
   const present = new Set(tl.segments.map((s) => s.kind));
 
   return (
-    <div className="dtl" id="day-timeline">
+    <div className="dtl" id={id}>
       <div className="dtl-track">
         {tl.segments.map((s, i) => (
           <span

@@ -115,7 +115,7 @@ export const strings = {
     /** Recusa de marcar à mão o bloco que está correndo (ver application/checks.ts). */
     checkRunning: 'Este bloco está rodando — ele se marca sozinho no fim ⏱',
     addEvent: '+ Evento',
-    dayWindows: '🕘 Janelas do dia',
+    dayWindows: '🕘 Estrutura do dia',
     /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */
     dayLive: '⏱ Ao vivo',
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
@@ -134,7 +134,7 @@ export const strings = {
         : r === 'no-room' ? 'Tem um compromisso bem agora 📅'
         : 'Só dá pra começar hoje 📅',
     },
-    dayWindowsEdited: '🕘 Janelas · editado',
+    dayWindowsEdited: '🕘 Estrutura · editado',
     freeDay: '🌴 Dia livre',
     xpGain: (xp: number) => `+${xp} XP`,
     free: 'livre',
@@ -143,7 +143,7 @@ export const strings = {
     dragTitle: 'Arraste pra mudar o horário',
     dragGhost: (start: string, end: string) => `${start} – ${end}`,
     freeWeekend: '🌴 Fim de semana livre',
-    freeDayHint: 'Quer estudar mesmo assim? Toque em 🕘 Janelas do dia e abra uma janela — só pra este dia.',
+    freeDayHint: 'Quer estudar mesmo assim? Toque em 🕘 Estrutura do dia e abra uma janela — só pra este dia.',
     notYet: 'Ainda não chegou 🔮',
     dayClosed: 'Dia encerrado 🔒',
     finishDay: 'Encerrar o dia',
@@ -344,11 +344,20 @@ export const strings = {
       study: 'min de estudo',
       short: 'min de pausa',
       long: 'min de pausa longa',
-      sub: 'Vale de hoje em diante. O que já passou fica como estava.',
       change: 'Mudar →',
     },
-    title: '🕘 Janelas do dia',
+    title: '🕘 Estrutura do dia',
     intro: 'Só pra este dia. A rotina em Configurações continua igual.',
+    /** "Como fica o dia" DESTE dia, dentro do modal: a régua com os eventos de verdade e a frase do fim. */
+    preview: {
+      label: 'Como fica o dia',
+      ends: (t: string) => `Termina às ${t}`,
+      /** O bloqueio depois do último estudo — pelo NOME, nunca por emoji (o app não sabe o ícone de "Dentista"). */
+      then: (name: string, end: string) => ` — depois, ${name} até ${end}.`,
+      live: 'Ao vivo: o que está aqui é o que já aconteceu.',
+      liveEmpty: 'Ao vivo: o plano vai sendo montado conforme você estuda. Nada ainda.',
+      empty: 'Sem janela válida — sem plano neste dia.',
+    },
     windowsLabel: 'Janelas de estudo',
     add: '+ Adicionar',
     dayOff: '🌴 Dia livre',
@@ -448,7 +457,7 @@ export const strings = {
         },
         'set-rhythm': {
           title: 'Ritmo do pomodoro',
-          body: 'Quanto dura um estudo, a pausa curta e a longa. É daqui que sai o tamanho de cada bloco do seu dia — e dá pra chegar nesta seção direto pelo "🕘 Janelas do dia".',
+          body: 'Quanto dura um estudo, a pausa curta e a longa. É daqui que sai o tamanho de cada bloco do seu dia — e dá pra chegar nesta seção direto pelo "🕘 Estrutura do dia".',
         },
         'set-preview': {
           title: 'Como fica o dia',
@@ -659,7 +668,7 @@ export const strings = {
     fab: 'Configurações',
     back: '← Voltar',
     title: 'Configurações',
-    tabs: { day: 'Estrutura do dia', general: 'Geral' },
+    tabs: { day: 'Estrutura da rotina', general: 'Geral' },
     reset: '↺ Padrão',
     save: 'Salvar',
     incomplete: 'Preencha todos os campos antes de salvar.',
@@ -680,6 +689,26 @@ export const strings = {
       noteOver: (diff: number, end: string) => `Passa ${diff} min das ${end} — o último bloco vaza da janela.`,
       noteUnder: (actual: string, diff: number, end: string) =>
         `Para às ${actual}, ${diff} min antes das ${end} — sobra um tempo sem bloco.`,
+    },
+    /** "Como fica a semana": sete réguas na mesma escala, o compromisso no horário dele (ver domain/weekPreview.ts). */
+    week: {
+      title: 'Como fica a semana',
+      desc: 'A rotina acima, dia a dia, com os compromissos que se repetem.',
+      descWeek: (from: string, to: string) => `A semana de ${from} a ${to}, com os avulsos e as janelas editadas.`,
+      modeRoutine: 'Rotina',
+      modeWeek: 'Esta semana',
+      days: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+      daysShort: ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'],
+      rest: 'folga',
+      changed: 'diferente da rotina',
+      legendTitle: 'O que se repete',
+      legendTitleWeek: 'Nesta semana',
+      everyDay: 'todo dia',
+      countsAsStudy: 'conta como estudo',
+      /** Depois do total em negrito: "6h25 de estudo · 16 pomos · +2h em eventos · ~865 XP". */
+      total: (pomos: number, events: string | null, xp: number) =>
+        `de estudo · ${pomos} pomos${events ? ` · +${events} em eventos` : ''} · ~${xp} XP`,
+      warn: 'Preencha as janelas e o ritmo acima pra ver a semana.',
     },
     windows: {
       title: 'Janelas de estudo',
@@ -716,7 +745,7 @@ export const strings = {
       hint: 'O início é fixo — só muda apagando todo o histórico.',
       clearEnd: 'Usar sem data de fim',
       skipWeekends: 'Pular finais de semana',
-      skipWeekendsSub: 'Sábado e domingo ficam livres, sem blocos e sem cobrança de meta. Num fim de semana específico dá pra abrir uma janela em 🕘 Janelas do dia.',
+      skipWeekendsSub: 'Sábado e domingo ficam livres, sem blocos e sem cobrança de meta. Num fim de semana específico dá pra abrir uma janela em 🕘 Estrutura do dia.',
     },
     goal: {
       title: 'Meta diária',

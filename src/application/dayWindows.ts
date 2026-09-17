@@ -11,17 +11,18 @@
 // continuam de folga — e "Restaurar rotina" devolve a folga.
 
 import { isChecked, isDayClosed } from '../domain/checks';
-import { routineAfter, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
+import { configForDay, routineAfter, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
 import { rhythmOf } from '../domain/configHistory';
 import { modeForDay } from '../domain/dayMode';
+import { isValidWindow } from '../domain/settings';
 import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey } from '../domain/time';
 import type { DateKey, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, notify, state } from '../store/store';
 import { rescheduleEndOfDayPrompt } from './dayEnd';
 import { notifyPlanDelta } from './events';
-import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, rebuildWeeks, restKindOf } from './plan';
+import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, generateBlocks, getEventsForDate, rebuildWeeks, restKindOf } from './plan';
 import { scheduleSave } from './save';
 
 export type DayWindowsRefusal =
@@ -42,6 +43,21 @@ export const effectiveWindows = (dateKey: DateKey): StudyWindow[] =>
 
 /** Por que o dia está sem blocos (fim de semana pausado / dia livre), ou null. */
 export const restKindKey = (dateKey: DateKey): RestKind | null => restKindOf(dateKey);
+
+/**
+ * "Como fica o dia" DENTRO do modal 🕘 Estrutura do dia: o plano do dia como ficaria
+ * com as janelas que o editor tem AGORA — antes de salvar. A mesma receita do
+ * `blocksForDay` (a config que valia no dia, os eventos dele, as pausas dele), só com
+ * as janelas do rascunho no lugar. Num dia ao vivo o rascunho não manda: o plano é o
+ * que aconteceu, e é o `blocksForDay` que diz.
+ */
+export function previewDayPlan(dateKey: DateKey, draft: StudyWindow[]): StudyBlock[] {
+  if (dayModeOf(dateKey) === 'live') return blocksForDay(dateKey);
+  const studyWindows = draft.filter(isValidWindow);
+  if (studyWindows.length === 0) return [];
+  const cfg = configForDay(configAtDay(dateKey), { studyWindows });
+  return generateBlocks(cfg, getEventsForDate(dateKey), state.pauses?.[dateKey] ?? []);
+}
 export const isRestDayKey = (dateKey: DateKey): boolean => restKindOf(dateKey) !== null;
 
 export function canEditDayWindows(dateKey: DateKey, now: Date = new Date()): DayWindowsResult {
