@@ -96,6 +96,18 @@ footer li{margin-bottom:6px}
 .lembrete .pin{font-size:12px;line-height:1.4}
 .lembrete b{font-weight:500;color:var(--text)}
 .lembrete .sep{color:var(--dim);padding:0 5px;font-weight:400}
+.lembrete.stack{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;align-items:start}
+.lembrete.stack .pin{grid-column:1;grid-row:1}
+.lembrete.stack .li{grid-column:2}
+.lembrete.ck2{gap:5px 7px}
+.lembrete.ck2 .li{display:flex;align-items:center;gap:8px}
+.lembrete.ck2 .pin{padding-top:1px}
+.ck.sm{width:16px;height:16px;border-radius:4px;font-size:10px}
+.lembrete .li.done b{text-decoration:line-through;text-decoration-color:var(--border-mid);color:var(--muted);font-weight:400}
+.lembrete.pills{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:7px 10px}
+.lembrete .pl{border:1px solid var(--border);background:var(--bg3);border-radius:99px;padding:3px 9px;font-size:11.6px;color:var(--text);font-weight:500}
+.medida{font:400 10.5px var(--font-mono);color:var(--accent);background:var(--accent-wash);border-radius:4px;padding:1px 6px}
+.cap .medida{margin-left:4px}
 
 .marca{margin:0 0 12px;padding:9px 11px 8px;border:1px dashed var(--border-mid);border-radius:var(--radius-sm);background:var(--bg2)}
 .marca-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
@@ -171,7 +183,7 @@ footer li{margin-bottom:6px}
 
   <!-- ─────────── A ─────────── -->
   <div class="dir">
-    <div class="dir-head"><span class="letra">Direção A</span><h3>Lembrete</h3><span class="tag">só texto · sem check</span></div>
+    <div class="dir-head"><span class="letra">Direção A</span><h3>Lembrete</h3><span class="tag rec">a forma escolhida</span></div>
 
     <div class="corpo">
       <div class="telas">
@@ -191,7 +203,7 @@ footer li{margin-bottom:6px}
               </div>
             </div>
           </div>
-          <p class="cap">um item · +33px</p>
+          <p class="cap">um item · 36px</p>
         </div>
 
         <div>
@@ -210,7 +222,7 @@ footer li{margin-bottom:6px}
               </div>
             </div>
           </div>
-          <p class="cap">três itens · +52px (quebra em duas linhas)</p>
+          <p class="cap">três itens · 55px (quebra em duas linhas)</p>
         </div>
       </div>
 
@@ -219,7 +231,7 @@ footer li{margin-bottom:6px}
         <p>Uma faixa de texto acima da barra de ações, com a borda tracejada que o app já usa pra dizer “isto não é bloco do plano” (é a mesma do <code>.other-day</code> e do evento que só bloqueia). Sem coluna de horário — e é justamente a ausência dela, num lugar onde toda linha começa com um horário alinhado, que faz a etiqueta ler como outra coisa sem precisar de cor nova.</p>
 
         <h4>O que ganha</h4>
-        <p>É a versão mais barata que resolve o pedido literal: a prova de amanhã passa a existir dentro do app. Nada pra decidir, nada pra marcar, nada que possa dar errado. Um item ocupa 33px.</p>
+        <p>É a versão mais barata que resolve o pedido literal: a prova de amanhã passa a existir dentro do app. Nada pra decidir, nada pra marcar, nada que possa dar errado. Um item ocupa 36px.</p>
 
         <h4 class="custo">O que custa</h4>
         <p>Não dá pra riscar. Um lembrete que você já resolveu às 10h fica lá o dia inteiro te olhando, e a única saída é apagar — o que é um gesto de “nunca existiu”, não de “fiz”. Com três itens vira um parágrafo: os pontos separadores fazem os três nomes competirem, e o mais importante não tem como ser o primeiro.</p>
@@ -232,7 +244,7 @@ footer li{margin-bottom:6px}
 
   <!-- ─────────── B ─────────── -->
   <div class="dir">
-    <div class="dir-head"><span class="letra">Direção B</span><h3>Riscar</h3><span class="tag rec">recomendada</span></div>
+    <div class="dir-head"><span class="letra">Direção B</span><h3>Riscar</h3><span class="tag">o check veio daqui · a moldura não</span></div>
 
     <div class="corpo">
       <div class="telas">
@@ -255,7 +267,7 @@ footer li{margin-bottom:6px}
               </div>
             </div>
           </div>
-          <p class="cap">um item · +68px</p>
+          <p class="cap">um item · 68px</p>
         </div>
 
         <div>
@@ -278,7 +290,7 @@ footer li{margin-bottom:6px}
               </div>
             </div>
           </div>
-          <p class="cap">três itens · +124px (uma linha de plano a menos)</p>
+          <p class="cap">três itens · 129px (uma linha de plano a menos)</p>
         </div>
       </div>
 
@@ -291,7 +303,7 @@ footer li{margin-bottom:6px}
         <p>Resolve a metade que a A deixa de fora: o item tem fim. Três itens continuam legíveis, e o mais urgente pode ser o primeiro da lista em vez de o primeiro de um parágrafo. O que já foi feito desce riscado em vez de sumir — dá pra ver, no fim do dia, o que o dia teve além de estudo.</p>
 
         <h4 class="custo">O que custa</h4>
-        <p>Altura: com três itens são 124px, uma linha de plano a menos acima da dobra. E é a direção que mais se aproxima de um <b>to-do list dentro do Pomodoro</b> — se um dia ela ganhar prioridade, prazo, subtarefa e recorrência, virou outro app. O contorno tem que ser assumido: <b>frase curta, do dia, sem nada pendurado</b>.</p>
+        <p>Altura: com três itens são 129px, uma linha de plano a menos acima da dobra. E é a direção que mais se aproxima de um <b>to-do list dentro do Pomodoro</b> — se um dia ela ganhar prioridade, prazo, subtarefa e recorrência, virou outro app. O contorno tem que ser assumido: <b>frase curta, do dia, sem nada pendurado</b>.</p>
 
         <h4>A pergunta que ela abre</h4>
         <p>Item não riscado <b>vai pro dia seguinte?</b> Minha recomendação é <b>não</b>: ele é do dia em que foi escrito, e some com ele. Arrastar pendência de ontem pra hoje é exatamente o mecanismo de culpa que o app promete não ter — e é assim que o to-do list começa.</p>
@@ -301,7 +313,7 @@ footer li{margin-bottom:6px}
 
   <!-- ─────────── C ─────────── -->
   <div class="dir">
-    <div class="dir-head"><span class="letra">Direção C</span><h3>O chip que abre</h3><span class="tag">recolhido por padrão</span></div>
+    <div class="dir-head"><span class="letra">Direção C</span><h3>O chip que abre</h3><span class="tag">descartada</span></div>
 
     <div class="corpo">
       <div class="telas">
@@ -322,7 +334,7 @@ footer li{margin-bottom:6px}
               </div>
             </div>
           </div>
-          <p class="cap">fechado · +31px, com qualquer número de itens</p>
+          <p class="cap">fechado · 35px, com qualquer número de itens</p>
         </div>
 
         <div>
@@ -353,14 +365,14 @@ footer li{margin-bottom:6px}
         <p>A direção B com uma porta na frente: por padrão só o contador, e um toque abre. O app já usa esse padrão no <b>ciclo que passou</b> (o divisor vira botão e recolhe as linhas), então o gesto não é novo.</p>
 
         <h4>O que ganha</h4>
-        <p>A altura para de crescer: 31px com um item ou com seis. É a única das três em que a feature não disputa espaço com o plano.</p>
+        <p>A altura para de crescer: 35px com um item ou com seis. É a única das três em que a feature não disputa espaço com o plano.</p>
 
         <h4 class="custo">O que custa</h4>
         <p>Um item fechado é um item esquecido — e esquecer é literalmente o problema que a feature existe pra resolver. No app, recolher é sempre sobre <b>o que já passou</b>; aqui seria sobre o que ainda vai acontecer, que é o contrário.</p>
         <p>E abre uma pergunta chata de estado: fica aberto entre trocas de aba? Entre reloads? É preferência ou é sessão? (No ciclo recolhido a resposta foi “sessão, e reload desdobra”. Aqui a mesma resposta significa que o item volta a aparecer sozinho, o que meio que desfaz a economia.)</p>
 
         <h4>Quando esta é a certa</h4>
-        <p>Só se, na prática, forem <b>muitos</b> itens por dia. Com um ou dois, o chip cobra um toque pra economizar 37px — e esconde justamente o que você escreveu pra não esquecer.</p>
+        <p>Só se, na prática, forem <b>muitos</b> itens por dia. Com um ou dois, o chip cobra um toque pra economizar 33px — e esconde justamente o que você escreveu pra não esquecer.</p>
       </div>
     </div>
   </div>
@@ -423,7 +435,7 @@ footer li{margin-bottom:6px}
 
 <!-- ══════════════════════════ PARTE 3 ══════════════════════════ -->
 <section class="parte">
-  <div class="parte-head"><span class="letra">Parte 3</span><h2>De onde nasce</h2></div>
+  <div class="parte-head"><span class="letra">Parte 3</span><h2>De onde nasce</h2><span class="tag rec">porta 1 escolhida</span></div>
   <p class="why">Duas portas possíveis, e elas não são excludentes. A lição do “Importar calendário” foi que uma porta só não é achada.</p>
 
   <div class="corpo" style="margin-top:6px">
@@ -474,7 +486,7 @@ footer li{margin-bottom:6px}
       <p>Mais rápida pra quem já sabe (um toque, digita, Enter), e é onde a mão já está quando você está lendo o dia. Mas ela só existe <b>depois</b> que a faixa existe, e a faixa não existe num dia sem item nenhum — então sozinha ela é invisível pra conta nova.</p>
 
       <h4>As duas</h4>
-      <p>É o que eu faria: <b>Porta 1 descobre, Porta 2 repete</b>. Custa um chip e um botãozinho. Com a direção A (sem check), a Porta 2 vira “+” no canto da faixa e funciona igual.</p>
+      <p><b>Você escolheu a Porta 1 sozinha</b>, e ela se defende: a faixa não precisa carregar um botão de criar, e sem o “+ anotar” ela fica com a cara de anotação em vez de cara de formulário. O preço é um toque a mais pra escrever o segundo lembrete do dia — abrir o “+ Evento” de novo. Se isso incomodar na prática, a Porta 2 volta como um “+” miúdo no canto direito da faixa, sem mexer em mais nada.</p>
 
       <h4>E a terceira, de graça</h4>
       <p>Hoje todo evento de <b>dia inteiro</b> do <code>.ics</code> é descartado na importação, com o motivo “dia inteiro” — feriado, aniversário, prazo de entrega da universidade, tudo cai fora, porque viraria um bloqueio do dia todo. Com a etiqueta, eles passam a ter onde cair: entram desmarcados na tela de revisão, como todo o resto, e quem quiser marca.</p>
@@ -556,9 +568,344 @@ footer li{margin-bottom:6px}
   </div>
 </section>
 
+<!-- ══════════════════════════ PARTE 5 ══════════════════════════ -->
+<section class="parte">
+  <div class="parte-head"><span class="letra">Parte 5</span><h2>A direção A de perto — o caso de dois</h2><span class="tag rec">escolhida</span></div>
+  <p class="why">Um lembrete sempre cabe. Três sempre quebram. <b>Dois é a fronteira</b> — e onde ela cai depende do tamanho dos nomes, não do número deles. Por isso cada variante abaixo aparece duas vezes: com dois nomes curtos (“Prova de Análise II”, “Entregar a lista 3”) e com dois nomes compridos de verdade, que é o que a pessoa escreve quando está com pressa. As alturas são medidas na tela, não estimadas.</p>
+
+  <div class="aviso" style="max-width:840px;margin:0 0 4px">
+    <p><b>O que você disse depois de ver a Parte 1:</b> gostou de poder riscar, mas não da formatação da B. Então a pergunta deixou de ser “A ou B” e virou <b>a faixa da A com o check da B</b> — que é a <b>variante A4</b> aqui embaixo. As outras três ficam porque foi comparando com elas que ela chegou nesse formato.</p>
+    <p>O que a B tinha e que sai: o título <code>HOJE TAMBÉM</code> em caps, o contador “1 de 3”, o “+ anotar” (a porta agora é o “+ Evento”), o ✕ em cada linha e as divisórias entre itens. Sobra a faixa tracejada leve da A — e um check.</p>
+  </div>
+
+  <!-- A1 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A1</span><h3>Em linha</h3><span class="tag">como está hoje no esboço</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete" id="m-a1-curto"><span class="pin">📌</span><span><b>Prova de Análise II</b><span class="sep">·</span><b>Entregar a lista 3</b></span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois curtos · cabem numa linha <span class="medida" data-med="m-a1-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete" id="m-a1-longo"><span class="pin">📌</span><span><b>Entregar o relatório de Mecânica Quântica</b><span class="sep">·</span><b>Renovar a matrícula no portal da TUM</b></span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois longos · o segundo começa no meio <span class="medida" data-med="m-a1-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que acontece</h4>
+        <p>Com nomes curtos é perfeito: uma linha, 36px, e os dois se leem de uma vez. Com nomes compridos o texto reflui, e o segundo lembrete <b>começa no meio da primeira linha e termina na segunda</b> — ele deixa de ter um começo visível. Lendo rápido, “Renovar a matrícula” some no meio do parágrafo.</p>
+
+        <h4 class="custo">O problema real</h4>
+        <p>A altura não é o que incomoda (19px a mais). É que a forma da faixa <b>muda conforme o que você escreveu</b>: hoje uma linha, amanhã duas, e o plano abaixo sobe e desce sem motivo aparente. O ponto separador funciona quando os dois itens cabem lado a lado, e só nesse caso.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A2 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A2</span><h3>Empilhado</h3><span class="tag">sem check</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack" id="m-a2-curto">
+                <span class="pin">📌</span>
+                <span class="li"><b>Prova de Análise II</b></span>
+                <span class="li"><b>Entregar a lista 3</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois curtos · uma linha cada <span class="medida" data-med="m-a2-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack" id="m-a2-longo">
+                <span class="pin">📌</span>
+                <span class="li"><b>Entregar o relatório de Mecânica Quântica</b></span>
+                <span class="li"><b>Renovar a matrícula no portal da TUM</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois longos · a mesma altura <span class="medida" data-med="m-a2-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que acontece</h4>
+        <p>Uma linha por lembrete, o 📌 só no primeiro (ele marca a faixa, não cada item — repeti-lo em cada linha só repete um emoji que não carrega informação). Nome comprido <b>não desloca o outro lembrete</b>: cada um tem a sua linha e ela é o seu começo.</p>
+
+        <h4>O que ganha</h4>
+        <p>Previsibilidade: N lembretes = N linhas, independente do que você escreveu. A altura é a mesma nas duas telas acima — o que quer dizer que a faixa não muda de forma conforme o texto, e o plano abaixo fica parado.</p>
+        <p>E de quebra resolve o problema que a A tinha com três: empilhados, três continuam legíveis, cada um com o seu começo. A A deixa de ter um teto prático de dois.</p>
+
+        <h4>O que falta nela</h4>
+        <p>Só o check — que é justamente o que você quis manter da B. Empilhada, a faixa já tem uma coluna livre na esquerda de cada linha, então acrescentá-lo é <b>uma coluna a mais, não uma tela nova</b>. É a variante A4, logo abaixo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A4</span><h3>Empilhado com check</h3><span class="tag rec">a faixa da A com o que você gostou da B</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack ck2" id="m-a4-curto">
+                <span class="pin">📌</span>
+                <span class="li"><span class="ck sm"></span><b>Prova de Análise II</b></span>
+                <span class="li"><span class="ck sm"></span><b>Entregar a lista 3</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois, nada riscado <span class="medida" data-med="m-a4-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack ck2" id="m-a4-done">
+                <span class="pin">📌</span>
+                <span class="li done"><span class="ck sm on">✓</span><b>Prova de Análise II</b></span>
+                <span class="li"><span class="ck sm"></span><b>Entregar a lista 3</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">um riscado · a altura não muda <span class="medida" data-med="m-a4-done">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack ck2" id="m-a4-longo">
+                <span class="pin">📌</span>
+                <span class="li"><span class="ck sm"></span><b>Entregar o relatório de Mecânica Quântica</b></span>
+                <span class="li done"><span class="ck sm on">✓</span><b>Renovar a matrícula no portal da TUM</b></span>
+                <span class="li"><span class="ck sm"></span><b>Buscar o pacote</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">três longos · o teto prático sobe <span class="medida" data-med="m-a4-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que mudou em relação à B</h4>
+        <p>Só o que você apontou: saiu a moldura de cartão e tudo que vinha com ela — o título <code>HOJE TAMBÉM</code> em caps, o contador, o “+ anotar” e o ✕ por linha. Ficou a faixa tracejada da A, que não tem cabeçalho, não tem rodapé e não se anuncia. O check é o mesmo quadrado das linhas do plano, só um pouco menor (16px contra 18px), porque aqui ele está numa faixa de texto e não numa linha de bloco.</p>
+
+        <h4>O 📌 marca a faixa, não cada linha</h4>
+        <p>Ele fica uma vez, na altura da primeira linha, como quem diz “daqui pra baixo é outra coisa”. Repetido em cada linha, ele viraria uma coluna de emoji sem informação — e brigaria com o check pelo mesmo canto.</p>
+
+        <h4>Dois alvos por linha, que é o que o app já faz</h4>
+        <p>No plano, a <code>.block-row</code> tem dois destinos: o <b>check</b> marca, e o <b>resto da linha</b> abre o foco. Aqui é igual — o check risca, o texto abre o modal do evento (Editar / Apagar). Ninguém precisa aprender nada novo, e o ✕ não precisa existir dentro da faixa.</p>
+
+        <h4>O teto prático</h4>
+        <p>Com o check, cada lembrete tem uma linha inteira só dele, então <b>três continuam legíveis</b> — o que na variante em linha já era um parágrafo. O que já foi riscado desce em cinza e continua visível: no fim do dia dá pra ver que o dia teve mais coisa além dos pomodoros.</p>
+
+        <h4 class="custo">O aviso que fica</h4>
+        <p>Isso é, assumidamente, uma listinha de tarefas dentro do Plano. O que a mantém pequena não é o layout — é a decisão: <b>frase curta, do dia, sem prazo, sem prioridade, sem recorrência, e nada migra pra amanhã</b>. Todas as vezes que um app assim inchou, inchou por aqui.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A3 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A3</span><h3>Pílulas</h3><span class="tag">descartada</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete pills" id="m-a3-curto">
+                <span class="pin">📌</span>
+                <span class="pl">Prova de Análise II</span>
+                <span class="pl">Entregar a lista 3</span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois curtos <span class="medida" data-med="m-a3-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete pills" id="m-a3-longo">
+                <span class="pin">📌</span>
+                <span class="pl">Entregar o relatório de Mecânica Quântica</span>
+                <span class="pl">Renovar a matrícula no portal da TUM</span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois longos · duas pílulas quase cheias <span class="medida" data-med="m-a3-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>Por que parecia boa</h4>
+        <p>Cada lembrete vira um objeto com contorno próprio, quebra sozinho em várias linhas (<code>flex-wrap</code>) e tem um lugar óbvio pra pendurar um ✕.</p>
+
+        <h4 class="custo">Por que não é</h4>
+        <p>Pílula é vocabulário de <b>filtro</b> e de <b>opção</b> no app — é o que os chips de modo, os atalhos do evento e o “Rotina · Esta semana” são. Usar a mesma forma pra uma frase que não se clica pra nada mente sobre o que ela faz.</p>
+        <p>E com nome comprido a pílula ocupa a linha inteira, com a borda arredondada de ponta a ponta: fica o pior dos dois mundos — a altura do empilhado com o ruído visual de dois contornos a mais.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- como sai -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">E como sai</span><h3>Tocar no lembrete</h3></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone" style="width:344px">
+            <div class="body" style="padding:14px">
+              <div class="sheet">
+                <div class="sheet-t">📌 Prova de Análise II</div>
+                <p class="dimtxt" style="margin-top:-4px">Lembrete de hoje · não reserva tempo no plano</p>
+                <div class="sheet-f" style="justify-content:space-between;margin-top:14px">
+                  <span class="btn mute">✏️ Editar</span>
+                  <span style="display:flex;gap:8px"><span class="btn mute">Fechar</span><span class="btn" style="color:var(--orange);border-color:var(--orange)">Apagar</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">o mesmo modal que o evento já abre, com uma porta a menos</p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>Por que isto sai de graça</h4>
+        <p>Como o lembrete <b>nasce do “+ Evento”</b>, o caminho de volta já existe: tocar num evento hoje abre <code>#event-delete-confirm</code>, com Editar e Apagar. O lembrete cai no mesmo lugar, só sem as opções que só fazem sentido numa série (“só este dia” / “a série”), porque ele não tem recorrência.</p>
+        <p>É o que dispensa inventar um ✕ dentro da faixa — que na direção A ficaria apertado entre os nomes, e que na variante em linha nem teria onde morar.</p>
+
+        <h4>O detalhe que decide</h4>
+        <p>Na A4 cada linha tem os mesmos dois alvos da linha do plano: o <b>check</b> risca, o <b>texto</b> abre este modal. Na variante em linha o alvo seria um pedaço de texto no meio de um parágrafo — e com dois nomes compridos, um deles está partido entre duas linhas, o que não dá pra tocar direito nem dá onde encostar um check.</p>
+        <p>Editar abre o mesmo “+ Evento” em modo edição, já sem os campos de hora — exatamente como um evento avulso faz hoje.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// mede a altura real de cada faixa e escreve no rótulo — pra nenhum número
+// deste documento ser estimativa.
+addEventListener('load', () => {
+  for (const el of document.querySelectorAll('.medida')) {
+    const alvo = document.getElementById(el.dataset.med);
+    if (alvo) el.textContent = Math.round(alvo.getBoundingClientRect().height) + 'px';
+  }
+});
+</script>
+
 <footer>
-  <h2>O que eu faria</h2>
-  <p><b>Direção B, com as duas portas, sem o “quando” grosso.</b> É a que resolve as duas metades do pedido — o item existe no dia e o item tem fim — usando o check que o app já ensinou, e ela é o miolo da C, então virar a C depois é só embrulhar. A A é mais barata mas te deixa com um lembrete que não morre; a C esconde o que você escreveu pra não esquecer.</p>
+  <h2>Onde a conversa parou</h2>
+  <p><b>Variante A4</b> — a faixa tracejada da direção A, empilhada, com o check da B em cada linha e mais nada da moldura dela. <b>Nasce do “+ Evento”</b>, por um chip <em>📌 Sem horário</em> que apaga os campos de hora, e sai pelo mesmo modal que o evento já abre no toque. <b>Sem o “quando” grosso</b> (manhã/tarde/noite) por ora — é a única parte que toca a lista do plano, e a única que é fácil de somar depois.</p>
+  <p>Descartadas no caminho, com o motivo à vista: a faixa <b>em linha</b> (com dois nomes compridos o segundo perde o começo, e a forma da faixa muda conforme o que você escreveu), as <b>pílulas</b> (vocabulário de filtro, e com nome comprido viram a linha inteira com contorno) e o <b>chip que recolhe</b> (esconde justamente o que você escreveu pra não esquecer).</p>
 
   <h3>O contorno, escrito antes de começar</h3>
   <ul>
@@ -569,11 +916,11 @@ footer li{margin-bottom:6px}
     <li><b>Nunca entra no <code>generateBlocks</code>.</b> Dia encerrado é só leitura, dia futuro pode — as mesmas réguas da nota e do grupo.</li>
   </ul>
 
-  <h3>As três perguntas que eu não decido sozinho</h3>
+  <h3>O que ainda falta você decidir</h3>
   <ul>
-    <li><b>Riscar ou não riscar</b> — que é a escolha entre a A e a B, e no fundo é “isso é contexto do dia ou coisa pra fazer?”.</li>
-    <li><b>Como se chama.</b> “Hoje também”, “📌 do dia”, “Sem horário”, “Lembretes”. Nas telas está <em>Hoje também</em>, que tem a vantagem de não prometer uma lista de tarefas — mas mente um pouco num dia que não é hoje.</li>
-    <li><b>O “quando” grosso entra agora ou nunca?</b> É a única parte que toca a lista do plano, e a única que é fácil de somar depois.</li>
+    <li><b>Como o chip se chama no “+ Evento”.</b> Nas telas está <em>📌 Sem horário</em>, que descreve o que ele faz. As outras candidatas — <em>Lembrete</em>, <em>Dia inteiro</em>, <em>Anotação</em> — dizem o que ele <em>é</em>, e “Dia inteiro” é o nome que o resto do mundo usa (é o que vem escrito no <code>.ics</code> que você importa).</li>
+    <li><b>Riscado some ou fica?</b> Nas telas fica, em cinza, no lugar — é o que deixa ver, no fim do dia, o que o dia teve além dos pomodoros. A alternativa é descer pro fim da faixa, o que mantém o que falta sempre no topo.</li>
+    <li><b>E na Semana?</b> A Parte 4 mostra uma linha no pé do cartão (celular) e uma faixa acima da grade (laptop). Dá pra deixar as duas fora do v1 sem perder nada — o lembrete é do dia, e é no dia que ele precisa aparecer.</li>
   </ul>
 
   <p class="dimtxt" style="margin-top:22px">Esboço, não implementação — nenhum arquivo de <code>src/</code> foi tocado. Escolhida a direção, a conta é: um campo em <code>persistence.ts</code>, um <code>domain/dayNotes.ts</code> (puro, com o remap pra pausa que a nota já tem), um caso de uso, um componente no <code>PlanTab</code> e um caso de e2e.</p>
