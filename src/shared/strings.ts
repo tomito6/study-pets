@@ -353,14 +353,13 @@ export const strings = {
     /**
      * O ritmo aqui é SÓ DESTE DIA (2026-10-01): os três números se editam no próprio modal,
      * e a rotina fica nas Configurações — duas coisas diferentes, e o nome de cada tela diz
-     * qual é qual. O botão ao lado continua sendo a porta pra rotina, e por isso diz isso.
+     * qual é qual. Sem botão de um pro outro.
      */
     rhythm: {
       label: 'Ritmo do pomodoro',
       study: 'min de estudo',
       short: 'min de pausa',
       long: 'min de pausa longa',
-      change: 'Mudar na rotina →',
       /** Só aparece quando o ritmo deste dia não é o da rotina. */
       routine: (p: number, s: number, l: number) => `Na rotina: ${p} · ${s} · ${l}`,
       savedWhole: 'Ritmo deste dia ajustado ✓',
@@ -695,7 +694,7 @@ export const strings = {
     save: 'Salvar',
     incomplete: 'Preencha todos os campos antes de salvar.',
     /** Ritmo/janelas mudaram e hoje já tem fato: a mudança fica pra amanhã (ver domain/configHistory.ts). */
-    savedFromTomorrow: 'Salvo. Vale a partir de amanhã — o dia de hoje já começou e fica como está.',
+    savedFromTomorrow: 'Salvo. Vale a partir de amanhã — o dia de hoje já começou e fica como está. Pra mudar o ritmo de hoje: 🕘 Estrutura do dia.',
     summary: {
       title: 'Como fica o dia',
       desc: 'Um dia com as janelas e o ritmo acima. Refeições e eventos entram pelo Plano.',

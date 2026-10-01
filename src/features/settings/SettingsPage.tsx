@@ -39,12 +39,13 @@ type SettingsModal = 'none' | 'fit' | 'cancel' | 'delete';
 /**
  * Para onde um atalho de fora pede pra ir. O caminho era um
  * `getElementById('ics-import-btn')` cravado no efeito; virou mapa quando o
- * "🕘 Janelas do dia" passou a mandar abrir o ritmo do pomodoro.
+ * "🕘 Janelas do dia" passou a mandar abrir o ritmo do pomodoro. Essa segunda porta saiu em
+ * 2026-10-01 (o modal do dia passou a editar o ritmo DELE, e o Tomi não quis caminho de um
+ * pro outro); o mapa ficou, porque uma seção nova pedida de fora é uma linha aqui.
  */
-export type SettingsFocus = 'calendar' | 'rhythm';
+export type SettingsFocus = 'calendar';
 const FOCO: Record<SettingsFocus, { tab: SettingsTab; section: string }> = {
   calendar: { tab: 'general', section: 'st-sec-calendar' },
-  rhythm: { tab: 'day', section: 'st-sec-rhythm' },
 };
 
 function Switch({ id, checked, onChange }: { id: string; checked: boolean; onChange: (v: boolean) => void }) {

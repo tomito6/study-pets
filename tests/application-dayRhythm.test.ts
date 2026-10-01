@@ -16,9 +16,10 @@ import {
   setDayRhythm,
 } from '../src/application/dayWindows';
 import { startLive } from '../src/application/live';
+import { stopHere } from '../src/application/pause';
 import { blocksForDay, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
 import { cancelSession, saveSettings } from '../src/application/settings';
-import { stopTimer } from '../src/application/timer';
+import { reconcileTimer, startTimer, stopTimer } from '../src/application/timer';
 import { weekPreview } from '../src/application/weekPreview';
 import { emptyPersistedState, hydrateUserDoc, serializeState } from '../src/domain/persistence';
 import { defaultDraft } from '../src/domain/settings';
@@ -244,6 +245,82 @@ describe('a rotina e o dia são duas coisas diferentes', () => {
     expect(hydrateUserDoc(antigo).dayRhythms).toEqual({});
     cancelSession(AGORA);
     expect(state.dayRhythms).toEqual({});
+  });
+});
+
+// 2026-10-01, o relato do Tomi: "botei 13 minutos quando tava no modo ao vivo, voltei pro modo
+// rotina, e ele fica em 13 minutos independente do que eu mude".
+describe('voltar do ao vivo pra rotina com um ritmo de 13 minutos', () => {
+  const R13 = { pomo: 13, shortBreak: 5, longBreak: 20 };
+  const R40 = { pomo: 40, shortBreak: 5, longBreak: 20 };
+  const seg = (hms: string) => new Date(`${HOJE}T${hms}`);
+  const ir = (hms: string) => {
+    vi.setSystemTime(seg(hms));
+    reconcileTimer(seg(hms));
+  };
+  const semSobreposicao = () => {
+    const dia = blocksForDay(HOJE);
+    expect(new Set(dia.map((b) => b.time)).size).toBe(dia.length);
+    for (let i = 1; i < dia.length; i++) expect(dia[i]!.time >= dia[i - 1]!.endTime, `${dia[i - 1]!.endTime} > ${dia[i]!.time}`).toBe(true);
+  };
+  const correr = () => {
+    const r = startLive(HOJE, seg('10:00:00'));
+    if (!r.ok) throw new Error('a corrida não começou');
+    startTimer(r.block, seg('10:00:00'));
+    derived.focusOpen = true;
+    ir('10:13:01'); // o estudo acaba e emenda na pausa
+    ir('10:18:01'); // a pausa acaba e emenda no segundo estudo (10:18–10:31)
+  };
+
+  it('o 13 veio das CONFIGURAÇÕES: a rotina só muda amanhã, mas o modal do dia muda hoje, do próximo bloco em diante', () => {
+    vi.setSystemTime(seg('10:00:00'));
+    setDayMode(HOJE, 'live', seg('10:00:00'));
+    expect(saveSettings({ ...defaultDraft(), pomo: '13' }, seg('10:00:00'))).toEqual({ ok: true, plan: 'from-today' });
+    correr();
+    ir('10:22:00');
+    expect(stopHere(seg('10:22:00'))).toMatchObject({ ok: true });
+    setDayMode(HOJE, 'rotina', seg('10:23:00'));
+    expect(estudos(HOJE).find((b) => b.time === '10:23')).toMatchObject({ endTime: '10:36' }); // a rotina de hoje é 13
+
+    // Nas Configurações: hoje já tem corrida, então vale de amanhã — hoje continua em 13.
+    expect(saveSettings({ ...defaultDraft(), pomo: '25' }, seg('10:24:00'))).toEqual({ ok: true, plan: 'from-tomorrow' });
+    expect(estudos(HOJE).filter((b) => b.time >= '10:23').every((b) => timeDiff(b) <= 13)).toBe(true);
+    expect(estudos(AMANHA)[0]).toMatchObject({ endTime: '09:25' });
+
+    // No modal do dia: muda HOJE. O bloco das 10:23 (já começou) fica; os seguintes são de 40.
+    expect(setDayRhythm(HOJE, R40, seg('10:25:00'))).toEqual({ ok: true, windows: false, rhythm: 'from-now' });
+    const depois = estudos(HOJE).filter((b) => b.time > '10:23');
+    expect(depois[0]).toMatchObject({ time: '10:41', endTime: '11:21' });
+    expect(depois.slice(0, 4).every((b) => timeDiff(b) === 40)).toBe(true);
+    // E o que foi vivido na corrida não se mexe.
+    expect(blocksForDay(HOJE).slice(0, 3).map((b) => `${b.time}–${b.endTime}`)).toEqual(['10:00–10:13', '10:13–10:18', '10:18–10:22']);
+    semSobreposicao();
+  });
+
+  it('voltar pra rotina com a corrida AINDA rodando: ela termina a pausa dela, e o resto do dia é da rotina — sem crescer por cima', () => {
+    vi.setSystemTime(seg('10:00:00'));
+    setDayMode(HOJE, 'live', seg('10:00:00'));
+    setDayRhythm(HOJE, R13, seg('10:00:00'));
+    correr();
+    ir('10:20:00');
+    setDayMode(HOJE, 'rotina', seg('10:20:00'));
+    expect(setDayRhythm(HOJE, R40, seg('10:21:00'))).toMatchObject({ ok: true, rhythm: 'from-now' });
+
+    // O estudo das 10:18 acaba: a pausa é da corrida (5 min, o ritmo dela), e a rotina começa depois dela.
+    ir('10:31:01');
+    expect(derived.timerBlock).toMatchObject({ time: '10:31', endTime: '10:36', type: 'pausa' });
+    expect(state.windowOverrides[HOJE]!.studyWindows).toEqual([
+      { start: '10:00', end: '10:36', live: R13 },
+      { start: '10:36', end: '18:00' },
+    ]);
+    semSobreposicao();
+
+    // A pausa acaba: o próximo é um estudo do PLANO, no ritmo novo do dia — e a corrida não cresce mais.
+    ir('10:36:01');
+    expect(derived.timerBlock).toMatchObject({ time: '10:36', endTime: '11:16', type: 'estudo' });
+    expect(derived.timerBlock!.live).toBeUndefined();
+    expect(state.windowOverrides[HOJE]!.studyWindows[0]).toMatchObject({ end: '10:36' });
+    semSobreposicao();
   });
 });
 

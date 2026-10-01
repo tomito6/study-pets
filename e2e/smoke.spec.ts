@@ -355,6 +355,9 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('.day-tab', { hasText: 'Qui' }).click();
     await page.locator('#day-windows-btn').click();
     await expect(page.locator('#day-rhythm-note')).toHaveCount(0);
+    await expect(page.locator('#day-windows-rhythm button')).toHaveCount(0); // sem porta pras Configurações: muda-se AQUI
+    // Campo com cara de campo: tem caixa (borda), não é um número solto num tile.
+    expect(await page.locator('#day-rhythm-pomo').evaluate((el) => parseFloat(getComputedStyle(el).borderTopWidth))).toBeGreaterThan(0);
     await expect(page.locator('#day-preview .sts-tile').first()).toContainText('16');
     await page.locator('#day-rhythm-pomo').fill('50');
     await page.locator('#day-rhythm-short').fill('10');
@@ -2501,47 +2504,30 @@ test.describe('Study Pets — smoke', () => {
     expect(erros).toEqual([]);
   });
 
-  // A mesma porta do 60, medida por outro ângulo: a seção do ritmo tem que parar no MEIO
-  // do `.st-scroll` (um alvo de scroll errado passaria verde com `toBeInViewport`), e a
-  // porta do calendário — que não tinha teste — continua indo pro lugar dela.
-  test('60b. a porta do ritmo centra a seção no scroll, e a porta do calendário continua indo pro lugar dela', async ({ page }) => {
+  // Era "a porta do ritmo centra a seção no scroll": o modal do dia levava até o ritmo das
+  // Configurações. Desde 2026-10-01 o ritmo se edita no próprio modal e a porta NÃO existe
+  // (o Tomi desistiu dela: são duas coisas diferentes, em dois lugares diferentes). O que
+  // sobra aqui é cobrar que ela não volte, e a porta do calendário, que não tinha outro teste.
+  test('60b. o modal do dia não tem porta pro ritmo da rotina, e a porta do calendário continua indo pro lugar dela', async ({ page }) => {
     const erros = vigiarErros(page);
     await abrirApp(page);
     await page.locator('#tour-skip').click();
     await expect(page.locator('#tour-balloon')).toBeHidden();
 
-    // O bloco mostra o ritmo em vigor NESTE dia — desde 2026-10-01 os três tiles são campos
-    // (o ritmo só do dia, ver o 75) — e se chama pelo nome da seção das Configurações aonde
-    // a porta leva: "Ritmo do pomodoro".
+    // O bloco do ritmo mostra o ritmo em vigor NESTE dia, em três campos (ver o 75), e nada ali leva às Configurações.
     await page.locator('#day-windows-btn').click();
     await expect(page.locator('#day-windows-rhythm')).toContainText('Ritmo do pomodoro');
     await expect(page.locator('#day-windows-rhythm .dw-rt')).toHaveText([/min de estudo/, /min de pausa/, /min de pausa longa/]);
     await expect(page.locator('#day-rhythm-pomo')).toHaveValue('25');
     await expect(page.locator('#day-rhythm-short')).toHaveValue('5');
     await expect(page.locator('#day-rhythm-long')).toHaveValue('20');
-    await expect(page.locator('#day-windows-rhythm-btn')).toContainText('rotina');
-
-    // E LEVA: o modal fecha, as Configurações abrem na segunda aba, na seção certa.
-    await page.locator('#day-windows-rhythm-btn').click();
-    await expect(page.locator('#day-windows-panel')).toBeHidden();
-    await expect(page.locator('#settings-panel')).toBeVisible();
-    await expect(page.locator('.settings-tab.active')).toContainText('Estrutura da rotina');
-    await expect(page.locator('#settings-panel .st-section-lit')).toBeVisible();
-    // A seção do ritmo é a TERCEIRA da aba e o `toBeInViewport` sozinho não prova nada —
-    // dependendo da altura da janela ela já está visível sem rolagem nenhuma, e um alvo de
-    // scroll errado passaria verde. O que se cobra é a rolagem ter acontecido e a seção ter
-    // parado no MEIO da área, que é o que o `block:'center'` promete.
-    const centro = await page.evaluate(() => {
-      const sc = document.querySelector('.st-scroll')!.getBoundingClientRect();
-      const sec = document.getElementById('cfg-pomo')!.closest('.st-section')!.getBoundingClientRect();
-      return { desvio: Math.abs((sec.top + sec.bottom) / 2 - (sc.top + sc.bottom) / 2), altura: sc.height };
-    });
-    expect(centro.desvio, 'a seção do ritmo não parou no meio da área de scroll').toBeLessThan(centro.altura / 4);
+    await expect(page.locator('#day-windows-rhythm-btn')).toHaveCount(0);
+    await expect(page.locator('#day-windows-rhythm button')).toHaveCount(0);
+    await page.locator('#day-windows-panel .panel-close').click();
+    await expect(page.locator('#day-windows-panel')).not.toHaveClass(/open/);
 
     // A porta do calendário continua indo pro lugar dela — o alvo do scroll virou
     // uma variável, e era exatamente o que podia quebrar em silêncio (ela não tinha teste).
-    await page.locator('#settings-panel .st-back').click();
-    await expect(page.locator('#settings-panel')).toBeHidden();
     await page.locator('#add-event-btn').click();
     await page.locator('#ev-import').click();
     await expect(page.locator('#event-panel')).toBeHidden();
@@ -2674,29 +2660,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#settings-panel')).toHaveClass(/open/); // pular não fecha a página
   });
 
-  // PENDENCIAS 4: o ritmo do pomodoro morava em Configurações → Estrutura do dia e
-  // ninguém o achava. O modal do dia passa a mostrá-lo e a levar até ele.
-  test('60. o "Janelas do dia" mostra o ritmo e leva direto até ele nas Configurações', async ({ page }) => {
-    const erros = vigiarErros(page);
-    await abrirApp(page, '09:12');
-    await page.locator('#tour-skip').click();
+  // (O 60 era a porta do modal do dia pro ritmo das Configurações. Ela saiu em 2026-10-01 — ver o 60b e o 75.)
 
-    await page.locator('#day-windows-btn').click();
-    await expect(page.locator('#day-windows-rhythm')).toContainText('Ritmo do pomodoro');
-    await expect(page.locator('#day-rhythm-pomo')).toHaveValue('25');
-    await page.locator('#day-windows-rhythm-btn').click();
-
-    // O modal fecha, as Configurações abrem na aba certa, e a seção do ritmo acende.
-    // (a casca do Modal fica sempre no DOM; quem diz aberto/fechado é a classe .open)
-    await expect(page.locator('#day-windows-panel')).not.toHaveClass(/open/);
-    await expect(page.locator('#settings-panel')).toHaveClass(/open/);
-    await expect(page.locator('#settings-panel .settings-tab[data-tab="day"]')).toHaveClass(/active/);
-    await expect(page.locator('#st-sec-rhythm')).toHaveClass(/st-section-lit/);
-    await expect(page.locator('#cfg-pomo')).toBeVisible();
-    // Quem pediu UMA seção não é sequestrado pelo tutorial das Configurações.
-    await expect(page.locator('#settings-tour')).toHaveCount(0);
-    expect(erros).toEqual([]);
-  });
   // Item 6 da revisão de 2026-09-14: com o hardcore ligado, "▶ Começar" gravava a corrida
   // ANTES do consentimento, e "Cancelar" deixava um bloco fantasma no plano (sem timer,
   // sem check) — e o cartão contava mais um pomodoro. Agora o consentimento mostra uma
@@ -2911,6 +2876,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#settings-panel').getByRole('button', { name: 'Salvar' }).click();
     await expect(page.locator('#settings-panel')).toBeHidden();
     await expect(page.locator('#toast')).toContainText('Vale a partir de amanhã');
+    await expect(page.locator('#toast')).toContainText('Estrutura do dia'); // e diz onde se muda o ritmo de HOJE
 
     // Hoje continua como estava, com o check no lugar. Amanhã já nasce com o pomodoro novo.
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');

@@ -22,7 +22,6 @@ import {
 } from '../../application/dayWindows';
 import type { DayStructureResult, DayWindowsRefusal } from '../../application/dayWindows';
 import { dayModeOf } from '../../application/plan';
-import { requestSettings } from '../../application/settings';
 import { state, useAppState } from '../../store/store';
 import { parseRhythmDraft, rhythmDraftOf, sameRhythm } from '../../domain/dayRhythm';
 import type { RhythmDraft } from '../../domain/dayRhythm';
@@ -62,37 +61,21 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   useAppState((s2) => s2.config); // a rotina (e o ritmo do dia, que mora no estado) mudando redesenha
   const edited = key ? dayEdited(key) : false;
   const refuse = (reason: DayWindowsRefusal) => showToast(t.refusal[reason]);
-  // O ritmo em vigor neste dia (de agora em diante, se ele já mudou no meio) e o da rotina —
-  // num dia passado seria o pomodoro com que ele foi gerado (ver domain/configHistory.ts).
-  const ritmoDoDia = key ? dayRhythmNow(key) : null;
+  // O ritmo da rotina neste dia (pra onde "Restaurar rotina" volta) e o que está nos campos.
   const ritmoDaRotina = key ? routineRhythmOf(key) : null;
   const ritmoRascunho = parseRhythmDraft(rhythm); // null = campo vazio ou fora da faixa
-  /** O editor tem mudança não salva? (mesma comparação que o `useEffect` usa pra preencher.) */
-  const sujo =
-    key !== '' &&
-    (JSON.stringify(windows.map((w) => [w.start, w.end])) !== JSON.stringify(effectiveWindows(key).map((w) => [w.start, w.end])) ||
-      !ritmoRascunho ||
-      !ritmoDoDia ||
-      !sameRhythm(ritmoRascunho, ritmoDoDia));
 
-  /** Janelas e ritmo numa escrita só; devolve se deu certo (a porta pro ritmo da rotina salva antes de ir). */
-  const gravar = (): DayStructureResult => {
-    if (!ritmoRascunho) return { ok: false, reason: 'invalid-rhythm' };
-    return saveDayStructure(key, { windows, rhythm: ritmoRascunho });
-  };
-  const contar = (r: Extract<DayStructureResult, { ok: true }>): void => {
-    // O ritmo que só vale do próximo bloco em diante é o que mais precisa ser dito.
-    if (r.rhythm === 'from-now') showToast(t.rhythm.savedFromNow);
-    else if (r.rhythm === 'whole-day') showToast(r.windows ? t.savedBoth : t.rhythm.savedWhole);
-    else showToast(t.saved);
-  };
+  /** Janelas e ritmo numa escrita só (`saveDayStructure` grava apenas o que mudou). */
   const save = () => {
-    const r = gravar();
+    const r: DayStructureResult = ritmoRascunho ? saveDayStructure(key, { windows, rhythm: ritmoRascunho }) : { ok: false, reason: 'invalid-rhythm' };
     if (!r.ok) {
       refuse(r.reason);
       return;
     }
-    contar(r);
+    // O ritmo que só vale do próximo bloco em diante é o que mais precisa ser dito.
+    if (r.rhythm === 'from-now') showToast(t.rhythm.savedFromNow);
+    else if (r.rhythm === 'whole-day') showToast(r.windows ? t.savedBoth : t.rhythm.savedWhole);
+    else showToast(t.saved);
     onClose();
   };
   const doOff = () => {
@@ -115,25 +98,6 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   // A prévia reage também ao ritmo do rascunho: 50 · 10 nos campos já mostra os pomos que
   // cabem — o dia inteiro se ele não começou, do próximo bloco em diante se já começou.
   const previewBlocks = key ? previewDayPlan(key, windows, ritmoRascunho, agora) : [];
-  /**
-   * A porta pro ritmo DA ROTINA: fecha o modal ANTES de pedir (dois modais abertos deixariam
-   * o overlay do dia por cima da página que acabou de abrir) e abre as Configurações já
-   * na seção do ritmo, acesa. E **salva o que o editor tem**, se tiver mudado: quem mexeu
-   * num horário e tocou na porta perdia a edição, calado. Salvar aqui é o que a
-   * pessoa faria no clique seguinte; o que é inválido é recusado e ninguém sai do lugar.
-   */
-  const irAoRitmo = (): void => {
-    if (sujo) {
-      const r = gravar();
-      if (!r.ok) {
-        refuse(r.reason);
-        return;
-      }
-      contar(r);
-    }
-    onClose();
-    requestSettings('rhythm');
-  };
   // Num dia que já tem corrida, a primeira delas diz desde quando o dia é ao vivo — é a
   // linha que uma barra de dois botões nunca poderia carregar.
   const desde = key ? (state.windowOverrides[key]?.studyWindows.find((w) => w.live)?.start ?? null) : null;
@@ -192,28 +156,31 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
       {/* O ritmo SÓ DESTE DIA (2026-10-01, pedido do Tomi: "deveria ser 2 coisas separadas —
           pelo próprio nome já deveríamos saber a diferença"). Até então os três números eram
           só uma vitrine do ritmo da rotina com um "Mudar →" pras Configurações: tudo no modal
-          era do dia, menos isto. Agora os tiles se editam aqui e valem pra este dia; a rotina
-          continua na seção de mesmo nome das Configurações, e o botão ao lado leva até ela.
+          era do dia, menos isto. Agora se edita aqui e vale pra este dia; a rotina continua na
+          seção de mesmo nome das Configurações. **Sem porta de um pro outro** (a primeira versão
+          deixou um "Mudar na rotina →" ao lado, e o Tomi tinha desistido justamente disso: com
+          um botão dizendo "mudar" do lado, os campos não se leem como o lugar de mudar). E os
+          três são CAMPOS com cara de campo — a mesma caixa das janelas logo acima —, não tiles
+          com um traço embaixo, que se liam como números parados.
           Em hoje com algo já vivido a troca vale do próximo bloco em diante (ver
           application/dayWindows.ts) — a prévia logo abaixo mostra isso antes do Salvar. */}
       <div className="dw-rhythm" id="day-windows-rhythm">
         <div className="dw-head">
           <label>{t.rhythm.label}</label>
-          <button type="button" className="ghost-btn" id="day-windows-rhythm-btn" onClick={irAoRitmo}>{t.rhythm.change}</button>
         </div>
-        <div className="dw-rhythm-tiles">
-          <label className="dw-rt accent">
-            <input type="number" inputMode="numeric" id="day-rhythm-pomo" min={1} max={600} value={rhythm.pomo} onChange={(e) => setRhythm({ ...rhythm, pomo: e.target.value })} />
+        <div className="dw-rhythm-tiles field-group">
+          <div className="dw-rt accent">
+            <input type="number" inputMode="numeric" id="day-rhythm-pomo" min={1} max={600} aria-label={t.rhythm.study} value={rhythm.pomo} onChange={(e) => setRhythm({ ...rhythm, pomo: e.target.value })} />
             <span>{t.rhythm.study}</span>
-          </label>
-          <label className="dw-rt">
-            <input type="number" inputMode="numeric" id="day-rhythm-short" min={1} max={600} value={rhythm.shortBreak} onChange={(e) => setRhythm({ ...rhythm, shortBreak: e.target.value })} />
+          </div>
+          <div className="dw-rt">
+            <input type="number" inputMode="numeric" id="day-rhythm-short" min={1} max={600} aria-label={t.rhythm.short} value={rhythm.shortBreak} onChange={(e) => setRhythm({ ...rhythm, shortBreak: e.target.value })} />
             <span>{t.rhythm.short}</span>
-          </label>
-          <label className="dw-rt">
-            <input type="number" inputMode="numeric" id="day-rhythm-long" min={1} max={600} value={rhythm.longBreak} onChange={(e) => setRhythm({ ...rhythm, longBreak: e.target.value })} />
+          </div>
+          <div className="dw-rt">
+            <input type="number" inputMode="numeric" id="day-rhythm-long" min={1} max={600} aria-label={t.rhythm.long} value={rhythm.longBreak} onChange={(e) => setRhythm({ ...rhythm, longBreak: e.target.value })} />
             <span>{t.rhythm.long}</span>
-          </label>
+          </div>
         </div>
         {/* Só quando o dia não está no ritmo da rotina: diz pra onde o "Restaurar rotina" volta. */}
         {ritmoDaRotina && (!ritmoRascunho || !sameRhythm(ritmoRascunho, ritmoDaRotina)) && (

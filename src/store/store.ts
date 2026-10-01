@@ -124,7 +124,7 @@ export interface Derived {
  * pedida — senão ela abre no topo do Geral, como sempre.
  */
 export interface SettingsRequest {
-  focus: 'calendar' | 'rhythm' | null;
+  focus: 'calendar' | null;
 }
 
 export interface SiteBlockRuntime {

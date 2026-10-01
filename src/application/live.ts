@@ -181,17 +181,45 @@ export function chainLive(dateKey: string, endedAt: string, now: Date = new Date
   const ritmo = atual.live!;
   const novo = changeInEffect(state.dayRhythms?.[dateKey], fim) ?? ritmo;
   const folga = timeToMins(atual.end) + Math.max(ritmo.pomo, novo.pomo) + Math.max(ritmo.longBreak, novo.longBreak);
-  const esticar = (fim: number) => {
-    const copia = [...janelas];
-    copia[idx] = { ...atual, end: minsToTime(Math.min(fim, 24 * 60 - 1)) };
+  // O dia voltou pra rotina com a corrida ainda rodando (`setDayMode` → `routineAfter`): há
+  // uma janela de rotina começando exatamente onde a corrida acaba, com o resto do dia já
+  // montado. Sem olhar pra ela, a corrida crescia POR CIMA — duas janelas sobrepostas, dois
+  // blocos no mesmo horário, e os pomodoros seguiam no ritmo carimbado na corrida pra sempre
+  // ("fica em 13 minutos independente do que eu mude", 2026-10-01). Ali a corrida só termina o
+  // que deve: a pausa do estudo que acabou é dela (e a rotina passa a começar depois da pausa);
+  // um estudo novo já é do plano.
+  const colada = timeToMins(atual.end) === fim ? janelas.findIndex((w, i) => i !== idx && !w.live && timeToMins(w.start) === fim) : -1;
+  const esticar = (ate: number, rotinaDesde: number | null = null) => {
+    const copia: StudyWindow[] = [];
+    janelas.forEach((w, i) => {
+      if (i === idx) copia.push({ ...atual, end: minsToTime(Math.min(ate, 24 * 60 - 1)) });
+      else if (i !== colada) copia.push(w);
+      else if (rotinaDesde !== null && rotinaDesde < timeToMins(w.end)) copia.push({ ...w, start: minsToTime(rotinaDesde) });
+      // rotinaDesde === null: a janela colada fica de fora (é só a tentativa); senão, ela começa onde a corrida passou a acabar
+    });
     state.windowOverrides[dateKey] = { studyWindows: copia };
     clearBlockCache();
   };
+  const desfazer = () => {
+    state.windowOverrides[dateKey] = { studyWindows: janelas };
+    clearBlockCache();
+  };
+  const ehParte = (b: StudyBlock) => b.time === endedAt && (b.type === 'estudo' || b.type === 'pausa');
 
-  esticar(folga);
-  const seguinte = blocksForDay(dateKey).find((b) => b.time === endedAt && (b.type === 'estudo' || b.type === 'pausa'));
+  esticar(folga); // a tentativa: só a corrida, com folga
+  const seguinte = blocksForDay(dateKey).find(ehParte);
+  if (colada >= 0) {
+    if (seguinte && seguinte.type === 'pausa') {
+      esticar(timeToMins(seguinte.endTime), timeToMins(seguinte.endTime));
+      commit(now);
+      return blocksForDay(dateKey).find(ehParte) ?? null;
+    }
+    desfazer(); // o próximo é um estudo: ele é do plano que já está montado
+    commit(now);
+    return blocksForDay(dateKey).find(ehParte) ?? null;
+  }
   if (!seguinte) {
-    esticar(timeToMins(atual.end)); // volta a janela pro tamanho de antes
+    desfazer(); // volta a janela pro tamanho de antes
     commit(now);
     return null;
   }
