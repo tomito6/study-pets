@@ -351,16 +351,20 @@ export const strings = {
       changed: 'Modo do dia trocado',
     },
     /**
-     * O ritmo é GLOBAL; o botão leva até ele em vez de fingir que é do dia. O título é
-     * o MESMO da seção de destino nas Configurações, de propósito: a porta e o lugar
-     * aonde ela leva têm que se chamar igual.
+     * O ritmo aqui é SÓ DESTE DIA (2026-10-01): os três números se editam no próprio modal,
+     * e a rotina fica nas Configurações — duas coisas diferentes, e o nome de cada tela diz
+     * qual é qual. O botão ao lado continua sendo a porta pra rotina, e por isso diz isso.
      */
     rhythm: {
       label: 'Ritmo do pomodoro',
       study: 'min de estudo',
       short: 'min de pausa',
       long: 'min de pausa longa',
-      change: 'Mudar →',
+      change: 'Mudar na rotina →',
+      /** Só aparece quando o ritmo deste dia não é o da rotina. */
+      routine: (p: number, s: number, l: number) => `Na rotina: ${p} · ${s} · ${l}`,
+      savedWhole: 'Ritmo deste dia ajustado ✓',
+      savedFromNow: 'Ritmo novo a partir do próximo bloco — o que já passou fica como está ✓',
     },
     title: '🕘 Estrutura do dia',
     intro: 'Só pra este dia. A rotina em Configurações continua igual.',
@@ -385,6 +389,7 @@ export const strings = {
     cancel: 'Cancelar',
     save: 'Salvar',
     saved: 'Janelas do dia ajustadas ✓',
+    savedBoth: 'Dia ajustado ✓',
     dayOffSet: 'Dia livre 🌴',
     restored: 'Rotina de volta ↺',
     weekendNote: '🌴 Fim de semana livre. Adicione uma janela pra estudar mesmo assim — só neste dia; os outros continuam de folga.',
@@ -395,6 +400,7 @@ export const strings = {
       empty: 'Adicione pelo menos uma janela (ou declare o dia livre).',
       'invalid-window': 'Tem janela com o fim antes do início.',
       overlap: 'Duas janelas se sobrepõem.',
+      'invalid-rhythm': 'O ritmo precisa dos três números (de 1 a 600 min).',
     },
   },
   session: {

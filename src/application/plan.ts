@@ -1,7 +1,9 @@
 // O plano lido a partir do estado: semanas, blocos de cada dia e estatísticas.
 // Único lugar que liga o domínio ao store — React e legado consomem daqui.
 
-import { configAt } from '../domain/configHistory';
+import { configAt, rhythmOf } from '../domain/configHistory';
+import { rhythmInEffect, withDayRhythm } from '../domain/dayRhythm';
+import type { DayConfig } from '../domain/dayRhythm';
 import { configForDay, isBonusDay, restDayKind } from '../domain/dayWindows';
 import { modeForDay } from '../domain/dayMode';
 import type { DayMode } from '../domain/dayMode';
@@ -11,7 +13,7 @@ import { blockagesOnly, generateBlocks as generateBlocksPure } from '../domain/p
 import { computeStats, calcStreaks } from '../domain/stats';
 import type { Stats } from '../domain/stats';
 import { dk, isWeekendKey } from '../domain/time';
-import type { DateKey, PauseRecord, PlannerConfig, StudyBlock, StudyEvent, UserConfig } from '../domain/types';
+import type { DateKey, LiveRhythm, PauseRecord, PlannerConfig, StudyBlock, StudyEvent, UserConfig } from '../domain/types';
 import { buildWeeks, dateForWeekDay as dateForWeekDayIn, findWeek as findWeekIn, weekDays } from '../domain/weeks';
 import type { WeekDay } from '../domain/weeks';
 import { isDayClosed } from '../domain/checks';
@@ -49,6 +51,7 @@ export function rebuildWeeks(now: Date = new Date()): void {
       ...Object.keys(state.events),
       ...Object.keys(state.groups),
       ...Object.keys(state.windowOverrides),
+      ...Object.keys(state.dayRhythms ?? {}),
       ...Object.keys(state.pauses ?? {}),
     ],
     today: now,
@@ -128,12 +131,28 @@ export function getEventsForDate(dateKey: DateKey): StudyEvent[] {
 export const dayModeOf = (dateKey: DateKey): DayMode => modeForDay(dateKey, state.dayModes, state.dayModeDefault);
 
 /**
- * A config que valia neste dia: a atual, ou a versão que valia antes de uma mudança de
- * ritmo/janelas (ver domain/configHistory.ts). Tudo que gera ou lê o plano de um dia
- * passa por aqui — nunca por `state.config` direto —, senão a mudança de dezembro
- * reescreve setembro.
+ * A ROTINA que valia neste dia: a config atual, ou a versão que valia antes de uma mudança
+ * de ritmo/janelas (ver domain/configHistory.ts). Sem o ritmo próprio do dia — quem quer o
+ * dia como ele é chama `configAtDay`.
  */
-export const configAtDay = (dateKey: DateKey): UserConfig => configAt(state.config, state.configHistory, dateKey);
+export const routineConfigAt = (dateKey: DateKey): UserConfig => configAt(state.config, state.configHistory, dateKey);
+
+/**
+ * A config que vale NESTE dia: a rotina que valia nele (`routineConfigAt`) com o ritmo só
+ * dele por cima, se houver (ver domain/dayRhythm.ts) — o do dia inteiro no lugar do da
+ * rotina, e as trocas do meio do dia em `rhythmChanges`, que o gerador lê. Tudo que gera ou
+ * lê o plano de um dia passa por aqui — nunca por `state.config` direto —, senão a mudança
+ * de dezembro reescreve setembro, e o ritmo que a pessoa escolheu pra hoje não vale.
+ */
+export const configAtDay = (dateKey: DateKey): DayConfig => withDayRhythm(routineConfigAt(dateKey), state.dayRhythms?.[dateKey]);
+
+/**
+ * O ritmo com que nasce um bloco que começa em `minute` neste dia — sem minuto, o que vale
+ * do fim do dia: "de agora em diante". (Dentro de uma corrida a base é o ritmo da janela;
+ * quem precisa disso pergunta por `changeInEffect`.)
+ */
+export const rhythmAtDay = (dateKey: DateKey, minute?: number): LiveRhythm =>
+  rhythmInEffect(rhythmOf(routineConfigAt(dateKey)), state.dayRhythms?.[dateKey], minute);
 
 /**
  * O dia já tem algo que o plano não pode mais mexer: check, encerramento, pausa registrada,

@@ -10,9 +10,10 @@ import { isDayClosed } from '../domain/checks';
 import { dk, minsToTime, timeToMins } from '../domain/time';
 import type { LiveRhythm, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, state } from '../store/store';
+import { changeInEffect } from '../domain/dayRhythm';
 import { grownRunWindows } from '../domain/dayWindows';
 import { canEditDayWindows } from './dayWindows';
-import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks } from './plan';
+import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks, rhythmAtDay } from './plan';
 import { saveNow } from './save';
 
 export type LiveRefusal = 'not-live' | 'closed' | 'past' | 'busy' | 'no-room';
@@ -21,14 +22,13 @@ export type LiveStart = { ok: true; block: StudyBlock } | { ok: false; reason: L
 /** As janelas que a corrida de agora deixaria no dia: as anteriores (aparadas) e a nova. */
 type Candidata = { ok: true; anteriores: StudyWindow[]; janela: StudyWindow } | { ok: false; reason: LiveRefusal };
 
-/** O ritmo que a corrida de hoje roda: o da config, congelado na janela ao começar. */
-export const liveRhythm = (): LiveRhythm => ({
-  pomo: state.config.pomo,
-  shortBreak: state.config.shortBreak,
-  longBreak: state.config.longBreak,
-});
-
 const minuteOf = (d: Date): number => d.getHours() * 60 + d.getMinutes();
+
+/**
+ * O ritmo que uma corrida aberta AGORA roda, congelado na janela ao começar: o do dia —
+ * o próprio dele, se o modal "🕘 Estrutura do dia" deu um, senão a rotina que vale hoje.
+ */
+export const liveRhythm = (now: Date = new Date()): LiveRhythm => rhythmAtDay(dk(now), minuteOf(now));
 
 /** As janelas de corrida já registradas hoje (as corridas anteriores do dia). */
 const runsOf = (dateKey: string) => (state.windowOverrides[dateKey]?.studyWindows ?? []).filter((w) => w.live);
@@ -63,7 +63,7 @@ function candidata(dateKey: string, now: Date): Candidata {
   if (dateKey !== dk(now)) return { ok: false, reason: 'past' };
   if (derived.timerBlock) return { ok: false, reason: 'busy' };
 
-  const ritmo = liveRhythm();
+  const ritmo = liveRhythm(now);
   const inicio = minuteOf(now);
   // As corridas anteriores ficam. Uma que ainda COBRE agora (o timer morreu num reload,
   // ou parou pelo ✕ da barra) é aparada em agora, nunca descartada: descartar levava
@@ -176,8 +176,11 @@ export function chainLive(dateKey: string, endedAt: string, now: Date = new Date
   const idx = janelas.findIndex((w) => w.live && timeToMins(w.start) <= fim && timeToMins(w.end) >= fim);
   if (idx < 0) return null;
   const atual = janelas[idx]!;
+  // A folga cobre o maior bloco que pode nascer aqui: pelo ritmo da corrida, ou pelo ritmo
+  // que o dia passou a ter no meio dela (o gerador aplica a troca por cima do da janela).
   const ritmo = atual.live!;
-  const folga = timeToMins(atual.end) + ritmo.pomo + ritmo.longBreak;
+  const novo = changeInEffect(state.dayRhythms?.[dateKey], fim) ?? ritmo;
+  const folga = timeToMins(atual.end) + Math.max(ritmo.pomo, novo.pomo) + Math.max(ritmo.longBreak, novo.longBreak);
   const esticar = (fim: number) => {
     const copia = [...janelas];
     copia[idx] = { ...atual, end: minsToTime(Math.min(fim, 24 * 60 - 1)) };

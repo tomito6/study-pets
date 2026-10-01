@@ -6,11 +6,11 @@
 // escolhido pelo Tomi em 2026-09-14 depois de duas rodadas: o cartaz original (269px), o
 // cartão compacto (150px) e a faixa com "25 · 5 · 20 min" (66px) foram ficando pra trás —
 // "o que mais incomoda são os numerozinhos". O selo diz só "25 min"; o ritmo inteiro mora
-// na porta do "⏱ Ao vivo" (Ritmo … Mudar →), que não precisa ser repetida aqui.
+// na porta do "⏱ Ao vivo" (os três campos do "Ritmo do pomodoro"), que não precisa ser repetida aqui.
 // Ele não é a tela do modo (num dia ao vivo quem está na frente é o foco): é o primeiro
 // toque do dia, e a porta de volta depois de uma parada.
 
-import { blocksForDay } from '../../application/plan';
+import { blocksForDay, rhythmAtDay } from '../../application/plan';
 import { isChecked } from '../../domain/checks';
 import { blockMins, dk } from '../../domain/time';
 import type { StudyBlock } from '../../domain/types';
@@ -31,7 +31,9 @@ interface Props {
 }
 
 export function LiveStartCard({ dateKey, onStart }: Props) {
-  const { pomo, checks } = useAppState((s) => ({ pomo: s.config.pomo, checks: s.checks }));
+  const checks = useAppState((s) => s.checks);
+  // O pomodoro com que a corrida nasceria AGORA: o do dia (o próprio dele, se o modal deu um), não o da config.
+  const { pomo } = rhythmAtDay(dateKey);
   const blocos = blocksForDay(dateKey);
   const estudos = blocos.filter((b) => b.type === 'estudo');
   // O dia já teve corrida? A régua é ESTUDO, não "tem bloco": a refeição das 13h existe num

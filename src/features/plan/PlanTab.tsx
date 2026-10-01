@@ -2,7 +2,7 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { canEditDayWindows, dayWindowsOverride, restKindKey } from '../../application/dayWindows';
+import { canEditDayWindows, dayEdited, restKindKey } from '../../application/dayWindows';
 import { canMoveEvents, findEventEditTarget, moveEvent, moveNeedsScope } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
@@ -250,7 +250,7 @@ export function PlanTab() {
   const groups = groupsForDay(viewKey);
   const canGroup = blocks.length > 0 && canEditGroups(viewKey);
   const canWindows = loaded && canEditDayWindows(viewKey, now).ok;
-  const windowsEdited = loaded && dayWindowsOverride(viewKey) !== null;
+  const windowsEdited = loaded && dayEdited(viewKey); // janelas editadas ou ritmo só deste dia
   const rest = loaded ? restKindKey(viewKey) : null; // dia sem blocos: fim de semana pausado ou dia livre
   const aoVivo = loaded && dayModeOf(viewKey) === 'live';
   const checks = useAppState((s) => s.checks);

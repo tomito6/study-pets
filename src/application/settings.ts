@@ -73,6 +73,7 @@ export function cancelSession(now: Date = new Date()): void {
   state.windowOverrides = {};
   state.dayModes = {};
   state.dayModeDefault = null;
+  state.dayRhythms = {};
   state.penalties = {};
   state.pauses = {};
   // O sininho zera junto: cada linha fala de um nível, um pet ou um dia que

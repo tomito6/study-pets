@@ -107,6 +107,14 @@ export function blockagesOnly(events: StudyEvent[] = []): StudyBlock[] {
  * só (mesma chave de check, mesmo "Estudo N"), com `paused` dizendo quanto do
  * intervalo foi pausa; a duração que vale é `blockMins`. Pausa que não cai em
  * estudo/pausa nenhum (o dia foi reeditado depois) é ignorada em silêncio.
+ *
+ * **O ritmo que muda no meio do dia** (`cfg.rhythmChanges`, 2026-10-01 — o ritmo só deste
+ * dia, ver domain/dayRhythm.ts): a partir do primeiro bloco que começa em `at` ou depois, o
+ * pomodoro e as pausas passam a ser os novos. Tudo que começou antes sai IGUAL ao plano sem
+ * a mudança — a pausa que segue o estudo em andamento ainda é a dele, a sobra colada nele
+ * ainda é dele, e um estudo de antes nunca é esticado por uma decisão do ritmo novo. A
+ * contagem de pomos do ciclo continua (a pausa longa segue vindo de quatro em quatro).
+ * Vale também dentro de uma corrida: ali a base é o ritmo da janela, e a mudança entra por cima.
  */
 export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pauses: PauseRecord[] = []): StudyBlock[] {
   // Resolve janelas de estudo (fallback pra retrocompat se vier cfg antigo)
@@ -129,6 +137,19 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     .filter((p) => p && isTime(p.at) && Number.isInteger(p.secs) && p.secs >= 1)
     .map((p) => ({ at: timeToMins(p.at), secs: p.secs }))
     .sort((a, b) => a.at - b.at);
+
+  // O ritmo que muda no meio do dia (ver `RhythmChange`), em minutos e em ordem. Vazio — que
+  // é como TODO dia era até 2026-10-01 — e nada abaixo se mexe: `changeAt` devolve sempre −1.
+  const changes = (cfg.rhythmChanges ?? [])
+    .filter((c) => c && isTime(c.at) && c.pomo > 0 && c.shortBreak > 0 && c.longBreak > 0)
+    .map((c) => ({ at: timeToMins(c.at), pomo: c.pomo, shortBreak: c.shortBreak, longBreak: c.longBreak }))
+    .sort((a, b) => a.at - b.at);
+  /** A mudança em vigor num minuto: a última com `at` ≤ ele. −1 = o ritmo da base (a janela ou a config). */
+  const changeAt = (m: number): number => {
+    let i = -1;
+    for (let k = 0; k < changes.length; k++) if (changes[k]!.at <= m) i = k;
+    return i;
+  };
 
   const blocks: StudyBlock[] = [];
   let cycleN = 0;
@@ -252,10 +273,16 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     // senão é o da config, como sempre. `half` desce pra cá junto, porque depende dele.
     const live = win.live;
     emCorrida = !!live;
-    const pomo = live ? live.pomo : cfg.pomo;
-    const shortBreak = live ? live.shortBreak : cfg.shortBreak;
-    const longBreak = live ? live.longBreak : cfg.longBreak;
-    const half = pomo / 2;
+    const base = live ?? cfg;
+    let pomo = base.pomo;
+    let shortBreak = base.shortBreak;
+    let longBreak = base.longBreak;
+    let half = pomo / 2;
+    // A mudança de ritmo em vigor (índice em `changes`; −1 = a base) e o minuto em que ela
+    // passou a valer nesta janela. Estudo que começou antes de `desde` nunca é esticado por
+    // uma sobra decidida com o ritmo novo — ele é de antes, e fica como estava.
+    let vigente = -1;
+    let desde = win.start;
     let pomoCount = 0;
     const MAX = 300;
     let iter = 0;
@@ -276,6 +303,29 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       const nextBlockStart = nextBlock ? nextBlock.start : winEnd;
       const gap = nextBlockStart - cur;
 
+      // O ritmo mudou no meio do dia? Vale pro primeiro bloco que COMEÇA aqui ou depois.
+      // A exceção é a sobra colada no estudo anterior (menor que um pomo DELE): ela ainda é
+      // dele — vira o mini ou estica ele, como já era —, e a troca fica pra volta seguinte.
+      // Sem isso um estudo marcado de 35 min (25 + a sobra de 10 antes da aula) voltaria a
+      // ter 25 só porque o ritmo mudou no minuto em que ele "terminava".
+      // E o ritmo novo só entra onde cabe pelo menos meio pomo DELE (a régua do mini): num
+      // trecho menor que isso ele não geraria nada — o tempo morreria, e a pausa que veio
+      // logo antes viraria o último bloco do dia e seria descartada, apagando um bloco que
+      // já tinha começado. Ali o trecho segue no ritmo de antes, e a troca espera.
+      if (changes.length > 0) {
+        const novo = changeAt(cur);
+        const r = novo < 0 ? base : changes[novo]!;
+        const colada = gap > 0 && gap < pomo && !!studyEndingAt(cur, desde);
+        if (novo !== vigente && !colada && gap >= r.pomo / 2) {
+          vigente = novo;
+          pomo = r.pomo;
+          shortBreak = r.shortBreak;
+          longBreak = r.longBreak;
+          half = pomo / 2;
+          desde = cur;
+        }
+      }
+
       // Gap menor que pomo: mini ou stretch. Sobra pequena que não encosta em estudo
       // nenhum (logo depois de um bloqueio, ou no começo de uma janela) fica livre.
       if (gap < pomo && gap > 0) {
@@ -287,7 +337,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
           // ser verdade por um detalhe que nada no app lê, mas que a prova cobra.
           pushStudy(cur, gap, nextBlockStart, gap >= half);
         } else {
-          const lastStudy = studyEndingAt(cur, win.start);
+          const lastStudy = studyEndingAt(cur, desde);
           if (gap >= half) pushStudy(cur, gap, nextBlockStart, true);
           else if (lastStudy) stretch(lastStudy, gap, nextBlockStart);
         }
@@ -358,7 +408,7 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
       // minutos de relógio, e uma pausa registrada que cubra a sobra inteira faria o mini nascer
       // vazio — o tempo morreria de novo, um nível abaixo. `effective` é o que de fato vale.
       const sobra = place(cur, winEnd - cur, winEnd);
-      const ultimo = studyEndingAt(cur, win.start);
+      const ultimo = studyEndingAt(cur, desde);
       // DESLIGAMENTO 3 (corrida): mesma razão do 1 — o que sobrou é tempo que passou.
       if (live) pushStudy(cur, winEnd - cur, winEnd, sobra.effective >= half);
       else if (sobra.effective >= half) pushStudy(cur, winEnd - cur, winEnd, true);

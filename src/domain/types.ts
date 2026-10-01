@@ -94,6 +94,21 @@ export interface PlannerConfig {
   pomo: number;
   shortBreak: number;
   longBreak: number;
+  /**
+   * O ritmo mudou no MEIO deste dia (ver domain/dayRhythm.ts). Nunca mora na config
+   * salva: quem monta é `configAtDay`, a partir do ritmo próprio do dia. Ausente = o
+   * gerador sai byte a byte igual ao de sempre.
+   */
+  rhythmChanges?: RhythmChange[];
+}
+
+/**
+ * "Às 14:00 o ritmo passa a ser 50 · 10 · 20": vale pro primeiro bloco que COMEÇA em
+ * `at` ou depois. O que começou antes — inclusive o bloco em andamento, e a sobra colada
+ * nele — fica exatamente como estava.
+ */
+export interface RhythmChange extends LiveRhythm {
+  at: TimeString;
 }
 
 /** `almoco` deixou de existir em 2026-09-06: a refeição é um evento sem XP, tipo `intervalo`. */

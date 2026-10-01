@@ -28,6 +28,8 @@ import type { ConfigHistory } from './configHistory';
 import type { WindowOverrides } from './dayWindows';
 import { normalizeDayModeDefault, normalizeDayModes } from './dayMode';
 import type { DayModeDefault, DayModes } from './dayMode';
+import { normalizeDayRhythms } from './dayRhythm';
+import type { DayRhythms } from './dayRhythm';
 import { LUNCH_SERIES_ID, migrateLunch } from './eventPresets';
 import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
@@ -110,6 +112,13 @@ export interface PersistedState {
    * clique. `null` = nunca decidiu, e o app segue na rotina.
    */
   dayModeDefault: DayModeDefault | null;
+  /**
+   * O ritmo do pomodoro só de um dia (ver domain/dayRhythm.ts): o do dia inteiro, e as
+   * trocas do meio do dia. Mapa próprio, como `dayModes`, e não um campo do
+   * `windowOverrides`: um override de janelas tira o sábado da folga e some a cada corrida
+   * do modo ao vivo — o ritmo do dia não é nem uma coisa nem outra.
+   */
+  dayRhythms: DayRhythms;
   /** Áreas cujo tour contextual já foi visto. Cancelar sessão NÃO zera — quem cancelou já conhece o app. */
   tutorialSeen: TutorialSeen;
   /**
@@ -192,6 +201,7 @@ export function emptyPersistedState(): PersistedState {
     windowOverrides: {},
     dayModes: {},
     dayModeDefault: null,
+    dayRhythms: {},
     tutorialSeen: {},
     safetyNet: null,
     ageConfirmed: false,
@@ -336,6 +346,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     windowOverrides: hydrateWindowOverrides(d.windowOverrides),
     dayModes: normalizeDayModes(d.dayModes),
     dayModeDefault: normalizeDayModeDefault(d.dayModeDefault),
+    // Doc de antes do ritmo por dia: nenhum — todo dia segue a rotina, que é o que era verdade.
+    dayRhythms: normalizeDayRhythms(d.dayRhythms),
     // Doc de antes do tour: vazio, então a conta que já existe também vê o tour uma vez.
     tutorialSeen: normalizeTutorialSeen(d.tutorialSeen),
     // Só a forma; o prazo de 30 dias é conferido em application/backup.ts, que tem o relógio.
@@ -375,6 +387,7 @@ export function serializeState(s: PersistedState): UserDoc {
     windowOverrides: s.windowOverrides || {},
     dayModes: s.dayModes || {},
     dayModeDefault: s.dayModeDefault ?? null,
+    dayRhythms: s.dayRhythms || {},
     tutorialSeen: s.tutorialSeen || {},
     safetyNet: s.safetyNet ?? null,
     ageConfirmed: s.ageConfirmed === true,

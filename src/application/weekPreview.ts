@@ -8,7 +8,7 @@
 //
 // `semana` é a semana de verdade, pelo MESMO `blocksForDay` do Plano: os avulsos, as
 // janelas só do dia, o dia livre, as corridas do modo ao vivo. Um dia com janela
-// editada ou evento avulso ganha a marca "diferente da rotina".
+// editada, ritmo próprio ou evento avulso ganha a marca "diferente da rotina".
 
 import { currentWeekKeys } from '../domain/analytics';
 import { expandEventsForDate } from '../domain/events';
@@ -36,6 +36,6 @@ function routineDay(key: DateKey, dayIdx: number, cfg: UserConfig): WeekPreviewD
 }
 
 function realDay(key: DateKey, dayIdx: number): WeekPreviewDay {
-  const changed = !!state.windowOverrides[key] || (state.events[key]?.length ?? 0) > 0;
+  const changed = !!state.windowOverrides[key] || (state.dayRhythms?.[key]?.length ?? 0) > 0 || (state.events[key]?.length ?? 0) > 0;
   return { key, dayIdx, rest: restKindOf(key), blocks: blocksForDay(key), changed };
 }

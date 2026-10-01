@@ -4,7 +4,7 @@ import { canCheckBlock, previousCountingDay, previousDayKey } from '../domain/ch
 import { blockInGroup, countsForGroup, groupOf } from '../domain/groups';
 import { petLevel } from '../domain/pets';
 import { bonusForCheck, coinsForBlock, xpFromCheck } from '../domain/progression';
-import { blockMins, dk } from '../domain/time';
+import { blockMins, dk, timeToMins } from '../domain/time';
 import { timerProgress } from '../domain/timer';
 import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/types';
 import { strings } from '../shared/strings';
@@ -12,7 +12,7 @@ import { showToast } from '../shared/toast';
 import { derived, state } from '../store/store';
 import { isRestDayKey } from './dayWindows';
 import { activePet } from './pets';
-import { blocksForDay, configAtDay, isBonusDayKey } from './plan';
+import { blocksForDay, isBonusDayKey, rhythmAtDay } from './plan';
 import { scheduleSave } from './save';
 
 export interface CheckResult {
@@ -77,6 +77,11 @@ function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString,
 /** Grava o check com o pet equipado e o bônus de skill decidido AGORA. */
 function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, CheckRecord>, now: Date): CheckResult {
   const pet = activePet();
+  // A pausa longa que valia quando a pausa anterior nasceu: ela é do ritmo do ESTUDO que veio
+  // antes dela — num dia em que o ritmo mudou no meio, a da manhã e a da tarde não têm o mesmo tamanho.
+  const estudoAntes = blocksForDay(dateKey)
+    .filter((b) => b.type === 'estudo' && b.time < block.time)
+    .pop();
   const bonus = bonusForCheck(block, dateKey, {
     activeSkill: pet?.skill ?? null,
     // A skill vale desde a troca dela OU desde que o pet foi equipado — o mais recente.
@@ -85,7 +90,7 @@ function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, 
     petLevel: pet ? petLevel(pet) : 1,
     ...dayContext(dateKey, block, day),
     dailyStudyMin: state.config.dailyStudyMin ?? 0,
-    longBreakMins: configAtDay(dateKey).longBreak, // a pausa longa que valia naquele dia
+    longBreakMins: rhythmAtDay(dateKey, timeToMins((estudoAntes ?? block).time)).longBreak,
     now,
   });
   const record = { pet: pet?.id ?? null, bonus };

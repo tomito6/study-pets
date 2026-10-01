@@ -339,6 +339,80 @@ test.describe('Study Pets — smoke', () => {
     expect(erros).toEqual([]);
   });
 
+  // 2026-10-01, pedido do Tomi: "o treco de mudar pomodoro deveria ser diferente no estrutura
+  // do dia e na estrutura da rotina — 2 coisas separadas; pelo próprio nome já deveríamos saber
+  // a diferença". Até aqui o modal do dia só MOSTRAVA o ritmo da rotina. Agora os três campos
+  // valem só praquele dia: o dia inteiro se ele não começou, do próximo bloco em diante se já
+  // tem bloco marcado — e a rotina, nas Configurações, não se mexe.
+  test('75. o ritmo do modal é só daquele dia: amanhã inteiro, hoje do próximo bloco em diante, e a rotina fica como está', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:07');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#tour-balloon')).toBeHidden();
+
+    // AMANHÃ (quinta) ainda não começou: o ritmo novo vale o dia inteiro. A prévia reage
+    // antes do Salvar, e uma linha diz qual é o ritmo da rotina (pra onde "Restaurar" volta).
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-rhythm-note')).toHaveCount(0);
+    await expect(page.locator('#day-preview .sts-tile').first()).toContainText('16');
+    await page.locator('#day-rhythm-pomo').fill('50');
+    await page.locator('#day-rhythm-short').fill('10');
+    await expect(page.locator('#day-preview .sts-tile').first()).not.toContainText('16');
+    await expect(page.locator('#day-rhythm-note')).toContainText('Na rotina: 25 · 5 · 20');
+    await page.locator('#day-windows-save').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('Ritmo deste dia ajustado');
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
+    await expect(page.locator('#day-windows-btn')).toContainText('editado');
+    // Sexta segue a rotina — o ritmo era só da quinta.
+    await page.locator('.day-tab', { hasText: 'Sex' }).click();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    await expect(page.locator('#day-windows-btn')).not.toContainText('editado');
+
+    // HOJE (quarta, 10:07) com um bloco já marcado: o ritmo novo entra depois do bloco em
+    // andamento (10:00–10:25) e da pausa dele. O que já foi vivido não se mexe.
+    await page.locator('.day-tab', { hasText: 'Qua' }).click();
+    const primeiro = page.locator('.block-row').first();
+    await primeiro.locator('.check').click();
+    await expect(primeiro.locator('.check')).toHaveClass(/checked/);
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-rhythm-pomo')).toHaveValue('25'); // hoje ainda está na rotina
+    await page.locator('#day-rhythm-pomo').fill('50');
+    await page.locator('#day-windows-save').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('#toast')).toContainText('a partir do próximo bloco');
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    await expect(page.locator('.block-row').first().locator('.check')).toHaveClass(/checked/);
+    await expect(page.locator('.block-row', { hasText: '10:00–10:25' })).toHaveCount(1);
+    await expect(page.locator('.block-row', { hasText: '10:25–10:30' })).toHaveCount(1);
+    await expect(page.locator('.block-row', { hasText: '10:30–11:20' })).toHaveCount(1);
+
+    // A ROTINA não foi tocada: nas Configurações o pomodoro continua 25.
+    await page.locator('#fab-config').click();
+    await page.locator('#settings-panel .settings-tab[data-tab="day"]').click();
+    await expect(page.locator('#cfg-pomo')).toHaveValue('25');
+    await page.locator('#settings-panel .st-back').click();
+    await expect(page.locator('#settings-panel')).toBeHidden();
+
+    // Sobrevive ao reload: o ritmo do dia vai no documento.
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('.block-row', { hasText: '10:30–11:20' })).toHaveCount(1);
+    await page.locator('.day-tab', { hasText: 'Qui' }).click();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:50');
+
+    // "Restaurar rotina" na quinta (que não começou) devolve o ritmo da rotina ao dia inteiro.
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-rhythm-pomo')).toHaveValue('50');
+    await page.locator('#day-windows-restore').click();
+    await expect(page.locator('#day-windows-panel')).toBeHidden();
+    await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');
+    await expect(page.locator('#day-windows-btn')).not.toContainText('editado');
+    expect(erros).toEqual([]);
+  });
+
   test('30. fim de semana pausado: dá pra abrir janelas só naquele sábado, e "Restaurar rotina" devolve a folga', async ({ page }) => {
     await abrirApp(page);
     await page.locator('#tour-skip').click(); // o balão do tour cobre as abas dos dias de propósito
@@ -2436,11 +2510,16 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     await expect(page.locator('#tour-balloon')).toBeHidden();
 
-    // A porta mostra o ritmo em vigor — quem abre já sabe o que vai mudar. E se chama
-    // pelo nome da seção aonde leva: "Ritmo do pomodoro", com os três números em tiles.
+    // O bloco mostra o ritmo em vigor NESTE dia — desde 2026-10-01 os três tiles são campos
+    // (o ritmo só do dia, ver o 75) — e se chama pelo nome da seção das Configurações aonde
+    // a porta leva: "Ritmo do pomodoro".
     await page.locator('#day-windows-btn').click();
     await expect(page.locator('#day-windows-rhythm')).toContainText('Ritmo do pomodoro');
-    await expect(page.locator('#day-windows-rhythm .dw-rt')).toHaveText([/25\s*min de estudo/, /5\s*min de pausa/, /20\s*min de pausa longa/]);
+    await expect(page.locator('#day-windows-rhythm .dw-rt')).toHaveText([/min de estudo/, /min de pausa/, /min de pausa longa/]);
+    await expect(page.locator('#day-rhythm-pomo')).toHaveValue('25');
+    await expect(page.locator('#day-rhythm-short')).toHaveValue('5');
+    await expect(page.locator('#day-rhythm-long')).toHaveValue('20');
+    await expect(page.locator('#day-windows-rhythm-btn')).toContainText('rotina');
 
     // E LEVA: o modal fecha, as Configurações abrem na segunda aba, na seção certa.
     await page.locator('#day-windows-rhythm-btn').click();
@@ -2604,7 +2683,7 @@ test.describe('Study Pets — smoke', () => {
 
     await page.locator('#day-windows-btn').click();
     await expect(page.locator('#day-windows-rhythm')).toContainText('Ritmo do pomodoro');
-    await expect(page.locator('#day-windows-rhythm .dw-rt').first()).toContainText('25');
+    await expect(page.locator('#day-rhythm-pomo')).toHaveValue('25');
     await page.locator('#day-windows-rhythm-btn').click();
 
     // O modal fecha, as Configurações abrem na aba certa, e a seção do ritmo acende.
@@ -2841,9 +2920,11 @@ test.describe('Study Pets — smoke', () => {
     // E o "Janelas do dia" de hoje mostra o ritmo que vale HOJE, não o da config.
     await page.locator('.day-tab', { hasText: 'Qua' }).click();
     await page.locator('#day-windows-btn').click();
-    await expect(page.locator('#day-windows-rhythm .dw-rt.accent b')).toHaveText('25');
+    await expect(page.locator('#day-rhythm-pomo')).toHaveValue('25');
 
-    // Sobrevive ao reload: a história vai no documento.
+    // Sobrevive ao reload: a história vai no documento. (O save tem 800 ms de debounce: sem
+    // esperar o indicador, o reload chegava antes dele numa máquina rápida.)
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
     await expect(page.locator('.block-row').first()).toContainText('09:00–09:25');

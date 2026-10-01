@@ -21,6 +21,11 @@ Lista de coisas pra fazer no app. Diferente do `IDEIAS.md` (rabiscos exploratór
 
 ## 1. Janelas do dia: o ritmo por dia
 
+> **(b) fechado em 2026-10-01**: o Tomi decidiu ("deveria ser 2 coisas separadas e diferentes") e está
+> implementado — os três números do modal "🕘 Estrutura do dia" são campos e valem só praquele dia; a rotina
+> fica nas Configurações. Ver "O ritmo do dia" no CLAUDE.md. O (a) — tirar o "↺ Restaurar rotina" — segue
+> aberto, e ele ganhou mais um trabalho: é também o caminho de volta do ritmo do dia.
+
 O que sobrou do pedido de 2026-09-07, depois que a **porta** pro ritmo entrou (2026-09-14 — o modal
 "🕘 Janelas do dia" mostra o ritmo em vigor em `#day-windows-rhythm`, e o "Mudar →" leva até
 Configurações → Estrutura do dia, já rolado e com a seção acesa; o tutorial das Configurações explica a
@@ -39,7 +44,8 @@ ritmo, e **o gerador passa a produzir planos diferentes pro mesmo dia conforme o
 "mexer no gerador reescreve o passado" valendo por inteiro. **Atualização 2026-09-15**: a história da config
 (`domain/configHistory.ts`) já congela o passado — mudar ritmo/janelas nas Configurações vale de hoje em
 diante, nunca pra trás —, então o ritmo por dia deixou de ser perigoso pra ontem; o que falta é o campo no
-override e a UI. Ver também o item 5.
+override e a UI. Ver também o item 5. **Atualização 2026-10-01**: feito, mas com mapa próprio
+(`dayRhythms`) em vez de campo no override, e com a troca do meio do dia dentro do gerador (`rhythmChanges`).
 
 ## 2. Miúdos de conta, se um dia houver outro usuário
 
