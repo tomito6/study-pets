@@ -38,3 +38,7 @@ teste/
 
 # Config local do Claude Code (o launch.json continua versionado)
 .claude/settings.local.json
+
+# Arquivos pessoais do Tomi, fora do git
+pensamentos_tomi.txt
+abrirstudypets.html
