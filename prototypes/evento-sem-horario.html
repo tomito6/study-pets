@@ -102,6 +102,8 @@ footer li{margin-bottom:6px}
 .lembrete.ck2{gap:5px 7px}
 .lembrete.ck2 .li{display:flex;align-items:center;gap:8px}
 .lembrete.ck2 .pin{padding-top:1px}
+.lembrete.stack.bare{grid-template-columns:1fr}
+.lembrete.stack.bare .li{grid-column:1}
 .ck.sm{width:16px;height:16px;border-radius:4px;font-size:10px}
 .lembrete .li.done b{text-decoration:line-through;text-decoration-color:var(--border-mid);color:var(--muted);font-weight:400}
 .lembrete.pills{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:7px 10px}
@@ -163,7 +165,7 @@ footer li{margin-bottom:6px}
 
 <header>
   <h1>Compromisso sem horário</h1>
-  <p class="sub">esboço · 18/09/2026 · três formas de mostrar, um “quando” opcional, e de onde nasce</p>
+  <p class="sub">esboço · 18/09/2026, revisto em 12/10/2026 · três formas de mostrar, um “quando” opcional, e de onde nasce</p>
 
   <p>O pedido, nas suas palavras: <em>“seria interessante poder adicionar um evento que não tem necessariamente um horário no dia. Esse evento ficaria demarcado em cima, de forma meio distinta.”</em></p>
 
@@ -445,7 +447,7 @@ footer li{margin-bottom:6px}
           <div class="body" style="padding:14px">
             <div class="sheet">
               <div class="sheet-t">Novo evento</div>
-              <div class="chips"><span>🍽️ Refeição</span><span>👥 Reunião</span><span>☕ Café</span><span>🚌 Deslocamento</span><span class="on">📌 Sem horário</span><span>✏️ Outro</span></div>
+              <div class="chips"><span>🍽️ Refeição</span><span>👥 Reunião</span><span>☕ Café</span><span>🚌 Deslocamento</span><span class="on">Sem horário</span><span>✏️ Outro</span></div>
               <div class="fld"><label>O quê</label><div class="inp ph">Prova de Análise II</div></div>
               <div class="fld two">
                 <div><label>Início</label><div class="inp" style="opacity:.4">—:—</div></div>
@@ -480,7 +482,7 @@ footer li{margin-bottom:6px}
 
     <div class="texto">
       <h4>Porta 1 — o chip no “+ Evento”</h4>
-      <p>Reaproveita a porta que a pessoa já usa pra botar compromisso no dia, e que já tem uma fileira de atalhos. Escolhendo <b>📌 Sem horário</b>, os campos de hora se apagam e o painel explica em uma linha o que muda. A vantagem é que a descoberta é de graça: quem abre o “+ Evento” pra marcar a prova <em>encontra</em> a opção sem procurar.</p>
+      <p>Reaproveita a porta que a pessoa já usa pra botar compromisso no dia, e que já tem uma fileira de atalhos. Escolhendo <b>Sem horário</b>, os campos de hora se apagam e o painel explica em uma linha o que muda. A vantagem é que a descoberta é de graça: quem abre o “+ Evento” pra marcar a prova <em>encontra</em> a opção sem procurar.</p>
 
       <h4>Porta 2 — “+ anotar” na própria faixa</h4>
       <p>Mais rápida pra quem já sabe (um toque, digita, Enter), e é onde a mão já está quando você está lendo o dia. Mas ela só existe <b>depois</b> que a faixa existe, e a faixa não existe num dia sem item nenhum — então sozinha ela é invisível pra conta nova.</p>
@@ -510,7 +512,7 @@ footer li{margin-bottom:6px}
               <div class="wk-l"><span class="h">11:00</span><span>Ciclo 2 · 0/4 · 1h40</span></div>
               <div class="wk-l"><span class="h">13:00</span><span>🍽️ Almoço</span></div>
               <div class="wk-l"><span class="h">14:00</span><span>Ciclo 3 · 0/4 · 1h40</span></div>
-              <div class="wk-pin">📌 Prova de Análise II · Entregar a lista 3</div>
+              <div class="wk-pin">Prova de Análise II · Entregar a lista 3</div>
             </div>
           </div>
         </div>
@@ -532,7 +534,7 @@ footer li{margin-bottom:6px}
               </div>
               <div class="wkcol">
                 <div class="wkcol-h" style="color:var(--accent);font-weight:600">Qui 18</div>
-                <div class="wkcol-pin">📌 Prova · Lista 3</div>
+                <div class="wkcol-pin">Prova · Lista 3</div>
                 <div class="wkcol-tr">
                   <div class="wkcol-sg" style="top:10px;height:46px"></div>
                   <div class="wkcol-sg ev" style="top:62px;height:20px"></div>
@@ -560,7 +562,7 @@ footer li{margin-bottom:6px}
 
       <h4>No laptop ela fica fora da grade</h4>
       <p>A coluna do dia desenha bloco por altura de duração; uma etiqueta sem duração não tem altura. Então ela mora numa faixa <b>acima</b> da grade, na mesma linha em todas as colunas — o que tem um efeito bom: os dias com etiqueta se destacam de longe, quando você está planejando a semana.</p>
-      <p>Com mais de duas por dia, a faixa trunca (<em>“📌 Prova · +2”</em>) em vez de crescer — a altura da faixa é comum às sete colunas, e um dia cheio não pode encolher a grade dos outros seis.</p>
+      <p>Com mais de duas por dia, a faixa trunca (<em>“Prova · +2”</em>) em vez de crescer — a altura da faixa é comum às sete colunas, e um dia cheio não pode encolher a grade dos outros seis.</p>
 
       <h4>Onde ela não entra</h4>
       <p>Nada na <b>Análise</b> (não tem minuto pra medir, e “você deixou 2 de 3 sem riscar” é exatamente o app te olhando torto), nada no <b>resumo do fim do dia</b> (que fala de XP e pets) e nada no <b>modo foco</b> (que é sobre o bloco que está correndo). Nem <b>notificação</b>: sem horário, não há quando avisar.</p>
@@ -574,6 +576,7 @@ footer li{margin-bottom:6px}
   <p class="why">Um lembrete sempre cabe. Três sempre quebram. <b>Dois é a fronteira</b> — e onde ela cai depende do tamanho dos nomes, não do número deles. Por isso cada variante abaixo aparece duas vezes: com dois nomes curtos (“Prova de Análise II”, “Entregar a lista 3”) e com dois nomes compridos de verdade, que é o que a pessoa escreve quando está com pressa. As alturas são medidas na tela, não estimadas.</p>
 
   <div class="aviso" style="max-width:840px;margin:0 0 4px">
+    <p><b>12/10:</b> fica a A4, sem o 📌 — a faixa sem emoji, só check e texto. A feature continua guardada, sem implementar, porque você ainda não está convencido do formato.</p>
     <p><b>O que você disse depois de ver a Parte 1:</b> gostou de poder riscar, mas não da formatação da B. Então a pergunta deixou de ser “A ou B” e virou <b>a faixa da A com o check da B</b> — que é a <b>variante A4</b> aqui embaixo. As outras três ficam porque foi comparando com elas que ela chegou nesse formato.</p>
     <p>O que a B tinha e que sai: o título <code>HOJE TAMBÉM</code> em caps, o contador “1 de 3”, o “+ anotar” (a porta agora é o “+ Evento”), o ✕ em cada linha e as divisórias entre itens. Sobra a faixa tracejada leve da A — e um check.</p>
   </div>
@@ -707,8 +710,7 @@ footer li{margin-bottom:6px}
           <div class="phone">
             <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
             <div class="body">
-              <div class="lembrete stack ck2" id="m-a4-curto">
-                <span class="pin">📌</span>
+              <div class="lembrete stack ck2 bare" id="m-a4-curto">
                 <span class="li"><span class="ck sm"></span><b>Prova de Análise II</b></span>
                 <span class="li"><span class="ck sm"></span><b>Entregar a lista 3</b></span>
               </div>
@@ -730,8 +732,7 @@ footer li{margin-bottom:6px}
           <div class="phone">
             <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
             <div class="body">
-              <div class="lembrete stack ck2" id="m-a4-done">
-                <span class="pin">📌</span>
+              <div class="lembrete stack ck2 bare" id="m-a4-done">
                 <span class="li done"><span class="ck sm on">✓</span><b>Prova de Análise II</b></span>
                 <span class="li"><span class="ck sm"></span><b>Entregar a lista 3</b></span>
               </div>
@@ -753,8 +754,7 @@ footer li{margin-bottom:6px}
           <div class="phone">
             <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
             <div class="body">
-              <div class="lembrete stack ck2" id="m-a4-longo">
-                <span class="pin">📌</span>
+              <div class="lembrete stack ck2 bare" id="m-a4-longo">
                 <span class="li"><span class="ck sm"></span><b>Entregar o relatório de Mecânica Quântica</b></span>
                 <span class="li done"><span class="ck sm on">✓</span><b>Renovar a matrícula no portal da TUM</b></span>
                 <span class="li"><span class="ck sm"></span><b>Buscar o pacote</b></span>
@@ -778,8 +778,8 @@ footer li{margin-bottom:6px}
         <h4>O que mudou em relação à B</h4>
         <p>Só o que você apontou: saiu a moldura de cartão e tudo que vinha com ela — o título <code>HOJE TAMBÉM</code> em caps, o contador, o “+ anotar” e o ✕ por linha. Ficou a faixa tracejada da A, que não tem cabeçalho, não tem rodapé e não se anuncia. O check é o mesmo quadrado das linhas do plano, só um pouco menor (16px contra 18px), porque aqui ele está numa faixa de texto e não numa linha de bloco.</p>
 
-        <h4>O 📌 marca a faixa, não cada linha</h4>
-        <p>Ele fica uma vez, na altura da primeira linha, como quem diz “daqui pra baixo é outra coisa”. Repetido em cada linha, ele viraria uma coluna de emoji sem informação — e brigaria com o check pelo mesmo canto.</p>
+        <h4>Sem o 📌 (12/10)</h4>
+        <p>O alfinete saiu, a seu pedido: a faixa fica só com o check e o texto. Quem diz “isto não é bloco do plano” é a borda tracejada e a falta da coluna de horário, que já bastavam. Até 12/10 ele ficava uma vez, na altura da primeira linha; essa versão está no histórico da branch.</p>
 
         <h4>Dois alvos por linha, que é o que o app já faz</h4>
         <p>No plano, a <code>.block-row</code> tem dois destinos: o <b>check</b> marca, e o <b>resto da linha</b> abre o foco. Aqui é igual — o check risca, o texto abre o modal do evento (Editar / Apagar). Ninguém precisa aprender nada novo, e o ✕ não precisa existir dentro da faixa.</p>
@@ -865,7 +865,7 @@ footer li{margin-bottom:6px}
           <div class="phone" style="width:344px">
             <div class="body" style="padding:14px">
               <div class="sheet">
-                <div class="sheet-t">📌 Prova de Análise II</div>
+                <div class="sheet-t">Prova de Análise II</div>
                 <p class="dimtxt" style="margin-top:-4px">Lembrete de hoje · não reserva tempo no plano</p>
                 <div class="sheet-f" style="justify-content:space-between;margin-top:14px">
                   <span class="btn mute">✏️ Editar</span>
@@ -904,7 +904,7 @@ addEventListener('load', () => {
 
 <footer>
   <h2>Onde a conversa parou</h2>
-  <p><b>Variante A4</b> — a faixa tracejada da direção A, empilhada, com o check da B em cada linha e mais nada da moldura dela. <b>Nasce do “+ Evento”</b>, por um chip <em>📌 Sem horário</em> que apaga os campos de hora, e sai pelo mesmo modal que o evento já abre no toque. <b>Sem o “quando” grosso</b> (manhã/tarde/noite) por ora — é a única parte que toca a lista do plano, e a única que é fácil de somar depois.</p>
+  <p><b>Variante A4, sem o 📌</b> (confirmado em 12/10) — a faixa tracejada da direção A, empilhada, com o check da B em cada linha e mais nada da moldura dela. <b>Nasce do “+ Evento”</b>, por um chip <em>Sem horário</em> que apaga os campos de hora, e sai pelo mesmo modal que o evento já abre no toque. <b>Sem o “quando” grosso</b> (manhã/tarde/noite) por ora — é a única parte que toca a lista do plano, e a única que é fácil de somar depois.</p>
   <p>Descartadas no caminho, com o motivo à vista: a faixa <b>em linha</b> (com dois nomes compridos o segundo perde o começo, e a forma da faixa muda conforme o que você escreveu), as <b>pílulas</b> (vocabulário de filtro, e com nome comprido viram a linha inteira com contorno) e o <b>chip que recolhe</b> (esconde justamente o que você escreveu pra não esquecer).</p>
 
   <h3>O contorno, escrito antes de começar</h3>
@@ -918,10 +918,12 @@ addEventListener('load', () => {
 
   <h3>O que ainda falta você decidir</h3>
   <ul>
-    <li><b>Como o chip se chama no “+ Evento”.</b> Nas telas está <em>📌 Sem horário</em>, que descreve o que ele faz. As outras candidatas — <em>Lembrete</em>, <em>Dia inteiro</em>, <em>Anotação</em> — dizem o que ele <em>é</em>, e “Dia inteiro” é o nome que o resto do mundo usa (é o que vem escrito no <code>.ics</code> que você importa).</li>
+    <li><b>Como o chip se chama no “+ Evento”.</b> Nas telas está <em>Sem horário</em>, que descreve o que ele faz. As outras candidatas — <em>Lembrete</em>, <em>Dia inteiro</em>, <em>Anotação</em> — dizem o que ele <em>é</em>, e “Dia inteiro” é o nome que o resto do mundo usa (é o que vem escrito no <code>.ics</code> que você importa).</li>
     <li><b>Riscado some ou fica?</b> Nas telas fica, em cinza, no lugar — é o que deixa ver, no fim do dia, o que o dia teve além dos pomodoros. A alternativa é descer pro fim da faixa, o que mantém o que falta sempre no topo.</li>
     <li><b>E na Semana?</b> A Parte 4 mostra uma linha no pé do cartão (celular) e uma faixa acima da grade (laptop). Dá pra deixar as duas fora do v1 sem perder nada — o lembrete é do dia, e é no dia que ele precisa aparecer.</li>
   </ul>
+
+  <p><b>Guardada, não implementada</b> (12/10): você ainda não está convencido do formato. Quando voltar, é retomar daqui.</p>
 
   <p class="dimtxt" style="margin-top:22px">Esboço, não implementação — nenhum arquivo de <code>src/</code> foi tocado. Escolhida a direção, a conta é: um campo em <code>persistence.ts</code>, um <code>domain/dayNotes.ts</code> (puro, com o remap pra pausa que a nota já tem), um caso de uso, um componente no <code>PlanTab</code> e um caso de e2e.</p>
 </footer>
