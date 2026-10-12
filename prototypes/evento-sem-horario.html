@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compromisso sem horário — esboços</title>
+<style>
+@font-face{font-family:'DM Sans';src:url('../public/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap;}
+@font-face{font-family:'DM Mono';src:url('../public/fonts/dm-mono-400-latin.woff2') format('woff2');font-weight:400;font-display:swap;}
+@font-face{font-family:'DM Mono';src:url('../public/fonts/dm-mono-500-latin.woff2') format('woff2');font-weight:500;font-display:swap;}
+@font-face{font-family:'Lora';src:url('../public/fonts/lora-latin.woff2') format('woff2');font-weight:400 700;font-display:swap;}
+:root{
+  --bg:#f6efe3; --bg2:#fffdf7; --bg3:#f2ead9; --track:#e5dcc8;
+  --text:#40382e; --muted:#6e6455; --dim:#8b8072;
+  --border:#d8cdbb; --border-mid:#c0b49f;
+  --accent:#486244; --accent2:#4e6b48; --on-accent:#fffdf6;
+  --accent-wash:rgba(72,98,68,.10); --accent-border:rgba(72,98,68,.45); --accent-bg:#e8eddf;
+  --orange:#9a5f38; --orange-bg:#faf3e8; --gold:#8f6318;
+  --s0:#486244; --s0-bg:#edf1e6; --s0-line:#3f5a3c;
+  --s1:#47677d; --s1-bg:#e9eff2; --s1-line:#3d5b6e;
+  --radius:14px; --radius-sm:8px; --radius-md:10px; --radius-lg:16px;
+  --font-ui:'DM Sans',system-ui,sans-serif; --font-mono:'DM Mono',ui-monospace,monospace; --font-title:'Lora',Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#efe7d8;color:var(--text);font:14px/1.55 var(--font-ui);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+code{font-size:.88em;font-family:var(--font-mono);background:rgba(64,56,46,.06);padding:1px 5px;border-radius:5px}
+header{max-width:880px;margin:0 auto;padding:44px 24px 10px}
+h1{font:600 33px/1.15 var(--font-title);margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+header p{color:var(--text);margin:0 0 11px;max-width:770px}
+.aviso{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:15px 18px;margin:20px 0 0;max-width:770px}
+.aviso b{font-weight:600}
+.aviso p{margin:0 0 8px}.aviso p:last-child{margin:0}
+.parte{max-width:1300px;margin:30px auto 0;padding:30px 24px 10px;border-top:1px solid var(--border)}
+.parte-head,.dir-head{display:flex;align-items:baseline;gap:14px;margin:0 0 6px;flex-wrap:wrap}
+.letra{font:500 12px var(--font-ui);letter-spacing:2px;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+.letra.warn{color:var(--orange)}
+h2{font:500 28px/1.2 var(--font-title);margin:0}
+.dir h3{font:500 21px/1.2 var(--font-title);margin:0}
+.tag{font:500 10.5px var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border-mid);border-radius:99px;padding:2px 9px}
+.tag.rec{color:var(--accent);border-color:var(--accent-border);background:var(--accent-wash)}
+.why{color:var(--muted);font-size:13.5px;margin:0 0 18px;max-width:840px}
+.dir{padding:24px 0 10px;border-top:1px dashed var(--border)}
+.corpo{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;margin-top:14px}
+.telas{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.texto{flex:1 1 360px;min-width:300px;max-width:540px}
+.texto h4{font:500 11.5px var(--font-ui);letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);margin:15px 0 4px}
+.texto h4:first-child{margin-top:0}
+.texto h4.custo{color:var(--orange)}
+.texto p{margin:0 0 8px;font-size:13.5px}
+.cap{font-size:11px;color:var(--muted);text-align:center;margin:8px 0 0;letter-spacing:.02em}
+footer{max-width:880px;margin:32px auto 0;padding:30px 24px 90px;border-top:1px solid var(--border)}
+footer h2{font-size:23px;margin-bottom:10px}
+footer h3{font:500 15px var(--font-title);margin:20px 0 4px}
+footer p{max-width:770px;margin:0 0 10px}
+footer ul{max-width:770px;padding-left:20px;margin:0 0 10px}
+footer li{margin-bottom:6px}
+
+/* ───────────────────────── a tela do app ───────────────────────── */
+.phone{width:394px;flex:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;overflow:hidden;box-shadow:0 1px 3px rgba(64,56,46,.06)}
+.phone.wide{width:560px}
+.tb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);background:rgba(255,253,247,.7)}
+.tb .dt{font-size:11.5px;color:var(--muted)}
+.tb .xp{font:500 11px var(--font-mono);color:var(--accent);border:1px solid var(--accent-border);border-radius:99px;padding:2px 9px;background:var(--accent-wash)}
+.body{padding:12px 14px 16px}
+.bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.btn{font-size:11.5px;color:var(--accent);background:transparent;border:1px solid var(--accent2);border-radius:var(--radius-sm);padding:4px 9px;white-space:nowrap}
+.btn.full{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.mute{color:var(--muted);border-color:var(--border)}
+
+.list{display:flex;flex-direction:column;gap:3px}
+.cd{display:flex;align-items:center;gap:8px;margin:9px 0 5px}
+.cd .ln{flex:1;height:1px;background:var(--s0-line);opacity:.35}
+.cd .lb{font:500 9.5px var(--font-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--s0);opacity:.8}
+.cd.c1 .ln{background:var(--s1-line)}.cd.c1 .lb{color:var(--s1)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:var(--radius-sm);border:1px solid var(--s0-line);background:var(--s0-bg)}
+.row.c1{border-color:var(--s1-line);background:var(--s1-bg)}
+.row.c1 .tm{color:var(--s1-line)}.row.c1 .nm{color:var(--s1)}
+.row.pausa{background:transparent;border-color:transparent;padding:7px 12px}
+.row.ev{background:var(--orange-bg);border:1px solid var(--orange);border-style:dashed}
+.row.ev .nm{color:var(--orange)}.row.ev .tm{color:var(--orange)}
+.row.done{opacity:.55}
+.row.done .nm{text-decoration:line-through;text-decoration-color:var(--muted)}
+.row.now{box-shadow:0 0 0 1px var(--accent2)}
+.ck{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border-mid);flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.ck.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ck.off{opacity:0;pointer-events:none}
+.tm{font:400 11px var(--font-mono);color:var(--s0-line);min-width:92px}
+.nm{font-size:13px;color:var(--s0);flex:1}
+.nm .sub2{color:var(--muted);font-weight:400}
+.xpb{font:400 10px var(--font-mono);padding:2px 7px;border-radius:99px;background:var(--accent-wash);color:var(--accent);white-space:nowrap}
+.xpb.no{background:transparent;color:var(--muted)}
+
+/* ── a etiqueta: as três formas ── */
+.lembrete{display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;padding:8px 11px;border:1px dashed var(--border-mid);border-radius:var(--radius-sm);background:var(--bg2);font-size:12.2px;color:var(--muted);line-height:1.5}
+.lembrete .pin{font-size:12px;line-height:1.4}
+.lembrete b{font-weight:500;color:var(--text)}
+.lembrete .sep{color:var(--dim);padding:0 5px;font-weight:400}
+.lembrete.stack{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;align-items:start}
+.lembrete.stack .pin{grid-column:1;grid-row:1}
+.lembrete.stack .li{grid-column:2}
+.lembrete.ck2{gap:5px 7px}
+.lembrete.ck2 .li{display:flex;align-items:center;gap:8px}
+.lembrete.ck2 .pin{padding-top:1px}
+.lembrete.stack.bare{grid-template-columns:1fr}
+.lembrete.stack.bare .li{grid-column:1}
+.ck.sm{width:16px;height:16px;border-radius:4px;font-size:10px}
+.lembrete .li.done b{text-decoration:line-through;text-decoration-color:var(--border-mid);color:var(--muted);font-weight:400}
+.lembrete.pills{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:7px 10px}
+.lembrete .pl{border:1px solid var(--border);background:var(--bg3);border-radius:99px;padding:3px 9px;font-size:11.6px;color:var(--text);font-weight:500}
+.medida{font:400 10.5px var(--font-mono);color:var(--accent);background:var(--accent-wash);border-radius:4px;padding:1px 6px}
+.cap .medida{margin-left:4px}
+
+.marca{margin:0 0 12px;padding:9px 11px 8px;border:1px dashed var(--border-mid);border-radius:var(--radius-sm);background:var(--bg2)}
+.marca-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.marca-t{font:600 9.5px var(--font-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.marca-add{font:500 10.5px var(--font-ui);color:var(--accent)}
+.it{display:flex;align-items:center;gap:9px;padding:5px 0}
+.it + .it{border-top:1px solid rgba(64,56,46,.06)}
+.it .tx{font-size:12.8px;color:var(--text);flex:1}
+.it.done .tx{text-decoration:line-through;text-decoration-color:var(--border-mid);color:var(--muted)}
+.it .per{font:500 9.5px var(--font-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 7px;background:var(--bg3)}
+.it .x{color:var(--dim);font-size:11px;padding-left:2px}
+
+.chip{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:7px 11px;border:1px dashed var(--border-mid);border-radius:99px;background:var(--bg2);font-size:12px;color:var(--muted);width:fit-content}
+.chip b{font-weight:500;color:var(--text)}
+.chip .cv{color:var(--dim);font-size:13px;margin-left:2px;line-height:1}
+
+.ancora{display:flex;align-items:center;gap:8px;margin:9px 0 4px;padding:0 2px}
+.ancora .ln{flex:1;height:1px;background:var(--border-mid);opacity:.5}
+.ancora .lb{font:500 10px var(--font-ui);color:var(--muted);display:flex;align-items:center;gap:5px}
+
+/* ── a semana ── */
+.wk{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 13px}
+.wk-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.wk-d{font:600 12.5px var(--font-title)}
+.wk-t{font:400 11px var(--font-mono);color:var(--muted)}
+.wk-l{font-size:11.8px;color:var(--muted);padding:3px 0;display:flex;gap:8px}
+.wk-l .h{font-family:var(--font-mono);font-size:10.5px;color:var(--dim);min-width:38px}
+.wk-pin{margin-top:8px;padding-top:7px;border-top:1px dashed var(--border);font-size:11.5px;color:var(--muted)}
+.wkcol{width:96px;flex:none}
+.wkcol-h{text-align:center;font:500 10.5px var(--font-ui);color:var(--muted);padding-bottom:5px}
+.wkcol-pin{font-size:9.5px;color:var(--orange);background:var(--orange-bg);border:1px dashed var(--orange);border-radius:5px;padding:2px 4px;margin-bottom:4px;text-align:center;line-height:1.3}
+.wkcol-tr{position:relative;height:190px;background:var(--track);border-radius:6px;overflow:hidden}
+.wkcol-sg{position:absolute;left:3px;right:3px;border-radius:3px;background:var(--s0-bg);border:1px solid var(--s0-line)}
+.wkcol-sg.c1{background:var(--s1-bg);border-color:var(--s1-line)}
+.wkcol-sg.ev{background:var(--orange-bg);border:1px dashed var(--orange)}
+
+/* ── o painel de criar ── */
+.sheet{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.sheet-t{font:600 14px var(--font-title);margin-bottom:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chips span{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:4px 9px;background:var(--bg3)}
+.chips span.on{color:var(--accent);border-color:var(--accent-border);background:var(--accent-wash);font-weight:500}
+.fld{margin-bottom:10px}
+.fld label{display:block;font:500 9.5px var(--font-ui);letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.fld .inp{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:12.5px;color:var(--text)}
+.fld .inp.ph{color:var(--dim)}
+.two{display:flex;gap:8px}.two>*{flex:1}
+.sheet-f{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.dimtxt{color:var(--muted);font-size:12.5px;margin-top:9px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Compromisso sem horário</h1>
+  <p class="sub">esboço · 18/09/2026, revisto em 12/10/2026 · três formas de mostrar, um “quando” opcional, e de onde nasce</p>
+
+  <p>O pedido, nas suas palavras: <em>“seria interessante poder adicionar um evento que não tem necessariamente um horário no dia. Esse evento ficaria demarcado em cima, de forma meio distinta.”</em></p>
+
+  <p>O evento do app existe pra <b>reservar tempo</b> — ele tem início e fim, e o plano se remonta em volta dele. Só que boa parte do que cai num dia não reserva nada: “prova de Análise II hoje”, “entregar a lista 3 até 23:59”, “buscar o pacote em algum momento”. Isso não tem onde morar. O evento obriga a inventar um horário, e o horário inventado come pomodoro que você ia estudar. A nota precisa de um bloco pra grudar. O grupo exige um trecho com estudo dentro. Então a pessoa não anota — ou anota fora do app.</p>
+
+  <div class="aviso">
+    <p><b>A decisão de arquitetura, antes das telas.</b> Isso <b>não</b> deveria ser um evento com <code>start</code>/<code>end</code> vazios. Entrando no mesmo array, todo lugar que lê <code>ev.start</code> passa a ter que se defender — e o pior deles é o <code>generateBlocks</code>, que regenera o passado inteiro a cada leitura.</p>
+    <p>É outra classe de dado: uma <b>etiqueta do dia</b>, na mesma família da nota no bloco (<code>state.notes[dia][horário]</code>), só que sem o horário — <code>state.dayNotes[dia]</code>, uma lista curta. Não entra no gerador, não muda um minuto do plano, não pode corromper check nenhum. Campo novo, opcional, default <code>[]</code> — sem <code>schemaVersion</code> novo.</p>
+    <p><b>E não dá XP.</b> O XP do app é por minuto estudado; um item sem duração só ganharia um número inventado, que sujaria meta, moeda e sequência. Riscar por riscar — que é o que as direções B e C oferecem, e a A não.</p>
+  </div>
+</header>
+
+<!-- ══════════════════════════ PARTE 1 ══════════════════════════ -->
+<section class="parte">
+  <div class="parte-head"><span class="letra">Parte 1</span><h2>Onde fica, e quanto ela pesa</h2></div>
+  <p class="why">As três formas em ordem de peso. A coluna da esquerda é sempre o caso fácil (um item); a da direita é o caso que decide (três itens, que é onde uma forma barata começa a custar). O Plano é a tela mais cheia do app — cada linha aqui em cima é uma linha a menos de plano acima da dobra.</p>
+
+  <!-- ─────────── A ─────────── -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Direção A</span><h3>Lembrete</h3><span class="tag rec">a forma escolhida</span></div>
+
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete"><span class="pin">📌</span><span><b>Prova de Análise II</b></span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">um item · 36px</p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete"><span class="pin">📌</span><span><b>Prova de Análise II</b><span class="sep">·</span><b>Entregar a lista 3</b><span class="sep">·</span><b>Buscar o pacote</b></span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">três itens · 55px (quebra em duas linhas)</p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que é</h4>
+        <p>Uma faixa de texto acima da barra de ações, com a borda tracejada que o app já usa pra dizer “isto não é bloco do plano” (é a mesma do <code>.other-day</code> e do evento que só bloqueia). Sem coluna de horário — e é justamente a ausência dela, num lugar onde toda linha começa com um horário alinhado, que faz a etiqueta ler como outra coisa sem precisar de cor nova.</p>
+
+        <h4>O que ganha</h4>
+        <p>É a versão mais barata que resolve o pedido literal: a prova de amanhã passa a existir dentro do app. Nada pra decidir, nada pra marcar, nada que possa dar errado. Um item ocupa 36px.</p>
+
+        <h4 class="custo">O que custa</h4>
+        <p>Não dá pra riscar. Um lembrete que você já resolveu às 10h fica lá o dia inteiro te olhando, e a única saída é apagar — o que é um gesto de “nunca existiu”, não de “fiz”. Com três itens vira um parágrafo: os pontos separadores fazem os três nomes competirem, e o mais importante não tem como ser o primeiro.</p>
+
+        <h4>Quando esta é a certa</h4>
+        <p>Se, na sua cabeça, isso é <b>contexto do dia</b> (“hoje tem prova”) e não <b>coisa pra fazer</b>. Contexto não se risca.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── B ─────────── -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Direção B</span><h3>Riscar</h3><span class="tag">o check veio daqui · a moldura não</span></div>
+
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="marca">
+                <div class="marca-h"><span class="marca-t">Hoje também</span><span class="marca-add">+ anotar</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Prova de Análise II</span><span class="x">✕</span></div>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">um item · 68px</p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="marca">
+                <div class="marca-h"><span class="marca-t">Hoje também · 1 de 3</span><span class="marca-add">+ anotar</span></div>
+                <div class="it done"><span class="ck on">✓</span><span class="tx">Buscar o pacote</span><span class="x">✕</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Prova de Análise II</span><span class="x">✕</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Entregar a lista 3</span><span class="x">✕</span></div>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">três itens · 129px (uma linha de plano a menos)</p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que é</h4>
+        <p>Uma caixinha com título miúdo em caps — a mesma tipografia dos títulos de seção das Configurações — e uma linha por item, cada uma com o <b>mesmo check quadrado</b> das linhas do plano. O check é o gesto mais usado do app; usar outro aqui seria inventar vocabulário.</p>
+        <p>Riscar não paga nada: nem XP, nem moeda, nem meta, nem sequência. O feedback é o risco no texto e o contador no título (<b>1 de 3</b>), e nada mais — sem som, sem “+X XP” flutuante, porque nada entrou.</p>
+
+        <h4>O que ganha</h4>
+        <p>Resolve a metade que a A deixa de fora: o item tem fim. Três itens continuam legíveis, e o mais urgente pode ser o primeiro da lista em vez de o primeiro de um parágrafo. O que já foi feito desce riscado em vez de sumir — dá pra ver, no fim do dia, o que o dia teve além de estudo.</p>
+
+        <h4 class="custo">O que custa</h4>
+        <p>Altura: com três itens são 129px, uma linha de plano a menos acima da dobra. E é a direção que mais se aproxima de um <b>to-do list dentro do Pomodoro</b> — se um dia ela ganhar prioridade, prazo, subtarefa e recorrência, virou outro app. O contorno tem que ser assumido: <b>frase curta, do dia, sem nada pendurado</b>.</p>
+
+        <h4>A pergunta que ela abre</h4>
+        <p>Item não riscado <b>vai pro dia seguinte?</b> Minha recomendação é <b>não</b>: ele é do dia em que foi escrito, e some com ele. Arrastar pendência de ontem pra hoje é exatamente o mecanismo de culpa que o app promete não ter — e é assim que o to-do list começa.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── C ─────────── -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Direção C</span><h3>O chip que abre</h3><span class="tag">descartada</span></div>
+
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="chip"><span>📌</span><b>3 coisas hoje</b><span class="cv">▾</span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:25–10:30</span><span class="nm">☕ Pausa</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">fechado · 35px, com qualquer número de itens</p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="marca">
+                <div class="marca-h"><span class="marca-t">📌 3 coisas hoje &nbsp;▴</span><span class="marca-add">+ anotar</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Prova de Análise II</span><span class="x">✕</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Entregar a lista 3</span><span class="x">✕</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Buscar o pacote</span><span class="x">✕</span></div>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">aberto · o mesmo miolo da direção B</p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que é</h4>
+        <p>A direção B com uma porta na frente: por padrão só o contador, e um toque abre. O app já usa esse padrão no <b>ciclo que passou</b> (o divisor vira botão e recolhe as linhas), então o gesto não é novo.</p>
+
+        <h4>O que ganha</h4>
+        <p>A altura para de crescer: 35px com um item ou com seis. É a única das três em que a feature não disputa espaço com o plano.</p>
+
+        <h4 class="custo">O que custa</h4>
+        <p>Um item fechado é um item esquecido — e esquecer é literalmente o problema que a feature existe pra resolver. No app, recolher é sempre sobre <b>o que já passou</b>; aqui seria sobre o que ainda vai acontecer, que é o contrário.</p>
+        <p>E abre uma pergunta chata de estado: fica aberto entre trocas de aba? Entre reloads? É preferência ou é sessão? (No ciclo recolhido a resposta foi “sessão, e reload desdobra”. Aqui a mesma resposta significa que o item volta a aparecer sozinho, o que meio que desfaz a economia.)</p>
+
+        <h4>Quando esta é a certa</h4>
+        <p>Só se, na prática, forem <b>muitos</b> itens por dia. Com um ou dois, o chip cobra um toque pra economizar 33px — e esconde justamente o que você escreveu pra não esquecer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PARTE 2 ══════════════════════════ -->
+<section class="parte">
+  <div class="parte-head"><span class="letra">Parte 2</span><h2>O “quando” grosso — opcional, soma a qualquer uma</h2></div>
+  <p class="why">Nem todo item sem horário é sem <em>quando</em>: “almoçar com a Ana em algum momento da tarde” não tem hora, mas tem metade do dia. Isto não é uma quarta direção — é uma camada que cabe em cima da A, da B ou da C, e a decisão é se ela entra no v1 ou fica pra depois.</p>
+
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Camada</span><h3>Manhã · Tarde · Noite</h3><span class="tag">pode ficar pro v2</span></div>
+
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="marca">
+                <div class="marca-h"><span class="marca-t">Hoje também</span><span class="marca-add">+ anotar</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Prova de Análise II</span><span class="per">manhã</span><span class="x">✕</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Buscar o pacote</span><span class="per">tarde</span><span class="x">✕</span></div>
+                <div class="it"><span class="ck"></span><span class="tx">Entregar a lista 3</span><span class="x">✕</span></div>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row ev"><span class="ck off"></span><span class="tm">13:00–14:00</span><span class="nm">🍽️ Almoço</span><span class="xpb no">sem XP</span></div>
+                <div class="ancora"><span class="ln"></span><span class="lb">📌 Buscar o pacote</span><span class="ln"></span></div>
+                <div class="row c1"><span class="ck"></span><span class="tm">14:00–14:25</span><span class="nm">📖 Estudo 5</span><span class="xpb">+50 XP</span></div>
+                <div class="row c1"><span class="ck"></span><span class="tm">14:25–14:30</span><span class="nm">☕ Pausa</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">o selo em cima, e uma marca fina onde a tarde começa</p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que é</h4>
+        <p>Um selo opcional no item (<b>manhã</b> / <b>tarde</b> / <b>noite</b>, ou nenhum), que faz duas coisas: ordena a lista de cima e desenha uma marca fina e tracejada <b>dentro do plano</b>, na fronteira do período — sem ocupar minuto nenhum, sem check ali, sem cor de ciclo. Só um lembrete que aparece quando a hora chega perto.</p>
+
+        <h4>O que ganha</h4>
+        <p>Cobre o caso que hoje força a inventar horário. “Tarde” é honesto: você não sabe a hora, mas sabe a metade do dia, e o app para de fingir que só existem duas opções (13:40 ou nada).</p>
+        <p>E resolve o defeito estrutural das três direções: uma etiqueta no topo da tela some do campo de visão quando você rola pro Estudo 7. A marca no meio da lista é a única forma de o lembrete te encontrar <em>na hora</em>.</p>
+
+        <h4 class="custo">O que custa</h4>
+        <p>Um campo a mais no formulário, uma decisão a mais por item — e a fronteira precisa ser definida no código (manhã até 12:00, tarde até 18:00?), o que é arbitrário pra quem estuda à noite. Também é a primeira coisa desta feature que <b>toca a lista do plano</b>: até aqui tudo vivia acima dela, sem chance de interferir.</p>
+
+        <h4>Minha recomendação</h4>
+        <p><b>Fora do v1.</b> O campo é fácil de acrescentar depois (o dado é opcional), e é impossível de tirar depois que existe. Vale ver primeiro se, usando a versão sem “quando”, você sente falta — ou se “Prova de Análise II” no topo já basta, porque você sabe a que horas é a sua prova.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PARTE 3 ══════════════════════════ -->
+<section class="parte">
+  <div class="parte-head"><span class="letra">Parte 3</span><h2>De onde nasce</h2><span class="tag rec">porta 1 escolhida</span></div>
+  <p class="why">Duas portas possíveis, e elas não são excludentes. A lição do “Importar calendário” foi que uma porta só não é achada.</p>
+
+  <div class="corpo" style="margin-top:6px">
+    <div class="telas">
+      <div>
+        <div class="phone" style="width:344px">
+          <div class="body" style="padding:14px">
+            <div class="sheet">
+              <div class="sheet-t">Novo evento</div>
+              <div class="chips"><span>🍽️ Refeição</span><span>👥 Reunião</span><span>☕ Café</span><span>🚌 Deslocamento</span><span class="on">Sem horário</span><span>✏️ Outro</span></div>
+              <div class="fld"><label>O quê</label><div class="inp ph">Prova de Análise II</div></div>
+              <div class="fld two">
+                <div><label>Início</label><div class="inp" style="opacity:.4">—:—</div></div>
+                <div><label>Fim</label><div class="inp" style="opacity:.4">—:—</div></div>
+              </div>
+              <p class="dimtxt" style="margin-top:-2px">Sem horário: não reserva tempo e não muda o plano. Aparece em cima do dia.</p>
+              <div class="sheet-f"><span class="btn mute">Cancelar</span><span class="btn full">Salvar</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Porta 1 · um chip nos atalhos que já existem</p>
+      </div>
+
+      <div>
+        <div class="phone" style="width:344px">
+          <div class="body" style="padding:14px">
+            <div class="marca" style="margin:0">
+              <div class="marca-h"><span class="marca-t">Hoje também</span><span class="marca-add">+ anotar</span></div>
+              <div class="it"><span class="ck"></span><span class="tx" style="color:var(--dim)">Prova de Análise II|</span></div>
+            </div>
+            <p class="dimtxt">O campo abre no lugar, Enter salva, vazio cancela — o mesmo comportamento da nota no bloco.</p>
+            <div class="marca" style="margin:16px 0 0">
+              <div class="marca-h"><span class="marca-t">Hoje também</span><span class="marca-add">+ anotar</span></div>
+              <div class="it"><span class="ck"></span><span class="tx">Prova de Análise II</span><span class="x">✕</span></div>
+            </div>
+            <p class="dimtxt">E quando não há nenhum item, a caixa inteira não existe — zero pixels num dia comum.</p>
+          </div>
+        </div>
+        <p class="cap">Porta 2 · a própria faixa é a porta</p>
+      </div>
+    </div>
+
+    <div class="texto">
+      <h4>Porta 1 — o chip no “+ Evento”</h4>
+      <p>Reaproveita a porta que a pessoa já usa pra botar compromisso no dia, e que já tem uma fileira de atalhos. Escolhendo <b>Sem horário</b>, os campos de hora se apagam e o painel explica em uma linha o que muda. A vantagem é que a descoberta é de graça: quem abre o “+ Evento” pra marcar a prova <em>encontra</em> a opção sem procurar.</p>
+
+      <h4>Porta 2 — “+ anotar” na própria faixa</h4>
+      <p>Mais rápida pra quem já sabe (um toque, digita, Enter), e é onde a mão já está quando você está lendo o dia. Mas ela só existe <b>depois</b> que a faixa existe, e a faixa não existe num dia sem item nenhum — então sozinha ela é invisível pra conta nova.</p>
+
+      <h4>As duas</h4>
+      <p><b>Você escolheu a Porta 1 sozinha</b>, e ela se defende: a faixa não precisa carregar um botão de criar, e sem o “+ anotar” ela fica com a cara de anotação em vez de cara de formulário. O preço é um toque a mais pra escrever o segundo lembrete do dia — abrir o “+ Evento” de novo. Se isso incomodar na prática, a Porta 2 volta como um “+” miúdo no canto direito da faixa, sem mexer em mais nada.</p>
+
+      <h4>E a terceira, de graça</h4>
+      <p>Hoje todo evento de <b>dia inteiro</b> do <code>.ics</code> é descartado na importação, com o motivo “dia inteiro” — feriado, aniversário, prazo de entrega da universidade, tudo cai fora, porque viraria um bloqueio do dia todo. Com a etiqueta, eles passam a ter onde cair: entram desmarcados na tela de revisão, como todo o resto, e quem quiser marca.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PARTE 4 ══════════════════════════ -->
+<section class="parte">
+  <div class="parte-head"><span class="letra">Parte 4</span><h2>Onde mais aparece</h2></div>
+  <p class="why">A etiqueta não tem duração, então ela é a única coisa do dia que <b>não</b> dá pra desenhar numa régua de horas. Isso a torna fácil na Semana do celular (que é texto) e chata na do laptop (que é geometria).</p>
+
+  <div class="corpo" style="margin-top:6px">
+    <div class="telas">
+      <div>
+        <div class="phone" style="width:300px">
+          <div class="body" style="padding:14px">
+            <div class="wk">
+              <div class="wk-h"><span class="wk-d">Qui, 18/09</span><span class="wk-t">6h40</span></div>
+              <div class="wk-l"><span class="h">09:00</span><span>Ciclo 1 · 0/4 · 1h40</span></div>
+              <div class="wk-l"><span class="h">11:00</span><span>Ciclo 2 · 0/4 · 1h40</span></div>
+              <div class="wk-l"><span class="h">13:00</span><span>🍽️ Almoço</span></div>
+              <div class="wk-l"><span class="h">14:00</span><span>Ciclo 3 · 0/4 · 1h40</span></div>
+              <div class="wk-pin">Prova de Análise II · Entregar a lista 3</div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Semana no celular · uma linha no pé do cartão</p>
+      </div>
+
+      <div>
+        <div class="phone" style="width:344px">
+          <div class="body" style="padding:14px">
+            <div style="display:flex;gap:8px">
+              <div class="wkcol">
+                <div class="wkcol-h">Qua 17</div>
+                <div class="wkcol-pin" style="visibility:hidden">—</div>
+                <div class="wkcol-tr">
+                  <div class="wkcol-sg" style="top:10px;height:46px"></div>
+                  <div class="wkcol-sg ev" style="top:62px;height:20px"></div>
+                  <div class="wkcol-sg c1" style="top:88px;height:60px"></div>
+                </div>
+              </div>
+              <div class="wkcol">
+                <div class="wkcol-h" style="color:var(--accent);font-weight:600">Qui 18</div>
+                <div class="wkcol-pin">Prova · Lista 3</div>
+                <div class="wkcol-tr">
+                  <div class="wkcol-sg" style="top:10px;height:46px"></div>
+                  <div class="wkcol-sg ev" style="top:62px;height:20px"></div>
+                  <div class="wkcol-sg c1" style="top:88px;height:60px"></div>
+                </div>
+              </div>
+              <div class="wkcol">
+                <div class="wkcol-h">Sex 19</div>
+                <div class="wkcol-pin" style="visibility:hidden">—</div>
+                <div class="wkcol-tr">
+                  <div class="wkcol-sg" style="top:10px;height:46px"></div>
+                  <div class="wkcol-sg c1" style="top:70px;height:60px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Semana no laptop · uma faixa acima da grade, fora da régua</p>
+      </div>
+    </div>
+
+    <div class="texto">
+      <h4>No celular é quase de graça</h4>
+      <p>O cartão de cada dia já é <b>texto condensado</b> — uma linha por ciclo, uma por compromisso. A etiqueta entra como uma linha no pé, separada por um traço, e nem precisa de horário porque nenhuma linha ali depende de um.</p>
+
+      <h4>No laptop ela fica fora da grade</h4>
+      <p>A coluna do dia desenha bloco por altura de duração; uma etiqueta sem duração não tem altura. Então ela mora numa faixa <b>acima</b> da grade, na mesma linha em todas as colunas — o que tem um efeito bom: os dias com etiqueta se destacam de longe, quando você está planejando a semana.</p>
+      <p>Com mais de duas por dia, a faixa trunca (<em>“Prova · +2”</em>) em vez de crescer — a altura da faixa é comum às sete colunas, e um dia cheio não pode encolher a grade dos outros seis.</p>
+
+      <h4>Onde ela não entra</h4>
+      <p>Nada na <b>Análise</b> (não tem minuto pra medir, e “você deixou 2 de 3 sem riscar” é exatamente o app te olhando torto), nada no <b>resumo do fim do dia</b> (que fala de XP e pets) e nada no <b>modo foco</b> (que é sobre o bloco que está correndo). Nem <b>notificação</b>: sem horário, não há quando avisar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PARTE 5 ══════════════════════════ -->
+<section class="parte">
+  <div class="parte-head"><span class="letra">Parte 5</span><h2>A direção A de perto — o caso de dois</h2><span class="tag rec">escolhida</span></div>
+  <p class="why">Um lembrete sempre cabe. Três sempre quebram. <b>Dois é a fronteira</b> — e onde ela cai depende do tamanho dos nomes, não do número deles. Por isso cada variante abaixo aparece duas vezes: com dois nomes curtos (“Prova de Análise II”, “Entregar a lista 3”) e com dois nomes compridos de verdade, que é o que a pessoa escreve quando está com pressa. As alturas são medidas na tela, não estimadas.</p>
+
+  <div class="aviso" style="max-width:840px;margin:0 0 4px">
+    <p><b>12/10:</b> fica a A4, sem o 📌 — a faixa sem emoji, só check e texto. A feature continua guardada, sem implementar, porque você ainda não está convencido do formato.</p>
+    <p><b>O que você disse depois de ver a Parte 1:</b> gostou de poder riscar, mas não da formatação da B. Então a pergunta deixou de ser “A ou B” e virou <b>a faixa da A com o check da B</b> — que é a <b>variante A4</b> aqui embaixo. As outras três ficam porque foi comparando com elas que ela chegou nesse formato.</p>
+    <p>O que a B tinha e que sai: o título <code>HOJE TAMBÉM</code> em caps, o contador “1 de 3”, o “+ anotar” (a porta agora é o “+ Evento”), o ✕ em cada linha e as divisórias entre itens. Sobra a faixa tracejada leve da A — e um check.</p>
+  </div>
+
+  <!-- A1 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A1</span><h3>Em linha</h3><span class="tag">como está hoje no esboço</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete" id="m-a1-curto"><span class="pin">📌</span><span><b>Prova de Análise II</b><span class="sep">·</span><b>Entregar a lista 3</b></span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois curtos · cabem numa linha <span class="medida" data-med="m-a1-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete" id="m-a1-longo"><span class="pin">📌</span><span><b>Entregar o relatório de Mecânica Quântica</b><span class="sep">·</span><b>Renovar a matrícula no portal da TUM</b></span></div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois longos · o segundo começa no meio <span class="medida" data-med="m-a1-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que acontece</h4>
+        <p>Com nomes curtos é perfeito: uma linha, 36px, e os dois se leem de uma vez. Com nomes compridos o texto reflui, e o segundo lembrete <b>começa no meio da primeira linha e termina na segunda</b> — ele deixa de ter um começo visível. Lendo rápido, “Renovar a matrícula” some no meio do parágrafo.</p>
+
+        <h4 class="custo">O problema real</h4>
+        <p>A altura não é o que incomoda (19px a mais). É que a forma da faixa <b>muda conforme o que você escreveu</b>: hoje uma linha, amanhã duas, e o plano abaixo sobe e desce sem motivo aparente. O ponto separador funciona quando os dois itens cabem lado a lado, e só nesse caso.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A2 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A2</span><h3>Empilhado</h3><span class="tag">sem check</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack" id="m-a2-curto">
+                <span class="pin">📌</span>
+                <span class="li"><b>Prova de Análise II</b></span>
+                <span class="li"><b>Entregar a lista 3</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois curtos · uma linha cada <span class="medida" data-med="m-a2-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack" id="m-a2-longo">
+                <span class="pin">📌</span>
+                <span class="li"><b>Entregar o relatório de Mecânica Quântica</b></span>
+                <span class="li"><b>Renovar a matrícula no portal da TUM</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois longos · a mesma altura <span class="medida" data-med="m-a2-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que acontece</h4>
+        <p>Uma linha por lembrete, o 📌 só no primeiro (ele marca a faixa, não cada item — repeti-lo em cada linha só repete um emoji que não carrega informação). Nome comprido <b>não desloca o outro lembrete</b>: cada um tem a sua linha e ela é o seu começo.</p>
+
+        <h4>O que ganha</h4>
+        <p>Previsibilidade: N lembretes = N linhas, independente do que você escreveu. A altura é a mesma nas duas telas acima — o que quer dizer que a faixa não muda de forma conforme o texto, e o plano abaixo fica parado.</p>
+        <p>E de quebra resolve o problema que a A tinha com três: empilhados, três continuam legíveis, cada um com o seu começo. A A deixa de ter um teto prático de dois.</p>
+
+        <h4>O que falta nela</h4>
+        <p>Só o check — que é justamente o que você quis manter da B. Empilhada, a faixa já tem uma coluna livre na esquerda de cada linha, então acrescentá-lo é <b>uma coluna a mais, não uma tela nova</b>. É a variante A4, logo abaixo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A4</span><h3>Empilhado com check</h3><span class="tag rec">a faixa da A com o que você gostou da B</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack ck2 bare" id="m-a4-curto">
+                <span class="li"><span class="ck sm"></span><b>Prova de Análise II</b></span>
+                <span class="li"><span class="ck sm"></span><b>Entregar a lista 3</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois, nada riscado <span class="medida" data-med="m-a4-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack ck2 bare" id="m-a4-done">
+                <span class="li done"><span class="ck sm on">✓</span><b>Prova de Análise II</b></span>
+                <span class="li"><span class="ck sm"></span><b>Entregar a lista 3</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">um riscado · a altura não muda <span class="medida" data-med="m-a4-done">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete stack ck2 bare" id="m-a4-longo">
+                <span class="li"><span class="ck sm"></span><b>Entregar o relatório de Mecânica Quântica</b></span>
+                <span class="li done"><span class="ck sm on">✓</span><b>Renovar a matrícula no portal da TUM</b></span>
+                <span class="li"><span class="ck sm"></span><b>Buscar o pacote</b></span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">três longos · o teto prático sobe <span class="medida" data-med="m-a4-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>O que mudou em relação à B</h4>
+        <p>Só o que você apontou: saiu a moldura de cartão e tudo que vinha com ela — o título <code>HOJE TAMBÉM</code> em caps, o contador, o “+ anotar” e o ✕ por linha. Ficou a faixa tracejada da A, que não tem cabeçalho, não tem rodapé e não se anuncia. O check é o mesmo quadrado das linhas do plano, só um pouco menor (16px contra 18px), porque aqui ele está numa faixa de texto e não numa linha de bloco.</p>
+
+        <h4>Sem o 📌 (12/10)</h4>
+        <p>O alfinete saiu, a seu pedido: a faixa fica só com o check e o texto. Quem diz “isto não é bloco do plano” é a borda tracejada e a falta da coluna de horário, que já bastavam. Até 12/10 ele ficava uma vez, na altura da primeira linha; essa versão está no histórico da branch.</p>
+
+        <h4>Dois alvos por linha, que é o que o app já faz</h4>
+        <p>No plano, a <code>.block-row</code> tem dois destinos: o <b>check</b> marca, e o <b>resto da linha</b> abre o foco. Aqui é igual — o check risca, o texto abre o modal do evento (Editar / Apagar). Ninguém precisa aprender nada novo, e o ✕ não precisa existir dentro da faixa.</p>
+
+        <h4>O teto prático</h4>
+        <p>Com o check, cada lembrete tem uma linha inteira só dele, então <b>três continuam legíveis</b> — o que na variante em linha já era um parágrafo. O que já foi riscado desce em cinza e continua visível: no fim do dia dá pra ver que o dia teve mais coisa além dos pomodoros.</p>
+
+        <h4 class="custo">O aviso que fica</h4>
+        <p>Isso é, assumidamente, uma listinha de tarefas dentro do Plano. O que a mantém pequena não é o layout — é a decisão: <b>frase curta, do dia, sem prazo, sem prioridade, sem recorrência, e nada migra pra amanhã</b>. Todas as vezes que um app assim inchou, inchou por aqui.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- A3 -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">Variante A3</span><h3>Pílulas</h3><span class="tag">descartada</span></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete pills" id="m-a3-curto">
+                <span class="pin">📌</span>
+                <span class="pl">Prova de Análise II</span>
+                <span class="pl">Entregar a lista 3</span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois curtos <span class="medida" data-med="m-a3-curto">—</span></p>
+        </div>
+
+        <div>
+          <div class="phone">
+            <div class="tb"><span class="dt">quinta-feira, 18 de setembro</span><span class="xp">1 240 XP</span></div>
+            <div class="body">
+              <div class="lembrete pills" id="m-a3-longo">
+                <span class="pin">📌</span>
+                <span class="pl">Entregar o relatório de Mecânica Quântica</span>
+                <span class="pl">Renovar a matrícula no portal da TUM</span>
+              </div>
+              <div class="bar"><span class="btn mute">🕘 Estrutura do dia</span><span class="btn mute">Agrupar</span><span class="btn full">+ Evento</span></div>
+              <div class="list">
+                <div class="cd"><span class="lb">Ciclo 1</span><span class="ln"></span></div>
+                <div class="row done"><span class="ck on">✓</span><span class="tm">09:00–09:25</span><span class="nm">📖 Estudo 1</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:25–09:30</span><span class="nm">☕ Pausa</span></div>
+                <div class="row now"><span class="ck"></span><span class="tm">09:30–09:55</span><span class="nm">📖 Estudo 2</span><span class="xpb">+50 XP</span></div>
+                <div class="row pausa"><span class="ck"></span><span class="tm">09:55–10:00</span><span class="nm">☕ Pausa</span></div>
+                <div class="row"><span class="ck"></span><span class="tm">10:00–10:25</span><span class="nm">📖 Estudo 3</span><span class="xpb">+50 XP</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">dois longos · duas pílulas quase cheias <span class="medida" data-med="m-a3-longo">—</span></p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>Por que parecia boa</h4>
+        <p>Cada lembrete vira um objeto com contorno próprio, quebra sozinho em várias linhas (<code>flex-wrap</code>) e tem um lugar óbvio pra pendurar um ✕.</p>
+
+        <h4 class="custo">Por que não é</h4>
+        <p>Pílula é vocabulário de <b>filtro</b> e de <b>opção</b> no app — é o que os chips de modo, os atalhos do evento e o “Rotina · Esta semana” são. Usar a mesma forma pra uma frase que não se clica pra nada mente sobre o que ela faz.</p>
+        <p>E com nome comprido a pílula ocupa a linha inteira, com a borda arredondada de ponta a ponta: fica o pior dos dois mundos — a altura do empilhado com o ruído visual de dois contornos a mais.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- como sai -->
+  <div class="dir">
+    <div class="dir-head"><span class="letra">E como sai</span><h3>Tocar no lembrete</h3></div>
+    <div class="corpo">
+      <div class="telas">
+        <div>
+          <div class="phone" style="width:344px">
+            <div class="body" style="padding:14px">
+              <div class="sheet">
+                <div class="sheet-t">Prova de Análise II</div>
+                <p class="dimtxt" style="margin-top:-4px">Lembrete de hoje · não reserva tempo no plano</p>
+                <div class="sheet-f" style="justify-content:space-between;margin-top:14px">
+                  <span class="btn mute">✏️ Editar</span>
+                  <span style="display:flex;gap:8px"><span class="btn mute">Fechar</span><span class="btn" style="color:var(--orange);border-color:var(--orange)">Apagar</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="cap">o mesmo modal que o evento já abre, com uma porta a menos</p>
+        </div>
+      </div>
+
+      <div class="texto">
+        <h4>Por que isto sai de graça</h4>
+        <p>Como o lembrete <b>nasce do “+ Evento”</b>, o caminho de volta já existe: tocar num evento hoje abre <code>#event-delete-confirm</code>, com Editar e Apagar. O lembrete cai no mesmo lugar, só sem as opções que só fazem sentido numa série (“só este dia” / “a série”), porque ele não tem recorrência.</p>
+        <p>É o que dispensa inventar um ✕ dentro da faixa — que na direção A ficaria apertado entre os nomes, e que na variante em linha nem teria onde morar.</p>
+
+        <h4>O detalhe que decide</h4>
+        <p>Na A4 cada linha tem os mesmos dois alvos da linha do plano: o <b>check</b> risca, o <b>texto</b> abre este modal. Na variante em linha o alvo seria um pedaço de texto no meio de um parágrafo — e com dois nomes compridos, um deles está partido entre duas linhas, o que não dá pra tocar direito nem dá onde encostar um check.</p>
+        <p>Editar abre o mesmo “+ Evento” em modo edição, já sem os campos de hora — exatamente como um evento avulso faz hoje.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// mede a altura real de cada faixa e escreve no rótulo — pra nenhum número
+// deste documento ser estimativa.
+addEventListener('load', () => {
+  for (const el of document.querySelectorAll('.medida')) {
+    const alvo = document.getElementById(el.dataset.med);
+    if (alvo) el.textContent = Math.round(alvo.getBoundingClientRect().height) + 'px';
+  }
+});
+</script>
+
+<footer>
+  <h2>Onde a conversa parou</h2>
+  <p><b>Variante A4, sem o 📌</b> (confirmado em 12/10) — a faixa tracejada da direção A, empilhada, com o check da B em cada linha e mais nada da moldura dela. <b>Nasce do “+ Evento”</b>, por um chip <em>Sem horário</em> que apaga os campos de hora, e sai pelo mesmo modal que o evento já abre no toque. <b>Sem o “quando” grosso</b> (manhã/tarde/noite) por ora — é a única parte que toca a lista do plano, e a única que é fácil de somar depois.</p>
+  <p>Descartadas no caminho, com o motivo à vista: a faixa <b>em linha</b> (com dois nomes compridos o segundo perde o começo, e a forma da faixa muda conforme o que você escreveu), as <b>pílulas</b> (vocabulário de filtro, e com nome comprido viram a linha inteira com contorno) e o <b>chip que recolhe</b> (esconde justamente o que você escreveu pra não esquecer).</p>
+
+  <h3>O contorno, escrito antes de começar</h3>
+  <ul>
+    <li><b>Frase curta</b>, na régua da nota do bloco (60 caracteres). Se não cabe numa linha, provavelmente é um evento, uma nota ou um grupo.</li>
+    <li><b>Sem XP, sem moeda, sem meta, sem sequência.</b> Riscar não paga.</li>
+    <li><b>Do dia, e só dele.</b> Item não riscado não migra pra amanhã.</li>
+    <li><b>Sem recorrência.</b> “Toda quinta tem prova” é uma série de evento; isto é uma frase de um dia. (Mesma decisão que a nota no bloco tomou.)</li>
+    <li><b>Nunca entra no <code>generateBlocks</code>.</b> Dia encerrado é só leitura, dia futuro pode — as mesmas réguas da nota e do grupo.</li>
+  </ul>
+
+  <h3>O que ainda falta você decidir</h3>
+  <ul>
+    <li><b>Como o chip se chama no “+ Evento”.</b> Nas telas está <em>Sem horário</em>, que descreve o que ele faz. As outras candidatas — <em>Lembrete</em>, <em>Dia inteiro</em>, <em>Anotação</em> — dizem o que ele <em>é</em>, e “Dia inteiro” é o nome que o resto do mundo usa (é o que vem escrito no <code>.ics</code> que você importa).</li>
+    <li><b>Riscado some ou fica?</b> Nas telas fica, em cinza, no lugar — é o que deixa ver, no fim do dia, o que o dia teve além dos pomodoros. A alternativa é descer pro fim da faixa, o que mantém o que falta sempre no topo.</li>
+    <li><b>E na Semana?</b> A Parte 4 mostra uma linha no pé do cartão (celular) e uma faixa acima da grade (laptop). Dá pra deixar as duas fora do v1 sem perder nada — o lembrete é do dia, e é no dia que ele precisa aparecer.</li>
+  </ul>
+
+  <p><b>Guardada, não implementada</b> (12/10): você ainda não está convencido do formato. Quando voltar, é retomar daqui.</p>
+
+  <p class="dimtxt" style="margin-top:22px">Esboço, não implementação — nenhum arquivo de <code>src/</code> foi tocado. Escolhida a direção, a conta é: um campo em <code>persistence.ts</code>, um <code>domain/dayNotes.ts</code> (puro, com o remap pra pausa que a nota já tem), um caso de uso, um componente no <code>PlanTab</code> e um caso de e2e.</p>
+</footer>
+
+</body>
+</html>
