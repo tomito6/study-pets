@@ -1,0 +1,45 @@
+{
+  "name": "study-pets-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Study Pets — o app de computador (a casca Electron em volta do app web).",
+  "author": "Study Pets",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "dist:dir": "electron-builder --win dir"
+  },
+  "devDependencies": {
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "app.studypets",
+    "productName": "Study Pets",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "app-paths.cjs"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist-native",
+        "to": "web"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "../public/icons/icon-512.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "shortcutName": "Study Pets"
+    },
+    "publish": null
+  }
+}

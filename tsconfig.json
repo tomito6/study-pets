@@ -30,6 +30,7 @@
     "vite.config.ts",
     "capacitor.config.ts",
     "playwright.config.ts",
-    "playwright.extension.config.ts"
+    "playwright.extension.config.ts",
+    "playwright.desktop.config.ts"
   ]
 }

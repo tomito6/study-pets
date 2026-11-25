@@ -45,3 +45,7 @@ abrirstudypets.html
 
 # Build que vai dentro do app nativo (Capacitor) — ver capacitor.config.ts
 dist-native/
+
+# App de computador (Electron) — ver desktop/ e "App de computador (Windows)" no CLAUDE.md
+desktop/release/
+desktop/.web-teste/

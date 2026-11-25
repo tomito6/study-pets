@@ -20,7 +20,11 @@
     "test:e2e:ui": "playwright test --ui",
     "test:ext": "playwright test -c playwright.extension.config.ts",
     "ios:sync": "npm run build:native && cap sync ios",
-    "ios:open": "cap open ios"
+    "ios:open": "cap open ios",
+    "test:desktop": "playwright test -c playwright.desktop.config.ts",
+    "desktop:install": "npm --prefix desktop install",
+    "desktop": "npm run build:native && npm --prefix desktop start",
+    "desktop:dist": "npm run build:native && npm --prefix desktop run dist"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.2",
