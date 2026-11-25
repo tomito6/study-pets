@@ -161,12 +161,14 @@ describe('os dois documentos internos', () => {
 describe('as páginas legais dentro do app', () => {
   it('a tela de login leva às três', () => {
     const login = ler('src/features/auth/LoginScreen.tsx');
-    for (const pagina of PAGINAS) expect(login, `o login não linka ${pagina}`).toContain(`/legal/${pagina}.html`);
+    // O endereço vem de `legalUrl` (application/platform.ts): caminho local no site, e o
+    // endereço publicado dentro do app nativo. tests/native-app.test.ts cobra os dois.
+    for (const pagina of PAGINAS) expect(login, `o login não linka ${pagina}`).toContain(`legalUrl('${pagina}')`);
   });
 
   it('as Configurações levam às três', () => {
     const config = ler('src/features/settings/SettingsPage.tsx');
-    expect(config).toContain('/legal/');
+    expect(config).toContain('legalUrl(arquivo)');
     for (const pagina of PAGINAS) expect(config).toContain(`'${pagina}'`);
   });
 

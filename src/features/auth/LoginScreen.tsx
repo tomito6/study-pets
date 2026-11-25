@@ -3,6 +3,7 @@
 // Mantém os mesmos ids/classes do markup antigo: o CSS e o smoke test dependem deles.
 
 import { useEffect, useMemo, useState } from 'react';
+import { isNativeApp, legalUrl } from '../../application/platform';
 import { resetPassword, signIn, signInWithEmail, signUpWithEmail } from '../../application/session';
 import type { AuthErrorReason } from '../../domain/auth';
 import { FORMS } from '../../domain/pets';
@@ -182,18 +183,26 @@ export function LoginScreen() {
           ))}
         </div>
         <EmailForm />
-        <div className="ls-divider"><span>{t.or}</span></div>
-        <button className="ls-google-btn" onClick={() => void signIn()}>
-          <GoogleLogo />
-          {t.google}
-        </button>
+        {/* No app nativo o login com Google ainda não existe (popup não funciona dentro de
+            app; vem por plugin nativo). Dizer isso é melhor que um botão que não faz nada. */}
+        {isNativeApp() ? (
+          <div className="ls-fine-print" id="login-google-soon">{t.googleSoon}</div>
+        ) : (
+          <>
+            <div className="ls-divider"><span>{t.or}</span></div>
+            <button className="ls-google-btn" onClick={() => void signIn()}>
+              <GoogleLogo />
+              {t.google}
+            </button>
+          </>
+        )}
         <div className="ls-fine-print">{t.finePrint}</div>
         <div className="ls-legal">
-          <a href="/legal/privacidade.html">{t.legal.privacy}</a>
+          <a href={legalUrl('privacidade')}>{t.legal.privacy}</a>
           <span aria-hidden="true">·</span>
-          <a href="/legal/termos.html">{t.legal.terms}</a>
+          <a href={legalUrl('termos')}>{t.legal.terms}</a>
           <span aria-hidden="true">·</span>
-          <a href="/legal/impressum.html">{t.legal.imprint}</a>
+          <a href={legalUrl('impressum')}>{t.legal.imprint}</a>
         </div>
       </div>
     </div>

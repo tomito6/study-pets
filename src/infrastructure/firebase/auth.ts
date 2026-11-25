@@ -7,6 +7,8 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
   onAuthStateChanged,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
@@ -18,6 +20,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { AuthError, authErrorReasonFromCode } from '../../domain/auth';
+import { isNativeApp } from '../platform';
 import { DeleteAccountError, type AuthPort, type AuthUser } from '../ports';
 
 const providerOf = (u: User): NonNullable<AuthUser['provider']> =>
@@ -34,7 +37,13 @@ const toAuthError = (e: unknown): AuthError =>
   new AuthError(authErrorReasonFromCode((e as { code?: string } | null)?.code), e);
 
 export function createFirebaseAuth(app: FirebaseApp): AuthPort {
-  const auth = getAuth(app);
+  // No app nativo (Capacitor) o `getAuth` de sempre não serve: ele prepara o login por
+  // popup/redirect, que carrega um iframe do Google — e dentro do WebView do iOS, servido
+  // de `capacitor://localhost`, esse iframe nunca responde e o auth fica pendurado sem
+  // erro nenhum (nem a tela de login aparece). `initializeAuth` só com a persistência em
+  // IndexedDB não monta nada disso. No site nada muda.
+  const native = isNativeApp();
+  const auth = native ? initializeAuth(app, { persistence: indexedDBLocalPersistence }) : getAuth(app);
   const provider = new GoogleAuthProvider();
 
   return {
@@ -47,6 +56,10 @@ export function createFirebaseAuth(app: FirebaseApp): AuthPort {
     },
 
     async signIn() {
+      // Popup não existe dentro do app nativo. O login com Google ali é por plugin nativo
+      // (a tela do próprio iOS) — o passo seguinte do plano; até lá a tela de login nem
+      // mostra o botão, e isto é só o cinto.
+      if (native) throw new Error('Login com Google ainda não existe no app nativo');
       await signInWithPopup(auth, provider);
     },
 
@@ -98,6 +111,9 @@ export function createFirebaseAuth(app: FirebaseApp): AuthPort {
             if (providerOf(user) === 'password' && opts?.password && user.email) {
               const credential = EmailAuthProvider.credential(user.email, opts.password);
               await reauthenticateWithCredential(user, credential);
+            } else if (native) {
+              // Mesmo motivo do `signIn`: sem popup no app nativo.
+              throw new Error('Reautenticação com Google ainda não existe no app nativo');
             } else {
               await reauthenticateWithPopup(user, provider);
             }

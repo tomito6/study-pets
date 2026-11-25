@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from 'react';
 import { finishOnboarding } from '../../application/onboarding';
+import { legalUrl } from '../../application/platform';
 import { DEFAULT_AVATAR } from '../../domain/avatar';
 import type { AvatarConfig } from '../../domain/avatar';
 import { PET_LIST, normalizePetName, speciesForm, suggestPetName } from '../../domain/pets';
@@ -213,9 +214,9 @@ export function OnboardingModal() {
               </div>
               <div className="onb-age-why">
                 {t.ageWhy}{' '}
-                <a href="/legal/privacidade.html" target="_blank" rel="noreferrer">{strings.login.legal.privacy}</a>
+                <a href={legalUrl('privacidade')} target="_blank" rel="noreferrer">{strings.login.legal.privacy}</a>
                 {' · '}
-                <a href="/legal/termos.html" target="_blank" rel="noreferrer">{strings.login.legal.terms}</a>
+                <a href={legalUrl('termos')} target="_blank" rel="noreferrer">{strings.login.legal.terms}</a>
               </div>
             </div>
             {starterNeeded && (

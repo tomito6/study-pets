@@ -10,6 +10,7 @@ import { activeSafetyNet, discardSafetyNet, importBackupFile, restoreSafetyNet }
 import { safetyNetDaysLeft } from '../../domain/backup';
 import { setDefaultDayMode } from '../../application/dayWindows';
 import { exportMyData } from '../../application/export';
+import { legalUrl } from '../../application/platform';
 import { clearSettingsRequest, saveSettings } from '../../application/settings';
 import { clearSetupTour, finishTour, restartTour } from '../../application/tutorial';
 import { SETTINGS_TOUR } from '../../domain/tutorial';
@@ -485,7 +486,7 @@ export function SettingsPage() {
                         <a
                           className="st-legal-link"
                           id={`legal-${arquivo}`}
-                          href={`/legal/${arquivo}.html`}
+                          href={legalUrl(arquivo)}
                           target="_blank"
                           rel="noreferrer"
                         >

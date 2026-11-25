@@ -42,3 +42,6 @@ teste/
 # Arquivos pessoais do Tomi, fora do git
 pensamentos_tomi.txt
 abrirstudypets.html
+
+# Build que vai dentro do app nativo (Capacitor) — ver capacitor.config.ts
+dist-native/

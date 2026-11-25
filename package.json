@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:native": "vite build --mode native",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,9 +18,12 @@
     "dev:teste": "vite --mode teste --port 5174",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:ext": "playwright test -c playwright.extension.config.ts"
+    "test:ext": "playwright test -c playwright.extension.config.ts",
+    "ios:sync": "npm run build:native && cap sync ios",
+    "ios:open": "cap open ios"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
@@ -30,6 +34,8 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "firebase": "^10.14.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
