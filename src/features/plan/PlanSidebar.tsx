@@ -1,6 +1,6 @@
 // A coluna da esquerda do Plano no laptop (layout B7, 2026-09-07): o XP pendente de hoje, a meta diária,
-// e o quarto ilustrado com o personagem e o pet equipado. A barra do timer (o cartão "Agora · Iniciar")
-// vem logo abaixo, via CSS. Só existe em tela grande (o App só monta a partir de 1100px).
+// e o quarto ilustrado com o personagem e o pet equipado. O cartão Agora fica na agenda.
+// Só existe em tela grande (o App só monta a partir de 1100px).
 
 import { currentAvatarSprites } from '../../application/avatar';
 import { activePet } from '../../application/pets';

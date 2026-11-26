@@ -79,17 +79,14 @@ export function App() {
       <LoginScreen />
       <div id="app" className={loggedIn ? undefined : 'app-hidden'}>
         <Header />
-        {/* Em tela grande e no Plano, a coluna da esquerda é um bloco só, da altura da lista: o PlanSidebar e,
-            por último, a barra do timer (o cartão "Agora"), que gruda no topo E no rodapé da tela ao rolar.
-            Fora disso a barra fica onde sempre ficou (logo abaixo do cabeçalho). */}
-        {wide && tab === 'plano' ? (
+        {/* No laptop, o cartão Agora fica na agenda, dentro do PlanTab.
+            No celular a barra do timer continua logo abaixo do cabeçalho. */}
+        {wide && tab === 'plano' && (
           <aside className="plan-col" id="plan-col">
             <PlanSidebar />
-            <TimerBar />
           </aside>
-        ) : (
-          <TimerBar />
         )}
+        {!wide && <TimerBar />}
         <div className="main" style={{ display: tab === 'plano' ? undefined : 'none' }}>
           <PlanTab />
         </div>

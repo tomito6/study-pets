@@ -33,6 +33,7 @@ import { GroupPanel, type GroupTarget } from '../groups/GroupPanel';
 import { SelectionRect } from '../groups/SelectionRect';
 import { useGroupSelection } from '../groups/useGroupSelection';
 import { HardcoreStartModal } from '../timer/HardcoreModals';
+import { TimerBar } from '../timer/TimerBar';
 import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { BlockSheet, type BlockSheetTarget } from './BlockSheet';
@@ -437,6 +438,10 @@ export function PlanTab() {
     : selection.mode.kind === 'resizing' ? tg.hintResize
     : tg.hintLast;
 
+  const dateLabel = dateForWeekDay(week, day)
+    .toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+    .replace('-feira', '');
+
   return (
     <>
       <XpCard stats={stats} weekIdx={week - 1} todayKey={todayKey} />
@@ -446,30 +451,11 @@ export function PlanTab() {
         <div className="stat-box"><div className="s-label">{t.stats.semana}</div><div className="s-val" id="stat-w">{t.weekChecks(stats.weekChecksOfCurrent)}</div></div>
       </div>
       <WeekDayPicker weeks={weeks} week={week} day={day} wide={wide} mode={mode} onMode={setMode} weekMode={weekMode} todayKey={todayKey} />
-      {weekMode ? (
-        wide ? (
-          <WeekView
-            week={week}
-            now={now}
-            drag={drag}
-            onPickDay={(i) => {
-              setDay(i);
-              setMode('day');
-            }}
-          />
-        ) : (
-          <WeekCards
-            week={week}
-            now={now}
-            onOpenDay={(i) => {
-              setDay(i);
-              setMode('day');
-            }}
-          />
-        )
-      ) : (
+      {!weekMode && (
         <>
       <OtherDayNote viewKey={viewKey} todayKey={todayKey} dayLabel={t.days[day]} />
+      <div className="plan-day-head">
+      <h1 className="plan-day-title" id="plan-day-title">{dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1)}</h1>
       <div className="day-events-bar">
         {selection.active ? (
           <div className="group-hint" id="group-hint">
@@ -494,9 +480,23 @@ export function PlanTab() {
           </>
         )}
       </div>
+      </div>
+        </>
+      )}
+      {wide && <TimerBar showIdle={!weekMode && viewKey === todayKey && !mostrarComecar} />}
+      {weekMode ? (
+        wide ? (
+          <WeekView week={week} now={now} drag={drag} onPickDay={(i) => { setDay(i); setMode('day'); }} />
+        ) : (
+          <WeekCards week={week} now={now} onOpenDay={(i) => { setDay(i); setMode('day'); }} />
+        )
+      ) : (
+        <>
+      {mostrarComecar && wide && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} agenda />}
       {estudarAgora && !selection.active && (
         <StudyNowCard
           dateKey={viewKey}
+          agenda={wide}
           stopped={!!dayWindowsOverride(viewKey)?.studyWindows.some((w) => w.live && !w.live.whole)}
           canResume={canResumeRoutine(viewKey, now)}
           onStart={(at) => startLiveCard(at, true)}
@@ -529,7 +529,7 @@ export function PlanTab() {
       </div>
       {/* O placar do dia: o que substitui, fora do foco, a lista que a pessoa não olha
           enquanto o relógio corre. É também a âncora do segundo balão do tour. */}
-      {mostrarComecar && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} />}
+      {mostrarComecar && !wide && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} />}
       {/* Num dia ao vivo o "Encerrar o dia" só aparece depois de um estudo FEITO (2026-09-14, pedido do
           Tomi): antes disso não há o que encerrar, e o botão ficava colado no Começar num dia que nem
           começou. Feito = marcado: o bloco que está rodando, um aparado sem check ou um fantasma não

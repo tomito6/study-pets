@@ -25,21 +25,40 @@ interface Props {
   stopped: boolean;
   /** A rotina ainda tem blocos pra devolver de agora em diante? */
   canResume: boolean;
+  /**
+   * No laptop o cartão mora na agenda, no lugar do cartão "Agora" (que neste estado não tem
+   * bloco pra oferecer), com a mesma cara dele e do "▶ Começar" do ao vivo: `.plan-live`.
+   */
+  agenda?: boolean;
   /** O Plano abre a corrida — é ele o dono do consentimento do hardcore. */
   onStart: (at: Date) => void;
   onResumeRoutine: () => void;
 }
 
-export function StudyNowCard({ dateKey, stopped, canResume, onStart, onResumeRoutine }: Props) {
+export function StudyNowCard({ dateKey, stopped, canResume, agenda = false, onStart, onResumeRoutine }: Props) {
   const { pomo } = rhythmAtDay(dateKey);
+  const ritmo = strings.plan.liveStart.rhythmValue(pomo);
   return (
-    <div className="study-now" id="study-now">
-      <div className="sn-note" id="study-now-note">{stopped ? t.stopped : t.over}</div>
+    <div className={'study-now' + (agenda ? ' plan-live' : '')} id="study-now">
+      {agenda ? (
+        <div className="timer-summary">
+          <div className="agora-k">{strings.timer.now.current}</div>
+          <h2 className="timer-block-name" id="study-now-note">{stopped ? t.stoppedTitle : t.overTitle}</h2>
+          <div className="agora-dur">{(stopped ? t.stoppedSub : t.overSub) + ' · ' + ritmo}</div>
+        </div>
+      ) : (
+        <div className="sn-note" id="study-now-note">{stopped ? t.stopped : t.over}</div>
+      )}
+      {agenda && canResume && (
+        <button type="button" className="sn-routine" id="study-now-routine" onClick={onResumeRoutine}>
+          {t.resumeRoutine}
+        </button>
+      )}
       <button type="button" className="lv-btn" id="study-now-btn" onClick={() => onStart(new Date())}>
         <span className="lv-label">{t.start}</span>
-        <span className="lv-chip">{strings.plan.liveStart.rhythmValue(pomo)}</span>
+        {!agenda && <span className="lv-chip">{ritmo}</span>}
       </button>
-      {canResume && (
+      {!agenda && canResume && (
         <button type="button" className="sn-routine" id="study-now-routine" onClick={onResumeRoutine}>
           {t.resumeRoutine}
         </button>

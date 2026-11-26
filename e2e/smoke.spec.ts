@@ -9,6 +9,146 @@ import { expect, test, type Page } from '@playwright/test';
 
 const DIA = '2026-09-02';
 
+test.describe('Plano aprovado no Sites', () => {
+  test.use({ viewport: { width: 1484, height: 900 } });
+
+  test('Agora fica acima dos ciclos e retoma a sessão real depois de recarregar', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#plan-day-title')).toHaveText('Quarta, 2 de setembro');
+    await expect(page.locator('.plan-day-head #day-windows-btn')).toHaveText('Estrutura do dia');
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await expect(page.locator('#timer-bar')).toContainText('Agora');
+    await expect(page.locator('#timer-block-name')).toHaveText('Estudo 3');
+    await expect(page.locator('.agora-dur')).toHaveText('10:00–10:25 · 25 min');
+    const pos = await page.evaluate(() => {
+      const r = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+      return { head: r('.plan-day-head').bottom, now: r('#timer-bar').top,
+        nowBottom: r('#timer-bar').bottom, blocks: r('#blocks-list').top,
+        sideHasTimer: !!document.querySelector('#plan-col #timer-bar'),
+        overflow: document.documentElement.scrollWidth > innerWidth };
+    });
+    expect(pos.sideHasTimer).toBe(false);
+    expect(pos.now).toBeGreaterThanOrEqual(pos.head);
+    expect(pos.blocks).toBeGreaterThanOrEqual(pos.nowBottom);
+    expect(pos.overflow).toBe(false);
+    await checksDeEstudo(page).first().click();
+    await expect(checksDeEstudo(page).first()).toHaveAttribute('aria-checked', 'true');
+    await checksDeEstudo(page).nth(1).click();
+    await page.screenshot({ path: test.info().outputPath('plano-aprovado.png') });
+    const currentCheck = page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.check');
+    await currentCheck.click();
+    await expect(page.locator('#timer-bar')).toContainText('A seguir');
+    await expect(page.locator('#timer-block-name')).toHaveText('Pausa');
+    await currentCheck.click();
+    await expect(page.locator('#timer-block-name')).toHaveText('Estudo 3');
+    await page.locator('#agora-start').click();
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00');
+    await page.locator('#focus-pause').click();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-continue')).toBeVisible();
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    await expect(checksDeEstudo(page).first()).toHaveAttribute('aria-checked', 'true');
+    await page.locator('#view-week').click();
+    await expect(page.locator('#week-view')).toBeVisible();
+    await expect(page.locator('#timer-continue')).toBeVisible();
+    await page.locator('#timer-continue').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
+  test('o cartão acompanha o dia escolhido e a largura sem duplicar o timer', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    await page.locator('#day-tabs .day-tab').nth(3).click();
+    await expect(page.locator('#plan-day-title')).toHaveText('Quinta, 3 de setembro');
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await page.locator('#other-day-go').click();
+    await expect(page.locator('#agora-start')).toBeVisible();
+    await page.locator('#view-week').click();
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await page.locator('#view-day').click();
+    await page.locator('#tab-perfil').click();
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await page.locator('#tab-plano').click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await page.locator('#focus-pause').click();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-bar.active')).toBeVisible();
+    await page.setViewportSize({ width: 1484, height: 900 });
+    await expect(page.locator('.main #timer-bar.active')).toBeVisible();
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  });
+
+  test('Ao vivo começa pelo cartão da agenda e mantém eventos e ritmo do dia', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-rhythm-pomo').fill('35');
+    await page.screenshot({ path: test.info().outputPath('estrutura-do-dia.png') });
+    await page.locator('#day-windows-save').click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+    await expect(page.locator('.main #live-start.plan-live')).toBeVisible();
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await expect(page.locator('#live-start')).toContainText('35 min');
+    await page.locator('#add-event-btn').click();
+    await page.locator('#ev-name').fill('Aula');
+    await page.locator('#ev-start').fill('14:00');
+    await page.locator('#ev-end').fill('15:00');
+    await page.locator('#ev-save').click();
+    await expect(page.locator('.block-row', { hasText: 'Aula' })).toBeVisible();
+    await page.locator('#live-start-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText('35:00');
+  });
+
+  // O "▶ Estudar agora" (o plano de hoje já passou) ocupa o lugar do cartão Agora, com a cara dele.
+  // E com o relógio correndo e o foco fechado, o cartão acompanha a rolagem: sair do foco não pausa,
+  // então é ali que a pessoa vê o tempo enquanto mexe no plano lá embaixo.
+  test('Estudar agora mora no cartão da agenda, e o relógio correndo acompanha a rolagem', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '21:10');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('.main #study-now.plan-live')).toBeVisible();
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await expect(page.locator('#study-now-note')).toHaveText('O plano de hoje já passou');
+    await expect(page.locator('#study-now')).toContainText('25 min');
+    await dentroDaJanela(page, '#study-now-btn', 'ao abrir o Plano à noite');
+
+    // Rolando, os botões da cabeceira passam por BAIXO das abas dos dias (eram item de flex com z-index).
+    await page.evaluate(() => window.scrollTo(0, 120));
+    const porCima = await page.evaluate(() => {
+      const r = document.querySelector('#day-tabs .day-tab:last-child')!.getBoundingClientRect();
+      const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!el && !!el.closest('#day-tabs');
+    });
+    expect(porCima, 'as abas dos dias ficaram atrás dos botões da cabeceira').toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 0));
+
+    await page.locator('#study-now-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('.main #timer-bar.active')).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+    await dentroDaJanela(page, '#timer-bar', 'com a lista rolada e o relógio correndo');
+    const m = await page.evaluate(() => ({
+      abas: document.querySelector('#day-tabs')!.getBoundingClientRect().bottom,
+      relogio: document.querySelector('#timer-bar')!.getBoundingClientRect().top,
+    }));
+    expect(m.relogio, 'o cartão do relógio sobe por cima das abas dos dias').toBeGreaterThanOrEqual(m.abas - 2);
+    expect(erros).toEqual([]);
+  });
+});
+
 /** Passa pelo onboarding: o personagem padrão, o gato como pet inicial (com o nome
  *  sugerido) e o período padrão. */
 async function passarOnboarding(page: Page, comSetup = true) {
@@ -925,7 +1065,9 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('.focus-exit').click();
     await expect(botao).toHaveText('▶ Continuar');
     await expect(botao).toHaveAttribute('data-action', 'continuar');
-    await expect(agora.locator('.block-xp')).toHaveCount(0); // o botão fica no lugar do selo de XP
+    // O botão fica no lugar do selo de XP. Desde o Plano aprovado (2026-11-26) o selo existe na linha
+    // pro laptop, onde o botão mora no cartão Agora — no celular ele não pode aparecer.
+    await expect(agora.locator('.block-xp')).toBeHidden();
 
     // E "Continuar" registra a pausa em vez de reiniciar o bloco (que a jogaria fora).
     await page.clock.setFixedTime(new Date(`${DIA}T10:14:00`));

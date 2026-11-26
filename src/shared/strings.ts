@@ -127,7 +127,7 @@ export const strings = {
     /** Recusa de marcar à mão o bloco que está correndo (ver application/checks.ts). */
     checkRunning: 'Este bloco está rodando — ele se marca sozinho no fim ⏱',
     addEvent: '+ Evento',
-    dayWindows: '🕘 Estrutura do dia',
+    dayWindows: 'Estrutura do dia',
     /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */
     dayLive: '⏱ Ao vivo',
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
@@ -150,10 +150,15 @@ export const strings = {
     studyNow: {
       over: 'O plano de hoje já passou. Dá pra estudar agora mesmo assim:',
       stopped: 'Você parou por aqui. Quando quiser voltar:',
+      /** As mesmas duas frases no cartão da agenda do laptop: título e linha de baixo (que termina com a duração). */
+      overTitle: 'O plano de hoje já passou',
+      overSub: 'Dá pra estudar agora mesmo assim',
+      stoppedTitle: 'Você parou por aqui',
+      stoppedSub: 'Quando quiser, é só voltar',
       start: '▶ Estudar agora',
       resumeRoutine: '↺ Remontar o resto do dia pela rotina',
     },
-    dayWindowsEdited: '🕘 Estrutura · editado',
+    dayWindowsEdited: 'Estrutura do dia · editado',
     freeDay: '🌴 Dia livre',
     xpGain: (xp: number) => `+${xp} XP`,
     free: 'livre',
@@ -928,6 +933,9 @@ export const strings = {
   timer: {
     /** O cartão "Agora · Iniciar" do laptop, quando nenhum timer roda. */
     now: {
+      current: 'Agora',
+      upcoming: 'A seguir',
+      window: (start: string, end: string, min: number) => `${start}–${end} · ${min} min`,
       kicker: (time: string) => `Agora · ${time}`,
       next: (time: string) => `Próximo · ${time}`,
       dur: (min: number, type: string) => `${min} min de ${type === 'pausa' ? 'pausa' : 'estudo'}`,

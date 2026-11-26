@@ -1,0 +1,76 @@
+/* Plano aprovado: data e controles na cabeceira, Agora acima dos ciclos.
+   O timer continua sendo o mesmo, com os dados e as ações da sessão real. */
+.plan-day-head { margin: 16px 0; }
+.plan-day-title { margin: 0 0 12px; font: 500 1.5rem/1.25 var(--font-title); color: var(--text); }
+.plan-day-head .day-events-bar { margin: 0; }
+.block-action-xp { display: none; }
+.block-kind-icon { display: inline-block; width: 16px; height: 16px; margin-right: 8px; vertical-align: -2px; color: var(--accent); }
+
+@media (min-width: 1100px) {
+  #app { grid-template-columns: calc(186 * var(--s) * var(--col-k)) minmax(0, 1fr); }
+  .plan-day-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 20px 0 16px; }
+  .plan-day-title { margin: 0; font-size: clamp(1.5rem, 2.1vw, 1.875rem); }
+  /* z-index:auto — a barra é item de flex, e o z-index:5 que ela herda do app.css valia mesmo sem
+     position: os botões passavam POR CIMA das abas dos dias (sticky) ao rolar. */
+  .plan-day-head .day-events-bar { position: static; z-index: auto; padding: 0; gap: 6px; }
+  .plan-day-head .add-event-btn { min-height: 40px; padding: 8px 12px; font-size: .875rem; }
+  :root[data-theme="cafe"] .plan-day-head #add-event-btn { background: var(--accent-bg); color: var(--accent); border-color: var(--sage-line); }
+
+  #timer-bar.plan-now, .main .plan-live {
+    position: relative; top: auto; z-index: auto; margin: 0 0 24px; padding: 20px 22px;
+    flex-direction: row; flex-wrap: wrap; align-items: center; gap: 14px;
+    border: 1px solid var(--border-strong); border-left: 4px solid var(--accent);
+    border-radius: 12px; background: var(--accent-bg); box-shadow: none;
+  }
+  .main .plan-live { display: flex; }
+  #timer-bar.plan-now::before { display: none; }
+  .plan-now .timer-summary, .plan-live .timer-summary { flex: 1; min-width: 160px; order: 0; }
+  .main .plan-now .agora-k, .main .plan-live .agora-k { font: 600 .875rem/1.4 var(--font-ui); font-size: .875rem !important; letter-spacing: 0; text-transform: none; color: var(--accent); }
+  .main .plan-now.idle .timer-block-name, .main .plan-live .timer-block-name { margin: 4px 0; font: 500 clamp(1.625rem, 2.1vw, 1.875rem)/1.2 var(--font-title); color: var(--text); }
+  .plan-now .agora-dur, .plan-live .agora-dur { margin-top: 4px; font-size: .875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .main .plan-now .agora-start, .main .plan-now .timer-continue, .main .plan-live .lv-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 104px;
+    min-height: 40px; height: auto; padding: 9px 16px; margin: 0; border: 1px solid var(--accent);
+    border-radius: 9px; background: var(--accent); color: var(--on-accent);
+    font: 600 .875rem/1.4 var(--font-ui); box-shadow: none; text-align: center;
+  }
+  .main .plan-now.active > .timer-summary { order: 0; }
+  .main .plan-now .timer-time { order: 0; font-size: 2rem; }
+  .main .plan-now .volume-wrap { order: 1; margin: 0; }
+  .main .plan-now .timer-continue { order: 2; }
+  .main .plan-now .timer-pause, .main .plan-now .timer-stop { min-height: 40px; font-size: .875rem; }
+  .plan-live .lv-tally { flex-basis: 100%; margin: 0; font-size: .875rem; }
+  /* "▶ Estudar agora" na agenda: a volta pela rotina é o botão de contorno ao lado do principal. */
+  .main .plan-live .sn-routine {
+    width: auto; min-height: 40px; margin: 0; padding: 9px 14px; border: 1px solid var(--border-strong);
+    border-radius: 9px; background: var(--bg2); color: var(--text); font: 500 .875rem/1.4 var(--font-ui);
+  }
+  /* Com o relógio correndo, o cartão acompanha a rolagem (logo abaixo das abas dos dias): desde que
+     sair do foco não pausa, é aqui que a pessoa vê o tempo enquanto mexe no plano lá embaixo. */
+  .main #timer-bar.plan-now.active { position: sticky; top: calc(var(--topbar-h) + 44 * var(--s)); z-index: 5; }
+
+  .main .blocks-list .block-row { min-height: 43px; padding: 7px 10px; gap: 12px; }
+  .main .blocks-list .block-time { min-width: 112px; font: 400 .875rem/1.4 var(--font-ui); color: var(--muted); }
+  .main .blocks-list .block-name { font-size: 1rem; font-weight: 500; }
+  .main .blocks-list .block-xp { font-size: .8125rem; }
+  .main .blocks-list .cycle-divider { margin: 22px 0 6px; font: 500 .875rem/1.4 var(--font-ui); letter-spacing: 0; text-transform: none; }
+  .main .blocks-list .cycle-divider .cd-label { color: var(--accent); }
+  .main .blocks-list .check { width: 18px !important; height: 18px !important; flex-shrink: 0; }
+  .main .block-row.now-block .block-action { display: none; }
+  .main .block-row.now-block .block-action-xp { display: contents; }
+  .plan-side { flex: 0 1 auto; }
+}
+
+/* Os mesmos campos de janelas e ritmo, com a legibilidade da prévia. */
+#day-windows-panel .panel-sheet { width: min(480px, calc(100vw - 32px)); }
+#day-windows-panel .panel-header h2 { font: 500 1.625rem/1.2 var(--font-title); }
+#day-windows-panel .dw-head label { font-size: 1rem; text-transform: none; letter-spacing: 0; }
+#day-windows-panel .dw-intro, #day-windows-panel .dw-mode-sub { font-size: .875rem; line-height: 1.5; }
+#day-windows-panel input { min-height: 42px; font-size: 1rem; }
+#day-windows-panel .dw-rt { display: flex; flex-direction: column-reverse; gap: 6px; }
+#day-windows-panel .dw-rt span { font-size: .875rem; }
+#day-windows-panel .dw-rt input { border: 1px solid var(--border-strong); border-radius: 6px; background: var(--bg2); }
+#day-windows-panel .dm-btn, #day-windows-panel .btn-row button { min-height: 40px; font-size: .875rem; }
+@media (pointer: coarse) {
+  .plan-day-head button, #day-windows-panel input, #day-windows-panel button { min-height: 44px; }
+}

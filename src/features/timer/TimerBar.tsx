@@ -10,9 +10,10 @@ import { continueBlock, pauseOutlookNow, pauseTimer, resumeTimer } from '../../a
 import { blocksForDay, dayModeOf } from '../../application/plan';
 import { setVolume, toggleMute } from '../../application/alerts';
 import { requestStartBlock, startContextFor, stopTimer } from '../../application/timer';
+import { isChecked } from '../../domain/checks';
 import { blockDurationMin, canStartBlock, cleanBlockName, timerProgress } from '../../domain/timer';
 import { dk } from '../../domain/time';
-import type { StudyBlock } from '../../domain/types';
+import type { ChecksByDate, StudyBlock } from '../../domain/types';
 import { strings } from '../../shared/strings';
 import { showToast } from '../../shared/toast';
 import { useWide } from '../../shared/useWide';
@@ -23,17 +24,18 @@ import { stopHereNow } from './StopHereModal';
 import { useSecondTick } from './useSecondTick';
 
 /** O estudo/pausa de hoje em andamento, ou o próximo que ainda dá pra iniciar. */
-function agoraBlock(now: Date): StudyBlock | null {
+function agoraBlock(now: Date, checks: ChecksByDate): StudyBlock | null {
   const key = dk(now);
   for (const b of blocksForDay(key)) {
     if (b.type !== 'estudo' && b.type !== 'pausa') continue;
+    if (isChecked(checks, key, b.time)) continue;
     if (canStartBlock(b, key, now, startContextFor(b, key)).ok) return b;
   }
   return null;
 }
 
-export function TimerBar() {
-  const { block, timerDay, tab, audio, hardcore, pausedAt, endsAt, focusOpen } = useAppState((s, d) => ({
+export function TimerBar({ showIdle = true }: { showIdle?: boolean }) {
+  const { block, timerDay, tab, audio, hardcore, pausedAt, endsAt, focusOpen, checks } = useAppState((s, d) => ({
     block: d.timerBlock,
     timerDay: d.timerDay,
     focusOpen: d.focusOpen,
@@ -42,6 +44,7 @@ export function TimerBar() {
     hardcore: !!d.hardcore,
     pausedAt: d.timerPausedAt,
     endsAt: d.timerEndsAt,
+    checks: s.checks,
   }));
   const wide = useWide();
   const active = !!block && tab === 'plano';
@@ -76,29 +79,30 @@ export function TimerBar() {
 
   // Tela grande sem timer: o cartão do bloco de agora (só no Plano, e só se houver bloco de hoje pela frente).
   if (wide && !block && tab === 'plano') {
-    const b = agoraBlock(now);
+    const b = showIdle ? agoraBlock(now, checks) : null;
     if (!b) return <div className="timer-bar" id="timer-bar" />;
     const running = timerProgress(b, now).phase === 'running';
     // O PlanTab atende: com hardcore ligado abre o consentimento, senão inicia (e mostra o motivo se recusar).
     const start = () => requestStartBlock(b);
     const notaAgora = blockNote(dk(now), b);
     return (
-      <div className="timer-bar idle" id="timer-bar">
-        <div className="agora-k">{running ? t.now.kicker(b.time) : t.now.next(b.time)}</div>
-        <div className="timer-block-name" id="timer-block-name">{cleanBlockName(b.name) + (notaAgora ? ` · ${notaAgora}` : '')}</div>
-        <div className="agora-dur">{t.now.dur(blockDurationMin(b), b.type)}</div>
+      <section className="timer-bar plan-now idle" id="timer-bar" aria-label={t.now.current}>
+        <div className="timer-summary">
+          <div className="agora-k">{running ? t.now.current : t.now.upcoming}</div>
+          <h2 className="timer-block-name" id="timer-block-name">{cleanBlockName(b.name) + (notaAgora ? ` · ${notaAgora}` : '')}</h2>
+          <div className="agora-dur">{t.now.window(b.time, b.endTime, blockDurationMin(b))}</div>
+        </div>
         <button className="agora-start" id="agora-start" onClick={start}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
           <span>{t.now.start}</span>
         </button>
-      </div>
+      </section>
     );
   }
 
   const nota = block ? blockNote(timerDay ?? dk(now), block) : null; // a nota do bloco vai junto na barra
   return (
-    <div className={'timer-bar' + (active ? ' active' : '')} id="timer-bar">
-      <div>
+    <div className={'timer-bar' + (wide ? ' plan-now' : '') + (active ? ' active' : '')} id="timer-bar">
+      <div className="timer-summary">
         <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
           {paused && progress ? t.pausedFor(progress.pausedDisplay) : waiting ? t.startsIn : t.inProgress}
         </div>
