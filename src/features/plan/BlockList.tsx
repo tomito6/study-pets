@@ -49,6 +49,16 @@ function CheckIcon() {
   );
 }
 
+function BlockKindIcon({ study }: { study: boolean }) {
+  return (
+    <svg className="block-kind-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={study
+        ? 'M12 5v15M3 4c3-1 6-1 9 1 3-2 6-2 9-1v15c-3-1-6-1-9 1-3-2-6-2-9-1Z'
+        : 'M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5ZM17 9h2a3 3 0 1 1 0 6h-2M7 2v2M12 2v2'} />
+    </svg>
+  );
+}
+
 /** O que o Plano faz quando uma linha pede um modal — ou quer iniciar o timer (o Plano decide se é hardcore). */
 export interface BlockActions {
   onDeleteEvent: (dateKey: DateKey, block: StudyBlock) => void;
@@ -238,7 +248,8 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
         {b.time}–{b.endTime}
       </span>
       <span className="block-name">
-        {b.name}
+        {(isE || isP) && <BlockKindIcon study={isE} />}
+        {isE || isP ? cleanName(b.name) : b.name}
         {nota && (
           <span
             className={'block-note' + (closed ? '' : ' editable')}
@@ -263,6 +274,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
       {/* O botão ocupa o lugar do selo de XP: medido a 375px, os dois juntos espremem o nome
           do bloco a 44px e ele quebra em três linhas. O ganho deste bloco está no foco, que é
           pra onde o botão leva ("+50 XP · +25 🪙 ao concluir"). */}
+      {acao && <span className="block-action-xp">{xpLabel}</span>}
       {acao ? (
         <button
           type="button"

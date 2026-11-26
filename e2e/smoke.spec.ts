@@ -9,6 +9,108 @@ import { expect, test, type Page } from '@playwright/test';
 
 const DIA = '2026-09-02';
 
+test.describe('Plano aprovado no Sites', () => {
+  test.use({ viewport: { width: 1484, height: 900 } });
+
+  test('Agora fica acima dos ciclos e retoma a sessão real depois de recarregar', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('#plan-day-title')).toHaveText('Quarta, 2 de setembro');
+    await expect(page.locator('.plan-day-head #day-windows-btn')).toHaveText('Estrutura do dia');
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await expect(page.locator('#timer-bar')).toContainText('Agora');
+    await expect(page.locator('#timer-block-name')).toHaveText('Estudo 3');
+    await expect(page.locator('.agora-dur')).toHaveText('10:00–10:25 · 25 min');
+    const pos = await page.evaluate(() => {
+      const r = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+      return { head: r('.plan-day-head').bottom, now: r('#timer-bar').top,
+        nowBottom: r('#timer-bar').bottom, blocks: r('#blocks-list').top,
+        sideHasTimer: !!document.querySelector('#plan-col #timer-bar'),
+        overflow: document.documentElement.scrollWidth > innerWidth };
+    });
+    expect(pos.sideHasTimer).toBe(false);
+    expect(pos.now).toBeGreaterThanOrEqual(pos.head);
+    expect(pos.blocks).toBeGreaterThanOrEqual(pos.nowBottom);
+    expect(pos.overflow).toBe(false);
+    await checksDeEstudo(page).first().click();
+    await expect(checksDeEstudo(page).first()).toHaveAttribute('aria-checked', 'true');
+    await checksDeEstudo(page).nth(1).click();
+    await page.screenshot({ path: test.info().outputPath('plano-aprovado.png') });
+    const currentCheck = page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.check');
+    await currentCheck.click();
+    await expect(page.locator('#timer-bar')).toContainText('A seguir');
+    await expect(page.locator('#timer-block-name')).toHaveText('Pausa');
+    await currentCheck.click();
+    await expect(page.locator('#timer-block-name')).toHaveText('Estudo 3');
+    await page.locator('#agora-start').click();
+    await expect(page.locator('#focus-time-big')).toHaveText('15:00');
+    await page.locator('#focus-pause').click();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-continue')).toBeVisible();
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+    await page.reload();
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    await expect(checksDeEstudo(page).first()).toHaveAttribute('aria-checked', 'true');
+    await page.locator('#view-week').click();
+    await expect(page.locator('#week-view')).toBeVisible();
+    await expect(page.locator('#timer-continue')).toBeVisible();
+    await page.locator('#timer-continue').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
+  test('o cartão acompanha o dia escolhido e a largura sem duplicar o timer', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    await page.locator('#day-tabs .day-tab').nth(3).click();
+    await expect(page.locator('#plan-day-title')).toHaveText('Quinta, 3 de setembro');
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await page.locator('#other-day-go').click();
+    await expect(page.locator('#agora-start')).toBeVisible();
+    await page.locator('#view-week').click();
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await page.locator('#view-day').click();
+    await page.locator('#tab-perfil').click();
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await page.locator('#tab-plano').click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await page.locator('#focus-pause').click();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#timer-bar.active')).toBeVisible();
+    await page.setViewportSize({ width: 1484, height: 900 });
+    await expect(page.locator('.main #timer-bar.active')).toBeVisible();
+    await expect(page.locator('#timer-bar')).toHaveCount(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  });
+
+  test('Ao vivo começa pelo cartão da agenda e mantém eventos e ritmo do dia', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-rhythm-pomo').fill('35');
+    await page.screenshot({ path: test.info().outputPath('estrutura-do-dia.png') });
+    await page.locator('#day-windows-save').click();
+    await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
+    await expect(page.locator('.main #live-start.plan-live')).toBeVisible();
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await expect(page.locator('#live-start')).toContainText('35 min');
+    await page.locator('#add-event-btn').click();
+    await page.locator('#ev-name').fill('Aula');
+    await page.locator('#ev-start').fill('14:00');
+    await page.locator('#ev-end').fill('15:00');
+    await page.locator('#ev-save').click();
+    await expect(page.locator('.block-row', { hasText: 'Aula' })).toBeVisible();
+    await page.locator('#live-start-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText('35:00');
+  });
+});
+
 /** Passa pelo onboarding: o personagem padrão, o gato como pet inicial (com o nome
  *  sugerido) e o período padrão. */
 async function passarOnboarding(page: Page, comSetup = true) {

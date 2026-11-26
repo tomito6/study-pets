@@ -125,7 +125,7 @@ export const strings = {
     /** Recusa de marcar à mão o bloco que está correndo (ver application/checks.ts). */
     checkRunning: 'Este bloco está rodando — ele se marca sozinho no fim ⏱',
     addEvent: '+ Evento',
-    dayWindows: '🕘 Estrutura do dia',
+    dayWindows: 'Estrutura do dia',
     /** O botão da barra num dia ao vivo: mais curto que os dois de rotina. */
     dayLive: '⏱ Ao vivo',
     /** O cartão que substitui a lista num dia ao vivo que ainda não começou. */
@@ -144,7 +144,7 @@ export const strings = {
         : r === 'no-room' ? 'Tem um compromisso bem agora 📅'
         : 'Só dá pra começar hoje 📅',
     },
-    dayWindowsEdited: '🕘 Estrutura · editado',
+    dayWindowsEdited: 'Estrutura do dia · editado',
     freeDay: '🌴 Dia livre',
     xpGain: (xp: number) => `+${xp} XP`,
     free: 'livre',
@@ -919,6 +919,9 @@ export const strings = {
   timer: {
     /** O cartão "Agora · Iniciar" do laptop, quando nenhum timer roda. */
     now: {
+      current: 'Agora',
+      upcoming: 'A seguir',
+      window: (start: string, end: string, min: number) => `${start}–${end} · ${min} min`,
       kicker: (time: string) => `Agora · ${time}`,
       next: (time: string) => `Próximo · ${time}`,
       dur: (min: number, type: string) => `${min} min de ${type === 'pausa' ? 'pausa' : 'estudo'}`,

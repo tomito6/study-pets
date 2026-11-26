@@ -8,6 +8,7 @@ import './styles/login.css';
 // que os dois herdam (e o fallback se o atributo faltar).
 import './styles/themes/cafe.css';
 import './styles/themes/loft.css';
+import './styles/plan.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

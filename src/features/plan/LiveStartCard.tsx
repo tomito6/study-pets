@@ -22,6 +22,7 @@ const t = strings.plan.liveStart;
 
 interface Props {
   dateKey: string;
+  agenda?: boolean;
   /**
    * O Plano é quem abre a corrida e põe o bloco no timer — é ele que é dono do
    * consentimento do hardcore, e a corrida só pode ser gravada DEPOIS dele: gravar
@@ -30,7 +31,7 @@ interface Props {
   onStart: (at: Date) => void;
 }
 
-export function LiveStartCard({ dateKey, onStart }: Props) {
+export function LiveStartCard({ dateKey, onStart, agenda = false }: Props) {
   const checks = useAppState((s) => s.checks);
   // O pomodoro com que a corrida nasceria AGORA: o do dia (o próprio dele, se o modal deu um), não o da config.
   const { pomo } = rhythmAtDay(dateKey);
@@ -47,10 +48,15 @@ export function LiveStartCard({ dateKey, onStart }: Props) {
   const minutos = feitos.reduce((soma, b) => soma + blockMins(b), 0);
 
   return (
-    <div className="live-start" id="live-start">
+    <div className={'live-start' + (agenda ? ' plan-live' : '')} id="live-start">
+      {agenda && <div className="timer-summary">
+        <div className="agora-k">{strings.timer.now.current}</div>
+        <h2 className="timer-block-name">{strings.plan.dayLive}</h2>
+        <div className="agora-dur">{t.rhythmValue(pomo)}</div>
+      </div>}
       <button type="button" className="lv-btn" id="live-start-btn" onClick={() => onStart(new Date())}>
         <span className="lv-label">{jaRodou ? t.back : t.start}</span>
-        <span className="lv-chip" id="live-rhythm">{t.rhythmValue(pomo)}</span>
+        {!agenda && <span className="lv-chip" id="live-rhythm">{t.rhythmValue(pomo)}</span>}
       </button>
       {feitos.length > 0 && (
         <div className="lv-tally" id="live-tally">
