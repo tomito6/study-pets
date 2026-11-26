@@ -69,6 +69,7 @@ export const strings = {
       'unknown': 'Não deu pra completar. Tenta de novo.',
     } satisfies Record<import('../domain/auth').AuthErrorReason, string>,
     google: 'Continuar com Google',
+    googleSoon: 'Entrar com Google chega numa próxima versão do app. Por enquanto, e-mail e senha.',
     legalLabel: 'Informações legais',
     legal: { privacy: 'Privacidade', terms: 'Termos', imprint: 'Impressum' },
   },

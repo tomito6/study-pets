@@ -3,6 +3,7 @@
 // O visual Caderno mora nesta tela. As ações continuam em application/session.
 
 import { useEffect, useState } from 'react';
+import { isNativeApp, legalUrl } from '../../application/platform';
 import { resetPassword, signIn, signInWithEmail, signUpWithEmail } from '../../application/session';
 import type { AuthErrorReason } from '../../domain/auth';
 import { FORMS } from '../../domain/pets';
@@ -70,7 +71,10 @@ function GoogleLogo() {
 
 type Mode = 'signin' | 'signup';
 
-function EmailForm() {
+// `autoFocus`: no site o formulário só nasce depois do clique em "Entrar com e-mail", e o cursor
+// já cai no campo. No app (iPhone, computador) ele nasce aberto, e focar ali faria o teclado do
+// iPhone subir sozinho na abertura, por cima da tela.
+function EmailForm({ autoFocus }: { autoFocus: boolean }) {
   const t = strings.login;
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -117,7 +121,7 @@ function EmailForm() {
           placeholder={t.emailPlaceholder}
           aria-label={t.emailPlaceholder}
           autoComplete="email"
-          autoFocus
+          autoFocus={autoFocus}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -154,27 +158,43 @@ function EmailForm() {
 function LoginCard() {
   const t = strings.login;
   const [emailOpen, setEmailOpen] = useState(false);
+  // No app (iPhone, computador) o login com Google ainda não existe: popup não funciona dentro
+  // de app, vem por plugin nativo. Sem o Google, um botão só pra abrir o e-mail seria um clique
+  // à toa — então o formulário já nasce aberto, e uma frase diz por que o Google não está ali.
+  const native = isNativeApp();
 
   return (
     <section className="ls-card" aria-labelledby="login-title">
       <h2 id="login-title">{t.signIn}</h2>
-      <div className="ls-actions">
-        <button type="button" className="ls-option ls-google-btn" onClick={() => void signIn()}>
-          <GoogleLogo />
-          {t.google}
-        </button>
-        <button type="button" className="ls-option" id="login-email-option" aria-expanded={emailOpen} aria-controls="login-email-panel" onClick={() => setEmailOpen((open) => !open)}>
-          <MailIcon />
-          {t.email}
-        </button>
-      </div>
-      <div id="login-email-panel" hidden={!emailOpen}>
-        {emailOpen && <EmailForm />}
-      </div>
+      {native ? (
+        <>
+          <div id="login-email-panel" className="ls-panel-open">
+            <EmailForm autoFocus={false} />
+          </div>
+          <p className="ls-note" id="login-google-soon">{t.googleSoon}</p>
+        </>
+      ) : (
+        <>
+          <div className="ls-actions">
+            <button type="button" className="ls-option ls-google-btn" onClick={() => void signIn()}>
+              <GoogleLogo />
+              {t.google}
+            </button>
+            <button type="button" className="ls-option" id="login-email-option" aria-expanded={emailOpen} aria-controls="login-email-panel" onClick={() => setEmailOpen((open) => !open)}>
+              <MailIcon />
+              {t.email}
+            </button>
+          </div>
+          <div id="login-email-panel" hidden={!emailOpen}>
+            {emailOpen && <EmailForm autoFocus />}
+          </div>
+        </>
+      )}
+      {/* legalUrl: caminho local no site, endereço publicado dentro do app (que abre fora da janela). */}
       <nav className="ls-legal" aria-label={t.legalLabel}>
-        <a href="/legal/privacidade.html">{t.legal.privacy}</a>
-        <a href="/legal/termos.html">{t.legal.terms}</a>
-        <a href="/legal/impressum.html">{t.legal.imprint}</a>
+        <a href={legalUrl('privacidade')}>{t.legal.privacy}</a>
+        <a href={legalUrl('termos')}>{t.legal.terms}</a>
+        <a href={legalUrl('impressum')}>{t.legal.imprint}</a>
       </nav>
     </section>
   );

@@ -153,6 +153,11 @@
 }
 
 .ls-link { border: 0; background: none; padding: 6px 0; cursor: pointer; }
+
+/* Dentro do app (iPhone, computador) não há os dois botões: o formulário nasce aberto, logo abaixo
+   do título, e a frase diz por que o Google não está ali. */
+.ls-panel-open .ls-form { margin-top: 0; }
+.ls-note { margin: 14px 0 0; color: var(--ls-muted); font-size: .875rem; line-height: 1.45; text-align: center; }
 .ls-notebook :is(button, a, input):focus-visible { outline: 2px solid var(--ls-accent); outline-offset: 3px; }
 
 @media (max-width: 720px) {

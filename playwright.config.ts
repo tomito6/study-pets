@@ -24,7 +24,8 @@ export default defineConfig({
   testDir: 'e2e',
   // `extension.spec.ts` é outra suíte: precisa do Chromium completo com a extensão
   // carregada (`npm run test:ext`, playwright.extension.config.ts). Aqui ela não roda.
-  testIgnore: /extension\.spec\.ts/,
+  // `desktop.spec.ts` idem: abre o app de computador (`npm run test:desktop`).
+  testIgnore: /(extension|desktop)\.spec\.ts/,
   fullyParallel: true,
   // Local: sem repetição — flake tem que aparecer. Em CI, uma repetição segura instabilidade de máquina.
   retries: process.env.CI ? 1 : 0,
