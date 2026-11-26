@@ -31,9 +31,6 @@
     --scene-floor:var(--bg2);              /* o "chão" iluminado da cena do foco */
     --timeline-pause:#0e0e0f;              /* segmento "pausa" da régua do dia */
     --hatch-a:#3a3a42; --hatch-b:#2a2a30;  /* hachura de intervalo */
-    --login-bg:#0a0a0b;                    /* fundo da tela de login */
-    --input-bg:rgba(var(--tint-rgb),.04);  /* input do login */
-    --input-border:rgba(var(--tint-rgb),.12);
 
     /* --- linha ------------------------------------------------------------ */
     --border:#2e2e35; --border-rgb:46,46,53;
@@ -48,12 +45,9 @@
     --text-soft:#c9c9cf;
     --muted:#888;
     --text-dim:#6b6b72;
-    --text-dim-alt:#666;                   /* login: subtítulo e placeholder */
     --text-faint:#555;
-    --text-ghost:#444;
     --on-accent:#0e0e0f;                   /* texto/ícone EM CIMA do accent */
     --on-accent-alt:#1a3a08;               /* 2ª variante (badges de nível) */
-    --on-accent-login:#0a0a0b;             /* idem, na tela de login */
     --on-accent-wash:rgba(14,14,15,.14);   /* um selo translúcido EM CIMA do accent (o "25 min" do botão Começar) */
     --on-orange:#0e0e0f;
     --on-gold:#0e0e0f;
@@ -64,11 +58,10 @@
     --accent:#a3e635; --accent-rgb:163,230,53; --accent2:#65a30d;
     --accent-bg:#1a2e1a;
     --accent-wash:rgba(var(--accent-rgb),.07);        /* faixa do bloco de agora */
-    --accent-wash-soft:rgba(var(--accent-rgb),.06);   /* seleção de grupo, card do login */
+    --accent-wash-soft:rgba(var(--accent-rgb),.06);   /* seleção de grupo */
     --accent-wash-soft2:rgba(var(--accent-rgb),.05);  /* coluna de hoje na Semana */
     --accent-wash-2:rgba(var(--accent-rgb),.08);      /* skill ligada, card selecionado */
     --accent-bg-soft:rgba(var(--accent-rgb),.15);     /* pill de nível, halo do FAB */
-    --accent-line:rgba(var(--accent-rgb),.15);        /* borda dos cards do login */
     --accent-border:rgba(var(--accent-rgb),.35);
     --accent-border-soft:rgba(var(--accent-rgb),.25);
     --accent-glow:rgba(var(--accent-rgb),.28);        /* faixa "✓ concluído" */
@@ -78,18 +71,9 @@
     --accent-glow-strong:rgba(var(--accent-rgb),.85); /* text-shadow do "+X XP" */
     --accent-glow-tight:rgba(var(--accent-rgb),1);    /* bloom colado na cor (2ª camada, linha do agora) */
     --accent-ripple:rgba(var(--accent-rgb),.65);      /* anel do check */
-    --accent-halo:rgba(var(--accent-rgb),.08);        /* login: glow radial e scanline */
-    --accent-grid:rgba(var(--accent-rgb),.04);        /* login: grade de fundo */
-    --accent-glow-mid:rgba(var(--accent-rgb),.5);     /* login: estrelas e drop-shadow */
-    --accent-glow-text:rgba(var(--accent-rgb),.6);    /* login: eyebrow */
-    --accent-glow-title:rgba(var(--accent-rgb),.3);   /* login: título */
     --accent-deep:#1a3a08; --accent-deep2:#2d5a18;  /* banner de level-up */
     --knob:#f0f0f0;                        /* botão do switch de skill (desligado) */
     --knob-on:var(--on-accent);            /* idem, ligado (sobre o accent) */
-    --google-btn-bg:#fff;                  /* botão do Google: fundo (variante clara) */
-    --google-btn-fg:#1a1a1a;
-    --google-btn-ring:rgba(var(--tint-rgb),.1);
-    --google-btn-ring-hover:rgba(var(--tint-rgb),.15);
 
     /* --- semântica -------------------------------------------------------- */
     --blue:#60a5fa; --blue-rgb:96,165,250; --blue-bg:#1e2d40;
@@ -150,7 +134,6 @@
     --shadow-raised:0 4px 16px rgba(var(--shadow-rgb),.4);
     --shadow-raised-hover:0 6px 24px rgba(var(--shadow-rgb),.5);
     --shadow-knob:0 1px 2px rgba(var(--shadow-rgb),.3);
-    --title-shadow:rgba(var(--shadow-rgb),.8);  /* sombra dura do título do login */
 
     /* --- estado — opacidade e brilho. No escuro fade escurece e brightness
        clareia; no claro os dois invertem, e é aqui que o tema corrige. ------- */
@@ -180,7 +163,15 @@
     --font-ui:'DM Sans',sans-serif;
     --font-mono:'DM Mono',monospace;
     --font-title:var(--font-ui);           /* títulos: onde os temas põem outra família */
-    --font-display:'Press Start 2P',monospace;  /* título/eyebrow do login */
+    /* a tela de entrada "Caderno" (styles/login.css) — sempre clara, igual nos dois temas, como o quarto:
+       quem ainda não entrou não tem tema escolhido neste dispositivo. Um tema PODE redefinir; hoje nenhum redefine */
+    --ls-paper:#f7f4ec; --ls-card:#fffef9; --ls-field:#fff; --ls-line:#dadfd4;
+    --ls-ink:#354739; --ls-muted:#586454;
+    --ls-accent:#3d5a46; --ls-accent-deep:#314a38; --ls-on-accent:#fffef9;
+    --ls-hover:#edf1e8;                    /* botão de opção em hover / com o formulário aberto */
+    --ls-danger:#923b2e;                   /* erro inline do formulário */
+    --ls-tape:#e8cfa080;                   /* a fita adesiva no topo do cartão */
+    --ls-card-shadow:#4a59420a; --ls-sprite-shadow:#454b3229;
     /* o quarto ilustrado da coluna do laptop (features/plan/PlanSidebar.tsx) — arte, não UI: igual nos dois temas */
     --room-wall:#e7d3b3; --room-frame:#fff9ec; --room-sky:#d9e4d5; --room-hill:#b2c1a3;
     --room-floor:#d3b38d; --room-floor-line:#b89a73; --room-rug:#c99979; --room-wood:#8c6447;

@@ -6,7 +6,6 @@ viaje junto com elas.
 Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
 Copyright 2020 The DM Mono Project Authors (https://www.github.com/googlefonts/dm-mono)
 Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name "Lora".
-Copyright 2012 The Press Start 2P Project Authors (cody@zone38.net), with Reserved Font Name "Press Start 2P".
 
 --------------------------------------------------------------------------------
 

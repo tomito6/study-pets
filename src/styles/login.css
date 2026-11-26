@@ -1,11 +1,7 @@
+/* A tela de entrada "Caderno". As cores são os tokens --ls-* do :root (styles/app.css):
+   aqui não entra hex solto, como no resto do app. */
 .ls-notebook {
   color-scheme: light;
-  --ls-paper: #f7f4ec;
-  --ls-card: #fffef9;
-  --ls-ink: #354739;
-  --ls-muted: #586454;
-  --ls-accent: #3d5a46;
-  --ls-line: #dadfd4;
   --ls-serif: Lora, Georgia, serif;
   min-height: 100vh;
   min-height: 100dvh;
@@ -63,7 +59,7 @@
   width: 30%;
   height: auto;
   image-rendering: pixelated;
-  filter: drop-shadow(0 4px 1px #454b3229);
+  filter: drop-shadow(0 4px 1px var(--ls-sprite-shadow));
 }
 
 .ls-pets img:nth-child(2) { width: 34%; }
@@ -77,7 +73,7 @@
   border: 1px solid var(--ls-line);
   border-radius: 20px;
   background: var(--ls-card);
-  box-shadow: 0 16px 48px #4a59420a;
+  box-shadow: 0 16px 48px var(--ls-card-shadow);
 }
 
 .ls-card::before {
@@ -88,7 +84,7 @@
   top: -9px;
   left: calc(50% - 34px);
   transform: rotate(-4deg);
-  background: #e8cfa080;
+  background: var(--ls-tape);
   clip-path: polygon(2% 0, 98% 0, 96% 100%, 3% 100%);
   pointer-events: none;
 }
@@ -110,7 +106,7 @@
   border: 1px solid var(--ls-line);
   border-radius: 10px;
   padding: 10px 14px;
-  background: #fff;
+  background: var(--ls-field);
   color: var(--ls-ink);
   cursor: pointer;
 }
@@ -125,9 +121,9 @@
 }
 
 .ls-option svg { flex: 0 0 20px; }
-.ls-option:hover, .ls-option[aria-expanded="true"] { background: #edf1e8; }
-.ls-submit-btn { background: var(--ls-accent); color: #fffef9; border-color: var(--ls-accent); }
-.ls-submit-btn:hover:not(:disabled) { background: #314a38; }
+.ls-option:hover, .ls-option[aria-expanded="true"] { background: var(--ls-hover); }
+.ls-submit-btn { background: var(--ls-accent); color: var(--ls-on-accent); border-color: var(--ls-accent); }
+.ls-submit-btn:hover:not(:disabled) { background: var(--ls-accent-deep); }
 .ls-submit-btn:disabled { opacity: .65; cursor: wait; }
 
 .ls-input {
@@ -136,13 +132,13 @@
   border: 1px solid var(--ls-line);
   border-radius: 10px;
   padding: 10px 13px;
-  background: #fff;
+  background: var(--ls-field);
   color: var(--ls-ink);
 }
 
 .ls-input::placeholder { color: var(--ls-muted); }
 .ls-error, .ls-info { font-size: .875rem; overflow-wrap: anywhere; }
-.ls-error { color: #923b2e; }
+.ls-error { color: var(--ls-danger); }
 .ls-info { color: var(--ls-accent); }
 
 .ls-links, .ls-legal { display: flex; flex-wrap: wrap; gap: 6px 16px; }

@@ -37,7 +37,6 @@
   --gold-surface-a:#3d3323; --gold-surface-b:#2d2719;
   --scene-floor:#31444e; --timeline-pause:#1b2632;
   --hatch-a:#3d4e5c; --hatch-b:#2b3b48;
-  --login-bg:#16202a; --input-bg:rgba(var(--tint-rgb),.05); --input-border:rgba(var(--tint-rgb),.14);
 
   /* linha */
   --border:#374753; --border-rgb:55,71,83; --border-strong:#5a6d7b; --border-mid:#4a5c69;
@@ -45,8 +44,8 @@
 
   /* texto */
   --text:#e4eae6; --text-soft:#c6d1cd; --muted:#adbbb9;
-  --text-dim:#95a4a5; --text-dim-alt:#95a4a5; --text-faint:#8d9c9e; --text-ghost:#63737a;
-  --on-accent:#1e322a; --on-accent-alt:#1e322a; --on-accent-login:#1e322a; --on-accent-wash:rgba(30,50,42,.16);
+  --text-dim:#95a4a5; --text-faint:#8d9c9e;
+  --on-accent:#1e322a; --on-accent-alt:#1e322a; --on-accent-wash:rgba(30,50,42,.16);
   --on-orange:#2b2016; --on-gold:#2b2016; --on-cycle:#17222d;
   /* tinta ESCURA sobre o vermelho, como no orange e no gold: o danger do loft é um salmão
      claro (#e0857a), e a tinta quase branca que veio junto dava 2,25:1 — o texto do botão
@@ -57,17 +56,13 @@
   --accent:#a8c9bc; --accent-rgb:168,201,188; --accent2:#8bb2a1; --accent-bg:#2a413e;
   --accent-wash:rgba(var(--accent-rgb),.08); --accent-wash-soft:rgba(var(--accent-rgb),.07);
   --accent-wash-soft2:rgba(var(--accent-rgb),.06); --accent-wash-2:rgba(var(--accent-rgb),.10);
-  --accent-bg-soft:rgba(var(--accent-rgb),.15); --accent-line:rgba(var(--accent-rgb),.16);
+  --accent-bg-soft:rgba(var(--accent-rgb),.15);
   --accent-border:rgba(var(--accent-rgb),.38); --accent-border-soft:rgba(var(--accent-rgb),.26);
   --accent-glow:rgba(var(--accent-rgb),.24); --accent-glow-ring:rgba(var(--accent-rgb),.18);
   --accent-glow-soft:rgba(var(--accent-rgb),.14); --accent-glow-faint:rgba(var(--accent-rgb),.12);
   --accent-glow-strong:rgba(var(--accent-rgb),.55); --accent-glow-tight:rgba(var(--accent-rgb),.6);
-  --accent-ripple:rgba(var(--accent-rgb),.5); --accent-halo:rgba(var(--accent-rgb),.07);
-  --accent-grid:rgba(var(--accent-rgb),.04); --accent-glow-mid:rgba(var(--accent-rgb),.45);
-  --accent-glow-text:rgba(var(--accent-rgb),.45); --accent-glow-title:rgba(var(--accent-rgb),.22);
+  --accent-ripple:rgba(var(--accent-rgb),.5);
   --accent-deep:#1e322a; --accent-deep2:#2f5045; --knob:#e4eae6;
-  --google-btn-bg:#f2f5f3; --google-btn-fg:#1b2632;
-  --google-btn-ring:rgba(var(--tint-rgb),.12); --google-btn-ring-hover:rgba(var(--tint-rgb),.18);
 
   /* semântica */
   --blue:#8fb8cf; --blue-rgb:143,184,207; --blue-bg:#2a3f4e; --blue-soft:#b0cfe0; --blue-bg-soft:rgba(var(--blue-rgb),.18);

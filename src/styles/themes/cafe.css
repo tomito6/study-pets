@@ -41,9 +41,6 @@
   --scene-floor:#ead9bd;                              /* chão iluminado da cena do foco */
   --timeline-pause:#cfc4b0;                           /* pausa na régua do dia (era preto chapado) */
   --hatch-a:#ded3c0; --hatch-b:#f0e9db;               /* hachura de intervalo */
-  --login-bg:#f4ece0;
-  --input-bg:#fffefa;
-  --input-border:#ada18d;
 
   /* tokens próprios do café (usados só pelas regras deste arquivo) */
   --field:#fffefa;                                    /* papel do campo — mais branco que o card */
@@ -72,12 +69,9 @@
   --text-soft:#5d5346;
   --muted:#6e6455;                    /* o #756a5a do pacote, um fio mais escuro: o app tem muito texto de 10–11px */
   --text-dim:#736858;                 /* metadados de 10–11px: no claro o cinza claro reprova em contraste */
-  --text-dim-alt:#736858;
   --text-faint:#756a5a;
-  --text-ghost:#756a5a;
   --on-accent:#fffdf6;                /* tinta sobre o verde */
   --on-accent-alt:#fffdf6;
-  --on-accent-login:#fffdf6;
   --on-accent-wash:rgba(255,253,246,.16);
   --on-orange:#fffdf6;
   --on-gold:#fffdf6;
@@ -94,7 +88,6 @@
   --accent-wash-soft2:rgba(var(--accent-rgb),.07);
   --accent-wash-2:rgba(var(--accent-rgb),.12);
   --accent-bg-soft:rgba(var(--accent-rgb),.14);
-  --accent-line:rgba(var(--accent-rgb),.22);
   --accent-border:rgba(var(--accent-rgb),.45);
   --accent-border-soft:rgba(var(--accent-rgb),.30);
   --accent-glow:rgba(var(--accent-rgb),.16);
@@ -104,18 +97,9 @@
   --accent-glow-strong:rgba(var(--bg2-rgb),.95);    /* no claro o "brilho" é halo de papel, não de luz */
   --accent-glow-tight:rgba(var(--accent-rgb),.55);
   --accent-ripple:rgba(var(--accent-rgb),.38);
-  --accent-halo:rgba(var(--accent-rgb),.07);
-  --accent-grid:rgba(var(--accent-rgb),.06);
-  --accent-glow-mid:rgba(var(--accent-rgb),.45);
-  --accent-glow-text:rgba(var(--accent-rgb),0);
-  --accent-glow-title:rgba(var(--accent-rgb),0);
   --accent-deep:#e8eddf; --accent-deep2:#dae5ca;    /* banner de level-up: sálvia clara, não verde-escuro */
   --knob:#a99c86;                                   /* switch desligado: o knob é neutro escuro sobre papel */
   --knob-on:#fffdf6;                                /* ligado: papel sobre a sálvia */
-  --google-btn-bg:#fffdf7;
-  --google-btn-fg:#40382e;
-  --google-btn-ring:rgba(var(--tint-rgb),.16);
-  --google-btn-ring-hover:rgba(var(--tint-rgb),.26);
 
   /* ── semântica ───────────────────────────────────────────────────────────
      Pausa = azul-acinzentado quente (derivado, nunca o azul frio de tela).
@@ -188,7 +172,6 @@
   --shadow-raised:0 3px 0 var(--flat-deep);
   --shadow-raised-hover:0 5px 0 var(--flat-deep);
   --shadow-knob:0 1px 0 rgba(var(--shadow-rgb),.18);
-  --title-shadow:var(--flat);
 
   /* ── estado ──────────────────────────────────────────────────────────────
      No escuro opacidade AFUNDA; no claro ela BRANQUEIA e o elemento some. Todo
@@ -220,7 +203,6 @@
   --font-ui:'DM Sans',sans-serif;
   --font-mono:'DM Sans',sans-serif;
   --font-title:'Lora',Georgia,serif;
-  --font-display:'Lora',Georgia,serif;
 }
 
 /* Todo número que muda sozinho é tabular — o relógio não pode dançar. */
