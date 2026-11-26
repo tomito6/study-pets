@@ -692,8 +692,8 @@
 
 /* ============================================================================
    12. TELA GRANDE (≥1100px) — a lista continua SEM CAIXA (decisão aprovada):
-   hairline, a sessão na cor do horário, o agora com papel sálvia e traço.
-   As caixas de papel entram só onde já havia caixa: o card do timer.
+   Divisores suaves, horários discretos e o bloco atual em papel sálvia.
+   A coluna do timer e do pet mantém os cartões.
    ============================================================================ */
 @media (min-width:1100px){
   /* o select da semana no laptop é texto, como no app.css — a regra base do tema (o campo de papel) vale só no celular */
@@ -701,7 +701,13 @@
   :root[data-theme="cafe"] .topbar{background:rgba(var(--bg2-rgb),.96);}
   :root[data-theme="cafe"] .nav-tab.active{color:var(--accent);}
   :root[data-theme="cafe"] .add-event-btn{border-color:var(--field-line);}
-  :root[data-theme="cafe"] #add-event-btn{border-color:var(--accent);}
+  :root[data-theme="cafe"] #add-event-btn{
+    background:var(--bg2);
+    border-color:var(--field-line);
+    color:var(--text);
+    box-shadow:none;
+  }
+  :root[data-theme="cafe"] #add-event-btn:hover{background:var(--surface-hover-solid);filter:none;}
   :root[data-theme="cafe"] .timer-bar.idle,
   :root[data-theme="cafe"] .room-card{box-shadow:0 3px 0 var(--flat);border:1px solid var(--border);}
   /* o card do timer é a única caixa da coluna — ganha papel, hairline sálvia,
@@ -728,10 +734,37 @@
   :root[data-theme="cafe"] .view-mode{background:var(--track);}
   :root[data-theme="cafe"] .vm-btn.on{background:var(--accent-bg);color:var(--accent);}
 
-  /* a lista sem caixa: só a hairline muda de cor. O agora ganha papel sálvia. */
+  /* Dia: deixe o nome de estudo à frente dos horários e do XP. */
+  :root[data-theme="cafe"] #blocks-list{
+    --hairline-row:rgba(var(--border-rgb),.5);
+    --plan-secondary:#6c6457;
+    --plan-current:#37533d;
+    --plan-current-paper:#e7ecdf;
+  }
+  :root[data-theme="cafe"] #blocks-list .block-row:not(.event-row,.now-block,.timer-active) .block-time{
+    color:var(--plan-secondary);
+  }
+  :root[data-theme="cafe"] #blocks-list .block-row:not(.event-row,.now-block,.timer-active,.forfeited) .block-xp{
+    color:var(--plan-secondary) !important;
+  }
+  :root[data-theme="cafe"] #blocks-list .block-row.cycle-block:not(.pausa-row,.event-row,.done,.forfeited) .block-name{
+    font-weight:600;
+  }
+  :root[data-theme="cafe"] #blocks-list .cycle-divider:not(.done,.now-cycle) .cd-label{color:var(--plan-secondary);}
+  :root[data-theme="cafe"] #blocks-list .cycle-divider:not(.done) .cd-line{background:var(--border);opacity:.72;}
+  :root[data-theme="cafe"] #blocks-list > .cycle-divider ~ .cycle-divider{margin-top:20px;}
+
   :root[data-theme="cafe"] .block-row.now-block{
     background:var(--accent-bg) !important;
     box-shadow:inset 3px 0 0 var(--accent);
+  }
+  :root[data-theme="cafe"] #blocks-list .block-row.now-block:not(.event-row,.forfeited){
+    background:var(--plan-current-paper) !important;
+    border-bottom-color:transparent !important;
+    box-shadow:inset 3px 0 0 var(--plan-current);
+  }
+  :root[data-theme="cafe"] #blocks-list .block-row.now-block:not(.event-row,.forfeited) :is(.block-name,.block-time,.block-xp){
+    color:var(--plan-current) !important;
   }
   :root[data-theme="cafe"] .block-row.done .block-name{color:var(--muted);}
   :root[data-theme="cafe"] .block-row.event-row .block-time{color:var(--orange);}
