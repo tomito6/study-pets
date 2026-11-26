@@ -275,9 +275,7 @@
 :root[data-theme="cafe"] .error-reload:active,
 :root[data-theme="cafe"] .fs-card .fs-apply:active,
 :root[data-theme="cafe"] .tour-next:active,
-:root[data-theme="cafe"] .hc-start-btn:active,
-:root[data-theme="cafe"] .ls-submit-btn:active,
-:root[data-theme="cafe"] .ls-google-btn:active{
+:root[data-theme="cafe"] .hc-start-btn:active{
   box-shadow:0 2px 0 var(--flat-deep);
 }
 :root[data-theme="cafe"] .save-btn:disabled{box-shadow:none;}
@@ -299,9 +297,7 @@
 :root[data-theme="cafe"] .st-action-btn:active,
 :root[data-theme="cafe"] .fit-study-btn:active,
 :root[data-theme="cafe"] .tour-next:active,
-:root[data-theme="cafe"] .error-reload:active,
-:root[data-theme="cafe"] .ls-submit-btn:active,
-:root[data-theme="cafe"] .ls-google-btn:active{
+:root[data-theme="cafe"] .error-reload:active{
   transform:translateY(1px);
 }
 
@@ -711,57 +707,6 @@
 :root[data-theme="cafe"] #save-indicator{box-shadow:0 3px 0 var(--flat);}
 :root[data-theme="cafe"] .fab-config{box-shadow:0 3px 0 var(--flat-deep),0 0 0 4px var(--accent-bg-soft);}
 :root[data-theme="cafe"] .fab-config:hover{box-shadow:0 5px 0 var(--flat-deep),0 0 0 6px var(--accent-glow-ring);}
-
-/* ============================================================================
-   11. LOGIN — a tela mais "escura por construção" do app vira papel quadriculado
-   ============================================================================ */
-:root[data-theme="cafe"] #login-screen{
-  background:
-    radial-gradient(120% 90% at 50% 0%,#fdf7ec 0%,rgba(253,247,236,0) 60%),
-    var(--login-bg);
-}
-/* a grade fica: sobre creme ela lê como papel quadriculado de caderno */
-:root[data-theme="cafe"] .ls-scanline{display:none;}
-:root[data-theme="cafe"] .ls-star{background:rgba(var(--accent-rgb),.35);}
-:root[data-theme="cafe"] .ls-char{
-  filter:none;
-  background:var(--sprite-stage);
-}
-:root[data-theme="cafe"] .ls-eyebrow{
-  font-family:var(--font-ui);
-  font-weight:500;
-  letter-spacing:.16em;
-  text-shadow:none;
-  color:var(--muted);
-}
-:root[data-theme="cafe"] .ls-title{
-  letter-spacing:-.02em;
-  font-weight:500;
-  text-shadow:2px 2px 0 var(--flat);
-}
-:root[data-theme="cafe"] .ls-title span{color:var(--accent);}
-:root[data-theme="cafe"] .ls-sub{color:var(--muted);}
-:root[data-theme="cafe"] .ls-feat{
-  background:var(--bg2);
-  border-color:var(--border);
-  border-radius:var(--radius-md);
-  box-shadow:0 3px 0 var(--flat);
-  color:var(--muted);
-}
-:root[data-theme="cafe"] .ls-input{
-  background:var(--field);
-  border:1px solid var(--field-line);
-  border-radius:var(--radius-sm);
-}
-:root[data-theme="cafe"] .ls-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-wash-2);}
-:root[data-theme="cafe"] .ls-submit-btn{border-radius:var(--radius-md);box-shadow:0 3px 0 var(--flat-deep);}
-:root[data-theme="cafe"] .ls-google-btn{
-  border:1px solid var(--field-line);
-  border-radius:var(--radius-md);
-  box-shadow:0 3px 0 var(--flat-deep);
-}
-:root[data-theme="cafe"] .ls-google-btn:hover{box-shadow:0 5px 0 var(--flat-deep);}
-:root[data-theme="cafe"] .ls-fine-print{color:var(--text-ghost);}
 
 /* ============================================================================
    12. TELA GRANDE (≥1100px) — a lista continua SEM CAIXA (decisão aprovada):
