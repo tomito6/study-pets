@@ -1,0 +1,69 @@
+/* O POP-UP DA SEQUÊNCIA (features/streak/StreakPop.tsx) — o parabéns quando a meta do dia
+   é batida e a sequência cresce. Um cartão, não um modal: sem véu, sem prender nada.
+
+   Onde ele fica: no TOPO, logo abaixo da barra — o rodapé já é do toast, da faixa do ciclo,
+   do "Salvando…" e do ⚙️ do celular. No laptop encosta à direita, debaixo do sininho. No
+   modo foco não há barra, então ele sobe pro topo da tela, sempre centrado.
+
+   z-index 450: acima do foco (300) e da faixa do ciclo (400), abaixo do toast (500).
+   Só tokens: a cena reaproveita o céu, o sol e a grama do habitat do pet (--hb-*), que os
+   dois temas já pintam — de dia no Café de casa, de noite (o sol vira lua) no Loft. */
+
+.streak-slot{position:fixed;top:calc(var(--topbar-h, 76px) + 8px);left:0;right:0;z-index:450;display:flex;justify-content:center;padding:0 12px;pointer-events:none;}
+.streak-slot.in-focus{top:14px;}
+
+.streak-pop{position:relative;pointer-events:auto;display:flex;align-items:stretch;gap:12px;width:min(376px,100%);padding:10px 34px 10px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-2xl);box-shadow:var(--shadow-float);cursor:pointer;text-align:left;animation:streak-in .5s cubic-bezier(.2,.9,.3,1.2) both;}
+.streak-pop.leaving{animation:streak-out .2s ease-in forwards;}
+
+/* a cena: o pet (ou o personagem) num recorte do habitat */
+.sp-scene{position:relative;flex:none;width:76px;min-height:84px;border-radius:var(--radius-lg);background:linear-gradient(var(--hb-sky) 0%,var(--hb-sky-2) 78%);overflow:hidden;}
+.sp-scene i{position:absolute;display:block;}
+.sp-sun{right:10px;top:9px;width:15px;height:15px;border-radius:50%;background:var(--hb-sun);}
+.sp-hill{left:-26px;bottom:14px;width:96px;height:30px;border-radius:50% 50% 0 0;background:var(--hb-hill);}
+.sp-ground{left:0;right:0;bottom:0;height:19px;background:var(--hb-grass);border-top:2px solid var(--hb-grass-line);}
+.sp-sprite{position:absolute;left:50%;bottom:7px;width:48px;height:48px;margin-left:-24px;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;z-index:1;animation:streak-hop .55s ease-out .45s 2 both;}
+.streak-pop.no-pet .sp-sprite{width:30px;height:52px;margin-left:-15px;} /* o personagem é 24×42: mais alto que largo */
+
+.sp-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;padding:2px 0;}
+.sp-kicker{font:600 9.5px/1 var(--font-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:5px;}
+.sp-title{font:600 19px/1.25 var(--font-title);color:var(--text);white-space:nowrap;}
+/* a frase inteira, só pra quem ouve */
+.sp-spoken{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+/* o número "vira": o de ontem sobe e some, o de hoje sobe e fica */
+.sp-roll{display:inline-grid;overflow:hidden;vertical-align:bottom;height:1.25em;color:var(--accent);}
+.sp-roll > span{grid-area:1/1;text-align:center;}
+.sp-old{opacity:0;transform:translateY(-100%);animation:streak-roll-out .45s cubic-bezier(.5,0,.2,1) .5s both;}
+.sp-new{animation:streak-roll-in .45s cubic-bezier(.5,0,.2,1) .5s both;}
+.sp-sub{margin:3px 0 0;font:400 12px/1.4 var(--font-ui);color:var(--muted);text-wrap:balance;}
+
+.sp-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;min-height:16px;}
+/* a trilha: um ponto por dia, ligados por um fio; o de hoje é o maior */
+.sp-trail{position:relative;display:flex;align-items:center;gap:7px;}
+.sp-trail::before{content:'';position:absolute;left:3px;right:6px;top:50%;height:2px;margin-top:-1px;border-radius:1px;background:var(--accent-border-soft);}
+.sp-trail.more{padding-left:14px;}
+.sp-trail.more::before{left:0;background:linear-gradient(to right,transparent 0,var(--accent-border-soft) 14px);}
+.sp-dot{position:relative;display:block;flex:none;width:7px;height:7px;border-radius:50%;background:var(--accent2);}
+.sp-dot.head{width:13px;height:13px;background:var(--accent);box-shadow:0 0 0 3px var(--accent-glow-soft);animation:streak-dot .5s cubic-bezier(.34,1.56,.64,1) .75s both;}
+.sp-bonus{flex:none;font:500 11px/1 var(--font-ui);color:var(--gold-muted);white-space:nowrap;}
+
+.sp-close{position:absolute;top:6px;right:6px;width:26px;height:26px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer;}
+.sp-close:hover{background:var(--surface-hover-solid);color:var(--text);}
+.sp-close:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+@keyframes streak-in{from{opacity:0;transform:translateY(-14px) scale(.97);}}
+@keyframes streak-out{to{opacity:0;transform:translateY(-8px);}}
+@keyframes streak-hop{0%,100%{transform:translateY(0);}45%{transform:translateY(-6px);}}
+@keyframes streak-roll-out{from{opacity:1;transform:translateY(0);}}
+@keyframes streak-roll-in{from{opacity:0;transform:translateY(100%);}}
+@keyframes streak-dot{from{opacity:0;transform:scale(0);}}
+
+/* laptop: fora do foco, encosta à direita — debaixo do sininho, sem cobrir a agenda */
+@media (min-width:1100px){
+  .streak-slot:not(.in-focus){justify-content:flex-end;padding:0 28px;}
+}
+
+/* quem pediu menos movimento: aparece e some, sem mola, sem pulo e sem o número virando */
+@media (prefers-reduced-motion:reduce){
+  .streak-pop,.streak-pop.leaving,.sp-sprite,.sp-new,.sp-dot.head{animation:none;}
+  .sp-old{display:none;}
+}

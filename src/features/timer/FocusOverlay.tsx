@@ -49,9 +49,9 @@ import { useSecondTick } from './useSecondTick';
 const FOCUS_CIRC = 2 * Math.PI * 45; // ≈ 282.7, o perímetro do círculo do SVG
 const NUM_CYCLES = 6;
 /** Quanto tempo a faixa "concluído" fica na tela depois de emendar no próximo bloco. */
-const COMPLETED_BANNER_MS = 4000;
+export const COMPLETED_BANNER_MS = 4000;
 /** A leva fechada é o marco maior do dia: fica mais tempo, e é a única faixa com o pet. */
-const CYCLE_BANNER_MS = 6500;
+export const CYCLE_BANNER_MS = 6500;
 
 const cycleNameOf = (n: number): string => strings.plan.cycles[n % NUM_CYCLES] ?? strings.plan.cycleFallback;
 

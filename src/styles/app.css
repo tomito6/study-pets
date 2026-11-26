@@ -134,6 +134,7 @@
     --shadow-raised:0 4px 16px rgba(var(--shadow-rgb),.4);
     --shadow-raised-hover:0 6px 24px rgba(var(--shadow-rgb),.5);
     --shadow-knob:0 1px 2px rgba(var(--shadow-rgb),.3);
+    --shadow-float:0 14px 40px rgba(var(--shadow-rgb),.55);   /* o cartão que flutua SOBRE o conteúdo, sem véu (o pop-up da sequência) */
 
     /* --- estado — opacidade e brilho. No escuro fade escurece e brightness
        clareia; no claro os dois invertem, e é aqui que o tema corrige. ------- */

@@ -101,6 +101,16 @@ describe('hydrateUserDoc — documentos antigos continuam carregando', () => {
     });
   });
 
+  it('doc de antes do pop-up da sequência: sem `streakCheered` → null; lixo vira null; a marca válida passa', () => {
+    expect(hydrateUserDoc({ coinsSpent: 5 }).streakCheered).toBeNull();
+    expect(hydrateUserDoc({ streakCheered: 'x' }).streakCheered).toBeNull();
+    expect(hydrateUserDoc({ streakCheered: { day: '2026-09-02', n: 0 } }).streakCheered).toBeNull();
+    expect(hydrateUserDoc({ streakCheered: { day: '2026-09-02', n: 3 } }).streakCheered).toEqual({ day: '2026-09-02', n: 3 });
+    const semCampo = { ...emptyPersistedState() } as Record<string, unknown>;
+    delete semCampo.streakCheered;
+    expect(serializeState(semCampo as never).streakCheered).toBeNull();
+  });
+
   it('doc de antes do sininho: sem `notifications` → []; lixo vira vazio; linha válida passa', () => {
     expect(hydrateUserDoc({ coinsSpent: 5 }).notifications).toEqual([]);
     expect(hydrateUserDoc({ notifications: 'x' }).notifications).toEqual([]);

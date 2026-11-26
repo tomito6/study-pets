@@ -1149,6 +1149,31 @@ export const strings = {
         `🔥 O timer ficou rodando sozinho no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
     },
   },
+  /**
+   * O pop-up de parabéns pela sequência (features/streak/StreakPop.tsx). Tom: comemora o
+   * que acabou de acontecer e para aí — nenhuma frase daqui fala de amanhã, de "não perca"
+   * ou do que acontece se a pessoa faltar.
+   */
+  streak: {
+    kicker: 'Sequência',
+    /** O número vai separado porque é ele que "vira" na animação: `antes` + n + `depois`. */
+    title: (n: number) => (n === 1 ? { antes: 'Dia ', depois: '' } : { antes: '', depois: ' dias seguidos' }),
+    /** A frase inteira, pra quem ouve em vez de ver. */
+    spoken: (n: number) => (n === 1 ? 'Sequência: dia 1.' : `Sequência: ${n} dias seguidos.`),
+    sub: (c: { n: number; record: boolean; milestone: boolean }, pet: string | null) => {
+      if (c.n === 1) return 'Meta de hoje batida. É assim que uma sequência começa.';
+      if (c.record) return 'Meta de hoje batida — e esta já é a sua maior sequência.';
+      if (c.n === 7) return 'Uma semana inteira batendo a meta.';
+      if (c.n === 14) return 'Duas semanas batendo a meta.';
+      if (c.n === 30) return 'Um mês batendo a meta. Isso já é hábito.';
+      if (c.milestone && c.n > 30) return `${c.n} dias batendo a meta. Isso já é rotina.`;
+      return pet ? `Meta de hoje batida. ${pet} está com você nessa.` : 'Meta de hoje batida. Mais um dia na conta.';
+    },
+    /** O bônus de moedas do dia — entra quando o dia fecha, como o resto. */
+    bonus: (coins: number) => `+${coins} 🪙 no fim do dia`,
+    more: 'A sequência vem de antes desta semana',
+    close: 'Fechar',
+  },
   notifications: {
     open: 'Notificações',
     title: 'Notificações',

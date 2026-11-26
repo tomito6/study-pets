@@ -35,6 +35,8 @@ import type { LegacyLunch } from './eventPresets';
 import { DEFAULT_GROUP_NAME } from './groups';
 import { normalizeHardcoreConfig, normalizePenalties } from './hardcore';
 import { normalizeNotifications } from './notifications';
+import { normalizeStreakCheerMark } from './streakCheer';
+import type { StreakCheerMark } from './streakCheer';
 import type { Notification } from './notifications';
 import { normalizeNotes } from './notes';
 import type { NotesByDate } from './notes';
@@ -148,6 +150,13 @@ export interface PersistedState {
    */
   notifications: Notification[];
   /**
+   * A última sequência já comemorada pelo pop-up (ver domain/streakCheer.ts). É o que
+   * faz o parabéns sair UMA vez por aumento: sem ela, desmarcar e remarcar o bloco que
+   * bateu a meta repetiria a festa — e no documento, não no aparelho, porque o mesmo
+   * dia pode ser marcado no celular e no laptop. `null` = nunca comemorou.
+   */
+  streakCheered: StreakCheerMark | null;
+  /**
    * A aparência do personagem (tom de pele, cor e penteado do cabelo). Fica fora
    * de `config` de propósito: é identidade, não regra do dia — "Cancelar sessão"
    * não mexe nela. Ver `domain/avatar.ts`.
@@ -208,6 +217,7 @@ export function emptyPersistedState(): PersistedState {
     penalties: {},
     pauses: {},
     notifications: [],
+    streakCheered: null,
     avatar: { ...DEFAULT_AVATAR },
   };
 }
@@ -361,6 +371,8 @@ export function hydrateUserDoc(raw: unknown): PersistedState {
     // Doc de antes do sininho: nenhuma notificação (nada é reconstruído pra trás —
     // o painel começa vazio e vai enchendo com o que acontecer daqui em diante).
     notifications: normalizeNotifications(d.notifications),
+    // Doc de antes do pop-up da sequência: nunca comemorou — o próximo aumento comemora.
+    streakCheered: normalizeStreakCheerMark(d.streakCheered),
   };
 }
 
@@ -395,5 +407,6 @@ export function serializeState(s: PersistedState): UserDoc {
     penalties: s.penalties || {},
     pauses: s.pauses || {},
     notifications: s.notifications || [],
+    streakCheered: s.streakCheered ?? null,
   };
 }
