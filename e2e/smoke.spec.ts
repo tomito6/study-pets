@@ -175,6 +175,8 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page.locator('#login-screen')).toBeVisible();
 
+    await expect(page.locator('#login-form')).toBeHidden();
+    await page.getByRole('button', { name: 'Entrar com e-mail' }).click();
     await page.locator('#login-toggle-mode').click(); // "Criar conta"
     await expect(page.locator('#login-submit')).toHaveText('Criar conta');
     await page.locator('#login-email').fill('tomi@example.com');
@@ -191,6 +193,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#login-screen')).toBeVisible();
 
     // Cria a conta primeiro, pra ter o que entrar depois.
+    await page.getByRole('button', { name: 'Entrar com e-mail' }).click();
     await page.locator('#login-toggle-mode').click();
     await page.locator('#login-email').fill('senha-teste@example.com');
     await page.locator('#login-password').fill('senhacerta1');
@@ -206,6 +209,7 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page.locator('#login-screen')).toBeVisible();
 
+    await page.getByRole('button', { name: 'Entrar com e-mail' }).click();
     await page.locator('#login-email').fill('senha-teste@example.com');
     await page.locator('#login-password').fill('senhaerrada');
     await page.locator('#login-submit').click();
@@ -223,6 +227,7 @@ test.describe('Study Pets — smoke', () => {
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page.locator('#login-screen')).toBeVisible();
 
+    await page.getByRole('button', { name: 'Entrar com e-mail' }).click();
     await page.locator('#login-email').fill('esqueci@example.com');
     await page.locator('#login-forgot').click();
     await expect(page.locator('#login-reset-sent')).toContainText('esqueci@example.com');

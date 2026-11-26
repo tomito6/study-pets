@@ -48,14 +48,8 @@ type NotifData = {
 export const strings = {
   login: {
     charAlt: 'Personagem',
-    eyebrow: '✦ SISTEMA DE ESTUDOS ✦',
-    title: ['STUDY', 'PETS'],
-    sub: ['Transforme sua rotina de estudos', 'numa aventura. Suba de nível. Evolua.'],
-    features: [
-      { icon: '⚡', label: ['Foco', 'inteligente'] },
-      { icon: '📊', label: ['Analytics', 'pessoal'] },
-      { icon: '🎮', label: ['XP &', 'Níveis'] },
-    ],
+    headline: ['Estude com', 'seu pet.'],
+    email: 'Entrar com e-mail',
     emailPlaceholder: 'E-mail',
     passwordPlaceholder: 'Senha',
     signIn: 'Entrar',
@@ -65,7 +59,6 @@ export const strings = {
     haveAccount: 'Já tenho conta',
     forgotPassword: 'Esqueci a senha',
     resetSent: (email: string) => `Enviamos um e-mail pra ${email}.`,
-    or: 'ou',
     errors: {
       'email-in-use': "Já existe uma conta com este e-mail. Entre com o Google ou use \"Esqueci a senha\".",
       'invalid-credential': 'E-mail ou senha incorretos.',
@@ -77,8 +70,8 @@ export const strings = {
     } satisfies Record<import('../domain/auth').AuthErrorReason, string>,
     google: 'Continuar com Google',
     googleSoon: 'Entrar com Google chega numa próxima versão do app. Por enquanto, e-mail e senha.',
+    legalLabel: 'Informações legais',
     legal: { privacy: 'Privacidade', terms: 'Termos', imprint: 'Impressum' },
-    finePrint: 'Dados salvos na nuvem · Sincronizado em todos os dispositivos',
   },
   tabs: {
     plano: 'Plano',

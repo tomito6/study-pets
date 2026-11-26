@@ -1,62 +1,60 @@
 // Tela de entrada. Só aparece depois que o provedor de auth respondeu e ninguém
 // está logado — antes disso a tela fica em branco, como o legado fazia.
-// Mantém os mesmos ids/classes do markup antigo: o CSS e o smoke test dependem deles.
+// O visual Caderno mora nesta tela. As ações continuam em application/session.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isNativeApp, legalUrl } from '../../application/platform';
 import { resetPassword, signIn, signInWithEmail, signUpWithEmail } from '../../application/session';
 import type { AuthErrorReason } from '../../domain/auth';
 import { FORMS } from '../../domain/pets';
 import { strings } from '../../shared/strings';
 import { useAppState } from '../../store/store';
+import { useSpriteFrame } from '../profile/useSpriteFrame';
+import notebookScene from './notebook-scene.svg';
 
-/** O mascote da tela de entrada: o cachorro, não o personagem. */
-const MASCOT = FORMS.dog!;
-const SPRITE_INTERVAL_MS = 180;
-const STAR_COUNT = 30;
+const PETS = [FORMS.cat!, FORMS.dog!, FORMS.cow!];
 
-interface Star {
-  left: string;
-  top: string;
-  duration: string;
-  delay: string;
-}
+function LoginArtwork() {
+  const [reducedMotion, setReducedMotion] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const frame = useSpriteFrame(PETS[1]!.frames, !reducedMotion);
 
-function makeStars(): Star[] {
-  return Array.from({ length: STAR_COUNT }, () => ({
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    duration: `${2 + Math.random() * 4}s`,
-    delay: `${-Math.random() * 4}s`,
-  }));
-}
+  useEffect(() => {
+    const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(preference.matches);
+    preference.addEventListener('change', update);
+    return () => preference.removeEventListener('change', update);
+  }, []);
 
-function Background() {
-  const stars = useMemo(makeStars, []);
   return (
-    <div className="ls-bg">
-      <div className="ls-grid" />
-      <div className="ls-glow" />
-      <div className="ls-scanline" />
-      {stars.map((s, i) => (
-        <div
-          key={i}
-          className="ls-star"
-          style={{ left: s.left, top: s.top, '--d': s.duration, '--delay': s.delay } as React.CSSProperties}
-        />
-      ))}
+    <div className="ls-scene" aria-hidden="true">
+      <img src={notebookScene} alt="" width="560" height="252" />
+      <div className="ls-pets">
+        {PETS.map((pet) => (
+          <img key={pet.id} src={pet.sprite(reducedMotion ? 0 : frame % pet.frames)} alt="" width="32" height="32" />
+        ))}
+      </div>
     </div>
   );
 }
 
-function MascotSprite() {
-  const [frame, setFrame] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setFrame((f) => (f + 1) % MASCOT.frames), SPRITE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []);
+function PawIcon() {
   return (
-    <img className="ls-char" src={MASCOT.sprite(frame)} alt={MASCOT.name} id="ls-char-sprite" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 15c4-7 8-7 12 0 5 9-6 3-6 3s-11 6-6-3Z" />
+      <ellipse cx="4" cy="8" rx="2" ry="3" />
+      <ellipse cx="10" cy="4" rx="2" ry="3" />
+      <ellipse cx="16" cy="5" rx="2" ry="3" />
+      <ellipse cx="21" cy="10" rx="2" ry="3" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
   );
 }
 
@@ -73,7 +71,10 @@ function GoogleLogo() {
 
 type Mode = 'signin' | 'signup';
 
-function EmailForm() {
+// `autoFocus`: no site o formulário só nasce depois do clique em "Entrar com e-mail", e o cursor
+// já cai no campo. No app (iPhone, computador) ele nasce aberto, e focar ali faria o teclado do
+// iPhone subir sozinho na abertura, por cima da tela.
+function EmailForm({ autoFocus }: { autoFocus: boolean }) {
   const t = strings.login;
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -118,7 +119,9 @@ function EmailForm() {
           id="login-email"
           className="ls-input"
           placeholder={t.emailPlaceholder}
+          aria-label={t.emailPlaceholder}
           autoComplete="email"
+          autoFocus={autoFocus}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -128,13 +131,14 @@ function EmailForm() {
           id="login-password"
           className="ls-input"
           placeholder={t.passwordPlaceholder}
+          aria-label={t.passwordPlaceholder}
           autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        {error && <div className="ls-error" id="login-error">{t.errors[error]}</div>}
-        {resetSent && <div className="ls-info" id="login-reset-sent">{t.resetSent(email)}</div>}
+        {error && <div className="ls-error" id="login-error" role="alert">{t.errors[error]}</div>}
+        {resetSent && <div className="ls-info" id="login-reset-sent" role="status">{t.resetSent(email)}</div>}
         <button type="submit" className="ls-submit-btn" id="login-submit" disabled={busy}>
           {busy ? t.loading : mode === 'signup' ? t.signUp : t.signIn}
         </button>
@@ -151,60 +155,69 @@ function EmailForm() {
   );
 }
 
+function LoginCard() {
+  const t = strings.login;
+  const [emailOpen, setEmailOpen] = useState(false);
+  // No app (iPhone, computador) o login com Google ainda não existe: popup não funciona dentro
+  // de app, vem por plugin nativo. Sem o Google, um botão só pra abrir o e-mail seria um clique
+  // à toa — então o formulário já nasce aberto, e uma frase diz por que o Google não está ali.
+  const native = isNativeApp();
+
+  return (
+    <section className="ls-card" aria-labelledby="login-title">
+      <h2 id="login-title">{t.signIn}</h2>
+      {native ? (
+        <>
+          <div id="login-email-panel" className="ls-panel-open">
+            <EmailForm autoFocus={false} />
+          </div>
+          <p className="ls-note" id="login-google-soon">{t.googleSoon}</p>
+        </>
+      ) : (
+        <>
+          <div className="ls-actions">
+            <button type="button" className="ls-option ls-google-btn" onClick={() => void signIn()}>
+              <GoogleLogo />
+              {t.google}
+            </button>
+            <button type="button" className="ls-option" id="login-email-option" aria-expanded={emailOpen} aria-controls="login-email-panel" onClick={() => setEmailOpen((open) => !open)}>
+              <MailIcon />
+              {t.email}
+            </button>
+          </div>
+          <div id="login-email-panel" hidden={!emailOpen}>
+            {emailOpen && <EmailForm autoFocus />}
+          </div>
+        </>
+      )}
+      {/* legalUrl: caminho local no site, endereço publicado dentro do app (que abre fora da janela). */}
+      <nav className="ls-legal" aria-label={t.legalLabel}>
+        <a href={legalUrl('privacidade')}>{t.legal.privacy}</a>
+        <a href={legalUrl('termos')}>{t.legal.terms}</a>
+        <a href={legalUrl('impressum')}>{t.legal.imprint}</a>
+      </nav>
+    </section>
+  );
+}
+
 export function LoginScreen() {
   const { user, authReady } = useAppState((s, d) => ({ user: s.user, authReady: d.authReady }));
   if (!authReady || user) return null;
 
   const t = strings.login;
   return (
-    <div id="login-screen">
-      <Background />
-      <div className="ls-content">
-        <MascotSprite />
-        <div className="ls-eyebrow">{t.eyebrow}</div>
-        <div className="ls-title">
-          {t.title[0]}
-          <br />
-          <span>{t.title[1]}</span>
+    <div id="login-screen" className="ls-notebook">
+      <header className="ls-header">
+        <PawIcon />
+        <span>{strings.header.brand}</span>
+      </header>
+      <main className="ls-layout">
+        <div className="ls-hero">
+          <h1>{t.headline[0]} <em>{t.headline[1]}</em></h1>
+          <LoginArtwork />
         </div>
-        <div className="ls-sub">
-          {t.sub[0]}
-          <br />
-          {t.sub[1]}
-        </div>
-        <div className="ls-features">
-          {t.features.map((f) => (
-            <div className="ls-feat" key={f.icon}>
-              <span className="lf-icon">{f.icon}</span>
-              {f.label[0]}
-              <br />
-              {f.label[1]}
-            </div>
-          ))}
-        </div>
-        <EmailForm />
-        {/* No app nativo o login com Google ainda não existe (popup não funciona dentro de
-            app; vem por plugin nativo). Dizer isso é melhor que um botão que não faz nada. */}
-        {isNativeApp() ? (
-          <div className="ls-fine-print" id="login-google-soon">{t.googleSoon}</div>
-        ) : (
-          <>
-            <div className="ls-divider"><span>{t.or}</span></div>
-            <button className="ls-google-btn" onClick={() => void signIn()}>
-              <GoogleLogo />
-              {t.google}
-            </button>
-          </>
-        )}
-        <div className="ls-fine-print">{t.finePrint}</div>
-        <div className="ls-legal">
-          <a href={legalUrl('privacidade')}>{t.legal.privacy}</a>
-          <span aria-hidden="true">·</span>
-          <a href={legalUrl('termos')}>{t.legal.terms}</a>
-          <span aria-hidden="true">·</span>
-          <a href={legalUrl('impressum')}>{t.legal.imprint}</a>
-        </div>
-      </div>
+        <LoginCard />
+      </main>
     </div>
   );
 }

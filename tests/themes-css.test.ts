@@ -85,3 +85,25 @@ describe('os arquivos de tema', () => {
     }
   });
 });
+
+// A tela de entrada tem folha própria (styles/login.css) e é a mesma nos dois temas, mas
+// segue a regra do resto: cor é token do `:root`. Em 2026-11-26 ela chegou com quinze hex
+// soltos e nada reclamou — este teste é o que faltava.
+describe('a tela de entrada', () => {
+  it('login.css não tem cor solta: todo hex e todo rgb() moram em tokens --ls-* da base', () => {
+    const css = ler('src/styles/login.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    const soltas = css.match(/#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/g) ?? [];
+    expect(soltas, `cores soltas em login.css: ${soltas.join(', ')}`).toEqual([]);
+  });
+
+  it('todo token --ls-* que o login.css usa existe na base', () => {
+    const base = tokensDaBase();
+    const css = ler('src/styles/login.css');
+    const locais = new Set([...css.matchAll(/(--ls-[a-z0-9-]+)\s*:/g)].map((m) => m[1]!));
+    const usados = [...new Set([...css.matchAll(/var\((--ls-[a-z0-9-]+)/g)].map((m) => m[1]!))];
+    expect(usados.length).toBeGreaterThan(5);
+    for (const token of usados) {
+      expect(base.has(token) || locais.has(token), `login.css usa ${token}, que não existe`).toBe(true);
+    }
+  });
+});
