@@ -414,9 +414,12 @@ describe('o dia que vira com o bloco rodando', () => {
 
 describe('o bloco que terminou sozinho não deixa âncora', () => {
   it('a virada da meia-noite não avisa de um timer que já acabou', () => {
-    startTimer(estudo3, AGORA);
-    const fim = new Date(`${HOJE}T10:26:00`); // o Estudo 3 acaba às 10:25, foco fechado emenda nada
-    derived.focusOpen = false;
+    // O último estudo do dia: depois dele não há o que emendar, e o timer acaba de verdade.
+    // (Até 2026-11-03 bastava fechar o foco pra não emendar; agora o fim é um só.)
+    const dia = blocksForDay(HOJE);
+    const ultimo = dia[dia.length - 1]!;
+    startTimer(ultimo, new Date(`${HOJE}T${ultimo.time}:30`));
+    const fim = new Date(`${HOJE}T${ultimo.endTime}:30`);
     vi.setSystemTime(fim);
     reconcileTimer(fim);
     expect(derived.timerBlock).toBeNull();

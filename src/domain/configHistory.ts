@@ -141,6 +141,7 @@ export function normalizeStudyWindows(raw: unknown): StudyWindow[] {
     const r = w.live;
     if (isObj(r) && positive(r.pomo) && positive(r.shortBreak) && positive(r.longBreak)) {
       janela.live = { pomo: positive(r.pomo), shortBreak: positive(r.shortBreak), longBreak: positive(r.longBreak) };
+      if (r.whole === true) janela.live.whole = true;
     }
     out.push(janela);
   }

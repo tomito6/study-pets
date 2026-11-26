@@ -18,7 +18,7 @@ import { validateDayWindows } from '../domain/dayWindows';
 import { LUNCH_SERIES_ID, mealSeries } from '../domain/eventPresets';
 import { PETS, normalizePetName } from '../domain/pets';
 import { dk } from '../domain/time';
-import type { PetId, StudyWindow } from '../domain/types';
+import type { PetId, RecurringEventSeries, StudyWindow } from '../domain/types';
 import { derived, notify, state } from '../store/store';
 import { adoptStarter, needsStarter } from './pets';
 import { clearBlockCache, rebuildWeeks } from './plan';
@@ -58,6 +58,18 @@ export type OnboardingRefusal =
 export type OnboardingResult = { ok: true } | { ok: false; reason: OnboardingRefusal };
 
 /**
+ * A refeição com que esta conta vai nascer ao terminar o onboarding — ou null, se não vai
+ * (quem já tem pet não ganha, e quem já tem a série não ganha outra). Uma fonte só pro
+ * `finishOnboarding` e pra prévia do último passo: a prévia gerava o dia SEM a refeição e
+ * dizia "17 pomodoros · 7h", e a primeira tela do Plano mostrava 16 (2026-11-26).
+ */
+export function starterMeal(): RecurringEventSeries | null {
+  if (!needsStarter()) return null;
+  if ((state.eventSeries ?? []).some((s) => s.id === LUNCH_SERIES_ID)) return null;
+  return mealSeries('13:00', 60);
+}
+
+/**
  * `periodStart` marca hoje como começo (é o marco que preserva progresso, e a única
  * forma de redefini-lo continua sendo cancelar a sessão); `periodEnd` nasce null —
  * o modo "sempre", que era o que quase todo mundo escolhia no passo antigo. Valida
@@ -80,11 +92,12 @@ export function finishOnboarding(input: OnboardingInput, now: Date = new Date())
   }
 
   if (starter) {
+    // Antes de adotar: depois dela `needsStarter` já diz não.
+    const refeicao = starterMeal();
     adoptStarter(starter.species, starter.name, now);
     // Conta nova (ou sessão recomeçada): a refeição das 13h já vem no plano, como o almoço
     // padrão de antes — só que é um evento, e dá pra editar ou apagar como qualquer outro.
-    if (!state.eventSeries) state.eventSeries = [];
-    if (!state.eventSeries.some((s) => s.id === LUNCH_SERIES_ID)) state.eventSeries.push(mealSeries('13:00', 60));
+    if (refeicao) state.eventSeries = [...(state.eventSeries ?? []), refeicao];
   }
   if (input.avatar) state.avatar = normalizeAvatar(input.avatar);
   if (input.ageConfirmed) state.ageConfirmed = true;

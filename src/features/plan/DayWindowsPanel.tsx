@@ -100,7 +100,7 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   const previewBlocks = key ? previewDayPlan(key, windows, ritmoRascunho, agora) : [];
   // Num dia que já tem corrida, a primeira delas diz desde quando o dia é ao vivo — é a
   // linha que uma barra de dois botões nunca poderia carregar.
-  const desde = key ? (state.windowOverrides[key]?.studyWindows.find((w) => w.live)?.start ?? null) : null;
+  const desde = key ? (state.windowOverrides[key]?.studyWindows.find((w) => w.live && !w.live.whole)?.start ?? null) : null;
   const trocarModo = (m: 'rotina' | 'live') => {
     if (!key || m === modo) return;
     const r = setDayMode(key, m);
