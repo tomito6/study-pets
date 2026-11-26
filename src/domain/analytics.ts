@@ -217,20 +217,35 @@ export function heatmap(
 
 export interface HourBar {
   hour: number;
-  count: number;
+  /** Minutos de estudo concluído nessa hora do relógio, no total. */
+  mins: number;
   /** Altura relativa ao pico, 0–100. */
   pct: number;
 }
 
-export function hourBars(hourCounts: Record<number, number>, start: TimeString, end: TimeString): HourBar[] {
-  const startH = parseInt(start.split(':')[0] as string, 10);
-  const endH = parseInt(end.split(':')[0] as string, 10) + 1;
+/**
+ * Uma barra por hora do relógio, em MINUTOS DE ESTUDO (`stats.hourStudyMins`). O eixo
+ * nasce das janelas da rotina — da hora em que a primeira começa à hora em que a última
+ * termina (09:00–18:00 = 9h…17h) — e se abre pra caber qualquer hora com estudo fora
+ * delas (a janela só de um dia, o evento à noite), então nenhum minuto fica sem barra.
+ */
+export function hourBars(hourMins: Record<number, number>, start: TimeString, end: TimeString): HourBar[] {
+  const [sh = 0] = start.split(':').map(Number);
+  const [eh = 0, em = 0] = end.split(':').map(Number);
+  let first = sh;
+  let last = Math.max(sh, em > 0 ? eh : eh - 1); // a hora que contém o último minuto da janela
+  for (const key of Object.keys(hourMins)) {
+    const h = Number(key);
+    if (!((hourMins[h] || 0) > 0)) continue;
+    if (h < first) first = h;
+    if (h > last) last = h;
+  }
   const hours: number[] = [];
-  for (let h = startH; h <= endH; h++) hours.push(h);
-  const max = Math.max(...hours.map((h) => hourCounts[h] || 0), 1);
+  for (let h = first; h <= last; h++) hours.push(h);
+  const max = Math.max(...hours.map((h) => hourMins[h] || 0), 1);
   return hours.map((hour) => {
-    const count = hourCounts[hour] || 0;
-    return { hour, count, pct: Math.round((count / max) * 100) };
+    const mins = Math.round(hourMins[hour] || 0);
+    return { hour, mins, pct: Math.round(((hourMins[hour] || 0) / max) * 100) };
   });
 }
 

@@ -185,12 +185,26 @@ describe('heatmap', () => {
 });
 
 describe('horas, drop-off e sparkline', () => {
-  it('barras das horas do dia, relativas ao pico', () => {
-    const bars = hourBars({ 9: 4, 10: 2 }, '09:00', '11:00');
-    expect(bars.map((b) => b.hour)).toEqual([9, 10, 11, 12]);
-    expect(bars[0]).toMatchObject({ count: 4, pct: 100 });
-    expect(bars[1]).toMatchObject({ count: 2, pct: 50 });
-    expect(bars[3]).toMatchObject({ count: 0, pct: 0 });
+  it('barras das horas do dia em minutos de estudo, relativas ao pico', () => {
+    const bars = hourBars({ 9: 120, 10: 60 }, '09:00', '12:00');
+    // 09:00–12:00 são as horas 9, 10 e 11: a janela acaba ÀS 12h, não há barra das 12h.
+    expect(bars.map((b) => b.hour)).toEqual([9, 10, 11]);
+    expect(bars[0]).toMatchObject({ mins: 120, pct: 100 });
+    expect(bars[1]).toMatchObject({ mins: 60, pct: 50 });
+    expect(bars[2]).toMatchObject({ mins: 0, pct: 0 });
+  });
+
+  it('o eixo das horas nasce das janelas e se abre pra caber estudo fora delas', () => {
+    // Janela que termina no meio da hora: a hora quebrada entra.
+    expect(hourBars({}, '09:00', '17:30').map((b) => b.hour)).toEqual([9, 10, 11, 12, 13, 14, 15, 16, 17]);
+    // Quem estuda à noite não lê mais um eixo cravado em 09h–18h.
+    expect(hourBars({}, '19:00', '23:00').map((b) => b.hour)).toEqual([19, 20, 21, 22]);
+    // Estudo antes e depois da rotina (janela só de um dia, evento à noite) ganha barra.
+    const fora = hourBars({ 7: 30, 20: 45, 22: 0 }, '09:00', '12:00');
+    expect(fora[0]!.hour).toBe(7);
+    expect(fora[fora.length - 1]!.hour).toBe(20); // hora sem minuto nenhum não estica o eixo
+    // Minuto fracionado (bloco com tempo pausado) é arredondado só na hora de mostrar.
+    expect(hourBars({ 9: 8.108 }, '09:00', '10:00')[0]).toMatchObject({ mins: 8, pct: 100 });
   });
 
   it('drop-off ignora sessões sem blocos e ordena', () => {

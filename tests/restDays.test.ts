@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearDayWindows, effectiveWindows, isRestDayKey, restKindKey, setDayOff, setDayWindows } from '../src/application/dayWindows';
-import { allDays, blocksForDay, calcStreaksNow, clearBlockCache, computeStatsNow, rebuildWeeks } from '../src/application/plan';
+import { allDays, blocksForDay, calcStreaksNow, clearBlockCache, computeStatsNow, currentStreak, rebuildWeeks } from '../src/application/plan';
 import { isBonusDay, restDayKind, windowsForDay } from '../src/domain/dayWindows';
 import { emptyPersistedState } from '../src/domain/persistence';
 import { computeStats } from '../src/domain/stats';
@@ -174,5 +174,52 @@ describe('aplicação: fim de semana pausado', () => {
     delete state.windowOverrides[SAB_PASSADO];
     clearBlockCache();
     expect(calcStreaksNow({ ...base, [SAB_PASSADO]: 60 }, AGORA)).toEqual({ cur: 4, best: 4 });
+  });
+});
+
+// A sequência como a TELA mostra (Análise → Recordes): com hoje aberto e a meta ainda
+// por bater, vale a que chegou até ontem. Antes ela marcava 0 o dia inteiro.
+describe('aplicação: a sequência com o dia de hoje em aberto', () => {
+  const AGORA = new Date('2026-09-02T10:07:00'); // quarta
+  const HOJE = '2026-09-02';
+  const SAB = '2026-09-05';
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(AGORA);
+    Object.assign(state, emptyPersistedState(), { user: { uid: 'u', displayName: null, email: null }, uiWeek: 1, uiDay: 2 });
+    state.config.skipWeekends = true;
+    derived.weeks = [];
+    clearBlockCache();
+    rebuildWeeks(AGORA);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // Segunda e terça batidas; a semana visível começa na segunda (conta sem dado mais antigo).
+  const doisDias = { '2026-08-31': 60, '2026-09-01': 60 };
+
+  it('hoje sem meta e aberto: a sequência é a de ontem, e avisa que hoje ainda pode somar', () => {
+    expect(calcStreaksNow({ ...doisDias, [HOJE]: 20 }, AGORA).cur).toBe(0); // a régua do sininho não muda
+    expect(currentStreak({ ...doisDias, [HOJE]: 20 }, AGORA)).toEqual({ cur: 2, best: 2, todayOpen: true });
+  });
+
+  it('hoje com a meta batida soma, e não há mais nada em aberto', () => {
+    expect(currentStreak({ ...doisDias, [HOJE]: 60 }, AGORA)).toEqual({ cur: 3, best: 3, todayOpen: false });
+  });
+
+  it('hoje ENCERRADO abaixo da meta zera: dia fechado é dia fechado', () => {
+    state.closedDays[HOJE] = true;
+    expect(currentStreak({ ...doisDias, [HOJE]: 20 }, AGORA)).toEqual({ cur: 0, best: 2, todayOpen: false });
+  });
+
+  it('num sábado pausado a sequência da semana continua na tela', () => {
+    const sabado = new Date(`${SAB}T10:00:00`);
+    vi.setSystemTime(sabado);
+    rebuildWeeks(sabado);
+    const semana = { '2026-09-01': 60, [HOJE]: 60, '2026-09-03': 60, '2026-09-04': 60 };
+    expect(currentStreak(semana, sabado)).toEqual({ cur: 4, best: 4, todayOpen: false });
   });
 });

@@ -173,7 +173,9 @@ function rodarNovo(c: Cenario) {
   // `penaltyXP`/`quits` (modo hardcore) e `dayXP`/`dayCoins` (o sininho) não existiam
   // no legado: ficam de fora da comparação. Os dois últimos são recortes do mesmo
   // somatório, e `tests/stats.test.ts` cobra que eles fechem com os totais.
-  const { penaltyXP: _p, quits: _q, dayXP: _dx, dayCoins: _dc, ...stats } = computeStats({
+  // `hourStudyMins` (a Análise por tempo de estudo, 2026-11-26) também é campo novo:
+  // `hourCounts`, que o legado tinha, continua lá e continua comparado.
+  const { penaltyXP: _p, quits: _q, dayXP: _dx, dayCoins: _dc, hourStudyMins: _hm, ...stats } = computeStats({
     days: c.dias,
     getBlocks: (key) => generateBlocks(c.cfg, c.eventosPorDia[key] || []),
     checks: c.checks,
