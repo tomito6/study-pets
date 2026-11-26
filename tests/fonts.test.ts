@@ -79,7 +79,7 @@ describe('fontes servidas pelo próprio domínio', () => {
   it('a licença viaja junto com as fontes, como a OFL exige', () => {
     const ofl = readFileSync(new URL('public/fonts/OFL.txt', raiz), 'utf8');
     expect(ofl).toContain('SIL OPEN FONT LICENSE');
-    for (const familia of ['DM Sans', 'DM Mono', 'Lora', 'Press Start 2P']) {
+    for (const familia of ['DM Sans', 'DM Mono', 'Lora']) {
       expect(ofl, `falta o copyright de ${familia}`).toContain(familia);
     }
   });

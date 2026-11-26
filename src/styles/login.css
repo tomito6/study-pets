@@ -1,107 +1,165 @@
-#login-screen {
-    min-height:100vh; background:var(--login-bg);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:40px 20px; position:relative; overflow:hidden;
-  }
-  .ls-bg {
-    position:absolute; inset:0; overflow:hidden; pointer-events:none;
-  }
-  .ls-grid {
-    position:absolute; inset:0;
-    background-image: linear-gradient(var(--accent-grid) 1px, transparent 1px),
-                      linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-  .ls-glow {
-    position:absolute; width:600px; height:600px; border-radius:50%;
-    background: radial-gradient(circle, var(--accent-halo) 0%, transparent 70%);
-    top:50%; left:50%; transform:translate(-50%,-50%);
-    animation: glow-pulse 4s ease-in-out infinite;
-  }
-  .ls-star { position:absolute; width:2px; height:2px; background:var(--accent-glow-mid); border-radius:50%; animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s); }
-  @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
-  @keyframes glow-pulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-  @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-  .ls-scanline {
-    position:absolute; left:0; right:0; height:2px;
-    background:linear-gradient(transparent, var(--accent-halo), transparent);
-    animation:scanline 6s linear infinite; pointer-events:none;
-  }
-  .ls-content { position:relative; z-index:1; text-align:center; max-width:340px; width:100%; }
-  .ls-char {
-    image-rendering:pixelated; width:96px; height:96px; object-fit:contain;
-    animation:float 2.4s ease-in-out infinite; margin-bottom:24px;
-    filter: drop-shadow(0 0 16px var(--accent-glow-mid));
-  }
-  .ls-eyebrow {
-    font-family:var(--font-display); font-size:9px;
-    color:var(--accent); letter-spacing:.15em; margin-bottom:12px;
-    text-shadow: 0 0 12px var(--accent-glow-text);
-  }
-  .ls-title {
-    font-family:var(--font-display); font-size:20px; line-height:1.4;
-    color:var(--text); margin-bottom:6px;
-    text-shadow: 0 0 20px var(--accent-glow-title), 2px 2px 0 var(--title-shadow);
-  }
-  .ls-title span { color:var(--accent); }
-  .ls-sub {
-    font-family:var(--font-ui); font-size:13px; color:var(--text-dim-alt);
-    line-height:1.7; margin-bottom:36px; margin-top:16px;
-  }
-  .ls-features {
-    display:flex; gap:16px; justify-content:center; margin-bottom:36px;
-  }
-  .ls-feat {
-    background:var(--accent-wash-soft); border:1px solid var(--accent-line);
-    border-radius:var(--radius-md); padding:10px 12px; font-size:11px;
-    color:var(--muted); font-family:var(--font-ui); text-align:center; line-height:1.5;
-  }
-  .ls-feat .lf-icon { font-size:18px; display:block; margin-bottom:4px; }
-  .ls-form { display:flex; flex-direction:column; gap:10px; margin-bottom:14px; text-align:left; }
-  .ls-input {
-    width:100%; box-sizing:border-box; padding:13px 14px; border-radius:var(--radius);
-    background:var(--input-bg); border:1px solid var(--input-border);
-    color:var(--text); font-size:14px; font-family:var(--font-ui); outline:none;
-    color-scheme:var(--scheme); transition:border-color .15s;
-  }
-  .ls-input::placeholder { color:var(--text-dim-alt); }
-  .ls-input:focus { border-color:var(--accent); }
-  .ls-error { font-size:12px; color:var(--danger-soft); line-height:1.5; }
-  .ls-info { font-size:12px; color:var(--accent); line-height:1.5; }
-  .ls-submit-btn {
-    width:100%; padding:14px 24px; border:none; border-radius:var(--radius-xl);
-    background:var(--accent); color:var(--on-accent-login); font-size:15px; font-weight:600;
-    font-family:var(--font-ui); cursor:pointer; transition:opacity .2s, transform .2s;
-  }
-  .ls-submit-btn:hover:not(:disabled) { transform:translateY(-1px); }
-  .ls-submit-btn:disabled { opacity:.6; cursor:not-allowed; }
-  .ls-links {
-    display:flex; justify-content:space-between; margin-bottom:20px; gap:12px;
-  }
-  .ls-link {
-    background:none; border:none; padding:0; cursor:pointer;
-    font-size:12px; color:var(--muted); font-family:var(--font-ui); text-decoration:underline;
-  }
-  .ls-link:hover { color:var(--accent); }
-  .ls-divider {
-    display:flex; align-items:center; gap:12px; margin-bottom:20px;
-    font-size:11px; color:var(--text-faint); font-family:var(--font-ui); text-transform:uppercase; letter-spacing:.08em;
-  }
-  .ls-divider::before, .ls-divider::after { content:''; flex:1; height:1px; background:rgba(var(--tint-rgb),.1); }
-  .ls-google-btn {
-    display:flex; align-items:center; justify-content:center; gap:12px;
-    width:100%; padding:15px 24px; border:none; border-radius:var(--radius-xl);
-    background:var(--google-btn-bg); color:var(--google-btn-fg); font-size:15px; font-weight:600;
-    font-family:var(--font-ui); cursor:pointer;
-    box-shadow:0 4px 24px rgba(var(--shadow-rgb),.4), 0 0 0 1px var(--google-btn-ring);
-    transition:all .2s; position:relative; overflow:hidden;
-  }
-  .ls-google-btn:hover { transform:translateY(-1px); box-shadow:0 8px 32px rgba(var(--shadow-rgb),.5), 0 0 0 1px var(--google-btn-ring-hover); }
-  .ls-google-btn:active { transform:translateY(0); }
-  .ls-fine-print { font-size:11px; color:var(--text-ghost); margin-top:16px; line-height:1.6; font-family:var(--font-ui); }
-  /* Os três documentos, na única página que qualquer pessoa vê sem conta. Discretos:
-     quem está entrando não veio ler política — mas quem veio, precisa achar. */
-  .ls-legal { display:flex; flex-wrap:wrap; justify-content:center; gap:6px 10px; margin-top:10px; font-size:11.5px; color:var(--text-ghost); font-family:var(--font-ui); }
-  .ls-legal a { color:var(--text-ghost); text-decoration:none; border-bottom:1px solid transparent; }
-  .ls-legal a:hover { color:var(--text); border-bottom-color:var(--border-strong); }
+/* A tela de entrada "Caderno". As cores são os tokens --ls-* do :root (styles/app.css):
+   aqui não entra hex solto, como no resto do app. */
+.ls-notebook {
+  color-scheme: light;
+  --ls-serif: Lora, Georgia, serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ls-paper);
+  color: var(--ls-ink);
+  font: 1rem/1.5 "DM Sans", sans-serif;
+}
+
+.ls-header {
+  width: min(100%, 1240px);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-inline: auto;
+  padding: 29px 36px;
+  font: 400 1.75rem/1.1 var(--ls-serif);
+}
+
+.ls-header svg { width: 30px; height: 34px; }
+
+.ls-layout {
+  width: min(100%, 1168px);
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 7vw, 100px);
+  margin-inline: auto;
+  padding: 28px 36px 64px;
+}
+
+.ls-hero h1 {
+  margin: 0;
+  font: 400 clamp(2.6rem, 4.8vw, 4.3rem)/1.12 var(--ls-serif);
+  letter-spacing: -.05em;
+}
+
+.ls-hero h1 em { color: var(--ls-accent); }
+.ls-scene { position: relative; max-width: 570px; margin-top: 12px; }
+.ls-scene > img { display: block; width: 100%; height: auto; }
+
+.ls-pets {
+  position: absolute;
+  inset: auto 13% 22% 19%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 2%;
+}
+
+.ls-pets img {
+  display: block;
+  width: 30%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 1px var(--ls-sprite-shadow));
+}
+
+.ls-pets img:nth-child(2) { width: 34%; }
+
+.ls-card {
+  position: relative;
+  justify-self: end;
+  width: 100%;
+  max-width: 414px;
+  padding: clamp(23px, 3vw, 36px);
+  border: 1px solid var(--ls-line);
+  border-radius: 20px;
+  background: var(--ls-card);
+  box-shadow: 0 16px 48px var(--ls-card-shadow);
+}
+
+.ls-card::before {
+  content: "";
+  position: absolute;
+  width: 68px;
+  height: 18px;
+  top: -9px;
+  left: calc(50% - 34px);
+  transform: rotate(-4deg);
+  background: var(--ls-tape);
+  clip-path: polygon(2% 0, 98% 0, 96% 100%, 3% 100%);
+  pointer-events: none;
+}
+
+.ls-card h2 {
+  margin: 0 0 22px;
+  font: 400 2rem/1.2 var(--ls-serif);
+  letter-spacing: -.04em;
+}
+
+.ls-actions, .ls-form { display: grid; gap: 10px; }
+.ls-form { margin-top: 16px; }
+
+.ls-notebook button, .ls-notebook input { font: inherit; }
+
+.ls-option, .ls-submit-btn {
+  width: 100%;
+  min-height: 53px;
+  border: 1px solid var(--ls-line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--ls-field);
+  color: var(--ls-ink);
+  cursor: pointer;
+}
+
+.ls-notebook .ls-option, .ls-notebook .ls-submit-btn { font-weight: 600; }
+
+.ls-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ls-option svg { flex: 0 0 20px; }
+.ls-option:hover, .ls-option[aria-expanded="true"] { background: var(--ls-hover); }
+.ls-submit-btn { background: var(--ls-accent); color: var(--ls-on-accent); border-color: var(--ls-accent); }
+.ls-submit-btn:hover:not(:disabled) { background: var(--ls-accent-deep); }
+.ls-submit-btn:disabled { opacity: .65; cursor: wait; }
+
+.ls-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--ls-line);
+  border-radius: 10px;
+  padding: 10px 13px;
+  background: var(--ls-field);
+  color: var(--ls-ink);
+}
+
+.ls-input::placeholder { color: var(--ls-muted); }
+.ls-error, .ls-info { font-size: .875rem; overflow-wrap: anywhere; }
+.ls-error { color: var(--ls-danger); }
+.ls-info { color: var(--ls-accent); }
+
+.ls-links, .ls-legal { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.ls-links { justify-content: space-between; margin-top: 8px; }
+.ls-legal { justify-content: center; margin-top: 18px; }
+
+.ls-notebook .ls-link, .ls-notebook .ls-legal a {
+  color: var(--ls-muted);
+  font-size: .875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ls-link { border: 0; background: none; padding: 6px 0; cursor: pointer; }
+.ls-notebook :is(button, a, input):focus-visible { outline: 2px solid var(--ls-accent); outline-offset: 3px; }
+
+@media (max-width: 720px) {
+  .ls-header { padding: 23px 22px; font-size: 1.5rem; }
+  .ls-layout { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 24px; padding: 18px 22px 32px; }
+  .ls-hero { width: 100%; max-width: 414px; margin-inline: auto; }
+  .ls-hero h1 { font-size: clamp(2.15rem, 8.6vw, 3.25rem); }
+  .ls-scene { max-width: 350px; margin-inline: auto; }
+  .ls-card { justify-self: center; }
+}
