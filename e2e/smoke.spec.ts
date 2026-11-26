@@ -177,6 +177,17 @@ function vigiarErros(page: Page): string[] {
 
 const checksDeEstudo = (page: Page) => page.locator('.block-row:not(.pausa-row) .check');
 
+/** O parabéns da sequência contra o meio da janela: o desvio do centro (px inteiros) e se cabe inteiro nela. */
+const meioDoParabens = (page: Page) =>
+  page.evaluate(() => {
+    const r = document.querySelector('#streak-pop')!.getBoundingClientRect();
+    return {
+      dx: Math.round((r.left + r.right) / 2 - window.innerWidth / 2),
+      dy: Math.round((r.top + r.bottom) / 2 - window.innerHeight / 2),
+      dentro: r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight,
+    };
+  });
+
 /**
  * O balão do tour está de fato utilizável? `toBeVisible()` do Playwright olha CSS e
  * caixa — passa com o elemento atrás de uma barra fixa ou centenas de pixels abaixo
@@ -1948,7 +1959,7 @@ test.describe('Study Pets — smoke', () => {
       expect(m.chao, 'o chão voltou a atravessar o cartão inteiro').toBeLessThan(m.palco * 0.6);
     });
 
-    test('77. no laptop o parabéns da sequência encosta à direita, abaixo da barra e dentro da janela', async ({ page }) => {
+    test('77. no laptop o parabéns da sequência fica no meio da janela, e um toque nele (ou o ✕) o tira dali', async ({ page }) => {
       await abrirApp(page, '10:40');
       await page.locator('#tour-skip').click();
       for (const i of [0, 1, 2]) await checksDeEstudo(page).nth(i).click();
@@ -1956,20 +1967,20 @@ test.describe('Study Pets — smoke', () => {
       await expect(pop).toBeVisible();
       await expect(pop).toHaveAttribute('data-n', '1');
 
-      const m = await page.evaluate(() => {
-        const r = document.querySelector('#streak-pop')!.getBoundingClientRect();
-        const barra = document.querySelector('.topbar')!.getBoundingClientRect();
-        return { topo: r.top, base: r.bottom, esq: r.left, dir: r.right, barra: barra.bottom, w: window.innerWidth, h: window.innerHeight };
-      });
-      expect(m.topo, 'atrás da barra do topo').toBeGreaterThanOrEqual(m.barra);
-      expect(m.dir, 'vazando pela direita').toBeLessThanOrEqual(m.w);
-      expect(m.base).toBeLessThanOrEqual(m.h);
-      expect(m.esq, 'no laptop ele encosta à direita, fora do meio da agenda').toBeGreaterThan(m.w / 2);
+      // No MEIO da janela (a entrada é uma mola: espera ela assentar antes de medir).
+      await expect.poll(() => meioDoParabens(page)).toEqual({ dx: 0, dy: 0, dentro: true });
 
-      // Um toque em qualquer lugar do cartão fecha — é o que devolve os botões do dia que ele cobre.
+      // Um toque em qualquer lugar do cartão fecha — é o que devolve a agenda que ele cobre.
       await pop.locator('.sp-body').click();
       await expect(pop).toHaveCount(0);
-      await expect(page.locator('#add-event-btn')).toBeVisible();
+
+      // Bater a meta de ontem DEPOIS de hoje junta os dois dias: número maior, parabéns de novo.
+      await page.locator('#day-tabs .day-tab').nth(1).click();
+      for (const i of [0, 1, 2]) await checksDeEstudo(page).nth(i).click();
+      await expect(pop).toBeVisible();
+      await expect(pop).toHaveAttribute('data-n', '2');
+      await page.locator('#streak-pop-close').click();
+      await expect(pop).toHaveCount(0);
       await page.locator('#add-event-btn').click();
       await expect(page.locator('#event-panel')).toBeVisible();
     });
@@ -3142,7 +3153,7 @@ test.describe('Study Pets — smoke', () => {
     await expect.poll(() => osc()).toBeGreaterThan(antes);
   });
 
-  test('76. a sequência cresceu: um cartão comemora uma vez, não prende a tela e sai do caminho', async ({ page }) => {
+  test('76. a sequência cresceu: um cartão no meio da tela comemora uma vez, não prende e sai do caminho', async ({ page }) => {
     await abrirApp(page, '10:40');
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
@@ -3171,24 +3182,20 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#streak-pop-trail .sp-dot')).toHaveCount(3);
     await expect(page.locator('#streak-pop-bonus')).toHaveText('+8 🪙 no fim do dia');
 
-    // Inteiro na tela e abaixo da barra do topo.
-    const m = await page.evaluate(() => {
-      const r = document.querySelector('#streak-pop')!.getBoundingClientRect();
-      const barra = document.querySelector('.topbar')!.getBoundingClientRect();
-      return { topo: r.top, esq: r.left, dir: r.right, barra: barra.bottom, w: window.innerWidth };
-    });
-    expect(m.topo, 'atrás da barra do topo').toBeGreaterThanOrEqual(m.barra);
-    expect(m.esq).toBeGreaterThanOrEqual(0);
-    expect(m.dir).toBeLessThanOrEqual(m.w);
+    // No MEIO da tela, inteiro dentro dela (a entrada é uma mola: espera ela assentar antes de medir).
+    await expect.poll(() => meioDoParabens(page)).toEqual({ dx: 0, dy: 0, dentro: true });
+    // O véu atrás dele é só luz: não segura clique.
+    expect(await page.locator('.sp-veil').evaluate((e) => getComputedStyle(e).pointerEvents)).toBe('none');
 
-    // Não é modal: com ele aberto o plano continua respondendo — e estudar a mais não comemora de novo.
+    // Não é modal: o toque FORA dele vale pro que estava embaixo — o check marca — e o cartão
+    // sai do caminho no mesmo gesto. Estudar a mais não comemora de novo.
     await checks.nth(3).click();
     await expect(checks.nth(3)).toHaveAttribute('aria-checked', 'true');
-    await expect(pop).toHaveAttribute('data-n', '3');
-
-    // ✕ fecha. Desfazer e bater a meta de novo no mesmo dia não repete o parabéns.
-    await page.locator('#streak-pop-close').click();
     await expect(pop).toHaveCount(0);
+    await page.waitForTimeout(1200);
+    await expect(pop).toHaveCount(0);
+
+    // Desfazer e bater a meta de novo no mesmo dia não repete o parabéns.
     await checks.nth(3).click();
     await checks.nth(2).click();
     await checks.nth(2).click();
@@ -3197,7 +3204,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(pop).toHaveCount(0);
   });
 
-  test('76b. no foco o parabéns espera a faixa "concluído", sobe pro topo e some sozinho', async ({ page }) => {
+  test('76b. no foco o parabéns espera a faixa "concluído", aparece no meio e some sozinho', async ({ page }) => {
     await abrirApp(page, '10:10');
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
@@ -3214,10 +3221,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(pop).toBeVisible({ timeout: 8000 });
     await expect(pop).toHaveAttribute('data-n', '1');
     await expect(page.locator('#streak-pop-title')).toContainText('Dia 1');
-    await expect(page.locator('.streak-slot')).toHaveClass(/in-focus/);
-    const topo = await pop.evaluate((e) => e.getBoundingClientRect().top);
-    expect(topo).toBeGreaterThanOrEqual(0);
-    expect(topo, 'no foco não há barra: ele fica no topo da tela').toBeLessThan(40);
+    await expect.poll(() => meioDoParabens(page), { message: 'no foco ele fica no meio da tela, como fora dele' }).toEqual({ dx: 0, dy: 0, dentro: true });
 
     // Vai embora sozinho, sem ninguém tocar — e o foco continua onde estava.
     await expect(pop).toHaveCount(0, { timeout: 14000 });

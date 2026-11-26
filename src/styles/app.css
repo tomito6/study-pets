@@ -25,6 +25,7 @@
     --surface-week-hover:rgba(var(--bg2-rgb),1);
     --ring-track:#1a1a1c;                  /* trilho do anel do modo foco */
     --overlay:rgba(var(--shadow-rgb),.7);  /* scrim de .panel-overlay */
+    --veil-soft:rgba(var(--shadow-rgb),.34);  /* véu leve, só luz: atrás do pop-up da sequência, que não é modal */
     --hero-a:#22262e; --hero-b:#1f232a;              /* palco do personagem */
     --accent-surface-a:#1f2618; --accent-surface-b:#1a1f15;  /* card do pet ativo */
     --gold-surface-a:#3a2f12; --gold-surface-b:#2a2510;      /* card de moedas */
@@ -134,7 +135,7 @@
     --shadow-raised:0 4px 16px rgba(var(--shadow-rgb),.4);
     --shadow-raised-hover:0 6px 24px rgba(var(--shadow-rgb),.5);
     --shadow-knob:0 1px 2px rgba(var(--shadow-rgb),.3);
-    --shadow-float:0 14px 40px rgba(var(--shadow-rgb),.55);   /* o cartão que flutua SOBRE o conteúdo, sem véu (o pop-up da sequência) */
+    --shadow-float:0 14px 40px rgba(var(--shadow-rgb),.55);   /* o cartão que flutua SOBRE o conteúdo (o pop-up da sequência) */
 
     /* --- estado — opacidade e brilho. No escuro fade escurece e brightness
        clareia; no claro os dois invertem, e é aqui que o tema corrige. ------- */

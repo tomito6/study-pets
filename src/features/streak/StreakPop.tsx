@@ -1,15 +1,19 @@
-// O pop-up de parabéns pela sequência: um cartão pequeno que desce do topo quando o
+// O pop-up de parabéns pela sequência: um cartão que aparece no meio da tela quando o
 // check que bate a meta do dia faz a sequência crescer, e vai embora sozinho.
 //
-// Não é modal — sem véu, sem prender o foco do teclado, sem pedir nada. Quem decide SE
-// ele aparece é o caso de uso (`application/streakCheer.ts`, uma vez por aumento); aqui
-// é só QUANDO e COMO:
+// Fica no meio (pedido do Tomi em 2026-11-26; nasceu no topo) e mesmo assim não é modal:
+// o véu atrás dele é só luz, não segura clique nem prende o foco do teclado. Quem decide
+// SE ele aparece é o caso de uso (`application/streakCheer.ts`, uma vez por aumento);
+// aqui é só QUANDO e COMO:
 //
 // - espera o feedback do próprio check passar (o anel e o "+X XP" da lista; no foco, a
 //   faixa "✓ … concluído") — uma comemoração de cada vez;
-// - fica alguns segundos, e o relógio dele só anda com a página visível e sem o mouse
-//   em cima: o bloco que bate a meta costuma terminar com a pessoa olhando o caderno;
-// - fecha no ✕, num toque em qualquer lugar dele, ou com Esc;
+// - fica alguns segundos, e o relógio dele só anda com a página visível: o bloco que
+//   bate a meta costuma terminar com a pessoa olhando o caderno. (No topo o mouse em
+//   cima também segurava o relógio; no meio da tela o mouse descansa ali sem ninguém
+//   ter pedido, e o cartão nunca iria embora);
+// - fecha no ✕, num toque em qualquer lugar — nele ou fora dele —, ou com Esc. O toque
+//   de fora não é engolido: quem clicou num check por baixo marcou o check;
 // - com `prefers-reduced-motion`, aparece e some sem movimento e o sprite fica parado.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -20,6 +24,7 @@ import { AVATAR_FRAMES } from '../../domain/avatar';
 import { petForm } from '../../domain/pets';
 import { streakTrail } from '../../domain/streakCheer';
 import { strings } from '../../shared/strings';
+import { useDismiss } from '../../shared/useDismiss';
 import { useReducedMotion } from '../../shared/useReducedMotion';
 import { useAppState } from '../../store/store';
 import { useSpriteFrame } from '../profile/useSpriteFrame';
@@ -31,8 +36,8 @@ const t = strings.streak;
 const ENTER_DELAY_MS = 700;
 /** Folga depois da faixa "concluído" do foco. */
 const AFTER_BANNER_MS = 400;
-/** Quanto tempo fica na tela — contado só com a página visível e sem o mouse em cima. */
-export const STREAK_POP_MS = 9000;
+/** Quanto tempo fica na tela — contado só com a página visível. No meio ele cobre o plano, então é curto. */
+export const STREAK_POP_MS = 7000;
 const TICK_MS = 250;
 /** A saída animada (o CSS dura um pouco menos). */
 const LEAVE_MS = 220;
@@ -48,7 +53,6 @@ export function StreakPop() {
   /** O `at` do parabéns que já entrou na tela (o atraso de entrada passou). */
   const [shownAt, setShownAt] = useState<number | null>(null);
   const [leaving, setLeaving] = useState(false);
-  const paused = useRef(false);
   // O que o atraso de entrada precisa saber do foco, lido na hora em que o parabéns chega.
   const foco = useRef({ focusOpen, completed });
   foco.current = { focusOpen, completed };
@@ -59,7 +63,6 @@ export function StreakPop() {
   // A entrada: depois do feedback do check — e, no foco, depois da faixa "concluído".
   useEffect(() => {
     setLeaving(false);
-    paused.current = false;
     if (at == null) {
       setShownAt(null);
       return;
@@ -89,27 +92,20 @@ export function StreakPop() {
     return () => clearTimeout(id);
   }, [leaving]);
 
-  // O tempo de tela: só anda com a página visível e sem ninguém parado em cima.
+  // O tempo de tela: só anda com a página visível.
   useEffect(() => {
     if (!visible || leaving) return;
     let elapsed = 0;
     const id = setInterval(() => {
-      if (paused.current || document.visibilityState !== 'visible') return;
+      if (document.visibilityState !== 'visible') return;
       elapsed += TICK_MS;
       if (elapsed >= STREAK_POP_MS) close();
     }, TICK_MS);
     return () => clearInterval(id);
   }, [visible, leaving, close]);
 
-  // Esc fecha — sem roubar o foco do teclado de onde ele estiver.
-  useEffect(() => {
-    if (!visible) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [visible, close]);
+  // Esc fecha e clicar fora fecha — sem roubar o foco do teclado e sem engolir o clique.
+  const cardRef = useDismiss<HTMLDivElement>(visible, close);
 
   const pet = useAppState(() => activePet());
   const form = pet ? petForm(pet) : null;
@@ -125,15 +121,15 @@ export function StreakPop() {
 
   return (
     // A região viva existe antes do conteúdo: é assim que o leitor de tela anuncia o que entra nela.
-    <div className={'streak-slot' + (focusOpen ? ' in-focus' : '')} role="status" aria-live="polite">
+    <div className="streak-slot" role="status" aria-live="polite">
+      {visible && cheer && title && trail && <i className={'sp-veil' + (leaving ? ' leaving' : '')} aria-hidden="true" />}
       {visible && cheer && title && trail && (
         <div
+          ref={cardRef}
           className={'streak-pop' + (leaving ? ' leaving' : '') + (form ? '' : ' no-pet')}
           id="streak-pop"
           data-n={cheer.n}
           onClick={close}
-          onMouseEnter={() => { paused.current = true; }}
-          onMouseLeave={() => { paused.current = false; }}
         >
           <div className="sp-scene" aria-hidden="true">
             <i className="sp-sun" />

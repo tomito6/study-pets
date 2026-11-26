@@ -35,6 +35,7 @@
   --surface-week-hover:#e9e1ce;
   --ring-track:#e6ddc9;                               /* trilho do anel do foco */
   --overlay:rgba(var(--shadow-rgb),.38);              /* scrim: véu de café, não preto */
+  --veil-soft:rgba(var(--shadow-rgb),.2);             /* o véu leve do pop-up da sequência */
   --hero-a:#ecd9ba;  --hero-b:#dfc49f;                /* o palco do personagem = parede e chão do quarto */
   --accent-surface-a:#eef2e6; --accent-surface-b:#e4ebd8;  /* card do pet ativo, em sálvia clara */
   --gold-surface-a:#f9edd3;  --gold-surface-b:#f2e0bd;     /* card de moedas */
