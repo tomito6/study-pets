@@ -3177,7 +3177,10 @@ test.describe('Study Pets — smoke', () => {
     await expect(pop).toBeVisible();
     await expect(pop).toHaveAttribute('data-n', '3');
     await expect(page.locator('#streak-pop-title')).toContainText('3 dias seguidos');
-    await expect(page.locator('#streak-pop-sub')).toContainText('Meta de hoje batida');
+    // É um parabéns pela SEQUÊNCIA: a frase fala dela, não da meta do dia.
+    await expect(page.locator('#streak-pop .sp-kicker')).toHaveText('Parabéns!');
+    await expect(page.locator('#streak-pop-sub')).toContainText('Sua sequência cresceu mais um dia');
+    await expect(page.locator('#streak-pop-sub')).not.toContainText(/meta/i);
     await expect(page.locator('#streak-pop-sub')).not.toContainText(/perd|amanh|quebr/i); // comemora, nunca cobra
     await expect(page.locator('#streak-pop-trail .sp-dot')).toHaveCount(3);
     await expect(page.locator('#streak-pop-bonus')).toHaveText('+8 🪙 no fim do dia');

@@ -1155,19 +1155,24 @@ export const strings = {
    * ou do que acontece se a pessoa faltar.
    */
   streak: {
-    kicker: 'Sequência',
+    kicker: 'Parabéns!',
     /** O número vai separado porque é ele que "vira" na animação: `antes` + n + `depois`. */
     title: (n: number) => (n === 1 ? { antes: 'Dia ', depois: '' } : { antes: '', depois: ' dias seguidos' }),
     /** A frase inteira, pra quem ouve em vez de ver. */
-    spoken: (n: number) => (n === 1 ? 'Sequência: dia 1.' : `Sequência: ${n} dias seguidos.`),
+    spoken: (n: number) =>
+      n === 1 ? 'Parabéns! Sua sequência começou: dia 1.' : `Parabéns! Sua sequência chegou a ${n} dias seguidos.`,
+    /**
+     * A frase fala da SEQUÊNCIA, nunca da meta do dia: o cartão é um parabéns por ela ter crescido
+     * (correção do Tomi em 2026-11-27 — "Meta de hoje batida" lia como aviso de meta, não como parabéns).
+     */
     sub: (c: { n: number; record: boolean; milestone: boolean }, pet: string | null) => {
-      if (c.n === 1) return 'Meta de hoje batida. É assim que uma sequência começa.';
-      if (c.record) return 'Meta de hoje batida — e esta já é a sua maior sequência.';
-      if (c.n === 7) return 'Uma semana inteira batendo a meta.';
-      if (c.n === 14) return 'Duas semanas batendo a meta.';
-      if (c.n === 30) return 'Um mês batendo a meta. Isso já é hábito.';
-      if (c.milestone && c.n > 30) return `${c.n} dias batendo a meta. Isso já é rotina.`;
-      return pet ? `Meta de hoje batida. ${pet} está com você nessa.` : 'Meta de hoje batida. Mais um dia na conta.';
+      if (c.n === 1) return pet ? `Sua sequência começou hoje. ${pet} comemora com você.` : 'Sua sequência começou hoje.';
+      if (c.record) return 'É a sua maior sequência até aqui.';
+      if (c.n === 7) return 'Uma semana inteira de sequência.';
+      if (c.n === 14) return 'Duas semanas de sequência.';
+      if (c.n === 30) return 'Um mês de sequência. Isso já é hábito.';
+      if (c.milestone && c.n > 30) return `${c.n} dias de sequência. Isso já é rotina.`;
+      return pet ? `Sua sequência cresceu mais um dia. ${pet} comemora com você.` : 'Sua sequência cresceu mais um dia.';
     },
     /** O bônus de moedas do dia — entra quando o dia fecha, como o resto. */
     bonus: (coins: number) => `+${coins} 🪙 no fim do dia`,

@@ -116,10 +116,20 @@ describe('o texto do pop-up', () => {
     }
   });
 
+  // Correção do Tomi (2026-11-27): o cartão é um parabéns pela SEQUÊNCIA. "Meta de hoje batida"
+  // lia como aviso de meta — a frase fala da sequência, e a meta não entra.
+  it('fala da sequência, não da meta do dia', () => {
+    expect(strings.streak.kicker).toBe('Parabéns!');
+    for (const frase of casos) {
+      expect(frase, frase).toMatch(/sequência/);
+      expect(frase, frase).not.toMatch(/meta/i);
+    }
+  });
+
   it('o título separa o número (é ele que vira na animação) e a frase falada é inteira', () => {
     expect(strings.streak.title(1)).toEqual({ antes: 'Dia ', depois: '' });
     expect(strings.streak.title(4)).toEqual({ antes: '', depois: ' dias seguidos' });
-    expect(strings.streak.spoken(4)).toBe('Sequência: 4 dias seguidos.');
-    expect(strings.streak.spoken(1)).toBe('Sequência: dia 1.');
+    expect(strings.streak.spoken(4)).toBe('Parabéns! Sua sequência chegou a 4 dias seguidos.');
+    expect(strings.streak.spoken(1)).toBe('Parabéns! Sua sequência começou: dia 1.');
   });
 });
