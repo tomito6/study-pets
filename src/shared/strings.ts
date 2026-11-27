@@ -56,6 +56,8 @@ export const strings = {
     signUp: 'Criar conta',
     loading: 'Aguarde…',
     needAccount: 'Criar conta',
+    /** Junto do erro de e-mail ou senha: a saída de quem ainda não tem conta. Não revela se a conta existe. */
+    firstTime: 'Primeira vez por aqui? Criar conta com este e-mail',
     haveAccount: 'Já tenho conta',
     forgotPassword: 'Esqueci a senha',
     resetSent: (email: string) => `Enviamos um e-mail pra ${email}.`,
@@ -143,6 +145,13 @@ export const strings = {
         : r === 'closed' ? 'Dia encerrado 🔒'
         : r === 'no-room' ? 'Tem um compromisso bem agora 📅'
         : 'Só dá pra começar hoje 📅',
+    },
+    /** "▶ Estudar agora": hoje está pela rotina e o plano não tem mais nada que dê pra iniciar (ver `StudyNowCard`). */
+    studyNow: {
+      start: '▶ Estudar agora',
+      resumeRoutine: '↺ Voltar à rotina',
+      /** Só se a prévia do bloco não sair (um compromisso em cima de agora): o cartão ainda precisa de um nome. */
+      fallbackName: 'Estudo',
     },
     dayWindowsEdited: 'Estrutura do dia · editado',
     freeDay: '🌴 Dia livre',
@@ -633,7 +642,7 @@ export const strings = {
     /** A régua é a meta do período; o plano vem na linha de baixo, como contexto. */
     adhVal: (done: number, goal: number) => `${done} / ${goal} min`,
     adhValNone: '— / — min',
-    adhSub: (doneH: number, plannedH: number) => `${doneH}h de estudo · ${plannedH}h no plano`,
+    adhSub: (done: string, planned: string) => `${done} de estudo · ${planned} no plano`,
     adhPct: (pct: number, met: boolean) => `${pct}%${met ? ' ✓' : ''}`,
     noData: 'nenhum dia cobra meta aqui',
     goalHeadline: ['Você bateu a meta de ', ' min em ', ' esta semana'],

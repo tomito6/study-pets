@@ -109,6 +109,49 @@ test.describe('Plano aprovado no Sites', () => {
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-time-big')).toHaveText('35:00');
   });
+
+  // O "▶ Estudar agora" (o plano de hoje já passou) ocupa o lugar do cartão Agora e É o cartão Agora:
+  // "Agora · Estudo 17 · 21:10–21:35 · 25 min · Iniciar", sem frase explicando (pedido do Tomi, 2026-11-27).
+  // E com o relógio correndo e o foco fechado, o cartão acompanha a rolagem: sair do foco não pausa,
+  // então é ali que a pessoa vê o tempo enquanto mexe no plano lá embaixo.
+  test('Estudar agora mora no cartão da agenda, e o relógio correndo acompanha a rolagem', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '21:10');
+    await page.locator('#tour-skip').click();
+    await expect(page.locator('.main #study-now.plan-live')).toBeVisible();
+    await expect(page.locator('#agora-start')).toHaveCount(0);
+    await expect(page.locator('#study-now .agora-k')).toHaveText('Agora');
+    await expect(page.locator('#study-now-name')).toHaveText('Estudo 17'); // o bloco que nasceria agora
+    await expect(page.locator('#study-now .agora-dur')).toHaveText('21:10–21:35 · 25 min');
+    await expect(page.locator('#study-now-btn')).toHaveText('Iniciar');
+    // Nada além disso: kicker, nome, horário e o botão.
+    await expect(page.locator('#study-now')).toHaveText('AgoraEstudo 1721:10–21:35 · 25 minIniciar');
+    await dentroDaJanela(page, '#study-now-btn', 'ao abrir o Plano à noite');
+
+    // Rolando, os botões da cabeceira passam por BAIXO das abas dos dias (eram item de flex com z-index).
+    await page.evaluate(() => window.scrollTo(0, 120));
+    const porCima = await page.evaluate(() => {
+      const r = document.querySelector('#day-tabs .day-tab:last-child')!.getBoundingClientRect();
+      const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!el && !!el.closest('#day-tabs');
+    });
+    expect(porCima, 'as abas dos dias ficaram atrás dos botões da cabeceira').toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 0));
+
+    await page.locator('#study-now-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('.main #timer-bar.active')).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+    await dentroDaJanela(page, '#timer-bar', 'com a lista rolada e o relógio correndo');
+    const m = await page.evaluate(() => ({
+      abas: document.querySelector('#day-tabs')!.getBoundingClientRect().bottom,
+      relogio: document.querySelector('#timer-bar')!.getBoundingClientRect().top,
+    }));
+    expect(m.relogio, 'o cartão do relógio sobe por cima das abas dos dias').toBeGreaterThanOrEqual(m.abas - 2);
+    expect(erros).toEqual([]);
+  });
 });
 
 /** Passa pelo onboarding: o personagem padrão, o gato como pet inicial (com o nome
@@ -216,6 +259,24 @@ async function balaoUtilizavel(page: Page) {
   expect(base, `${passo}: o balão termina abaixo da dobra`).toBeLessThanOrEqual(janela);
   // A `.topbar` é sticky com z-index acima do balão: encostar nela é sumir atrás dela.
   expect(topo, `${passo}: o balão fica atrás da barra do topo`).toBeGreaterThanOrEqual(barra);
+}
+
+/**
+ * O elemento está inteiro DENTRO da janela, sem rolar? `toBeVisible()` passa com o botão
+ * abaixo da dobra — foi como o Pausar do foco viveu fora da tela de um laptop de 768px.
+ */
+async function dentroDaJanela(page: Page, seletor: string, quando = '') {
+  const m = await page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { topo: Math.round(r.top), base: Math.round(r.bottom), esq: Math.round(r.left), dir: Math.round(r.right), w: window.innerWidth, h: window.innerHeight };
+  }, seletor);
+  expect(m, `${seletor} não existe ${quando}`).not.toBeNull();
+  expect(m!.topo, `${seletor} começa acima da janela ${quando}`).toBeGreaterThanOrEqual(0);
+  expect(m!.base, `${seletor} termina abaixo da dobra ${quando}`).toBeLessThanOrEqual(m!.h);
+  expect(m!.esq, `${seletor} sai pela esquerda ${quando}`).toBeGreaterThanOrEqual(0);
+  expect(m!.dir, `${seletor} sai pela direita ${quando}`).toBeLessThanOrEqual(m!.w);
 }
 
 /** Lê "175 / 370 min" de um card de realizado da Análise, pra comparar por valor. */
@@ -328,6 +389,14 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#login-submit').click();
     await expect(page.locator('#login-error')).toContainText('incorretos');
     await expect(page.locator('#app')).toBeHidden();
+    // Quem nunca criou conta cai exatamente neste erro: a saída fica ao lado dele, e não
+    // num link pequeno lá embaixo. Ela só troca o modo — o e-mail e a senha digitados ficam.
+    await expect(page.locator('#login-error-signup')).toContainText('Primeira vez por aqui?');
+    await page.locator('#login-error-signup').click();
+    await expect(page.locator('#login-submit')).toHaveText('Criar conta');
+    await expect(page.locator('#login-email')).toHaveValue('senha-teste@example.com');
+    await expect(page.locator('#login-error-signup')).toHaveCount(0);
+    await page.locator('#login-toggle-mode').click(); // de volta pro "Entrar"
 
     await page.locator('#login-password').fill('senhacerta1');
     await page.locator('#login-submit').click();
@@ -835,13 +904,12 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#timer-bar')).toHaveClass(/active/);
     await expect(page.locator('#timer-display')).toHaveText(/^1[45]:\d\d$/); // ~15 min restantes
 
-    // Num ESTUDO, sair do foco só existe PAUSADO (2026-09-12): com o relógio correndo, o foco é o
-    // compromisso. (Numa pausa a saída é livre — teste 72.)
-    await expect(page.locator('.focus-exit')).toHaveCount(0);
-    await page.locator('#focus-pause').click();
+    // Sair do foco é só sair (2026-11-03): não precisa pausar antes, e o relógio segue na barra.
+    // (O que acontece lá fora — o fim do bloco, a volta — é o teste 76.)
     await page.locator('.focus-exit').click();
     await expect(page.locator('#focus-overlay')).toBeHidden();
     await expect(page.locator('#timer-bar')).toHaveClass(/active/); // sair do foco não para o timer
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento'); // nem pausa
 
     await page.locator('#timer-bar').getByRole('button', { name: /Parar/ }).click();
     await expect(page.locator('#timer-bar')).not.toHaveClass(/active/);
@@ -907,10 +975,9 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#toast')).toContainText('Pausa de 3 min');
     await expect(page.locator('.focus-scene-xp')).toHaveText('+50 XP'); // esticar pela pausa não muda o que o bloco vale
 
-    // Pra ver o plano no meio de um ESTUDO é preciso pausar: rodando não há saída (2026-09-12). Pausar de
-    // novo às 10:15 não registra nada por si — só retomar registra —, então a conta segue igual.
+    // Sair do foco PAUSADO continua existindo (sair não pausa nem despausa). Pausar de novo às
+    // 10:15 não registra nada por si — só retomar registra —, então a conta segue igual.
     await page.clock.setFixedTime(new Date(`${DIA}T10:15:00`));
-    await expect(page.locator('.focus-exit')).toHaveCount(0);
     await page.locator('#focus-pause').click();
     await page.locator('.focus-exit').click();
     await expect(page.locator('#timer-bar')).toContainText('Pausado');
@@ -1014,7 +1081,9 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('.focus-exit').click();
     await expect(botao).toHaveText('▶ Continuar');
     await expect(botao).toHaveAttribute('data-action', 'continuar');
-    await expect(agora.locator('.block-xp')).toHaveCount(0); // o botão fica no lugar do selo de XP
+    // O botão fica no lugar do selo de XP. Desde o Plano aprovado (2026-11-26) o selo existe na linha
+    // pro laptop, onde o botão mora no cartão Agora — no celular ele não pode aparecer.
+    await expect(agora.locator('.block-xp')).toBeHidden();
 
     // E "Continuar" registra a pausa em vez de reiniciar o bloco (que a jogaria fora).
     await page.clock.setFixedTime(new Date(`${DIA}T10:14:00`));
@@ -1040,7 +1109,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-block-name')).toHaveText('Pausa');
 
-    // "← Sair do foco" está lá com o relógio CORRENDO — num estudo ele só existe pausado (teste 4).
+    // "← Sair do foco" está lá com o relógio CORRENDO (num estudo também, desde 2026-11-03 — teste 76).
     await page.locator('.focus-exit').click();
     await expect(page.locator('#focus-overlay')).toBeHidden();
     await expect(page.locator('#timer-bar')).toHaveClass(/active/);
@@ -1055,6 +1124,115 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-block-name')).toHaveText('Estudo 4');
     await expect(page.locator('#focus-done')).toHaveText('✓ Pausa concluída · +5 XP');
     await expect(pausa.locator('.check')).toHaveClass(/checked/);
+  });
+
+  // 2026-11-03, decisão do Tomi: "pausar mexe em tudo e me deixa meio aflito, sendo que só quero
+  // sair, botar uma tarefa e voltar a estudar". Sair do foco num ESTUDO não pausa: o relógio segue,
+  // nada é registrado, o dia não desliza — e sair não custa o check nem a emenda.
+  test('76. num estudo dá pra sair do foco sem pausar: o relógio segue, nada é registrado, e o fim do bloco marca e traz o foco de volta', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    const estudo = page.locator('.block-row', { hasText: '10:00–10:25' });
+    await estudo.locator('.block-action').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento'); // e não "Pausado"
+    await expect(page.locator('#timer-display')).toHaveText(/^1[45]:\d\d$/);
+    await expect(estudo.locator('.block-action')).toHaveText('▶ Continuar');
+    await expect(page.locator('#timer-pause')).toHaveText(/Pausar/); // pausar continua existindo, só não é o preço de sair
+
+    // Lá fora o relógio anda, e o plano não se mexeu: o bloco continua 10:00–10:25, sem pausa nenhuma.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:20:00`));
+    await expect(page.locator('#timer-display')).toHaveText(/^0[45]:\d\d$/);
+    await expect(estudo.locator('.block-paused')).toHaveCount(0);
+    expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('study-pets:teste:usuario-teste') ?? '{}').pauses ?? {})).toEqual({});
+
+    // "▶ Continuar" volta pro mesmo bloco, sem reiniciar nada.
+    await estudo.locator('.block-action').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-time-big')).toHaveText(/^0[45]:\d\d$/);
+    await page.locator('.focus-exit').click();
+
+    // O estudo acaba com o foco fechado: marca, emenda na pausa e o foco volta junto.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:25:01`));
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toHaveText('Pausa');
+    await expect(page.locator('#focus-done')).toContainText('✓ Estudo 3 concluído · +50 XP');
+    await expect(estudo.locator('.check')).toHaveClass(/checked/);
+  });
+
+  // 2026-11-26, da avaliação "como usuário novo": quem cria a conta às 21h nascia com o dia
+  // inteiro no passado — tocar num bloco dizia "Este bloco já terminou" e não havia por onde
+  // estudar (o caminho era 🕘 Estrutura do dia → ⏱ Ao vivo → ▶ Começar, que ninguém acha).
+  test('77. o plano de hoje já passou: "▶ Estudar agora" abre um pomodoro, e o que passou continua lá', async ({ page }) => {
+    await abrirApp(page, '21:10');
+    await page.locator('#tour-skip').click();
+
+    const cartao = page.locator('#study-now');
+    await expect(cartao).toBeVisible();
+    await expect(cartao).toHaveText('▶ Estudar agora25 min'); // só o botão: sem frase em volta
+    await expect(page.locator('#study-now-routine')).toHaveCount(0); // não há rotina pela frente pra remontar
+    await dentroDaJanela(page, '#study-now-btn', 'ao abrir o Plano'); // em cima da lista, não depois de 30 linhas
+    const linhasAntes = await page.locator('.block-row').count();
+
+    await page.locator('#study-now-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toHaveText('Estudo 17'); // os 16 do plano, mais este
+    await expect(page.locator('#focus-time-big')).toHaveText(/^2[45]:\d\d$/);
+
+    await page.locator('.focus-exit').click();
+    await expect(cartao).toHaveCount(0); // com o bloco rodando, a porta é o timer
+    await expect(page.locator('.block-row', { hasText: '21:10–21:35' })).toBeVisible();
+    // Nada do dia saiu da tela: quem estudou longe do computador ainda marca a manhã.
+    await expect(page.locator('.block-row')).toHaveCount(linhasAntes + 1);
+    await expect(page.locator('.block-row', { hasText: '09:00–09:25' })).toBeVisible();
+    await expect(page.locator('#day-windows-btn')).toContainText('Ao vivo'); // dali em diante o dia é ao vivo
+    await page.locator('.block-row', { hasText: '09:00–09:25' }).locator('.check').click();
+    await expect(page.locator('.block-row', { hasText: '09:00–09:25' }).locator('.check')).toHaveClass(/checked/);
+  });
+
+  // A folha do "■ Parar por aqui" diz "Dá pra voltar mais tarde" — e a volta era
+  // 🕘 Estrutura · editado → ↺ Restaurar rotina, que ninguém acha. Agora ela fica onde o
+  // resto do dia estava.
+  test('78. depois de "Parar por aqui" a volta está na tela: voltar à rotina, ou estudar agora', async ({ page }) => {
+    await abrirApp(page, '10:12');
+    await page.locator('#tour-skip').click();
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await page.locator('#focus-stop').click();
+    await page.locator('#stop-here-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await expect(page.locator('.block-row', { hasText: '10:30–10:55' })).toHaveCount(0);
+
+    await expect(page.locator('#study-now-btn')).toBeVisible();
+    await expect(page.locator('#study-now-routine')).toHaveText('↺ Voltar à rotina');
+
+    // Meia hora depois: a rotina volta DE AGORA em diante, e o bloco parcial fica do tamanho que foi.
+    await page.clock.setFixedTime(new Date(`${DIA}T10:40:00`));
+    await page.locator('#study-now-routine').click();
+    await expect(page.locator('#toast')).toContainText('Rotina de volta');
+    await expect(page.locator('.block-row', { hasText: '10:00–10:12' })).toBeVisible();
+    await expect(page.locator('.block-row', { hasText: '10:40–11:05' })).toBeVisible();
+    await expect(page.locator('#study-now')).toHaveCount(0); // a porta volta a ser a linha do bloco
+    await expect(page.locator('.block-row', { hasText: '10:40–11:05' }).locator('.block-action')).toHaveText('▶ Iniciar');
+  });
+
+  test('78b. depois de "Parar por aqui", "▶ Estudar agora" começa um pomodoro no minuto de agora', async ({ page }) => {
+    await abrirApp(page, '10:12');
+    await page.locator('#tour-skip').click();
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await page.locator('#focus-stop').click();
+    await page.locator('#stop-here-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+
+    await page.clock.setFixedTime(new Date(`${DIA}T10:40:00`));
+    await page.locator('#study-now-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toHaveText('Estudo 4');
+    await page.locator('.focus-exit').click();
+    await expect(page.locator('.block-row', { hasText: '10:00–10:12' }).locator('.check')).toHaveClass(/checked/); // o parcial continua creditado
+    await expect(page.locator('.block-row', { hasText: '10:40–11:05' })).toBeVisible();
   });
 
   /**
@@ -1105,8 +1283,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#hardcore-start-confirm')).toBeHidden();
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-hardcore')).toBeVisible();
-    // `.focus-exit` some num estudo não pausado desde 2026-09-12 — o que distingue o
-    // hardcore é não ter NEM pausa NEM parar: a saída é só "Desistir…", e custa.
+    // O hardcore é o único foco sem "Sair do foco" (fora dele, sair é livre desde 2026-11-03),
+    // e também não tem NEM pausa NEM parar: a saída é só "Desistir…", e custa.
     await expect(page.locator('#focus-pause')).toHaveCount(0); // sem "Pausar"
     await expect(page.locator('.focus-exit')).toHaveCount(0); // sem "Sair do foco"
     await expect(page.locator('#timer-bar .timer-stop')).toHaveCount(0); // nem "Parar"
@@ -1412,7 +1590,7 @@ test.describe('Study Pets — smoke', () => {
     expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, goal: 60 });
     await expect(page.locator('#adherence-today')).toHaveClass(/adh-big/);
     await expect(page.locator('#adherence-today')).toHaveClass(/met/);
-    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2.9h de estudo · 6.4h no plano');
+    await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2h55 de estudo · 6h25 no plano'); // horas e minutos, não "2.9h"
     await expect(page.locator('#adherence-today .adh-pct')).toHaveText('292% ✓'); // 175/60
     // Meta de 60 min: só hoje bateu. Seg e ter são ANTES da conta existir (ela nasceu hoje),
     // então são neutros — nem falha nem descanso —, e a semana cobra 5 dias, não 7.
@@ -1907,6 +2085,35 @@ test.describe('Study Pets — smoke', () => {
       await balaoUtilizavel(page);
     });
 
+    // Da avaliação de 2026-11-26: em 1366×768, 1280×720 e 1536×864 o "⏸ Pausar" e o
+    // "■ Parar por aqui" ficavam abaixo da dobra — o overlay rola, mas nada avisava.
+    test('79. no foco, Pausar e Parar cabem na tela de um laptop comum, rodando e pausado', async ({ page }) => {
+      await abrirApp(page, '10:10');
+      await page.locator('#tour-skip').click();
+      await page.locator('#agora-start').click();
+      await expect(page.locator('#focus-overlay')).toBeVisible();
+
+      for (const [w, h] of [[1366, 768], [1280, 720], [1536, 864], [1280, 600], [1920, 1080]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        const em = `em ${w}×${h}`;
+        await dentroDaJanela(page, '#focus-pause', em);
+        await dentroDaJanela(page, '#focus-stop', em);
+        await dentroDaJanela(page, '#focus-time-big', em);
+        // E sem depender de rolagem: a tela inteira do foco cabe.
+        const sobra = await page.evaluate(() => {
+          const o = document.querySelector('#focus-overlay')!;
+          return o.scrollHeight - o.clientHeight;
+        });
+        expect(sobra, `o foco rola ${em}`).toBeLessThanOrEqual(1);
+      }
+
+      await page.setViewportSize({ width: 1366, height: 768 });
+      await page.locator('#focus-pause').click();
+      await expect(page.locator('#focus-pause')).toHaveText(/Retomar/);
+      await dentroDaJanela(page, '#focus-pause', 'pausado em 1366×768');
+      await dentroDaJanela(page, '#focus-stop', 'pausado em 1366×768');
+    });
+
     test('49. no laptop o sininho fica ao lado da engrenagem, e o painel cabe na tela', async ({ page }) => {
       await abrirApp(page);
       await page.locator('#tour-skip').click();
@@ -1959,7 +2166,7 @@ test.describe('Study Pets — smoke', () => {
       expect(m.chao, 'o chão voltou a atravessar o cartão inteiro').toBeLessThan(m.palco * 0.6);
     });
 
-    test('77. no laptop o parabéns da sequência fica no meio da janela, e um toque nele (ou o ✕) o tira dali', async ({ page }) => {
+    test('83. no laptop o parabéns da sequência fica no meio da janela, e um toque nele (ou o ✕) o tira dali', async ({ page }) => {
       await abrirApp(page, '10:40');
       await page.locator('#tour-skip').click();
       for (const i of [0, 1, 2]) await checksDeEstudo(page).nth(i).click();
@@ -1989,6 +2196,42 @@ test.describe('Study Pets — smoke', () => {
   test.describe('num celular estreito', () => {
     // 360px, um iPhone SE: a largura em que tudo disputava espaço na barra do topo.
     test.use({ viewport: { width: 360, height: 850 } });
+
+    // Da avaliação de 2026-11-26: a 375px a barra do timer media mais que a janela — o
+    // "✕ Parar" saía cortado pela direita e a página inteira rolava de lado.
+    test('80. a barra do timer cabe na largura do celular: nada cortado, nada rolando de lado', async ({ page }) => {
+      for (const w of [360, 375, 390]) {
+        await page.setViewportSize({ width: w, height: 800 });
+        await abrirApp(page, '10:10');
+        await page.locator('#tour-skip').click();
+        await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-action').click();
+        await page.locator('.focus-exit').click();
+        await expect(page.locator('#timer-bar')).toHaveClass(/active/);
+        await dentroDaJanela(page, '#timer-stop', `a ${w}px`);
+        await dentroDaJanela(page, '#timer-pause', `a ${w}px`);
+        await dentroDaJanela(page, '#timer-display', `a ${w}px`);
+        const sobra = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(sobra, `a página rola de lado a ${w}px`).toBeLessThanOrEqual(0);
+        await page.evaluate(() => sessionStorage.clear()); // a próxima largura começa como conta nova
+      }
+    });
+
+    // Idem: escolher o pet abria o campo de nome e empurrava o "Continuar" pra fora do modal.
+    test('81. no onboarding, "Continuar" continua na tela depois de escolher o pet', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.clock.setFixedTime(new Date(`${DIA}T17:30:00`));
+      await page.goto('/');
+      await expect(page.locator('#onboarding-panel')).toBeVisible();
+      await page.locator('#onb-avatar-next').click();
+      await page.locator('#starter-grid .starter-card[data-species="cat"]').click();
+      await expect(page.locator('#starter-name')).not.toHaveValue('');
+      await dentroDaJanela(page, '#onb-next', 'com o pet escolhido');
+      // E o botão não tapa o que a pessoa precisa alcançar: o campo do nome rola até ficar à vista.
+      await page.locator('#starter-name').scrollIntoViewIfNeeded();
+      await dentroDaJanela(page, '#starter-name', 'depois de rolar até ele');
+      await page.locator('#onb-next').click();
+      await expect(page.locator('#onb-step')).toHaveText('Passo 3 de 3');
+    });
 
     test('50. a barra do topo tem altura fixa, e a barra do timer gruda abaixo dela', async ({ page }) => {
       await abrirApp(page, '10:10');
@@ -2073,8 +2316,9 @@ test.describe('Study Pets — smoke', () => {
     // O passo 3 é o horário — e diz na hora o que ele vira.
     await expect(page.locator('#onb-step')).toHaveText('Passo 3 de 3');
     await expect(page.locator('#onb-windows .sw-row')).toHaveCount(1);
-    // 17, não 16: desde 2026-09-10 a sobra do fim da janela vira estudo em vez de morrer.
-    await expect(page.locator('#onb-windows-preview')).toContainText('17 pomodoros');
+    // 16, o mesmo número que a primeira tela do Plano vai mostrar: a prévia conta com a
+    // refeição das 13h com que a conta nasce. Sem ela dizia 17, e o Plano abria com 16.
+    await expect(page.locator('#onb-windows-preview')).toContainText('16 pomodoros');
 
     // Quem estuda de noite não deveria herdar 09:00–18:00 sem ter escolhido.
     await page.locator('#onb-windows .sw-row .swc-start').fill('19:00');
@@ -2954,9 +3198,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#app')).toBeVisible();
     await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
     await expect(page.locator('#focus-overlay')).toBeVisible();
-    await page.locator('#focus-pause').click(); // pra ver a barra é preciso pausar: rodando não há saída do foco
-    await page.locator('.focus-exit').click();
-    await expect(page.locator('#timer-bar')).toContainText('Pausado');
+    await page.locator('.focus-exit').click(); // a barra aparece com o relógio correndo: sair não pede pausa (2026-11-03)
+    await expect(page.locator('#timer-bar')).toContainText('Em andamento');
     await expect(page.locator('#vol-slider')).toHaveValue('0.3');
     await page.getByRole('button', { name: 'Configurações' }).click();
     await expect(page.locator('#sound-volume')).toHaveValue('0.3');
@@ -3066,12 +3309,14 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('.block-row', { hasText: '10:30–10:55' }).locator('.block-name').click();
     await expect(page.locator('#focus-overlay')).toBeVisible();
     await expect(page.locator('#focus-next-name')).toContainText('Pausa longa · lavar roupa');
-    await page.locator('#focus-pause').click(); // pra ver a barra é preciso pausar: rodando não há saída do foco
-    await page.locator('.focus-exit').click();
+    await page.locator('.focus-exit').click(); // sair não pede mais pausa (2026-11-03)
     await expect(page.locator('#focus-overlay')).toBeHidden();
     await page.locator('#timer-stop').click();
 
     // Sobrevive ao reload; tocar na nota edita; Apagar tira.
+    // O save da nota tem debounce de 800 ms: sem esperar o indicador, o reload às vezes
+    // ganhava a corrida e a nota não estava lá (1 em 4, medido em 2026-11-26).
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
     await page.reload();
     await expect(page.locator('#app')).toBeVisible();
     await expect(pausaLonga).toContainText('lavar roupa');
@@ -3153,7 +3398,7 @@ test.describe('Study Pets — smoke', () => {
     await expect.poll(() => osc()).toBeGreaterThan(antes);
   });
 
-  test('76. a sequência cresceu: um cartão no meio da tela comemora uma vez, não prende e sai do caminho', async ({ page }) => {
+  test('82. a sequência cresceu: um cartão no meio da tela comemora uma vez, não prende e sai do caminho', async ({ page }) => {
     await abrirApp(page, '10:40');
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
@@ -3207,7 +3452,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(pop).toHaveCount(0);
   });
 
-  test('76b. no foco o parabéns espera a faixa "concluído", aparece no meio e some sozinho', async ({ page }) => {
+  test('82b. no foco o parabéns espera a faixa "concluído", aparece no meio e some sozinho', async ({ page }) => {
     await abrirApp(page, '10:10');
     await page.locator('#tour-skip').click();
     const checks = checksDeEstudo(page);
@@ -3232,7 +3477,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-block-name')).toHaveText('Pausa');
   });
 
-  test('76c. Esc fecha o parabéns, e com movimento reduzido ele entra sem animação nenhuma', async ({ page }) => {
+  test('82c. Esc fecha o parabéns, e com movimento reduzido ele entra sem animação nenhuma', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await abrirApp(page, '10:40');
     await page.locator('#tour-skip').click();

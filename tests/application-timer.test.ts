@@ -121,9 +121,8 @@ describe('fim do bloco no modo foco', () => {
     expect(isChecked(state.checks, HOJE, '10:00')).toBe(false);
   });
 
-  // Sair do foco com um ESTUDO correndo deixou de existir (2026-09-12), então este estado
-  // só se alcança pelo que o app não fecha: o dia encerrado à mão com um bloco rodando.
-  // (Numa pausa a saída é livre desde 2026-09-16 — e o fim dela emenda igual; ver abaixo.)
+  // O único fim SEM check que sobrou: o dia encerrado à mão com um bloco ainda no timer.
+  // (Sair do foco não muda o fim do bloco desde 2026-11-03 — ver "sair do foco é só sair".)
   it('com o dia encerrado no meio do bloco, o fim é o de sempre: sem check, e o timer some', () => {
     startTimer(bloco);
     state.closedDays[HOJE] = true;
@@ -294,18 +293,54 @@ describe('ciclo de vida', () => {
     expect(derived.timerBlock).toBeNull();
   });
 
-  // A regra de 2026-09-12: enquanto o relógio corre num ESTUDO, o foco é o compromisso. Quem
-  // precisa mexer no plano pausa antes — e a pausa é honesta (vira registro, o dia desliza).
-  it('num estudo, sair do foco é recusado com o relógio correndo, e permitido pausado', () => {
-    startTimer(bloco);
-    closeFocus();
-    expect(derived.focusOpen).toBe(true); // no-op: o bloco está rodando
-    expect(derived.timerBlock).toBe(bloco);
+  // 2026-11-03, decisão do Tomi: "pausar mexe em tudo e me deixa meio aflito, sendo que só
+  // quero sair, botar uma tarefa e voltar a estudar". De 2026-09-12 até ali, num estudo só
+  // dava pra sair PAUSADO — e a pausa estica o bloco, desliza o dia e vira registro.
+  describe('sair do foco é só sair — nunca pausa', () => {
+    it('com o estudo correndo: o foco fecha, o relógio segue, e nada é registrado', () => {
+      startTimer(bloco);
+      expect(wakeLockWanted()).toBe(true);
+      closeFocus();
+      expect(derived.focusOpen).toBe(false);
+      expect(derived.timerBlock).toBe(bloco); // o timer segue, RODANDO, na barra
+      expect(derived.timerPausedAt).toBeNull(); // sair não é pausar
+      expect(derived.timerEndsAt).toBeNull(); // e o fim não se mexeu
+      expect(state.pauses).toEqual({});
+      expect(blocksForDay(HOJE).find((b) => b.time === '10:00')).toMatchObject({ endTime: '10:25' }); // o dia não deslizou
+      expect(wakeLockWanted()).toBe(false); // fora do foco a tela pode dormir
+      reopenFocus(); // a volta é o "▶ Continuar" da linha
+      expect(derived.focusOpen).toBe(true);
+      expect(derived.timerBlock).toBe(bloco);
+      expect(wakeLockWanted()).toBe(true);
+    });
 
-    pauseTimer(AGORA);
-    closeFocus();
-    expect(derived.focusOpen).toBe(false);
-    expect(derived.timerBlock).toBe(bloco); // o timer continua, pausado, na barra
+    it('o estudo que acaba com o foco fechado termina como no foco: marca, emenda na pausa e o foco volta', () => {
+      startTimer(bloco);
+      closeFocus();
+      relogioEm('10:24:59');
+      expect(isChecked(state.checks, HOJE, '10:00')).toBe(true); // sair não custou o check
+      expect(derived.timerBlock).toMatchObject({ type: 'pausa', time: '10:25', endTime: '10:30' }); // nem a emenda
+      expect(derived.focusOpen).toBe(true);
+      expect(derived.timerCompleted).toMatchObject({ name: 'Estudo 3', xp: 50, coins: 25 });
+    });
+
+    it('pausado também dá pra sair, e o timer continua pausado na barra', () => {
+      startTimer(bloco);
+      pauseTimer(AGORA);
+      closeFocus();
+      expect(derived.focusOpen).toBe(false);
+      expect(derived.timerBlock).toBe(bloco);
+      expect(derived.timerPausedAt).toBe(AGORA.getTime());
+    });
+
+    it('em espera, sair continua recusado — antes da hora a saída é Cancelar', () => {
+      const proximo = blocksForDay(HOJE).find((b) => b.time === '10:30')!;
+      expect(proximo.type).toBe('estudo');
+      startTimer(proximo, AGORA); // 10:10: o estudo das 10:30 fica em espera
+      closeFocus(AGORA);
+      expect(derived.focusOpen).toBe(true);
+      expect(derived.timerBlock).toBe(proximo);
+    });
   });
 
   // 2026-09-16, pedido do Tomi: "sair do modo foco durante a pausa sem ter que pausar a
@@ -341,7 +376,7 @@ describe('ciclo de vida', () => {
       relogioEm('10:29:59');
       expect(isChecked(state.checks, HOJE, '10:25')).toBe(true); // a pausa marcou
       expect(derived.timerBlock).toMatchObject({ type: 'estudo', time: '10:30', endTime: '10:55' }); // Estudo 4, rodando
-      expect(derived.focusOpen).toBe(true); // estudo correndo ⇒ foco aberto
+      expect(derived.focusOpen).toBe(true); // o bloco seguinte traz o foco de volta
       expect(wakeLockWanted()).toBe(true);
       expect(derived.timerCompleted).toMatchObject({ name: 'Pausa', type: 'pausa' });
     });

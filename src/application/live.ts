@@ -10,14 +10,26 @@ import { isDayClosed } from '../domain/checks';
 import { dk, minsToTime, timeToMins } from '../domain/time';
 import type { LiveRhythm, StudyBlock, StudyWindow } from '../domain/types';
 import { derived, state } from '../store/store';
+import { rhythmOf } from '../domain/configHistory';
+import { modeForDay } from '../domain/dayMode';
 import { changeInEffect } from '../domain/dayRhythm';
-import { grownRunWindows } from '../domain/dayWindows';
-import { canEditDayWindows } from './dayWindows';
-import { blocksForDay, clearBlockCache, dayModeOf, rebuildWeeks, rhythmAtDay } from './plan';
+import { grownRunWindows, stopDayAt } from '../domain/dayWindows';
+import { canStartBlock } from '../domain/timer';
+import { canEditDayWindows, effectiveWindows, isRestDayKey } from './dayWindows';
+import { blocksForDay, clearBlockCache, configAtDay, dayModeOf, rebuildWeeks, rhythmAtDay } from './plan';
 import { saveNow } from './save';
+import { startContextFor } from './timer';
 
 export type LiveRefusal = 'not-live' | 'closed' | 'past' | 'busy' | 'no-room';
 export type LiveStart = { ok: true; block: StudyBlock } | { ok: false; reason: LiveRefusal };
+
+/**
+ * `fromRoutine`: a corrida pode abrir num dia que ainda está **pela rotina** — é o
+ * "▶ Estudar agora" (ver `canStudyNow`). Sem ela, só um dia que já é ao vivo começa.
+ */
+export interface LiveOptions {
+  fromRoutine?: boolean;
+}
 
 /** As janelas que a corrida de agora deixaria no dia: as anteriores (aparadas) e a nova. */
 type Candidata = { ok: true; anteriores: StudyWindow[]; janela: StudyWindow } | { ok: false; reason: LiveRefusal };
@@ -55,8 +67,9 @@ function commit(now: Date): void {
  * primeiro pomodoro — e não além, porque o que vem depois ainda não aconteceu. Quem a
  * estica, bloco a bloco, é `chainLive`.
  */
-function candidata(dateKey: string, now: Date): Candidata {
-  if (dayModeOf(dateKey) !== 'live') return { ok: false, reason: 'not-live' };
+function candidata(dateKey: string, now: Date, opts: LiveOptions = {}): Candidata {
+  const daRotina = dayModeOf(dateKey) !== 'live';
+  if (daRotina && !(opts.fromRoutine && canStudyNow(dateKey, now))) return { ok: false, reason: 'not-live' };
   if (isDayClosed(state.closedDays, dateKey)) return { ok: false, reason: 'closed' };
   const can = canEditDayWindows(dateKey, now);
   if (!can.ok) return { ok: false, reason: can.reason === 'closed' ? 'closed' : 'past' };
@@ -72,7 +85,7 @@ function candidata(dateKey: string, now: Date): Candidata {
   // e do corte do "Parar por aqui" que escreve o fim de uma corrida — e só numa corrida
   // em que nada roda, então a conta da pausa (`growLiveForPause`) nunca a vê crescer.
   const anteriores: StudyWindow[] = [];
-  for (const w of runsOf(dateKey)) {
+  for (const w of daRotina ? livedRoutine(dateKey, now) : runsOf(dateKey)) {
     const fim = timeToMins(w.end);
     if (fim <= inicio) anteriores.push(w);
     else if (timeToMins(w.start) < inicio) anteriores.push({ ...w, end: minsToTime(inicio) });
@@ -90,35 +103,90 @@ function candidata(dateKey: string, now: Date): Candidata {
  * mais um pomodoro. O dia é gerado com o override candidato só pelo tempo de achar o
  * bloco, e volta ao que era; o cache do gerador é limpo nas duas pontas.
  */
-export function previewLive(dateKey: string, now: Date = new Date()): LiveStart {
-  const c = candidata(dateKey, now);
+export function previewLive(dateKey: string, now: Date = new Date(), opts: LiveOptions = {}): LiveStart {
+  const c = candidata(dateKey, now, opts);
   if (!c.ok) return c;
   const antes = state.windowOverrides[dateKey];
   state.windowOverrides[dateKey] = { studyWindows: [...c.anteriores, c.janela] };
   clearBlockCache();
-  const bloco = blocksForDay(dateKey).find((b) => b.time === c.janela.start) ?? null;
+  const bloco = blocksForDay(dateKey).find((b) => b.time === c.janela.start && b.type === 'estudo') ?? null;
   if (antes) state.windowOverrides[dateKey] = antes;
   else delete state.windowOverrides[dateKey];
   clearBlockCache();
   return bloco ? { ok: true, block: bloco } : { ok: false, reason: 'no-room' };
 }
 
-export function startLive(dateKey: string, now: Date = new Date()): LiveStart {
-  const c = candidata(dateKey, now);
+export function startLive(dateKey: string, now: Date = new Date(), opts: LiveOptions = {}): LiveStart {
+  const c = candidata(dateKey, now, opts);
   if (!c.ok) return c;
   const { anteriores, janela } = c;
+  // O dia de rotina que abre uma corrida passa a ser ao vivo dali em diante (ver `canStudyNow`).
+  // O que havia antes fica guardado pra desfazer se não houver espaço: num dia de rotina o
+  // override pode nem existir, e as janelas aparadas não são o que estava lá.
+  const overrideAntes = state.windowOverrides[dateKey];
+  const modoAntes = state.dayModes[dateKey];
+  const eraRotina = dayModeOf(dateKey) !== 'live';
   state.windowOverrides[dateKey] = { studyWindows: [...anteriores, janela] };
+  if (eraRotina) {
+    // A escolha do dia só é gravada quando o padrão não diz a mesma coisa (a régua do `setDayMode`).
+    if (modeForDay(dateKey, undefined, state.dayModeDefault) === 'live') delete state.dayModes[dateKey];
+    else state.dayModes[dateKey] = 'live';
+  }
   commit(now);
 
-  const bloco = blocksForDay(dateKey).find((b) => b.time === janela.start) ?? null;
+  // Só um ESTUDO serve: com um compromisso começando exatamente em agora, o bloco achado
+  // nesse horário era o próprio compromisso, e a corrida "começava" num evento.
+  const bloco = blocksForDay(dateKey).find((b) => b.time === janela.start && b.type === 'estudo') ?? null;
   if (!bloco) {
     // Um evento cravado no minuto de agora não deixa espaço. Desfaz e diz o motivo.
-    if (anteriores.length > 0) state.windowOverrides[dateKey] = { studyWindows: anteriores };
+    if (eraRotina) {
+      if (overrideAntes) state.windowOverrides[dateKey] = overrideAntes;
+      else delete state.windowOverrides[dateKey];
+      if (modoAntes) state.dayModes[dateKey] = modoAntes;
+      else delete state.dayModes[dateKey];
+    } else if (anteriores.length > 0) state.windowOverrides[dateKey] = { studyWindows: anteriores };
     else delete state.windowOverrides[dateKey];
     commit(now);
     return { ok: false, reason: 'no-room' };
   }
   return { ok: true, block: bloco };
+}
+
+/**
+ * "▶ Estudar agora" (2026-11-26): hoje está **pela rotina** e o plano não tem mais nada
+ * que dê pra iniciar — todo estudo e toda pausa já terminaram, ou o dia foi cortado pelo
+ * "■ Parar por aqui". Até aqui esse estado não tinha porta: tocar num bloco dizia "Este
+ * bloco já terminou", e o único jeito de estudar era descobrir 🕘 Estrutura do dia →
+ * ⏱ Ao vivo → ▶ Começar. Quem cria a conta às 21h nascia exatamente aí, com o dia
+ * inteiro no passado; e quem parava pra almoçar lia "Dá pra voltar mais tarde" sem ter
+ * por onde voltar.
+ *
+ * A porta abre uma corrida agora, e o dia passa a ser ao vivo dali em diante — o mesmo
+ * destino do caminho escondido, num toque. O que muda em relação a ele: o que já passou
+ * fica INTEIRO, marcado ou não (o corte é em agora, `livedRoutine`), porque quem estudou
+ * longe do computador ainda vai marcar a manhã.
+ *
+ * Fora daqui: dia de folga (a porta de lá continua sendo abrir janelas), dia com bloco
+ * ainda por começar (a porta é a linha dele) e o hardcore não muda nada — quem atende é
+ * o Plano, pelo mesmo consentimento do cartão do ao vivo.
+ */
+export function canStudyNow(dateKey: string, now: Date = new Date()): boolean {
+  if (dateKey !== dk(now) || dayModeOf(dateKey) === 'live') return false;
+  if (derived.timerBlock || isRestDayKey(dateKey) || !canEditDayWindows(dateKey, now).ok) return false;
+  return !blocksForDay(dateKey).some(
+    (b) => (b.type === 'estudo' || b.type === 'pausa') && canStartBlock(b, dateKey, now, startContextFor(b, dateKey)).ok,
+  );
+}
+
+/**
+ * O que um dia de ROTINA já viveu até agora, como fato: o mesmo corte do "■ Parar por
+ * aqui" (`stopDayAt`) — a janela que já acabou fica inteira (`whole`: gerada como a rotina
+ * que foi), a que agora atravessa é aparada e vira corrida; uma janela que já é corrida
+ * guarda o ritmo dela. Nada vivido (a rotina inteira no futuro) = lista vazia.
+ */
+function livedRoutine(dateKey: string, now: Date): StudyWindow[] {
+  const r = stopDayAt(effectiveWindows(dateKey), now, rhythmOf(configAtDay(dateKey)));
+  return r.ok ? r.windows : [];
 }
 
 /**
@@ -173,7 +241,7 @@ export function chainLive(dateKey: string, endedAt: string, now: Date = new Date
   // registrada no meio da corrida move esse minuto, e comparar o fim exato fazia a emenda
   // devolver null — a corrente parava sozinha e o foco fechava no meio do dia.
   const fim = timeToMins(endedAt);
-  const idx = janelas.findIndex((w) => w.live && timeToMins(w.start) <= fim && timeToMins(w.end) >= fim);
+  const idx = janelas.findIndex((w) => w.live && !w.live.whole && timeToMins(w.start) <= fim && timeToMins(w.end) >= fim);
   if (idx < 0) return null;
   const atual = janelas[idx]!;
   // A folga cobre o maior bloco que pode nascer aqui: pelo ritmo da corrida, ou pelo ritmo

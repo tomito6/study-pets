@@ -18,6 +18,7 @@ import {
 import type { Adherence, GoalWeek } from '../../domain/analytics';
 import { restDayKind } from '../../domain/dayWindows';
 import { getLevel, getLevelPct } from '../../domain/progression';
+import { formatCompact } from '../../domain/settings';
 import type { Stats } from '../../domain/stats';
 import { dk, isWeekendKey } from '../../domain/time';
 import { strings } from '../../shared/strings';
@@ -27,7 +28,6 @@ const t = strings.analytics;
 type View = 'hoje' | 'semana' | 'geral' | 'recordes';
 const VIEWS: View[] = ['hoje', 'semana', 'geral', 'recordes'];
 const fmtDay = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-const hours1 = (mins: number) => Math.round((mins / 60) * 10) / 10;
 
 function ProfileCard({ stats, now }: { stats: Stats; now: Date }) {
   const next = nextLevel(stats.totalXP);
@@ -68,7 +68,7 @@ function AdherenceCard({ id, label, agg, big }: { id: string; label: string; agg
     <div className={cls} id={id}>
       <div className="adh-label">{label}</div>
       <div className="adh-val">{agg.empty ? t.adhValNone : t.adhVal(agg.done, agg.goal)}</div>
-      <div className="adh-sub">{agg.empty ? t.noData : t.adhSub(hours1(agg.done), hours1(agg.planned))}</div>
+      <div className="adh-sub">{agg.empty ? t.noData : t.adhSub(formatCompact(agg.done), formatCompact(agg.planned))}</div>
       <div className="bar-track"><div className="bar-fill" style={{ width: `${Math.min(100, agg.pct)}%` }} /></div>
       <div className="adh-pct">{agg.empty ? '' : t.adhPct(agg.pct, agg.met)}</div>
     </div>

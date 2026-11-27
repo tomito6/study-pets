@@ -301,6 +301,23 @@ export function setDayOff(dateKey: DateKey, now: Date = new Date()): DayWindowsR
 }
 
 /**
+ * Hoje foi cortado por uma parada ("■ Parar por aqui") e a rotina ainda tem dia pela
+ * frente: "↺ Restaurar rotina" devolveria algum estudo que ainda dá pra fazer? É o que
+ * decide se a volta pela rotina aparece ao lado do "▶ Estudar agora" — oferecer uma volta
+ * que não devolve nada (parou às 17:50 de um dia que acaba às 18:00) seria um botão morto.
+ * A conta é a do próprio restaurar (`routineAfter`), gerada sem escrever.
+ */
+export function canResumeRoutine(dateKey: DateKey, now: Date = new Date()): boolean {
+  if (dateKey !== dk(now) || dayModeOf(dateKey) === 'live' || !canEditDayWindows(dateKey, now).ok) return false;
+  const corridas = (state.windowOverrides[dateKey]?.studyWindows ?? []).filter((w) => w.live);
+  if (corridas.length === 0) return false;
+  const r = routineAfter(corridas, configAtDay(dateKey).studyWindows, now);
+  if (!r.ok) return false;
+  const agora = minsToTime(now.getHours() * 60 + now.getMinutes());
+  return previewDayPlan(dateKey, r.windows, null, now).some((b) => b.type === 'estudo' && b.endTime > agora);
+}
+
+/**
  * "Restaurar rotina" / "Voltar ao padrão": o dia volta a seguir a config.
  *
  * **Com corrida no dia, a rotina volta só de agora em diante** (`routineAfter`). Apagar o

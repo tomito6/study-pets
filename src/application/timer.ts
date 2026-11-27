@@ -7,10 +7,11 @@
 // O único intervalo aqui existe pra detectar o fim do bloco.
 //
 // Um bloco de hoje pode ser aberto antes da hora (fica em espera até começar).
-// No modo foco, o fim do bloco é uma conquista: marca o check sozinho, toca
-// "deu certo" e emenda no bloco seguinte (estudo → pausa → estudo…) até o dia
-// mudar de assunto (almoço, evento, gap, fim). Com o foco fechado (só a barra),
-// o fim continua como sempre foi: som do tipo, notificação, e o timer some.
+// O fim do bloco é uma conquista: marca o check sozinho, toca "deu certo" e
+// emenda no bloco seguinte (estudo → pausa → estudo…) até o dia mudar de assunto
+// (almoço, evento, gap, fim). Isso vale com o foco aberto E com ele fechado
+// (2026-11-03): sair do foco é só sair — o relógio segue, e sair não custa o
+// check nem a emenda. O bloco seguinte traz o foco de volta.
 //
 // No modo hardcore (`derived.hardcore`) o foco não tem saída livre: "Sair do foco"
 // e "Parar" viram no-op — a porta é `quitHardcore`, que cobra. A emenda e o fim
@@ -30,7 +31,7 @@ import { isForfeited } from '../domain/hardcore';
 import { pauseSessionFor } from '../domain/pauses';
 import { closedCycleOf } from '../domain/cycles';
 import { dk } from '../domain/time';
-import { canStartBlock, chainedBlockAfter, cleanBlockName, finishesAsFocus, soundForBlock, timerEnd, timerProgress } from '../domain/timer';
+import { canStartBlock, chainedBlockAfter, cleanBlockName, soundForBlock, timerEnd, timerProgress } from '../domain/timer';
 import type { StartCheck, StartContext } from '../domain/timer';
 import type { DateKey, StudyBlock } from '../domain/types';
 import { notify as pushNotification, requestNotificationPermission } from '../infrastructure/notifications/notifications';
@@ -189,8 +190,8 @@ export function pauseRuntime(now: Date): void {
 /**
  * Retomou: o bloco em andamento passa a ser o regenerado (fim novo) e o relógio volta
  * a correr de onde parou — `endsAt` é o fim ajustado pela pausa real (ver `timerEnd`),
- * porque o plano só estica em minutos cheios. O foco volta junto: relógio correndo
- * implica foco aberto (ver `closeFocus`).
+ * porque o plano só estica em minutos cheios. O foco volta junto: "Retomar" e
+ * "Continuar" são a volta pro estudo (quem quer ficar de fora sai de novo, sem pausar).
  */
 export function resumeRuntime(block: StudyBlock, now: Date, endsAt: number | null = null): void {
   primeAudio(); // "▶ Retomar" / "▶ Continuar" são gestos: o contexto de áudio acorda aqui
@@ -232,7 +233,7 @@ export function watchVisibility(): void {
 export function startTimer(block: StudyBlock, now: Date = new Date()): void {
   // Começar OUTRO bloco com uma pausa aberta larga a pausa: registro é só de bloco que
   // continuou (a mesma regra do "✕ Parar"). Silencioso, porém, isso some do histórico sem
-  // ninguém ver — e desde que o foco só se fecha pausado, é o estado normal da lista.
+  // ninguém ver — e quem saiu do foco pausado tem a lista inteira na frente.
   if (derived.timerPausedAt != null && derived.timerBlock) showToast(strings.timer.pauseDropped);
   // Iniciar vem de um gesto (a linha, o cartão Agora, o "▶ Começar" do ao vivo, o consentimento
   // do hardcore): é a hora de criar o contexto de áudio, senão o fim do bloco toca em silêncio.
@@ -265,14 +266,17 @@ export function tryStartTimer(block: StudyBlock, now: Date = new Date()): StartC
 }
 
 /**
- * Fim natural do bloco. No foco: check automático, som de "deu certo" e emenda
- * no próximo bloco — ou fecha, se a sequência acabou. Fora do foco: som do tipo
- * e notificação, e o timer some.
+ * Fim natural do bloco: check automático, som de "deu certo" e emenda no próximo
+ * bloco — ou fecha, se a sequência acabou.
  *
- * A pausa é a exceção (2026-09-16): dela dá pra sair do foco com o relógio correndo
- * (ver `closeFocus`), e o fim dela com o foco fechado é o MESMO fim do foco aberto —
- * marca, emenda no estudo e o foco volta junto com ele (`runBlock` abre). Senão sair
- * pra olhar o plano na pausa custaria a emenda e o check dela, um preço escondido.
+ * Com o foco fechado é o MESMO fim (a pausa desde 2026-09-16, o estudo desde
+ * 2026-11-03): dá pra sair do foco com o relógio correndo (ver `closeFocus`), e o
+ * bloco que acaba lá fora marca, emenda e traz o foco de volta com o seguinte
+ * (`runBlock` abre). Senão sair pra anotar uma tarefa custaria o check e a emenda —
+ * um preço escondido, e era exatamente por não ter preço que a saída foi pedida.
+ *
+ * O ramo sem check é só o do dia que foi encerrado com o bloco ainda no timer: som
+ * do tipo, e o timer some.
  */
 function finishTimer(now: Date = new Date()): void {
   const block = derived.timerBlock;
@@ -291,7 +295,7 @@ function finishTimer(now: Date = new Date()): void {
   const delegated = alarmDelegated(block, now);
   if (!delegated) void pushNotification(block.type === 'estudo' ? n.study : n.break, cleanBlockName(block.name));
 
-  if (finishesAsFocus(block, derived.focusOpen) && canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
+  if (canToggleCheck(todayKey, { closedDays: state.closedDays, now })) {
     const result = checkBlock(todayKey, block, now); // null = já estava marcado à mão
     if (!delegated) playSound('sucesso');
     // No modo ao vivo o plano não tem futuro: a emenda GERA o bloco seguinte esticando a
@@ -369,29 +373,24 @@ export function stopTimer(): void {
 }
 
 /**
- * "← Sair do foco": fecha o overlay, o timer continua (e a tela pode travar de novo).
+ * "← Sair do foco": fecha o overlay, e só isso. O timer continua do jeito que está —
+ * correndo ou pausado — na barra, e a tela pode travar de novo.
  *
- * **Num estudo, só pausado** (2026-09-12). Enquanto o relógio corre, o foco É o
- * compromisso — sair dali não servia a nada que a própria tela não mostre (o próximo
- * bloco, o ganho, o relógio), e servia a tudo que o app pede pra fazer de olhos abertos:
- * mexer no plano no meio de um estudo. Quem precisa mexer pausa antes, e a pausa é
- * honesta — vira registro e o dia desliza. Em espera a saída é "✕ Cancelar" (`stopTimer`),
- * que desarma o timer: não há o que congelar antes da hora. No hardcore nada disso existe.
+ * **Sair nunca pausa** (2026-11-03, decisão do Tomi: "pausar mexe em tudo e me deixa
+ * meio aflito, sendo que só quero sair, botar uma tarefa e voltar a estudar"). De
+ * 2026-09-12 até ali, num estudo só dava pra sair PAUSADO — e a pausa tem consequência:
+ * estica o bloco, desliza o dia, vira registro. Era um preço alto pra olhar o plano.
+ * Agora o relógio segue lá fora, nada é registrado, e o fim do bloco é o mesmo de
+ * dentro do foco (ver `finishTimer`). A volta é o "▶ Continuar" da linha e do cartão.
  *
- * **Numa pausa rodando, é livre** (2026-09-16, pedido do Tomi: "sair do modo foco durante
- * a pausa sem ter que pausar a pausa"). O compromisso é com o estudo; a pausa é a vida
- * entrando — e obrigar a congelar uma pausa pra olhar o plano era o app cobrando por um
- * café. O relógio segue: quando a pausa acaba, ela marca, emenda no estudo e o foco volta
- * com ele (ver `finishTimer`). Em espera continua sendo Cancelar.
+ * O que continua trancado: **em espera** a saída é "✕ Cancelar" (`stopTimer`), que
+ * desarma o timer — antes da hora não há relógio pra seguir lá fora; e **no hardcore**
+ * nada disso existe (o modo é o compromisso, e a porta cobra).
  */
 export function closeFocus(now: Date = new Date()): void {
   if (!derived.focusOpen || derived.hardcore) return;
   const block = derived.timerBlock;
-  if (block) {
-    const phase = timerProgress(block, now, derived.timerPausedAt, derived.timerEndsAt).phase;
-    const pausaRodando = block.type === 'pausa' && phase === 'running';
-    if (phase !== 'paused' && !pausaRodando) return;
-  }
+  if (block && timerProgress(block, now, derived.timerPausedAt, derived.timerEndsAt).phase === 'waiting') return;
   derived.focusOpen = false;
   releaseWakeLock();
   notify();
