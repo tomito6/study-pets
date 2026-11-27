@@ -183,6 +183,7 @@ function resetToLoggedOut(): void {
   derived.loadFailed = false;
   derived.booting = false;
   derived.setupTour = false; // a corrida de setup é da sessão que saiu
+  derived.streakCheer = null; // o parabéns é de quem estava na tela
   // O estado inteiro, não uma lista de campos. A lista existia e esquecia cinco:
   // eventSeries, groups, windowOverrides, avatar e tutorialSeen ficavam com o
   // conteúdo de quem saiu — e as séries são justamente onde moram as aulas e

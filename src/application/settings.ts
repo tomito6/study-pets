@@ -79,6 +79,9 @@ export function cancelSession(now: Date = new Date()): void {
   // O sininho zera junto: cada linha fala de um nível, um pet ou um dia que
   // acabaram de deixar de existir — mantê-las seria guardar um diário de mentira.
   state.notifications = [];
+  // A marca do parabéns fala de uma sequência que acabou de deixar de existir, e o pop-up dela sai da tela.
+  state.streakCheered = null;
+  derived.streakCheer = null;
   // `avatar` e `tutorialSeen` ficam: o personagem é identidade e quem cancelou já conhece o app.
   // E a marcha a ré fica guardada por 30 dias: apagar o histórico deixou de ser definitivo.
   state.safetyNet = rede;

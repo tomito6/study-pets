@@ -35,6 +35,7 @@
   --surface-week-hover:#e9e1ce;
   --ring-track:#e6ddc9;                               /* trilho do anel do foco */
   --overlay:rgba(var(--shadow-rgb),.38);              /* scrim: véu de café, não preto */
+  --veil-soft:rgba(var(--shadow-rgb),.2);             /* o véu leve do pop-up da sequência */
   --hero-a:#ecd9ba;  --hero-b:#dfc49f;                /* o palco do personagem = parede e chão do quarto */
   --accent-surface-a:#eef2e6; --accent-surface-b:#e4ebd8;  /* card do pet ativo, em sálvia clara */
   --gold-surface-a:#f9edd3;  --gold-surface-b:#f2e0bd;     /* card de moedas */
@@ -171,6 +172,7 @@
   --shadow-card:0 3px 0 var(--flat-deep);
   --shadow-raised:0 3px 0 var(--flat-deep);
   --shadow-raised-hover:0 5px 0 var(--flat-deep);
+  --shadow-float:0 3px 0 var(--flat-deep),0 16px 34px rgba(var(--shadow-rgb),.16);  /* a chapada do café + um sopro: sem véu atrás, só a chapada não descola o cartão da página */
   --shadow-knob:0 1px 0 rgba(var(--shadow-rgb),.18);
 
   /* ── estado ──────────────────────────────────────────────────────────────

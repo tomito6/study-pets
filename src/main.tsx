@@ -9,6 +9,7 @@ import './styles/login.css';
 import './styles/themes/cafe.css';
 import './styles/themes/loft.css';
 import './styles/plan.css';
+import './styles/streak.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

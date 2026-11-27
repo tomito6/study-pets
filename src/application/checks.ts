@@ -14,6 +14,7 @@ import { isRestDayKey } from './dayWindows';
 import { activePet } from './pets';
 import { blocksForDay, isBonusDayKey, rhythmAtDay } from './plan';
 import { scheduleSave } from './save';
+import { cheerStreakIfGrew, streakNow } from './streakCheer';
 
 export interface CheckResult {
   /** Estado depois do toggle. */
@@ -76,6 +77,8 @@ function dayContext(dateKey: DateKey, block: StudyBlock, day: Record<TimeString,
 
 /** Grava o check com o pet equipado e o bônus de skill decidido AGORA. */
 function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, CheckRecord>, now: Date): CheckResult {
+  // A sequência ANTES do check: se ele bater a meta do dia, ela cresce — e isso ganha um parabéns.
+  const streakBefore = streakNow(now);
   const pet = activePet();
   // A pausa longa que valia quando a pausa anterior nasceu: ela é do ritmo do ESTUDO que veio
   // antes dela — num dia em que o ritmo mudou no meio, a da manhã e a da tarde não têm o mesmo tamanho.
@@ -96,6 +99,8 @@ function markBlock(dateKey: DateKey, block: StudyBlock, day: Record<TimeString, 
   const record = { pet: pet?.id ?? null, bonus };
   day[block.time] = record;
   scheduleSave();
+  // Depois do save agendado, que notifica: as stats de agora já enxergam o check.
+  cheerStreakIfGrew(streakBefore, now);
   return { checked: true, xp: xpFromCheck(block, record), coins: coinsForBlock(block, mins(block)) };
 }
 
