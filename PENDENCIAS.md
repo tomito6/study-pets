@@ -132,6 +132,46 @@ pra trás. O que sobra é decidir ONDE o ritmo mora e como ele entra no gerador:
 - **O passado**: mudar o ritmo de um grupo de hoje que já tem check segue a mesma regra da história (vale só
   pro que ainda não aconteceu) — ou é recusado, como "Dia livre" recusa depois de um check. Decidir.
 
+## 6. O check só existe pelo foco
+
+**Decisão do Tomi em 2026-11-27, a implementar**: "se você não estuda o bloco em modo foco, se não estiver
+ativamente nele, você não pode dar check" — ou seja, **o check à mão deixa de existir**. Quem marca passa a
+ser só o app: o fim do bloco no timer (`checkBlock`) e o "■ Parar por aqui" (o parcial, pelos minutos
+vividos). É o terceiro portão da mesma fila — o bloco que não começou (2026-09-13), o bloco em andamento
+(2026-09-15) — e o que fecha de vez o "plano como auto-declaração": XP, moedas, meta, sequência e o XP do
+pet passam a sair só de tempo que o relógio do app viu. O modo ao vivo já vive assim.
+
+**Nada foi implementado.** A direção está tomada; o contorno não (o próprio Tomi disse "sipa"). O caminho no
+código é curto — `toggleBlockCheck` (`application/checks.ts`) deixa de marcar, e o `.check` da `BlockList`
+deixa de ser um botão —, mas o check manual hoje é a rede de sete coisas, e cada uma pede resposta antes:
+
+1. **O evento que conta como estudo** (a aula). O timer só roda estudo e pausa (`tryStartTimer`); evento só
+   ganha check à mão. Ele ganha um foco próprio, fica como a única coisa marcável à mão, ou deixa de dar XP?
+   Vão junto a skill Aula (a base da Pomba), a Retomada e "evento alimenta sequência e XP do pet".
+2. **Quem estuda longe do computador.** O CLAUDE.md promete hoje que "dia passado aceita qualquer horário —
+   quem estuda longe do computador marca à noite", e a skill "concluir no modo foco" foi descartada
+   justamente por punir essa pessoa. A decisão vira as duas frases. Dia passado fica sem jeito nenhum de
+   marcar? (É onde o app de iPhone deixa de ser conforto e vira o caminho.)
+3. **O que é "ativamente".** O foco aberto na tela, ou o relógio do app rodando? Em 2026-11-03 você decidiu
+   que sair do foco não pausa e **não custa o check** (PR #5, ainda aberto). Se "ativamente" for "foco na
+   tela", as duas decisões batem de frente. Leitura provável: relógio do app rodando = vale. Confirmar.
+4. **O timer que se perde.** Um reload perde o timer (só a pausa e o hardcore voltam), a aba descartada
+   idem, a ausência de mais de 30 min (`ATRASO_MAX_MIN`) encerra sem check, e a pausa que atravessa a
+   parede diz "marque à mão se quiser ✓". Em todos, hoje, a saída é marcar à mão. Sem ela, um F5 aos 24
+   minutos custa o bloco inteiro — o que provavelmente pede **persistir o timer no dispositivo** antes ou
+   junto (o próximo passo que "O fim do bloco pela extensão" já deixava anotado).
+5. **Desmarcar.** Continua existindo ("tirar não é ganhar")? Se sim, passa a ser irreversível — não há como
+   remarcar —, e aí pede confirmação. Ou some junto, e o check vira só registro.
+6. **A pausa.** Hoje ela dá XP com check (à mão ou pela emenda do foco). Só pela emenda também?
+7. **O que some na tela e nos testes.** O ripple e o "+X XP" flutuante passam a existir só no fim do bloco;
+   o `.check.not-yet` e a recusa do bloco em andamento perdem a função; a faixa do ciclo da lista
+   (`#cycle-cheer`) deixa de ter quem a dispare fora do foco; os balões do tour e a Fiel ("o primeiro estudo
+   **marcado**") falam de marcar. E o smoke marca check à mão em dezenas de casos: vai precisar de um helper
+   que rode o bloco pelo relógio falso. Medir antes de começar.
+
+Os checks que já existem ficam como estão — nada retroativo. Quando as respostas vierem, isto é plan grande
+(mexe em Princípios do CLAUDE.md, em skills e na suíte inteira): vai pra `plans/`.
+
 ---
 
 ## Como esse arquivo deve crescer

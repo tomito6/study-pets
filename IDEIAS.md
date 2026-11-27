@@ -722,6 +722,19 @@ morar na janela (`studyWindows[i].rhythm?`) e/ou no grupo (`StudyGroup.rhythm?`)
 o ritmo da janela em que está. Grupo é anotação por horário, então "ritmo do grupo" seria o gerador reagir a
 uma anotação — muda a regra "grupo nunca entra no generateBlocks" (CLAUDE.md). Pensar antes de implementar.
 
+## Check só pelo foco: o check à mão deixa de existir — 2026-11-27
+
+Decisão do Tomi: bloco que não foi estudado em modo foco, com ele ativamente ali, não pode ser marcado. O
+plano deixa de ser auto-declaração de vez — o que rende XP, moeda, sequência e pet é tempo que o relógio do
+app viu. → virou o **item 6 do `PENDENCIAS.md`**, com as sete perguntas que a decisão abre (a aula, quem
+estuda longe do computador, o reload que perde o timer, desmarcar…).
+
+O que fica aqui é o rabisco em volta: se o check deixa de ser um gesto, o **quadradinho da linha** vira só
+estado (feito / não feito), e talvez nem precise mais parecer um botão — o "▶ Iniciar" da linha de agora
+passa a ser a única ação do plano. E o gesto gostoso de marcar ("o ato de marcar um bloco como feito tem que
+ser gratificante", CLAUDE.md) muda de lugar: o momento passa a ser o fim do bloco no foco, que já tem som e
+faixa — vale olhar se ele carrega sozinho o que o ripple e o "+X XP" carregavam.
+
 Pendências menores do B7 que ficaram pra depois, pra não perder (as três viraram os itens 1, 2 e 3 do
 `PENDENCIAS.md` em 2026-09-08, cada uma com a pergunta que falta responder):
 - as abas do laptop continuam "Plano · Análise · Perfil"; o pacote dizia "Meu plano · Meus pets · Progresso"
