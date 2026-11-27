@@ -121,78 +121,89 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     onClose();
   };
 
-
+  // TUDO NA TELA, SEM ROLAR (2026-11-27, pedido do Tomi: "a gente precisa dar scroll pra
+  // baixo pra salvar… deveria sempre mostrar tudo"). Três partes: o cabeçalho do Modal, o
+  // corpo (`.dw-body`: o que se edita e a prévia) e o pé (`.dw-foot`: as ações do dia e o
+  // Salvar). No laptop o corpo são DUAS colunas — editar à esquerda, "Como fica o dia" à
+  // direita —; no celular é uma coluna só, compacta. O pé fica sempre à vista: se um dia
+  // tiver janelas demais pra altura da tela, quem rola é só o corpo, nunca o Salvar.
+  // Pra caber, saíram duas frases: a introdução ("Só pra este dia…", que o título já diz)
+  // e a linha genérica de cada modo. A linha do modo só existe quando é FATO deste dia.
   return (
     <Modal id="day-windows-panel" open={!!dateKey} title={t.title} onClose={onClose}>
-      <p className="dw-intro">{t.intro}</p>
-      {/* O seletor de modo mora AQUI e não numa barra própria: este modal já é onde o app
-          decide as outras coisas de um dia só, e num dia misto a pergunta "e a manhã?"
-          cabe numa linha de texto — numa barra de dois botões, não caberia. */}
-      <div className="dw-mode" id="day-mode">
-        <button type="button" className={'dm-btn' + (modo === 'rotina' ? ' on' : '')} id="day-mode-rotina" onClick={() => trocarModo('rotina')}>
-          {t.mode.rotina}
-        </button>
-        <button type="button" className={'dm-btn' + (modo === 'live' ? ' on' : '')} id="day-mode-live" onClick={() => trocarModo('live')}>
-          {t.mode.live}
-        </button>
+      <div className="dw-body">
+        <div className="dw-edit">
+          {/* O seletor de modo mora AQUI e não numa barra própria: este modal já é onde o app
+              decide as outras coisas de um dia só, e num dia misto a pergunta "e a manhã?"
+              cabe numa linha de texto — numa barra de dois botões, não caberia. */}
+          <div className="dw-mode" id="day-mode">
+            <button type="button" className={'dm-btn' + (modo === 'rotina' ? ' on' : '')} id="day-mode-rotina" onClick={() => trocarModo('rotina')}>
+              {t.mode.rotina}
+            </button>
+            <button type="button" className={'dm-btn' + (modo === 'live' ? ' on' : '')} id="day-mode-live" onClick={() => trocarModo('live')}>
+              {t.mode.live}
+            </button>
+          </div>
+          {modo === 'live' && desde && (
+            <p className="dw-mode-sub" id="day-mode-sub">{t.mode.liveSince(desde)}</p>
+          )}
+          {windows.length > 0 ? (
+            <div className="field-group">
+              <div className="dw-head">
+                <label>{t.windowsLabel}</label>
+                <button type="button" className="add-block-btn" id="day-windows-add" onClick={() => setWindows(appendWindow(windows))}>{t.add}</button>
+              </div>
+              <StudyWindowsEditor windows={windows} onChange={setWindows} />
+            </div>
+          ) : (
+            <div className="field-group">
+              <div className="dw-off-note" id="day-windows-off-note">{rest === 'weekend' ? t.weekendNote : t.offNote}</div>
+              <button type="button" className="ghost-btn" id="day-windows-add" onClick={() => setWindows(appendWindow([]))}>{t.add}</button>
+            </div>
+          )}
+          {/* O ritmo SÓ DESTE DIA (2026-10-01, pedido do Tomi: "deveria ser 2 coisas separadas —
+              pelo próprio nome já deveríamos saber a diferença"). Até então os três números eram
+              só uma vitrine do ritmo da rotina com um "Mudar →" pras Configurações: tudo no modal
+              era do dia, menos isto. Agora se edita aqui e vale pra este dia; a rotina continua na
+              seção de mesmo nome das Configurações. **Sem porta de um pro outro** (a primeira versão
+              deixou um "Mudar na rotina →" ao lado, e o Tomi tinha desistido justamente disso: com
+              um botão dizendo "mudar" do lado, os campos não se leem como o lugar de mudar). E os
+              três são CAMPOS com cara de campo — a mesma caixa das janelas logo acima —, não tiles
+              com um traço embaixo, que se liam como números parados.
+              Em hoje com algo já vivido a troca vale do próximo bloco em diante (ver
+              application/dayWindows.ts) — a prévia mostra isso antes do Salvar. */}
+          <div className="dw-rhythm" id="day-windows-rhythm">
+            <div className="dw-head">
+              <label>{t.rhythm.label}</label>
+              {/* Só quando o dia não está no ritmo da rotina: diz pra onde o "Restaurar rotina" volta.
+                  No cabeçalho da seção, e não numa linha própria embaixo dos campos (2026-11-27). */}
+              {ritmoDaRotina && (!ritmoRascunho || !sameRhythm(ritmoRascunho, ritmoDaRotina)) && (
+                <div className="dw-rhythm-note" id="day-rhythm-note">{t.rhythm.routine(ritmoDaRotina.pomo, ritmoDaRotina.shortBreak, ritmoDaRotina.longBreak)}</div>
+              )}
+            </div>
+            <div className="dw-rhythm-tiles field-group">
+              <div className="dw-rt accent">
+                <input type="number" inputMode="numeric" id="day-rhythm-pomo" min={1} max={600} aria-label={t.rhythm.study} value={rhythm.pomo} onChange={(e) => setRhythm({ ...rhythm, pomo: e.target.value })} />
+                <span>{t.rhythm.study}</span>
+              </div>
+              <div className="dw-rt">
+                <input type="number" inputMode="numeric" id="day-rhythm-short" min={1} max={600} aria-label={t.rhythm.short} value={rhythm.shortBreak} onChange={(e) => setRhythm({ ...rhythm, shortBreak: e.target.value })} />
+                <span>{t.rhythm.short}</span>
+              </div>
+              <div className="dw-rt">
+                <input type="number" inputMode="numeric" id="day-rhythm-long" min={1} max={600} aria-label={t.rhythm.long} value={rhythm.longBreak} onChange={(e) => setRhythm({ ...rhythm, longBreak: e.target.value })} />
+                <span>{t.rhythm.long}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <DayPreview blocks={previewBlocks} nowMins={hoje ? agora.getHours() * 60 + agora.getMinutes() : null} live={modo === 'live'} />
       </div>
-      <p className="dw-mode-sub" id="day-mode-sub">
-        {modo === 'live' ? (desde ? t.mode.liveSince(desde) : t.mode.liveSub) : t.mode.rotinaSub}
-      </p>
-      {windows.length > 0 ? (
-        <div className="field-group">
-          <div className="dw-head">
-            <label>{t.windowsLabel}</label>
-            <button type="button" className="add-block-btn" id="day-windows-add" onClick={() => setWindows(appendWindow(windows))}>{t.add}</button>
-          </div>
-          <StudyWindowsEditor windows={windows} onChange={setWindows} />
-        </div>
-      ) : (
-        <div className="field-group">
-          <div className="dw-off-note" id="day-windows-off-note">{rest === 'weekend' ? t.weekendNote : t.offNote}</div>
-          <button type="button" className="ghost-btn" id="day-windows-add" onClick={() => setWindows(appendWindow([]))}>{t.add}</button>
-        </div>
-      )}
-      {/* O ritmo SÓ DESTE DIA (2026-10-01, pedido do Tomi: "deveria ser 2 coisas separadas —
-          pelo próprio nome já deveríamos saber a diferença"). Até então os três números eram
-          só uma vitrine do ritmo da rotina com um "Mudar →" pras Configurações: tudo no modal
-          era do dia, menos isto. Agora se edita aqui e vale pra este dia; a rotina continua na
-          seção de mesmo nome das Configurações. **Sem porta de um pro outro** (a primeira versão
-          deixou um "Mudar na rotina →" ao lado, e o Tomi tinha desistido justamente disso: com
-          um botão dizendo "mudar" do lado, os campos não se leem como o lugar de mudar). E os
-          três são CAMPOS com cara de campo — a mesma caixa das janelas logo acima —, não tiles
-          com um traço embaixo, que se liam como números parados.
-          Em hoje com algo já vivido a troca vale do próximo bloco em diante (ver
-          application/dayWindows.ts) — a prévia logo abaixo mostra isso antes do Salvar. */}
-      <div className="dw-rhythm" id="day-windows-rhythm">
-        <div className="dw-head">
-          <label>{t.rhythm.label}</label>
-        </div>
-        <div className="dw-rhythm-tiles field-group">
-          <div className="dw-rt accent">
-            <input type="number" inputMode="numeric" id="day-rhythm-pomo" min={1} max={600} aria-label={t.rhythm.study} value={rhythm.pomo} onChange={(e) => setRhythm({ ...rhythm, pomo: e.target.value })} />
-            <span>{t.rhythm.study}</span>
-          </div>
-          <div className="dw-rt">
-            <input type="number" inputMode="numeric" id="day-rhythm-short" min={1} max={600} aria-label={t.rhythm.short} value={rhythm.shortBreak} onChange={(e) => setRhythm({ ...rhythm, shortBreak: e.target.value })} />
-            <span>{t.rhythm.short}</span>
-          </div>
-          <div className="dw-rt">
-            <input type="number" inputMode="numeric" id="day-rhythm-long" min={1} max={600} aria-label={t.rhythm.long} value={rhythm.longBreak} onChange={(e) => setRhythm({ ...rhythm, longBreak: e.target.value })} />
-            <span>{t.rhythm.long}</span>
-          </div>
-        </div>
-        {/* Só quando o dia não está no ritmo da rotina: diz pra onde o "Restaurar rotina" volta. */}
-        {ritmoDaRotina && (!ritmoRascunho || !sameRhythm(ritmoRascunho, ritmoDaRotina)) && (
-          <div className="dw-rhythm-note" id="day-rhythm-note">{t.rhythm.routine(ritmoDaRotina.pomo, ritmoDaRotina.shortBreak, ritmoDaRotina.longBreak)}</div>
-        )}
-      </div>
-      <DayPreview blocks={previewBlocks} nowMins={hoje ? agora.getHours() * 60 + agora.getMinutes() : null} live={modo === 'live'} />
-      <div className="dw-actions">
-        {!off && !confirmOff && (
-          <button type="button" className="ghost-btn" id="day-windows-off" onClick={() => setConfirmOff(true)}>{t.dayOff}</button>
-        )}
-        {confirmOff && (
+      {/* O pé. A confirmação do dia livre OCUPA o pé inteiro enquanto está aberta (antes ela
+          crescia em cima dos botões e empurrava o Salvar pra fora): é uma pergunta, e a
+          resposta são os dois botões dela. */}
+      <div className="dw-foot">
+        {confirmOff ? (
           <div className="dw-confirm" id="day-windows-off-confirm-box">
             <span>{t.dayOffConfirm}</span>
             <div className="btn-row">
@@ -200,14 +211,24 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
               <button type="button" className="save-btn" id="day-windows-off-confirm" onClick={doOff}>{t.dayOffYes}</button>
             </div>
           </div>
+        ) : (
+          <>
+            {(!off || edited) && (
+              <div className="dw-actions">
+                {!off && (
+                  <button type="button" className="ghost-btn" id="day-windows-off" onClick={() => setConfirmOff(true)}>{t.dayOff}</button>
+                )}
+                {edited && (
+                  <button type="button" className="ghost-btn" id="day-windows-restore" onClick={restore}>{t.restore}</button>
+                )}
+              </div>
+            )}
+            <div className="btn-row">
+              <button type="button" className="reset-btn" onClick={onClose}>{t.cancel}</button>
+              <button type="button" className="save-btn" id="day-windows-save" onClick={save} disabled={windows.length === 0}>{t.save}</button>
+            </div>
+          </>
         )}
-        {edited && (
-          <button type="button" className="ghost-btn" id="day-windows-restore" onClick={restore}>{t.restore}</button>
-        )}
-      </div>
-      <div className="btn-row" style={{ marginTop: 16 }}>
-        <button type="button" className="reset-btn" onClick={onClose}>{t.cancel}</button>
-        <button type="button" className="save-btn" id="day-windows-save" onClick={save} disabled={windows.length === 0}>{t.save}</button>
       </div>
     </Modal>
   );

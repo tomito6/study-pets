@@ -346,10 +346,8 @@ export const strings = {
     mode: {
       rotina: '📋 Pela rotina',
       live: '⏱ Ao vivo',
-      /** Uma linha por modo — curtas de propósito. */
-      rotinaSub: 'O dia vem montado pelas suas janelas.',
-      liveSub: 'O dia começa quando você começa.',
-      /** Num dia que já tem corrida, o modal conta desde quando. */
+      /** Num dia que já tem corrida, o modal conta desde quando — a única linha do seletor
+       *  (as duas genéricas, uma por modo, saíram em 2026-11-27: o modal tem que caber na tela). */
       liveSince: (at: string) => `Ao vivo desde as ${at}. Antes disso, pela rotina.`,
       changed: 'Modo do dia trocado',
     },
@@ -369,7 +367,6 @@ export const strings = {
       savedFromNow: 'Ritmo novo a partir do próximo bloco — o que já passou fica como está ✓',
     },
     title: '🕘 Estrutura do dia',
-    intro: 'Só pra este dia. A rotina em Configurações continua igual.',
     /** "Como fica o dia" DESTE dia, dentro do modal: a régua com os eventos de verdade e a frase do fim. */
     preview: {
       label: 'Como fica o dia',

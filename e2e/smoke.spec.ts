@@ -3361,3 +3361,115 @@ test.describe('Study Pets — smoke', () => {
     await expect.poll(() => osc()).toBeGreaterThan(antes);
   });
 });
+
+// A "🕘 Estrutura do dia" cabe na tela (2026-11-27, pedido do Tomi: "a gente precisa dar
+// scroll pra baixo pra salvar… deveria sempre mostrar tudo"). Em 1366×768 o Salvar ficava
+// abaixo da dobra já no estado padrão, e num celular faltavam 290px. Como no foco (e2e 79),
+// `toBeVisible()` passaria com o botão lá embaixo: aqui se mede dentro da janela, e se cobra
+// que NADA role — nem a folha, nem o corpo.
+test.describe('a Estrutura do dia cabe na tela', () => {
+  /** O que a pessoa precisa alcançar sem rolar: o modo, o ritmo, a prévia e o pé inteiro. */
+  const tudoNaTela = async (page: Page, em: string) => {
+    for (const sel of ['#day-mode', '#day-windows-add', '#day-rhythm-long', '#day-preview .st-summary', '#day-windows-off', '#day-windows-save']) {
+      await dentroDaJanela(page, sel, em);
+    }
+    const sobra = await page.evaluate(() => {
+      const folha = document.querySelector('#day-windows-panel .panel-sheet')!;
+      const corpo = document.querySelector('#day-windows-panel .dw-body')!;
+      return { folha: folha.scrollHeight - folha.clientHeight, corpo: corpo.scrollHeight - corpo.clientHeight, lado: document.documentElement.scrollWidth - innerWidth };
+    });
+    expect(sobra.folha, `a folha rola ${em}`).toBeLessThanOrEqual(1);
+    expect(sobra.corpo, `o corpo do modal rola ${em}`).toBeLessThanOrEqual(1);
+    expect(sobra.lado, `a página rola de lado ${em}`).toBeLessThanOrEqual(0);
+  };
+  const abrirModal = async (page: Page) => {
+    await page.locator('#day-windows-btn').click();
+    await expect(page.locator('#day-windows-panel')).toBeVisible();
+  };
+  /** O caso que mais ocupa e ainda é comum: duas janelas e o ritmo do dia diferente da rotina. */
+  const duasJanelas = async (page: Page) => {
+    await page.locator('#day-windows-add').click();
+    await page.locator('#day-rhythm-pomo').fill('50');
+    await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(2);
+    await expect(page.locator('#day-rhythm-note')).toContainText('Na rotina: 25 · 5 · 20');
+  };
+
+  test.describe('no laptop', () => {
+    test.use({ viewport: { width: 1366, height: 768 } });
+
+    test('82. no laptop o modal são duas colunas e tudo cabe, até com quatro janelas', async ({ page }) => {
+      const erros = vigiarErros(page);
+      await abrirApp(page, '10:10');
+      await page.locator('#tour-skip').click();
+      await abrirModal(page);
+      await tudoNaTela(page, 'no estado padrão em 1366×768');
+      // Duas colunas: a prévia fica AO LADO do editor, não embaixo dele.
+      const lado = await page.evaluate(() => {
+        const r = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+        return { editor: r('#day-windows-panel .dw-edit'), previa: r('#day-preview') };
+      });
+      expect(lado.previa.left).toBeGreaterThanOrEqual(lado.editor.right - 1);
+      expect(Math.abs(lado.previa.top - lado.editor.top)).toBeLessThanOrEqual(2);
+
+      await duasJanelas(page);
+      await page.locator('#day-windows-add').click();
+      await page.locator('#day-windows-add').click();
+      for (const [w, h] of [[1366, 768], [1280, 720], [1536, 864], [1920, 1080]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await tudoNaTela(page, `com quatro janelas em ${w}×${h}`);
+      }
+
+      // A confirmação do dia livre ocupa o pé — e os dois botões dela também estão na tela.
+      await page.setViewportSize({ width: 1366, height: 768 });
+      await page.locator('#day-windows-off').click();
+      await dentroDaJanela(page, '#day-windows-off-confirm', 'na confirmação do dia livre');
+      await dentroDaJanela(page, '#day-windows-off-confirm-box .reset-btn', 'na confirmação do dia livre');
+      await page.locator('#day-windows-off-confirm-box .reset-btn').click();
+      await dentroDaJanela(page, '#day-windows-save', 'depois de voltar da confirmação');
+      expect(erros).toEqual([]);
+    });
+  });
+
+  test.describe('no celular', () => {
+    // `isMobile` faz o `(pointer: coarse)` valer: no dedo os campos e botões têm 44px, e é
+    // com essa altura que a conta tem de fechar.
+    test.use({ viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true });
+
+    test('83. no celular tudo cabe com duas janelas, e o Salvar nunca sai da tela', async ({ page }) => {
+      const erros = vigiarErros(page);
+      await abrirApp(page, '10:10');
+      await page.locator('#tour-skip').click();
+      await abrirModal(page);
+      await tudoNaTela(page, 'no estado padrão em 375×667');
+      await duasJanelas(page);
+      for (const [w, h] of [[375, 667], [360, 740], [390, 844], [412, 915]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await tudoNaTela(page, `com duas janelas em ${w}×${h}`);
+      }
+
+      // Dia editado: "Restaurar rotina" divide a linha com "Dia livre" em vez de empurrar o Salvar.
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.locator('#day-windows-save').click();
+      await expect(page.locator('#day-windows-panel')).toBeHidden();
+      await abrirModal(page);
+      await dentroDaJanela(page, '#day-windows-restore', 'num dia editado');
+      await tudoNaTela(page, 'num dia editado em 375×667');
+
+      // A rede: janelas demais pra altura da tela. Aí quem rola é SÓ o corpo — o pé fica.
+      for (let i = 0; i < 3; i++) await page.locator('#day-windows-add').click();
+      await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(5);
+      await dentroDaJanela(page, '#day-windows-save', 'com cinco janelas');
+      await dentroDaJanela(page, '#day-windows-off', 'com cinco janelas');
+      const rola = await page.evaluate(() => {
+        const folha = document.querySelector('#day-windows-panel .panel-sheet')!;
+        const corpo = document.querySelector('#day-windows-panel .dw-body')!;
+        return { folha: folha.scrollHeight - folha.clientHeight, corpo: corpo.scrollHeight - corpo.clientHeight };
+      });
+      expect(rola.folha).toBeLessThanOrEqual(1);
+      expect(rola.corpo).toBeGreaterThan(1);
+      await page.locator('#day-windows-off').click();
+      await dentroDaJanela(page, '#day-windows-off-confirm', 'na confirmação do dia livre, com cinco janelas');
+      expect(erros).toEqual([]);
+    });
+  });
+});
