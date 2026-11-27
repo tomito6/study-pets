@@ -1155,6 +1155,36 @@ export const strings = {
         `🔥 O timer ficou rodando sozinho no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
     },
   },
+  /**
+   * O pop-up de parabéns pela sequência (features/streak/StreakPop.tsx). Tom: comemora o
+   * que acabou de acontecer e para aí — nenhuma frase daqui fala de amanhã, de "não perca"
+   * ou do que acontece se a pessoa faltar.
+   */
+  streak: {
+    kicker: 'Parabéns!',
+    /** O número vai separado porque é ele que "vira" na animação: `antes` + n + `depois`. */
+    title: (n: number) => (n === 1 ? { antes: 'Dia ', depois: '' } : { antes: '', depois: ' dias seguidos' }),
+    /** A frase inteira, pra quem ouve em vez de ver. */
+    spoken: (n: number) =>
+      n === 1 ? 'Parabéns! Sua sequência começou: dia 1.' : `Parabéns! Sua sequência chegou a ${n} dias seguidos.`,
+    /**
+     * A frase fala da SEQUÊNCIA, nunca da meta do dia: o cartão é um parabéns por ela ter crescido
+     * (correção do Tomi em 2026-11-27 — "Meta de hoje batida" lia como aviso de meta, não como parabéns).
+     */
+    sub: (c: { n: number; record: boolean; milestone: boolean }, pet: string | null) => {
+      if (c.n === 1) return pet ? `Sua sequência começou hoje. ${pet} comemora com você.` : 'Sua sequência começou hoje.';
+      if (c.record) return 'É a sua maior sequência até aqui.';
+      if (c.n === 7) return 'Uma semana inteira de sequência.';
+      if (c.n === 14) return 'Duas semanas de sequência.';
+      if (c.n === 30) return 'Um mês de sequência. Isso já é hábito.';
+      if (c.milestone && c.n > 30) return `${c.n} dias de sequência. Isso já é rotina.`;
+      return pet ? `Sua sequência cresceu mais um dia. ${pet} comemora com você.` : 'Sua sequência cresceu mais um dia.';
+    },
+    /** O bônus de moedas do dia — entra quando o dia fecha, como o resto. */
+    bonus: (coins: number) => `+${coins} 🪙 no fim do dia`,
+    more: 'A sequência vem de antes desta semana',
+    close: 'Fechar',
+  },
   notifications: {
     open: 'Notificações',
     title: 'Notificações',

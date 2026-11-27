@@ -10,6 +10,7 @@ import type { HardcoreRuntime } from '../domain/hardcore';
 import type { BlockingAck } from '../infrastructure/extensionBridge';
 import { emptyPersistedState } from '../domain/persistence';
 import type { PersistedState } from '../domain/persistence';
+import type { StreakCheer } from '../domain/streakCheer';
 import type { CycleSummary } from '../domain/cycles';
 import type { BlockType, DateKey, SiteBlockMode, StudyBlock } from '../domain/types';
 import type { Week } from '../domain/weeks';
@@ -61,6 +62,11 @@ export interface CompletedBlock {
   cycle?: CycleSummary | null;
 }
 
+/** O parabéns pela sequência que está (ou vai entrar) na tela. `at` = ms de quando o check o disparou. */
+export interface StreakCheerUi extends StreakCheer {
+  at: number;
+}
+
 /**
  * Derivados e estado de runtime que não são persistidos. Os modais que estão
  * aqui (`focusOpen`, `onboardingOpen`, `dayEnd`) são exceções conscientes: quem
@@ -87,6 +93,11 @@ export interface Derived {
   focusOpen: boolean;
   /** Preenchido quando o foco emenda de um bloco no seguinte; limpo ao parar/iniciar. */
   timerCompleted: CompletedBlock | null;
+  /**
+   * O pop-up de parabéns pela sequência (ver application/streakCheer.ts). Mora aqui porque
+   * quem o abre é um caso de uso — o check que bateu a meta do dia —, não um clique local.
+   */
+  streakCheer: StreakCheerUi | null;
   /** Um "Iniciar" pedido fora da lista (o cartão Agora do laptop); o PlanTab atende e limpa. */
   startRequest: StudyBlock | null;
   /** "Abrir Configurações" pedido pela barra do laptop; a SettingsPage atende e limpa. */
@@ -142,6 +153,7 @@ export const derived: Derived = {
   timerEndsAt: null,
   focusOpen: false,
   timerCompleted: null,
+  streakCheer: null,
   startRequest: null,
   settingsRequest: null,
   setupTour: false,

@@ -11,6 +11,7 @@ import { PlanTab } from '../features/plan/PlanTab';
 import { ProfileTab } from '../features/profile/ProfileTab';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { SaveIndicator } from '../features/shell/SaveIndicator';
+import { StreakPop } from '../features/streak/StreakPop';
 import { FocusOverlay } from '../features/timer/FocusOverlay';
 import { TimerBar } from '../features/timer/TimerBar';
 import { TourBalloon } from '../features/tutorial/TourBalloon';
@@ -98,6 +99,8 @@ export function App() {
         <OnboardingModal />
         {/* Dentro de #app: some com o logout junto com o resto. Posição absoluta = coordenadas do documento. */}
         <TourBalloon />
+        {/* Dentro de #app pelo mesmo motivo (e porque lê --topbar-h, que mora aqui). Acima do foco. */}
+        <StreakPop />
       </div>
       <SaveIndicator />
     </>

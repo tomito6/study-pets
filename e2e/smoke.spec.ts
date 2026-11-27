@@ -220,6 +220,17 @@ function vigiarErros(page: Page): string[] {
 
 const checksDeEstudo = (page: Page) => page.locator('.block-row:not(.pausa-row) .check');
 
+/** O parabéns da sequência contra o meio da janela: o desvio do centro (px inteiros) e se cabe inteiro nela. */
+const meioDoParabens = (page: Page) =>
+  page.evaluate(() => {
+    const r = document.querySelector('#streak-pop')!.getBoundingClientRect();
+    return {
+      dx: Math.round((r.left + r.right) / 2 - window.innerWidth / 2),
+      dy: Math.round((r.top + r.bottom) / 2 - window.innerHeight / 2),
+      dentro: r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight,
+    };
+  });
+
 /**
  * O balão do tour está de fato utilizável? `toBeVisible()` do Playwright olha CSS e
  * caixa — passa com o elemento atrás de uma barra fixa ou centenas de pixels abaixo
@@ -2154,6 +2165,32 @@ test.describe('Study Pets — smoke', () => {
       expect(m.palco).toBeGreaterThan(600); // confere que a medida é a do laptop
       expect(m.chao, 'o chão voltou a atravessar o cartão inteiro').toBeLessThan(m.palco * 0.6);
     });
+
+    test('83. no laptop o parabéns da sequência fica no meio da janela, e um toque nele (ou o ✕) o tira dali', async ({ page }) => {
+      await abrirApp(page, '10:40');
+      await page.locator('#tour-skip').click();
+      for (const i of [0, 1, 2]) await checksDeEstudo(page).nth(i).click();
+      const pop = page.locator('#streak-pop');
+      await expect(pop).toBeVisible();
+      await expect(pop).toHaveAttribute('data-n', '1');
+
+      // No MEIO da janela (a entrada é uma mola: espera ela assentar antes de medir).
+      await expect.poll(() => meioDoParabens(page)).toEqual({ dx: 0, dy: 0, dentro: true });
+
+      // Um toque em qualquer lugar do cartão fecha — é o que devolve a agenda que ele cobre.
+      await pop.locator('.sp-body').click();
+      await expect(pop).toHaveCount(0);
+
+      // Bater a meta de ontem DEPOIS de hoje junta os dois dias: número maior, parabéns de novo.
+      await page.locator('#day-tabs .day-tab').nth(1).click();
+      for (const i of [0, 1, 2]) await checksDeEstudo(page).nth(i).click();
+      await expect(pop).toBeVisible();
+      await expect(pop).toHaveAttribute('data-n', '2');
+      await page.locator('#streak-pop-close').click();
+      await expect(pop).toHaveCount(0);
+      await page.locator('#add-event-btn').click();
+      await expect(page.locator('#event-panel')).toBeVisible();
+    });
   });
 
   test.describe('num celular estreito', () => {
@@ -3359,6 +3396,101 @@ test.describe('Study Pets — smoke', () => {
     // O overlay já dizia "Em seguida · Estudo 4" durante a pausa: o fim é a faixa "concluída".
     await expect(page.locator('#focus-done')).toContainText('Pausa concluída');
     await expect.poll(() => osc()).toBeGreaterThan(antes);
+  });
+
+  test('82. a sequência cresceu: um cartão no meio da tela comemora uma vez, não prende e sai do caminho', async ({ page }) => {
+    await abrirApp(page, '10:40');
+    await page.locator('#tour-skip').click();
+    const checks = checksDeEstudo(page);
+    const pop = page.locator('#streak-pop');
+    // A região viva existe antes do conteúdo (é assim que o leitor de tela anuncia o que entra).
+    await expect(page.locator('.streak-slot')).toHaveAttribute('role', 'status');
+
+    // Segunda e terça com a meta batida: marcar dia passado não comemora nada — a sequência
+    // se conta a partir de HOJE, e hoje ainda não bateu.
+    for (const d of [0, 1]) {
+      await page.locator('#day-tabs .day-tab').nth(d).click();
+      for (const i of [0, 1, 2]) await checks.nth(i).click();
+    }
+    await page.locator('#day-tabs .day-tab').nth(2).click();
+    for (const i of [0, 1]) await checks.nth(i).click(); // 50 min: ainda não é a meta de 60
+    await page.waitForTimeout(1200);
+    await expect(pop).toHaveCount(0);
+
+    // O check que bate a meta de hoje junta os três dias.
+    await checks.nth(2).click();
+    await expect(pop).toBeVisible();
+    await expect(pop).toHaveAttribute('data-n', '3');
+    await expect(page.locator('#streak-pop-title')).toContainText('3 dias seguidos');
+    // É um parabéns pela SEQUÊNCIA: a frase fala dela, não da meta do dia.
+    await expect(page.locator('#streak-pop .sp-kicker')).toHaveText('Parabéns!');
+    await expect(page.locator('#streak-pop-sub')).toContainText('Sua sequência cresceu mais um dia');
+    await expect(page.locator('#streak-pop-sub')).not.toContainText(/meta/i);
+    await expect(page.locator('#streak-pop-sub')).not.toContainText(/perd|amanh|quebr/i); // comemora, nunca cobra
+    await expect(page.locator('#streak-pop-trail .sp-dot')).toHaveCount(3);
+    await expect(page.locator('#streak-pop-bonus')).toHaveText('+8 🪙 no fim do dia');
+
+    // No MEIO da tela, inteiro dentro dela (a entrada é uma mola: espera ela assentar antes de medir).
+    await expect.poll(() => meioDoParabens(page)).toEqual({ dx: 0, dy: 0, dentro: true });
+    // O véu atrás dele é só luz: não segura clique.
+    expect(await page.locator('.sp-veil').evaluate((e) => getComputedStyle(e).pointerEvents)).toBe('none');
+
+    // Não é modal: o toque FORA dele vale pro que estava embaixo — o check marca — e o cartão
+    // sai do caminho no mesmo gesto. Estudar a mais não comemora de novo.
+    await checks.nth(3).click();
+    await expect(checks.nth(3)).toHaveAttribute('aria-checked', 'true');
+    await expect(pop).toHaveCount(0);
+    await page.waitForTimeout(1200);
+    await expect(pop).toHaveCount(0);
+
+    // Desfazer e bater a meta de novo no mesmo dia não repete o parabéns.
+    await checks.nth(3).click();
+    await checks.nth(2).click();
+    await checks.nth(2).click();
+    await expect(checks.nth(2)).toHaveAttribute('aria-checked', 'true');
+    await page.waitForTimeout(1200);
+    await expect(pop).toHaveCount(0);
+  });
+
+  test('82b. no foco o parabéns espera a faixa "concluído", aparece no meio e some sozinho', async ({ page }) => {
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    const checks = checksDeEstudo(page);
+    for (const i of [0, 1]) await checks.nth(i).click();
+
+    // O bloco que bate a meta termina dentro do foco: o check é do app.
+    await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await page.clock.setFixedTime(new Date(`${DIA}T10:25:01`));
+    await expect(page.locator('#focus-done')).toContainText('Estudo 3 concluído');
+    const pop = page.locator('#streak-pop');
+    await expect(pop, 'uma comemoração de cada vez: a faixa do bloco vem antes').toHaveCount(0);
+
+    await expect(pop).toBeVisible({ timeout: 8000 });
+    await expect(pop).toHaveAttribute('data-n', '1');
+    await expect(page.locator('#streak-pop-title')).toContainText('Dia 1');
+    await expect.poll(() => meioDoParabens(page), { message: 'no foco ele fica no meio da tela, como fora dele' }).toEqual({ dx: 0, dy: 0, dentro: true });
+
+    // Vai embora sozinho, sem ninguém tocar — e o foco continua onde estava.
+    await expect(pop).toHaveCount(0, { timeout: 14000 });
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(page.locator('#focus-block-name')).toHaveText('Pausa');
+  });
+
+  test('82c. Esc fecha o parabéns, e com movimento reduzido ele entra sem animação nenhuma', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await abrirApp(page, '10:40');
+    await page.locator('#tour-skip').click();
+    for (const i of [0, 1, 2]) await checksDeEstudo(page).nth(i).click();
+    const pop = page.locator('#streak-pop');
+    await expect(pop).toBeVisible();
+    const animadas = await page.evaluate(() =>
+      [...document.querySelectorAll('#streak-pop, #streak-pop *')].filter((e) => getComputedStyle(e).animationName !== 'none').length,
+    );
+    expect(animadas).toBe(0);
+    await expect(pop.locator('.sp-old')).toBeHidden(); // o número não "vira"
+    await page.keyboard.press('Escape');
+    await expect(pop).toHaveCount(0);
   });
 });
 
