@@ -27,6 +27,28 @@ export const minsToTime = (m: number): TimeString =>
 export const blockMins = (b: Pick<StudyBlock, 'time' | 'endTime'> & { paused?: number | undefined }): number =>
   timeToMins(b.endTime) - timeToMins(b.time) - (b.paused ?? 0);
 
+/**
+ * Os minutos que valem de um bloco, repartidos pelas horas do relógio que ele
+ * atravessa: uma aula das 10:30 às 12:00 dá 30 min às 10h e 60 às 11h. O tempo
+ * pausado sai na mesma proporção de cada hora, então a soma é sempre `blockMins`
+ * (e por isso pode vir fracionada — quem mostra arredonda).
+ */
+export function minutesByHour(
+  b: Pick<StudyBlock, 'time' | 'endTime'> & { paused?: number | undefined },
+): Array<[hour: number, mins: number]> {
+  const from = timeToMins(b.time);
+  const to = timeToMins(b.endTime);
+  const valid = blockMins(b);
+  if (to <= from || valid <= 0) return [];
+  const k = valid / (to - from);
+  const out: Array<[number, number]> = [];
+  for (let h = Math.floor(from / 60); h * 60 < to; h++) {
+    const overlap = Math.min(to, (h + 1) * 60) - Math.max(from, h * 60);
+    if (overlap > 0) out.push([h, overlap * k]);
+  }
+  return out;
+}
+
 /** Segunda-feira da semana da data dada, à meia-noite. Domingo pertence à semana anterior. */
 export function mondayOf(date: Date): Date {
   const d = new Date(date);

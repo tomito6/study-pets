@@ -146,6 +146,39 @@ describe('computeStats — o que conta como estudo', () => {
   });
 });
 
+describe('computeStats — minutos de estudo por hora do relógio', () => {
+  // "Horários onde mais estuda" contava BLOCOS, com a pausa valendo um bloco: uma pausa
+  // de 5 min pesava o mesmo que uma aula de 2h. `hourStudyMins` é tempo de estudo.
+  it('reparte o bloco pelas horas que ele atravessa, e pausa não entra', () => {
+    const stats = computeStats(entrada({ checks: marcandoTudo(ONTEM, ['09:00', '09:30', '09:35']) }));
+    // 09:00–09:30 inteiro às 9h; 09:35–10:05 dá 25 min às 9h e 5 às 10h; a pausa das 09:30 fica de fora.
+    expect(stats.hourStudyMins).toEqual({ 9: 55, 10: 5 });
+  });
+
+  it('uma aula longa pesa pelo tempo, em cada hora que ocupa', () => {
+    const stats = computeStats(
+      entrada({ getBlocks: () => [evento('10:30', '12:00')], checks: marcandoTudo(ONTEM, ['10:30']) }),
+    );
+    expect(stats.hourStudyMins).toEqual({ 10: 30, 11: 60 });
+  });
+
+  it('inclui hoje (é diagnóstico, como a aderência) e ignora o que não foi marcado', () => {
+    const stats = computeStats(entrada({ checks: marcandoTudo(HOJE, ['09:00']) }));
+    expect(stats.hourStudyMins).toEqual({ 9: 30 });
+    expect(stats.hourCounts).toEqual({}); // os blocos continuam sendo só de dia fechado
+  });
+
+  it('a soma fecha com os minutos de estudo feitos, mesmo com tempo pausado no bloco', () => {
+    const esticado: StudyBlock = { ...estudo('09:50', '10:27'), paused: 7, xp: 60 };
+    const stats = computeStats(entrada({ getBlocks: () => [esticado], checks: marcandoTudo(ONTEM, ['09:50']) }));
+    const soma = Object.values(stats.hourStudyMins).reduce((a, b) => a + b, 0);
+    expect(soma).toBeCloseTo(30, 6);
+    expect(soma).toBeCloseTo(stats.dayStudyDoneMins[ONTEM]!, 6);
+    // A pausa sai na proporção de cada hora: 10 de 37 min de relógio antes das 10h.
+    expect(stats.hourStudyMins[9]).toBeCloseTo((10 / 37) * 30, 6);
+  });
+});
+
 describe('computeStats — bloco esticado por uma pausa do timer', () => {
   // 09:00–09:37 com 7 min pausados: valem 30 min, como o pomo que era. Moedas, meta, aderência e o
   // total de horas descontam a pausa; o XP é o do bloco (o gerador já o calcula pela duração que vale).
@@ -293,6 +326,37 @@ describe('calcStreaks', () => {
   it('sequência atual é zero quando hoje não bateu a meta', () => {
     const mins = { [ANTEONTEM]: 60, [ONTEM]: 60, [HOJE]: 0 };
     expect(calcStreaks(mins, dias, HOJE, 60).cur).toBe(0);
+  });
+
+  describe('com hoje ainda aberto (carry)', () => {
+    // A tela dizia "0 dias seguidos" o dia inteiro, até a meta de hoje fechar.
+    it('enquanto hoje não bateu a meta, vale a sequência que chegou até ontem', () => {
+      const mins = { [ANTEONTEM]: 60, [ONTEM]: 60, [HOJE]: 20 };
+      expect(calcStreaks(mins, dias, HOJE, 60)).toEqual({ cur: 0, best: 2 });
+      expect(calcStreaks(mins, dias, HOJE, 60, true)).toEqual({ cur: 2, best: 2 });
+    });
+
+    it('hoje batendo a meta soma um dia, igual com ou sem carry', () => {
+      const mins = { [ANTEONTEM]: 60, [ONTEM]: 60, [HOJE]: 60 };
+      expect(calcStreaks(mins, dias, HOJE, 60, true)).toEqual({ cur: 3, best: 3 });
+    });
+
+    it('ontem em branco continua quebrando: carry não perdoa dia fechado', () => {
+      const mins = { [ANTEONTEM]: 60, [ONTEM]: 0, [HOJE]: 20 };
+      expect(calcStreaks(mins, dias, HOJE, 60, true).cur).toBe(0);
+    });
+
+    it('hoje fora dos dias que contam (sábado pausado) não zera a sequência da semana', () => {
+      const semana = [ANTEONTEM, ONTEM]; // hoje não está na lista
+      const mins = { [ANTEONTEM]: 60, [ONTEM]: 60 };
+      expect(calcStreaks(mins, semana, HOJE, 60).cur).toBe(0);
+      expect(calcStreaks(mins, semana, HOJE, 60, true).cur).toBe(2);
+    });
+
+    it('conta nova, sem dia nenhum antes de hoje: zero, sem quebrar', () => {
+      expect(calcStreaks({}, [HOJE], HOJE, 60, true)).toEqual({ cur: 0, best: 0 });
+      expect(calcStreaks({}, [], HOJE, 60, true)).toEqual({ cur: 0, best: 0 });
+    });
   });
 
   it('recalcula ao mudar a meta diária', () => {

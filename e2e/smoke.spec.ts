@@ -271,9 +271,9 @@ async function dentroDaJanela(page: Page, seletor: string, quando = '') {
 /** Lê "175 / 370 min" de um card de realizado da Análise, pra comparar por valor. */
 /** O card "Realizado": cumprido / META do período (o plano do dia é contexto, na linha de baixo). */
 async function realizado(page: Page, id: string): Promise<{ done: number; goal: number }> {
-  const texto = await page.locator(`#${id} .adh-val`).innerText();
-  const [done, goal] = texto.replace(' min', '').split(' / ').map(Number);
-  return { done: done as number, goal: goal as number };
+  // O texto é "2h55 de 1h" desde 2026-11-26; os minutos crus viajam em data-done/data-goal.
+  const val = page.locator(`#${id} .adh-val`);
+  return { done: Number(await val.getAttribute('data-done')), goal: Number(await val.getAttribute('data-goal')) };
 }
 
 test.describe('Study Pets — smoke', () => {
@@ -1579,6 +1579,7 @@ test.describe('Study Pets — smoke', () => {
     expect(await realizado(page, 'adherence-today')).toEqual({ done: 175, goal: 60 });
     await expect(page.locator('#adherence-today')).toHaveClass(/adh-big/);
     await expect(page.locator('#adherence-today')).toHaveClass(/met/);
+    await expect(page.locator('#adherence-today .adh-val')).toHaveText('2h55 de 1h'); // horas e minutos, não "175 / 60 min"
     await expect(page.locator('#adherence-today .adh-sub')).toHaveText('2h55 de estudo · 6h25 no plano'); // horas e minutos, não "2.9h"
     await expect(page.locator('#adherence-today .adh-pct')).toHaveText('292% ✓'); // 175/60
     // Meta de 60 min: só hoje bateu. Seg e ter são ANTES da conta existir (ela nasceu hoje),
@@ -1588,6 +1589,17 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#goal-week-dots-h .goal-dot')).toHaveCount(7);
     await expect(page.locator('#goal-week-dots-h .goal-dot.met')).toHaveCount(1);
     await expect(page.locator('#goal-week-dots-h .goal-dot.today')).toHaveClass(/met/);
+    await expect(page.locator('#goal-week-headline-h')).toContainText('a meta de 1h em');
+    // O detalhe de um dia aparece no TOQUE (no celular não há "passar o mouse"), e some no segundo toque.
+    await expect(page.locator('#goal-week-detail-h')).toHaveText('');
+    await page.locator('#goal-week-dots-h .goal-dot.today').click();
+    await expect(page.locator('#goal-week-detail-h')).toHaveText('Qua: 2h55 ✓');
+    await expect(page.locator('#goal-week-dots-h .goal-dot.today')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#goal-week-dots-h .goal-dot').first().focus();
+    await page.keyboard.press('Enter'); // e pelo teclado
+    await expect(page.locator('#goal-week-detail-h')).toHaveText('Seg — antes de você começar');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#goal-week-detail-h')).toHaveText('');
 
     // Semana: o mesmo cumprido, sobre um planejado maior (a semana inteira).
     await page.locator('#an-subnav .subnav-chip[data-view="semana"]').click();
@@ -1611,25 +1623,69 @@ test.describe('Study Pets — smoke', () => {
     await expect(ciclos.nth(2).locator('.do-count')).toHaveText('0/12');
     await expect(ciclos.nth(3).locator('.do-count')).toHaveText('0/12');
 
-    // Geral: agrega todos os dias com dados até hoje; heatmap 7×16 e as horas da rotina (9h–19h).
+    // Geral: agrega todos os dias com dados até hoje; heatmap 7×16 e as horas da rotina (9h–17h).
     await page.locator('#an-subnav .subnav-chip[data-view="geral"]').click();
     const geral = await realizado(page, 'adherence-geral');
     expect(geral.done).toBe(175);
     expect(geral.goal).toBe(60);
     await expect(page.locator('#heatmap-grid-gh .heatmap-cell')).toHaveCount(7 * 16);
-    await expect(page.locator('#heatmap-grid-gh .heatmap-cell[title^="02/09"]')).toHaveAttribute('title', '02/09 (hoje): 175 de 60 min (292%)');
-    await expect(page.locator('#hour-bar-chart .bar-wrap')).toHaveCount(11);
-    await expect(page.locator('#hour-bar-chart .bar-wrap').first()).toHaveAttribute('title', '9h: 2 blocos concluídos');
+    await expect(page.locator('#heatmap-grid-gh .heatmap-cell[title^="02/09"]')).toHaveAttribute('title', '02/09 (hoje): 2h55 de 1h (292%)');
+    await page.locator('#heatmap-grid-gh .heatmap-cell[title^="02/09"]').click();
+    await expect(page.locator('#heatmap-detail')).toHaveText('02/09 (hoje): 2h55 de 1h (292%)');
+    await expect(page.locator('#heatmap-grid-gh .heatmap-cell.sel')).toHaveCount(1);
+    // Dia futuro e dia de antes da conta não têm o que contar: ficam fora do toque e do Tab.
+    await expect(page.locator('#heatmap-grid-gh .heatmap-cell.future[role="button"]')).toHaveCount(0);
+    // Horários: uma barra por hora da janela (09:00–18:00 = 9h…17h), em TEMPO de estudo — eram
+    // blocos, com a pausa contando como bloco, e uma segunda régua cravada em 09h·12h·15h·18h.
+    const horas = page.locator('#hour-bar-chart .bar-wrap');
+    await expect(horas).toHaveCount(9);
+    await expect(horas.first().locator('.bar-label')).toHaveText('9h');
+    await expect(horas.last().locator('.bar-label')).toHaveText('17h');
+    // 7 estudos de 25 min a partir das 09:00: 09:00 e 09:30 inteiros na hora das 9h.
+    await expect(horas.first()).toHaveAttribute('title', '9h às 10h: 50min de estudo');
+    await expect(horas.last()).toHaveAttribute('title', '17h às 18h: nenhum estudo');
+    await expect(page.locator('#hour-detail')).toHaveText('');
+    await horas.first().click();
+    await expect(page.locator('#hour-detail')).toHaveText('9h às 10h: 50min de estudo');
+    await expect(page.locator('.subview[data-view="geral"] .chart-card').last()).not.toContainText('09h');
 
     // Recordes: 7 blocos marcados, 1 dia de sequência, 350 XP no melhor dia.
     await page.locator('#an-subnav .subnav-chip[data-view="recordes"]').click();
     await expect(page.locator('#an-total-checks')).toHaveText('7');
     await expect(page.locator('#an-streak')).toHaveText('1');
     await expect(page.locator('#an-best-week')).toHaveText('7');
-    await expect(page.locator('#an-cur-streak')).toHaveText('1 dias');
-    await expect(page.locator('#an-best-streak')).toHaveText('1 dias');
+    await expect(page.locator('#an-cur-streak')).toHaveText('1 dia');
+    await expect(page.locator('#an-best-streak')).toHaveText('1 dia');
+    await expect(page.locator('#an-streak-open')).toHaveCount(0); // hoje foi encerrado: nada em aberto
     await expect(page.locator('#an-best-day')).toHaveText('02/09 (7)');
     await expect(page.locator('#an-best-xp')).toHaveText('350 XP');
+  });
+
+  test('82. a sequência não zera enquanto hoje está em aberto: vale a de ontem até a meta de hoje fechar', async ({ page }) => {
+    await abrirApp(page);
+    await page.locator('#tour-skip').click();
+    // Ontem: três estudos de 25 min = 1h15, acima da meta de 1h. Ninguém encerra o dia.
+    for (let i = 0; i < 3; i++) await checksDeEstudo(page).nth(i).click();
+    await expect(page.locator('#save-indicator')).toContainText('Modo teste');
+
+    // Hoje de manhã, sem nada estudado ainda. A tela dizia "0 dias seguidos" até a meta fechar.
+    await page.clock.setFixedTime(new Date('2026-09-03T11:00:00'));
+    await page.reload();
+    await expect(page.locator('#app')).toBeVisible();
+    await page.locator('#tab-analise').click();
+    await page.locator('#tour-skip').click();
+    await page.locator('#an-subnav .subnav-chip[data-view="recordes"]').click();
+    await expect(page.locator('#an-streak')).toHaveText('1');
+    await expect(page.locator('#an-cur-streak')).toHaveText('1 dia');
+    await expect(page.locator('#an-streak-open')).toHaveText('hoje em aberto');
+
+    // Bater a meta de hoje soma o dia, e o aviso some.
+    await page.locator('#tab-plano').click();
+    for (let i = 0; i < 3; i++) await checksDeEstudo(page).nth(i).click();
+    await page.locator('#tab-analise').click();
+    await expect(page.locator('#an-streak')).toHaveText('2');
+    await expect(page.locator('#an-cur-streak')).toHaveText('2 dias');
+    await expect(page.locator('#an-streak-open')).toHaveCount(0);
   });
 
   test('8. comprar e equipar um pet', async ({ page }) => {

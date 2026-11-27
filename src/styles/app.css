@@ -587,8 +587,20 @@
   .bar-fill-an { border-radius:3px 3px 0 0; width:100%; background:var(--accent); transition:height .4s ease; min-height:2px; opacity:.85; }
   .bar-fill-an.empty { background:var(--track); opacity:1; min-height:3px; }
   .bar-label { font-size:9px; color:var(--muted); font-family:var(--font-mono); }
+  .bar-wrap { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .bar-wrap:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+  .bar-chart.has-sel .bar-wrap:not(.sel) .bar-fill-an { opacity:.45; }
+  .bar-wrap.sel .bar-label { color:var(--text); font-weight:700; }
+  /* A linha de detalhe: o que o toque (ou Enter) num ponto, numa célula ou numa barra mostra. Antes só existia no title, que no celular não aparece. */
+  .an-detail { font-size:11px; line-height:1.4; color:var(--muted); margin-top:10px; min-height:16px; }
+  .an-detail:empty { display:none; }
+  .an-detail.on { color:var(--text); }
   .heatmap-grid { display:grid; grid-template-columns:repeat(18,1fr); gap:2px; margin-bottom:6px; }
   .heatmap-cell { aspect-ratio:1; border-radius:2px; }
+  .heatmap-cell.tap { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .heatmap-cell.tap:focus-visible { outline:2px solid var(--accent); outline-offset:1px; position:relative; z-index:1; }
+  .heatmap-cell.sel { outline:2px solid var(--text); outline-offset:1px; position:relative; z-index:1; }
+  .heatmap-gh + .an-detail { margin-top:4px; margin-bottom:8px; }
   .heatmap-legend { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); justify-content:flex-end; }
   .heatmap-legend .lc { width:10px; height:10px; border-radius:2px; }
   .heatmap-gh { display:grid; grid-template-rows:repeat(7,1fr); grid-auto-flow:column; grid-auto-columns:1fr; gap:2px; margin-bottom:6px; }
@@ -635,6 +647,8 @@
   .goal-dot.future { background:transparent; border:1px dashed var(--border); color:var(--muted); }
   .goal-dot.weekend, .goal-dot.before { background:var(--rest-fill-soft); color:var(--muted); opacity:var(--fade-weekend); }
   .goal-dot.today { outline:2px solid var(--accent); outline-offset:2px; }
+  .goal-dot { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .goal-dot:focus-visible, .goal-dot.sel { outline:2px solid var(--text); outline-offset:2px; }
 
   /* Sparkline */
   .sparkline-wrap { display:flex; align-items:center; gap:8px; margin-top:10px; }
@@ -653,6 +667,7 @@
   .streak-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
   .streak-row:last-child { border-bottom:none; }
   .streak-label { font-size:13px; color:var(--text); }
+  .streak-note { font-size:11px; color:var(--muted); margin-left:8px; }
   .streak-val { font-size:15px; font-weight:600; font-family:var(--font-mono); color:var(--accent); }
 
   /* PROFILE PAGE */

@@ -3,7 +3,7 @@
 
 import type { ChecksByDate, DateKey, PenaltiesByDate, StudyBlock } from './types';
 import { coinsForBlock, dailyBonusForStreak, xpFromCheck } from './progression';
-import { blockMins } from './time';
+import { blockMins, minutesByHour } from './time';
 import { isChecked } from './checks';
 
 /** Um dia a considerar, já resolvido por quem chama (que conhece WEEKS e skipWeekends). */
@@ -42,6 +42,14 @@ export interface Stats {
   todayChecks: number;
   todayCoins: number;
   hourCounts: Record<number, number>;
+  /**
+   * Minutos de ESTUDO concluído por hora do relógio (estudo e evento que conta; pausa
+   * não entra), repartidos pelas horas que o bloco atravessa. É o que a Análise desenha
+   * em "Horários onde mais estuda": `hourCounts` conta blocos, e ali uma pausa de 5 min
+   * pesava o mesmo que uma aula de 2h. Inclui hoje, como a aderência — é diagnóstico,
+   * não recompensa.
+   */
+  hourStudyMins: Record<number, number>;
   bestWeekChecks: number;
   bestDayChecks: number;
   bestDayLabel: string;
@@ -96,6 +104,7 @@ export function computeStats(input: StatsInput): Stats {
     weekXP: {}, weekChecks: {},
     todayXP: 0, todayChecks: 0, todayCoins: 0,
     hourCounts: {},
+    hourStudyMins: {},
     bestWeekChecks: 0,
     bestDayChecks: 0, bestDayLabel: '—', bestDayXP: 0,
     studyMins: 0, coins: 0,
@@ -140,7 +149,10 @@ export function computeStats(input: StatsInput): Stats {
       if (isStudyLike) {
         const dur = blockMins(b); // a duração que vale: sem o tempo em que o timer ficou pausado
         dayPlanned += dur;
-        if (isChecked(checks, key, b.time)) dayDone += dur;
+        if (isChecked(checks, key, b.time)) {
+          dayDone += dur;
+          for (const [h, m] of minutesByHour(b)) stats.hourStudyMins[h] = (stats.hourStudyMins[h] || 0) + m;
+        }
         if (isPast) {
           const s = b.cycle ?? 0;
           if (!stats.cycleStats[s]) stats.cycleStats[s] = { done: 0, total: 0 };
@@ -233,12 +245,22 @@ export function computeStats(input: StatsInput): Stats {
   return stats;
 }
 
-/** Sequência atual e maior sequência, a partir dos minutos estudados por dia. */
+/**
+ * Sequência atual e maior sequência, a partir dos minutos estudados por dia.
+ *
+ * `carry` é pra quem mostra a sequência com o dia de hoje ainda ABERTO: enquanto hoje
+ * não bateu a meta (ou nem é dia que conta — sábado pausado, dia livre), a sequência é
+ * a que chegou até o último dia que conta antes dele. Sem isso a tela dizia "0 dias
+ * seguidos" o dia inteiro, até a meta de hoje fechar, pra quem vinha de três dias
+ * batidos. Quem ancora num dia já fechado (o marco de sequência do sininho) não passa
+ * `carry`: ali um dia abaixo da meta zera, como sempre.
+ */
 export function calcStreaks(
   dayStudyMins: Record<DateKey, number>,
   dayKeys: DateKey[],
   todayKey: DateKey,
   minMins: number,
+  carry = false,
 ): { cur: number; best: number } {
   let cur = 0;
   let best = 0;
@@ -251,7 +273,14 @@ export function calcStreaks(
       temp = 0;
     }
   });
-  const idx = dayKeys.indexOf(todayKey);
+  let idx = dayKeys.indexOf(todayKey);
+  if (carry && (idx < 0 || (dayStudyMins[todayKey] || 0) < minMins)) {
+    // O último dia que conta ANTES de hoje (as chaves vêm em ordem de data).
+    idx = -1;
+    for (let i = dayKeys.length - 1; i >= 0; i--) {
+      if ((dayKeys[i] as DateKey) < todayKey) { idx = i; break; }
+    }
+  }
   if (idx >= 0) {
     for (let i = idx; i >= 0; i--) {
       if ((dayStudyMins[dayKeys[i] as DateKey] || 0) >= minMins) cur++;

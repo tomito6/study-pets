@@ -217,3 +217,21 @@ export function calcStreaksNow(dayStudyMins: Record<DateKey, number>, now: Date 
     .map((d) => d.key);
   return calcStreaks(dayStudyMins, keys, dk(now), min);
 }
+
+/**
+ * A sequência como a tela mostra AGORA. Com o dia de hoje aberto e a meta ainda por
+ * bater, vale a que chegou até ontem, e `todayOpen` diz que hoje ainda pode somar.
+ * Hoje encerrado abaixo da meta zera, como qualquer dia fechado. `calcStreaksNow`
+ * continua sendo a régua de quem ancora num dia já fechado (o marco do sininho).
+ */
+export function currentStreak(dayStudyMins: Record<DateKey, number>, now: Date = new Date()) {
+  const min = state.config.dailyStudyMin || 60;
+  const todayKey = dk(now);
+  const closed = isDayClosed(state.closedDays, todayKey);
+  const days = allDays();
+  // Dia bônus só entra se bateu a meta, como em `calcStreaksNow`.
+  const keys = days.filter((d) => !d.bonus || (dayStudyMins[d.key] || 0) >= min).map((d) => d.key);
+  const streaks = calcStreaks(dayStudyMins, keys, todayKey, min, !closed);
+  const todayOpen = !closed && days.some((d) => d.key === todayKey) && (dayStudyMins[todayKey] || 0) < min;
+  return { ...streaks, todayOpen };
+}
