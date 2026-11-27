@@ -735,6 +735,34 @@ passa a ser a única ação do plano. E o gesto gostoso de marcar ("o ato de mar
 ser gratificante", CLAUDE.md) muda de lugar: o momento passa a ser o fim do bloco no foco, que já tem som e
 faixa — vale olhar se ele carrega sozinho o que o ripple e o "+X XP" carregavam.
 
+## Bônus por aparecer, e bônus extra pra quem escolhe um mínimo por dia — 2026-11-27
+
+Ideia do Tomi, em duas metades: (1) um bônus **só por abrir o app / aparecer de novo**; (2) um bônus
+**extra se você decide botar um mínimo de horas de estudo por dia**.
+
+O que já existe e encosta nisso: a meta diária (`config.dailyStudyMin`, 15–240 min, padrão 60) e o bônus
+diário de moedas por sequência (`DAILY_BONUS_TIERS`: 5/8/12/18/25 nos dias 1/3/7/14/30), que só entra no dia
+em que a meta foi batida. E a skill **Recomeço** (Pássaro de fogo) já paga por voltar depois de um dia em
+branco — mas paga em cima de bloco estudado, não pela visita.
+
+Antes de virar tarefa, decidir:
+
+- **O que o bônus de aparecer paga, e em quê.** Moeda parece o lugar (XP é tempo estudado, e no mesmo dia
+  o Tomi decidiu que check só vale pelo foco — pagar XP por abrir o app iria na direção contrária). Uma vez
+  por dia? Só no dia da volta depois de um sumiço, como a Recomeço?
+- **Onde ele para de ser carinho e vira gancho.** "Recompensa diária de login" é o padrão clássico de
+  retenção, e o CLAUDE.md proíbe o primo dele ("faz N dias que você não aparece"). A versão que cabe no app
+  é a que **nunca escala nem se perde**: um oi fixo, sem contador de dias de visita, sem "volte amanhã pra
+  não perder". Se tiver sequência de visitas, virou streak de login — aí é não.
+- **O que é "decidir botar um mínimo".** Hoje todo mundo já tem meta (60 min de fábrica), então ninguém
+  decide nada. A ideia pede uma de duas coisas: a meta vira **escolha** (conta nova nasce sem, e quem liga
+  ganha o extra), ou o extra **cresce com a meta** que a pessoa escolheu. Na primeira, o bônus por sequência
+  de hoje já é esse extra e só falta dizer isso na tela; na segunda, meta de 15 min não pode render igual à
+  de 4h, senão o caminho barato é baixar a meta.
+- **Mudar a meta recalcula tudo pra trás** (sequência e bônus são retroativos em `dailyStudyMin`, de
+  propósito fora da história da config). Com dinheiro pendurado na altura da meta, subir a meta depois de
+  um mês bom repagaria o mês inteiro. Ou a meta entra na história, ou o extra é fixo.
+
 Pendências menores do B7 que ficaram pra depois, pra não perder (as três viraram os itens 1, 2 e 3 do
 `PENDENCIAS.md` em 2026-09-08, cada uma com a pergunta que falta responder):
 - as abas do laptop continuam "Plano · Análise · Perfil"; o pacote dizia "Meu plano · Meus pets · Progresso"
