@@ -21,7 +21,9 @@ export interface KeyValueStorage {
   removeItem(key: string): void;
 }
 
-const PREFIX = 'study-pets:teste:';
+/** A chave do documento é este prefixo + o uid. Exportado pro site de teste, que semeia a conta. */
+export const MEMORY_DOC_PREFIX = 'study-pets:teste:';
+const PREFIX = MEMORY_DOC_PREFIX;
 
 /** O `sessionStorage` (uma conta por aba) ou o `localStorage` (uma por navegador). */
 export function browserStorage(kind: 'session' | 'local'): KeyValueStorage | null {

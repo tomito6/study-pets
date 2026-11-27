@@ -50,6 +50,11 @@ export const strings = {
   testSite: {
     mark: 'site de teste',
     title: 'Study Pets · teste',
+    menuLabel: 'Trocar a conta do site de teste',
+    ready: 'Personagem pronto',
+    readySub: 'Volta pra conta já montada, com pet e histórico',
+    fresh: 'Conta nova',
+    freshSub: 'Começa do zero: onboarding e tutorial',
   },
   login: {
     charAlt: 'Personagem',

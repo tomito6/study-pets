@@ -4,6 +4,8 @@
 import { isNativeApp, isTestSite } from '../infrastructure/platform';
 
 export { isNativeApp, isTestSite };
+export { restartTestSite } from '../infrastructure/memory/testSite';
+export type { TestAccountKind } from '../infrastructure/memory/testSite';
 
 /** Onde o site está publicado. O projeto na Vercel se chama `plano-estudos` (não renomear). */
 export const PUBLIC_APP_URL = 'https://plano-estudos-one.vercel.app';
