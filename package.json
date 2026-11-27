@@ -11,6 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:native": "vite build --mode native",
+    "build:previa": "vite build --mode previa",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

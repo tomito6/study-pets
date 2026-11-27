@@ -15,13 +15,17 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { ErrorBoundary } from './app/ErrorBoundary';
 import { initAudio } from './application/alerts';
+import { isTestSite } from './application/platform';
 import { startSession } from './application/session';
 import { initTheme } from './shared/theme';
+import { markTestSite } from './shared/testSiteMark';
 
 // Antes do createRoot: o tema entra no `<html>` na primeira pintura, sem piscar o errado —
 // e o volume gravado neste dispositivo entra no runtime antes de qualquer som.
 initTheme();
 initAudio();
+// Só na prévia publicada de cada PR: a etiqueta que diz que aquilo não é a conta de verdade.
+if (isTestSite()) markTestSite();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('index.html sem #root');

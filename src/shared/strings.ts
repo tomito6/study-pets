@@ -46,6 +46,11 @@ type NotifData = {
 };
 
 export const strings = {
+  // O site de teste: a prévia que a Vercel publica pra cada PR, em modo memória.
+  testSite: {
+    mark: 'site de teste',
+    title: 'Study Pets · teste',
+  },
   login: {
     charAlt: 'Personagem',
     headline: ['Estude com', 'seu pet.'],

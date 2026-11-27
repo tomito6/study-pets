@@ -5,6 +5,8 @@
 interface ImportMetaEnv {
   /** 'firebase' (padrão) ou 'memory' — modo teste, sem rede, dados só na sessão. */
   readonly VITE_PERSISTENCE?: 'firebase' | 'memory';
+  /** '1' no site de teste publicado (a prévia de cada PR) — ver `.env.previa`. */
+  readonly VITE_TEST_SITE?: string;
   readonly VITE_FIREBASE_API_KEY?: string;
   readonly VITE_FIREBASE_AUTH_DOMAIN?: string;
   readonly VITE_FIREBASE_PROJECT_ID?: string;

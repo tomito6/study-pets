@@ -36,3 +36,12 @@ export function isNativeApp(): boolean {
     return false;
   }
 }
+
+/**
+ * O app está rodando no SITE DE TESTE — a prévia que a Vercel publica pra cada PR, em
+ * modo memória (`vite build --mode previa`, ver `.env.previa`)? Não é o `dev:teste` nem
+ * o e2e: esses continuam com uma conta nova por aba e sem etiqueta na tela.
+ */
+export function isTestSite(): boolean {
+  return import.meta.env.VITE_TEST_SITE === '1';
+}
