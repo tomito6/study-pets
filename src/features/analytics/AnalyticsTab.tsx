@@ -52,8 +52,9 @@ function tapProps(label: string, selected: boolean, onPick: () => void) {
   };
 }
 
-function Detail({ id, text, hint }: { id: string; text: string | null; hint: string }) {
-  return <div className={'an-detail' + (text ? ' on' : '')} id={id} aria-live="polite">{text ?? hint}</div>;
+/** Vazia enquanto nada foi tocado: sem frase ensinando o gesto (o Tomi não quer texto explicativo na tela). */
+function Detail({ id, text }: { id: string; text: string | null }) {
+  return <div className={'an-detail' + (text ? ' on' : '')} id={id} aria-live="polite">{text}</div>;
 }
 
 function ProfileCard({ stats, now }: { stats: Stats; now: Date }) {
@@ -136,7 +137,7 @@ function GoalWeekCard({ goal, min, headlineId, dotsId, detailId, highlightToday 
           );
         })}
       </div>
-      <Detail id={detailId} text={detail} hint={t.tapDay} />
+      <Detail id={detailId} text={detail} />
     </div>
   );
 }
@@ -231,7 +232,7 @@ export function AnalyticsTab() {
               return <div key={c.key} className={'heatmap-cell tap' + sel} style={{ background: HEAT_COLORS[c.intensity] }} {...tap} />;
             })}
           </div>
-          <Detail id="heatmap-detail" text={cellDetail} hint={t.tapDay} />
+          <Detail id="heatmap-detail" text={cellDetail} />
           <div className="heatmap-legend">
             <span>0%</span>
             {HEAT_COLORS.map((color) => <div key={color} className="lc" style={{ background: color }} />)}
@@ -256,7 +257,7 @@ export function AnalyticsTab() {
               );
             })}
           </div>
-          <Detail id="hour-detail" text={hourSel ? hourText(hourSel) : null} hint={t.tapHour} />
+          <Detail id="hour-detail" text={hourSel ? hourText(hourSel) : null} />
         </div>
       </div>
 

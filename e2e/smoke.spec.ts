@@ -1591,7 +1591,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#goal-week-dots-h .goal-dot.today')).toHaveClass(/met/);
     await expect(page.locator('#goal-week-headline-h')).toContainText('a meta de 1h em');
     // O detalhe de um dia aparece no TOQUE (no celular não há "passar o mouse"), e some no segundo toque.
-    await expect(page.locator('#goal-week-detail-h')).toHaveText('Toque num dia pra ver o detalhe.');
+    await expect(page.locator('#goal-week-detail-h')).toHaveText('');
     await page.locator('#goal-week-dots-h .goal-dot.today').click();
     await expect(page.locator('#goal-week-detail-h')).toHaveText('Qua: 2h55 ✓');
     await expect(page.locator('#goal-week-dots-h .goal-dot.today')).toHaveAttribute('aria-pressed', 'true');
@@ -1599,7 +1599,7 @@ test.describe('Study Pets — smoke', () => {
     await page.keyboard.press('Enter'); // e pelo teclado
     await expect(page.locator('#goal-week-detail-h')).toHaveText('Seg — antes de você começar');
     await page.keyboard.press('Enter');
-    await expect(page.locator('#goal-week-detail-h')).toHaveText('Toque num dia pra ver o detalhe.');
+    await expect(page.locator('#goal-week-detail-h')).toHaveText('');
 
     // Semana: o mesmo cumprido, sobre um planejado maior (a semana inteira).
     await page.locator('#an-subnav .subnav-chip[data-view="semana"]').click();
@@ -1644,7 +1644,7 @@ test.describe('Study Pets — smoke', () => {
     // 7 estudos de 25 min a partir das 09:00: 09:00 e 09:30 inteiros na hora das 9h.
     await expect(horas.first()).toHaveAttribute('title', '9h às 10h: 50min de estudo');
     await expect(horas.last()).toHaveAttribute('title', '17h às 18h: nenhum estudo');
-    await expect(page.locator('#hour-detail')).toHaveText('Toque numa hora pra ver o total.');
+    await expect(page.locator('#hour-detail')).toHaveText('');
     await horas.first().click();
     await expect(page.locator('#hour-detail')).toHaveText('9h às 10h: 50min de estudo');
     await expect(page.locator('.subview[data-view="geral"] .chart-card').last()).not.toContainText('09h');

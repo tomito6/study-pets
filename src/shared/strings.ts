@@ -654,9 +654,6 @@ export const strings = {
     dotFuture: (d: string) => `${d} — futuro`,
     dotMet: (d: string, done: string) => `${d}: ${done} ✓`,
     dotMiss: (d: string, done: string, goal: string) => `${d}: ${done} (meta ${goal})`,
-    /** O que a linha de detalhe diz antes de a pessoa tocar em alguma coisa. No celular não existe "passar o mouse". */
-    tapDay: 'Toque num dia pra ver o detalhe.',
-    tapHour: 'Toque numa hora pra ver o total.',
     dropoffTitle: 'Conclusão por ciclo',
     historic: '(histórico)',
     dropoffEmpty: 'Ainda não há dados suficientes.',

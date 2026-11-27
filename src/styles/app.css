@@ -593,6 +593,7 @@
   .bar-wrap.sel .bar-label { color:var(--text); font-weight:700; }
   /* A linha de detalhe: o que o toque (ou Enter) num ponto, numa célula ou numa barra mostra. Antes só existia no title, que no celular não aparece. */
   .an-detail { font-size:11px; line-height:1.4; color:var(--muted); margin-top:10px; min-height:16px; }
+  .an-detail:empty { display:none; }
   .an-detail.on { color:var(--text); }
   .heatmap-grid { display:grid; grid-template-columns:repeat(18,1fr); gap:2px; margin-bottom:6px; }
   .heatmap-cell { aspect-ratio:1; border-radius:2px; }
