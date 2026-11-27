@@ -13,56 +13,68 @@
 //
 // Fica ACIMA da lista, e não embaixo como o cartão do ao vivo: às 21h a lista tem 32
 // linhas apagadas, e uma porta depois delas estaria a duas telas de distância.
+//
+// SEM FRASE (2026-11-27, pedido do Tomi: "ODEIO que você bota um trilhão de frases ao longo
+// da página"). A primeira versão explicava o estado ("O plano de hoje já passou. Dá pra
+// estudar agora mesmo assim:") e no laptop virava um cartão com título e subtítulo próprios.
+// No laptop ele é o cartão Agora, igual: "Agora · Estudo 17 · 21:10–21:35 · 25 min · Iniciar"
+// — o bloco que nasceria neste minuto. No celular é só o botão. O lugar e o botão já dizem
+// o que é; a lista logo abaixo já mostra que o plano passou.
 
 import { rhythmAtDay } from '../../application/plan';
+import { blockDurationMin, cleanBlockName } from '../../domain/timer';
+import type { StudyBlock } from '../../domain/types';
 import { strings } from '../../shared/strings';
 
 const t = strings.plan.studyNow;
+const tn = strings.timer.now;
 
 interface Props {
   dateKey: string;
-  /** O dia foi cortado por uma parada (tem corrida)? Muda só a frase. */
-  stopped: boolean;
   /** A rotina ainda tem blocos pra devolver de agora em diante? */
   canResume: boolean;
   /**
    * No laptop o cartão mora na agenda, no lugar do cartão "Agora" (que neste estado não tem
-   * bloco pra oferecer), com a mesma cara dele e do "▶ Começar" do ao vivo: `.plan-live`.
+   * bloco pra oferecer) e com o MESMO desenho dele: `.plan-live`.
    */
   agenda?: boolean;
+  /** O bloco que nasceria agora (a prévia, sem gravar) — é ele que o cartão da agenda anuncia. */
+  block?: StudyBlock | null;
   /** O Plano abre a corrida — é ele o dono do consentimento do hardcore. */
   onStart: (at: Date) => void;
   onResumeRoutine: () => void;
 }
 
-export function StudyNowCard({ dateKey, stopped, canResume, agenda = false, onStart, onResumeRoutine }: Props) {
+export function StudyNowCard({ dateKey, canResume, agenda = false, block = null, onStart, onResumeRoutine }: Props) {
   const { pomo } = rhythmAtDay(dateKey);
   const ritmo = strings.plan.liveStart.rhythmValue(pomo);
-  return (
-    <div className={'study-now' + (agenda ? ' plan-live' : '')} id="study-now">
-      {agenda ? (
+  const voltar = canResume && (
+    <button type="button" className="sn-routine" id="study-now-routine" onClick={onResumeRoutine}>
+      {t.resumeRoutine}
+    </button>
+  );
+  if (agenda) {
+    return (
+      <section className="study-now plan-live" id="study-now" aria-label={tn.current}>
         <div className="timer-summary">
-          <div className="agora-k">{strings.timer.now.current}</div>
-          <h2 className="timer-block-name" id="study-now-note">{stopped ? t.stoppedTitle : t.overTitle}</h2>
-          <div className="agora-dur">{(stopped ? t.stoppedSub : t.overSub) + ' · ' + ritmo}</div>
+          <div className="agora-k">{tn.current}</div>
+          <h2 className="timer-block-name" id="study-now-name">{block ? cleanBlockName(block.name) : t.fallbackName}</h2>
+          <div className="agora-dur">{block ? tn.window(block.time, block.endTime, blockDurationMin(block)) : ritmo}</div>
         </div>
-      ) : (
-        <div className="sn-note" id="study-now-note">{stopped ? t.stopped : t.over}</div>
-      )}
-      {agenda && canResume && (
-        <button type="button" className="sn-routine" id="study-now-routine" onClick={onResumeRoutine}>
-          {t.resumeRoutine}
+        {voltar}
+        <button type="button" className="lv-btn" id="study-now-btn" onClick={() => onStart(new Date())}>
+          <span className="lv-label">{tn.start}</span>
         </button>
-      )}
+      </section>
+    );
+  }
+  return (
+    <div className="study-now" id="study-now">
       <button type="button" className="lv-btn" id="study-now-btn" onClick={() => onStart(new Date())}>
         <span className="lv-label">{t.start}</span>
-        {!agenda && <span className="lv-chip">{ritmo}</span>}
+        <span className="lv-chip">{ritmo}</span>
       </button>
-      {!agenda && canResume && (
-        <button type="button" className="sn-routine" id="study-now-routine" onClick={onResumeRoutine}>
-          {t.resumeRoutine}
-        </button>
-      )}
+      {voltar}
     </div>
   );
 }

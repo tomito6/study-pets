@@ -2,7 +2,7 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { canEditDayWindows, canResumeRoutine, clearDayWindows, dayEdited, dayWindowsOverride, restKindKey } from '../../application/dayWindows';
+import { canEditDayWindows, canResumeRoutine, clearDayWindows, dayEdited, restKindKey } from '../../application/dayWindows';
 import { canMoveEvents, findEventEditTarget, moveEvent, moveNeedsScope } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
@@ -263,6 +263,10 @@ export function PlanTab() {
   // Hoje pela rotina, e o plano não tem mais nada que dê pra iniciar (tudo já passou, ou o dia
   // foi cortado por uma parada): a porta é o "▶ Estudar agora" — ver `StudyNowCard`.
   const estudarAgora = loaded && canStudyNow(viewKey, now);
+  // No laptop o cartão anuncia o bloco que nasceria neste minuto, como o cartão Agora anuncia
+  // o do plano ("Estudo 17 · 21:10–21:35 · 25 min"). É a mesma prévia do clique, sem gravar.
+  const previaAgora = estudarAgora && wide ? previewLive(viewKey, now, { fromRoutine: true }) : null;
+  const blocoDeAgora = previaAgora && previaAgora.ok ? previaAgora.block : null;
 
   // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
   const selection = useGroupSelection({
@@ -497,7 +501,7 @@ export function PlanTab() {
         <StudyNowCard
           dateKey={viewKey}
           agenda={wide}
-          stopped={!!dayWindowsOverride(viewKey)?.studyWindows.some((w) => w.live && !w.live.whole)}
+          block={wide ? blocoDeAgora : null}
           canResume={canResumeRoutine(viewKey, now)}
           onStart={(at) => startLiveCard(at, true)}
           onResumeRoutine={() => {

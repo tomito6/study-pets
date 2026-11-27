@@ -110,7 +110,8 @@ test.describe('Plano aprovado no Sites', () => {
     await expect(page.locator('#focus-time-big')).toHaveText('35:00');
   });
 
-  // O "▶ Estudar agora" (o plano de hoje já passou) ocupa o lugar do cartão Agora, com a cara dele.
+  // O "▶ Estudar agora" (o plano de hoje já passou) ocupa o lugar do cartão Agora e É o cartão Agora:
+  // "Agora · Estudo 17 · 21:10–21:35 · 25 min · Iniciar", sem frase explicando (pedido do Tomi, 2026-11-27).
   // E com o relógio correndo e o foco fechado, o cartão acompanha a rolagem: sair do foco não pausa,
   // então é ali que a pessoa vê o tempo enquanto mexe no plano lá embaixo.
   test('Estudar agora mora no cartão da agenda, e o relógio correndo acompanha a rolagem', async ({ page }) => {
@@ -119,8 +120,12 @@ test.describe('Plano aprovado no Sites', () => {
     await page.locator('#tour-skip').click();
     await expect(page.locator('.main #study-now.plan-live')).toBeVisible();
     await expect(page.locator('#agora-start')).toHaveCount(0);
-    await expect(page.locator('#study-now-note')).toHaveText('O plano de hoje já passou');
-    await expect(page.locator('#study-now')).toContainText('25 min');
+    await expect(page.locator('#study-now .agora-k')).toHaveText('Agora');
+    await expect(page.locator('#study-now-name')).toHaveText('Estudo 17'); // o bloco que nasceria agora
+    await expect(page.locator('#study-now .agora-dur')).toHaveText('21:10–21:35 · 25 min');
+    await expect(page.locator('#study-now-btn')).toHaveText('Iniciar');
+    // Nada além disso: kicker, nome, horário e o botão.
+    await expect(page.locator('#study-now')).toHaveText('AgoraEstudo 1721:10–21:35 · 25 minIniciar');
     await dentroDaJanela(page, '#study-now-btn', 'ao abrir o Plano à noite');
 
     // Rolando, os botões da cabeceira passam por BAIXO das abas dos dias (eram item de flex com z-index).
@@ -1156,9 +1161,7 @@ test.describe('Study Pets — smoke', () => {
 
     const cartao = page.locator('#study-now');
     await expect(cartao).toBeVisible();
-    await expect(page.locator('#study-now-note')).toContainText('O plano de hoje já passou');
-    await expect(page.locator('#study-now-btn')).toContainText('Estudar agora');
-    await expect(page.locator('#study-now-btn')).toContainText('25 min');
+    await expect(cartao).toHaveText('▶ Estudar agora25 min'); // só o botão: sem frase em volta
     await expect(page.locator('#study-now-routine')).toHaveCount(0); // não há rotina pela frente pra remontar
     await dentroDaJanela(page, '#study-now-btn', 'ao abrir o Plano'); // em cima da lista, não depois de 30 linhas
     const linhasAntes = await page.locator('.block-row').count();
@@ -1182,7 +1185,7 @@ test.describe('Study Pets — smoke', () => {
   // A folha do "■ Parar por aqui" diz "Dá pra voltar mais tarde" — e a volta era
   // 🕘 Estrutura · editado → ↺ Restaurar rotina, que ninguém acha. Agora ela fica onde o
   // resto do dia estava.
-  test('78. depois de "Parar por aqui" a volta está na tela: remontar o resto pela rotina, ou estudar agora', async ({ page }) => {
+  test('78. depois de "Parar por aqui" a volta está na tela: voltar à rotina, ou estudar agora', async ({ page }) => {
     await abrirApp(page, '10:12');
     await page.locator('#tour-skip').click();
     await page.locator('.block-row', { hasText: '10:00–10:25' }).locator('.block-name').click();
@@ -1191,9 +1194,8 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#focus-overlay')).toBeHidden();
     await expect(page.locator('.block-row', { hasText: '10:30–10:55' })).toHaveCount(0);
 
-    await expect(page.locator('#study-now-note')).toContainText('Você parou por aqui');
     await expect(page.locator('#study-now-btn')).toBeVisible();
-    await expect(page.locator('#study-now-routine')).toContainText('pela rotina');
+    await expect(page.locator('#study-now-routine')).toHaveText('↺ Voltar à rotina');
 
     // Meia hora depois: a rotina volta DE AGORA em diante, e o bloco parcial fica do tamanho que foi.
     await page.clock.setFixedTime(new Date(`${DIA}T10:40:00`));

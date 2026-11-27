@@ -148,15 +148,10 @@ export const strings = {
     },
     /** "▶ Estudar agora": hoje está pela rotina e o plano não tem mais nada que dê pra iniciar (ver `StudyNowCard`). */
     studyNow: {
-      over: 'O plano de hoje já passou. Dá pra estudar agora mesmo assim:',
-      stopped: 'Você parou por aqui. Quando quiser voltar:',
-      /** As mesmas duas frases no cartão da agenda do laptop: título e linha de baixo (que termina com a duração). */
-      overTitle: 'O plano de hoje já passou',
-      overSub: 'Dá pra estudar agora mesmo assim',
-      stoppedTitle: 'Você parou por aqui',
-      stoppedSub: 'Quando quiser, é só voltar',
       start: '▶ Estudar agora',
-      resumeRoutine: '↺ Remontar o resto do dia pela rotina',
+      resumeRoutine: '↺ Voltar à rotina',
+      /** Só se a prévia do bloco não sair (um compromisso em cima de agora): o cartão ainda precisa de um nome. */
+      fallbackName: 'Estudo',
     },
     dayWindowsEdited: 'Estrutura do dia · editado',
     freeDay: '🌴 Dia livre',
