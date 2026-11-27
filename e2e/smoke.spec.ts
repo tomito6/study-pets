@@ -3529,7 +3529,7 @@ test.describe('a Estrutura do dia cabe na tela', () => {
   test.describe('no laptop', () => {
     test.use({ viewport: { width: 1366, height: 768 } });
 
-    test('82. no laptop o modal são duas colunas e tudo cabe, até com quatro janelas', async ({ page }) => {
+    test('84. no laptop o modal são duas colunas e tudo cabe, até com quatro janelas', async ({ page }) => {
       const erros = vigiarErros(page);
       await abrirApp(page, '10:10');
       await page.locator('#tour-skip').click();
@@ -3567,7 +3567,7 @@ test.describe('a Estrutura do dia cabe na tela', () => {
     // com essa altura que a conta tem de fechar.
     test.use({ viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true });
 
-    test('83. no celular tudo cabe com duas janelas, e o Salvar nunca sai da tela', async ({ page }) => {
+    test('85. no celular tudo cabe com duas janelas, e o Salvar nunca sai da tela', async ({ page }) => {
       const erros = vigiarErros(page);
       await abrirApp(page, '10:10');
       await page.locator('#tour-skip').click();
