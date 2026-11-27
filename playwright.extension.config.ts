@@ -15,6 +15,12 @@ import { defineConfig } from '@playwright/test';
 // NUNCA `channel: 'chrome'`/`'msedge'`: o Cold Turkey Blocker desta máquina fecha
 // o Chrome do sistema inteiro, levando as abas reais do usuário junto.
 
+// FUSO — o mesmo do smoke (ver `playwright.config.ts`): o spec monta a janela de
+// estudo "em volta do agora" com a hora do Node, e a página roda em Berlim. Numa
+// máquina em outro fuso a janela cai fora do agora da página e nenhum bloco roda.
+const TIMEZONE = 'Europe/Berlin';
+process.env.TZ = TIMEZONE;
+
 const PORT = Number(process.env.SP_EXT_PORT) || 5183;
 
 export default defineConfig({
@@ -31,7 +37,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: 'pt-BR',
-    timezoneId: 'Europe/Berlin',
+    timezoneId: TIMEZONE,
   },
   webServer: {
     command: `npx vite --mode teste --port ${PORT} --strictPort`,
