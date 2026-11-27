@@ -26,6 +26,20 @@ export interface LiveRhythm {
   longBreak: number;
 }
 
+/**
+ * O ritmo carimbado numa janela que já é FATO (`StudyWindow.live`).
+ *
+ * `whole` (2026-11-26): a janela de rotina que rodou até o fim que a rotina deu a ela. É
+ * fato como uma corrida — ninguém a devolve pra rotina, e o ritmo dela não muda mais —,
+ * mas o gerador a trata como janela de ROTINA, porque foi assim que ela aconteceu. Sem a
+ * marca, carimbar como corrida uma janela inteira ligava os desligamentos da corrida no
+ * rabo dela: no dia padrão sem refeição o mini-estudo das 17:40 virava pausa longa, e um
+ * check de 40 XP passava a valer 20 depois de um "■ Parar por aqui" às 21h.
+ */
+export interface RunRhythm extends LiveRhythm {
+  whole?: true;
+}
+
 /** Janela de estudo: um intervalo do dia em que o app gera pomodoros. */
 export interface StudyWindow {
   start: TimeString;
@@ -40,7 +54,7 @@ export interface StudyWindow {
    * Ausente = tudo como sempre foi. Nenhum dia que já existe tem a marca, então dia de
    * rotina sai byte a byte igual — e isso é teste, não promessa.
    */
-  live?: LiveRhythm;
+  live?: RunRhythm;
 }
 
 /** Config do usuário, como salva em `users/{uid}.config`. */

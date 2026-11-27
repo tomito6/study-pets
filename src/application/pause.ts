@@ -247,8 +247,8 @@ export function pauseOutlookNow(now: Date = new Date()): PauseOutlook | null {
 
 /**
  * "▶ Continuar": a porta de volta pro bloco em andamento — a mesma da linha do plano e do
- * cartão do laptop. Pausado, retomar já reabre o foco (`resumeRuntime`); rodando (só dá
- * pra estar fora do foco assim num estado de boot antigo), só reabre. Nunca passa por
+ * cartão do laptop. Pausado, retomar já reabre o foco (`resumeRuntime`); rodando (quem
+ * saiu do foco sem pausar — o caso comum desde 2026-11-03), só reabre. Nunca passa por
  * `runBlock`, que reiniciaria o bloco e comeria a pausa.
  */
 export function continueBlock(now: Date = new Date()): ResumeOutcome {
