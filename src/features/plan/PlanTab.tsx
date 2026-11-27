@@ -2,7 +2,7 @@
 // Ilha montada em `.main` (#plan-root). Mesmos ids/classes do markup antigo.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { canEditDayWindows, dayEdited, restKindKey } from '../../application/dayWindows';
+import { canEditDayWindows, canResumeRoutine, clearDayWindows, dayEdited, restKindKey } from '../../application/dayWindows';
 import { canMoveEvents, findEventEditTarget, moveEvent, moveNeedsScope } from '../../application/events';
 import type { EventEditTarget } from '../../application/events';
 import { canEditGroups, groupsForDay, updateGroup, validateGroup } from '../../application/groups';
@@ -38,8 +38,9 @@ import { BlockList, dayProgress } from './BlockList';
 import { DayWindowsPanel } from './DayWindowsPanel';
 import { BlockSheet, type BlockSheetTarget } from './BlockSheet';
 import { EventDragGhost } from './EventDragGhost';
-import { liveRunOpen, previewLive, startLive } from '../../application/live';
+import { canStudyNow, liveRunOpen, previewLive, startLive } from '../../application/live';
 import { LiveStartCard, showLiveStart } from './LiveStartCard';
+import { StudyNowCard } from './StudyNowCard';
 import { useMinuteTick } from './useMinuteTick';
 import { WeekCards } from './WeekCards';
 import { WeekView } from './WeekView';
@@ -259,6 +260,13 @@ export function PlanTab() {
   // E com nenhuma corrida ainda aberta no minuto de agora (reload no meio de um bloco): ali a
   // porta é o "▶ Iniciar" da linha, que retoma a MESMA corrida — o "▶ Voltar" abriria outra.
   const mostrarComecar = aoVivo && showLiveStart('live', viewKey, timerBlock, now) && !liveRunOpen(viewKey, now);
+  // Hoje pela rotina, e o plano não tem mais nada que dê pra iniciar (tudo já passou, ou o dia
+  // foi cortado por uma parada): a porta é o "▶ Estudar agora" — ver `StudyNowCard`.
+  const estudarAgora = loaded && canStudyNow(viewKey, now);
+  // No laptop o cartão anuncia o bloco que nasceria neste minuto, como o cartão Agora anuncia
+  // o do plano ("Estudo 17 · 21:10–21:35 · 25 min"). É a mesma prévia do clique, sem gravar.
+  const previaAgora = estudarAgora && wide ? previewLive(viewKey, now, { fromRoutine: true }) : null;
+  const blocoDeAgora = previaAgora && previaAgora.ok ? previaAgora.block : null;
 
   // Seleção de trecho pra grupo — o intervalo escolhido vira o modal de novo grupo.
   const selection = useGroupSelection({
@@ -368,8 +376,9 @@ export function PlanTab() {
    * consentimento do hardcore, quando há. Gravar antes deixava um bloco fantasma no
    * plano quando a pessoa cancelava o consentimento, e o cartão contava mais um pomodoro.
    */
-  const startLiveCard = (at: Date) => {
-    const prev = previewLive(viewKey, at);
+  const startLiveCard = (at: Date, fromRoutine = false) => {
+    const opts = { fromRoutine };
+    const prev = previewLive(viewKey, at, opts);
     if (!prev.ok) {
       showToast(t.liveStart.refusal(prev.reason));
       return;
@@ -380,7 +389,7 @@ export function PlanTab() {
       return;
     }
     const gravar = (): StudyBlock | null => {
-      const r = startLive(viewKey, new Date());
+      const r = startLive(viewKey, new Date(), opts);
       if (!r.ok) {
         showToast(t.liveStart.refusal(r.reason));
         return null;
@@ -488,6 +497,20 @@ export function PlanTab() {
       ) : (
         <>
       {mostrarComecar && wide && <LiveStartCard dateKey={viewKey} onStart={startLiveCard} agenda />}
+      {estudarAgora && !selection.active && (
+        <StudyNowCard
+          dateKey={viewKey}
+          agenda={wide}
+          block={wide ? blocoDeAgora : null}
+          canResume={canResumeRoutine(viewKey, now)}
+          onStart={(at) => startLiveCard(at, true)}
+          onResumeRoutine={() => {
+            const r = clearDayWindows(viewKey);
+            if (r.ok) showToast(strings.dayWindows.restored);
+            else showToast(strings.dayWindows.refusal[r.reason]);
+          }}
+        />
+      )}
       <div className={'blocks-list' + (selection.active ? ' selecting-mode' : '')} id="blocks-list" {...selection.listProps}>
         <BlockList
           dateKey={viewKey}

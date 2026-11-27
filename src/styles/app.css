@@ -442,6 +442,15 @@
   .lv-chip{position:absolute;right:8px;top:8px;height:36px;padding:0 12px;border-radius:99px;background:var(--on-accent-wash);
     display:flex;align-items:center;font-size:12px;font-weight:500;letter-spacing:.02em;color:var(--on-accent);opacity:.92;}
   .lv-tally{font-family:var(--font-ui);font-size:11.5px;color:var(--muted);margin:7px 0 0 2px;}
+  /* "▶ Estudar agora" (2026-11-26): a porta de um dia de rotina em que o plano não tem mais
+     o que iniciar — ver `StudyNowCard`. O botão é o mesmo `.lv-btn` do ao vivo (é pra lá que
+     ele leva), sem frase em volta; embaixo, quando a rotina ainda tem tarde pela frente, a
+     outra volta, em contorno. */
+  .study-now{margin:2px 0 14px;}
+  .sn-routine{display:block;width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:99px;background:transparent;
+    color:var(--muted);font-size:12.5px;font-family:var(--font-ui);cursor:pointer;}
+  .sn-routine:hover{border-color:var(--border-strong);color:var(--text);}
+  .sn-routine:focus-visible,.lv-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   /* Os dois cards do padrão, em Configurações → Estrutura do dia. */
   .mode2{display:flex;gap:9px;}
   .mode2 .m{flex:1;display:block;text-align:left;border:1px solid var(--border);border-radius:var(--radius-md);
@@ -506,6 +515,10 @@
   .field-group input[type=date]::-webkit-calendar-picker-indicator{filter:var(--picker-filter);cursor:pointer;opacity:.8;}
   .field-group input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1;}
   .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  /* No onboarding o botão de seguir gruda no pé da folha (2026-11-26): no passo do pet, escolher
+     um faz o campo do nome aparecer e empurrava o "Continuar" pra baixo da dobra da folha num
+     celular — a pessoa escolhia o pet e o botão que ela procurava tinha sumido. */
+  #onboarding-panel .btn-row{position:sticky;bottom:-24px;z-index:1;background:var(--bg2);padding:10px 0 24px;margin-bottom:-24px;box-shadow:0 -10px 10px -6px var(--bg2);}
   .save-btn{width:100%;background:var(--accent);color:var(--on-accent);border:none;border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-ui);}
   .save-btn:hover{opacity:.9;}
   .reset-btn{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:14px;cursor:pointer;font-family:var(--font-ui);}
@@ -871,7 +884,13 @@
   /* Pausado: o anel para onde estava, o número apaga, e "pausado · N" embaixo. */
   .focus-time-big.paused { color:var(--muted); }
   .focus-overlay.paused .focus-timer-fill { opacity:.45; }
-  .focus-actions { display:flex; justify-content:center; margin-top:clamp(14px, 2.5vmin, 24px); }
+  /* Pausar · Parar grudam no pé da tela (2026-11-26). Num laptop de 1366×768 a tela do foco media
+     873px e os dois nasciam abaixo da dobra, sem nada dizendo que ela rolava — as duas únicas
+     portas do foco, invisíveis. Cabendo tudo, `sticky` não faz nada e eles ficam onde sempre
+     estiveram; não cabendo (janela baixa, a dica do ao vivo, a linha da pausa), o resto rola
+     por baixo e eles ficam à vista. A sombra é o fundo subindo, pra o corte não ser seco. */
+  .focus-actions, .focus-hc-actions { position:sticky; bottom:0; z-index:1; background:var(--bg); box-shadow:0 -10px 10px -4px var(--bg); }
+  .focus-actions { display:flex; justify-content:center; gap:10px; margin-top:clamp(6px, 1.2vmin, 12px); padding:clamp(8px, 1.3vmin, 12px) 0; }
   .focus-pause { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:99px; padding:8px 18px; font-size:clamp(11px, 1.6vmin, 13px); cursor:pointer; font-family:inherit; }
   .focus-pause:hover { border-color:var(--border-strong); color:var(--text); }
   .focus-overlay.paused .focus-pause { border-color:var(--accent2); color:var(--accent); }
@@ -898,6 +917,22 @@
   .focus-next-sep { width:4px; height:4px; background:var(--text-faint); border-radius:50%; }
   .focus-next-name { flex:1; color:var(--text); font-size:clamp(12px, 1.8vmin, 15px); }
   .focus-next-dur { color:var(--text-faint); font-family:var(--font-mono); font-size:clamp(11px, 1.6vmin, 14px); }
+
+  /* Janela mais larga que alta e baixa — o laptop: 1366×768 dá uns 650px úteis no navegador.
+     Tudo acima mede em `vmin`, que numa janela deitada é a ALTURA, mas os pedaços somados
+     passam dela (o anel sozinho levava 55%). Aqui o anel mede pelo que SOBRA da altura depois
+     do resto, o número acompanha o anel, e o palco vazio da cena (reservado, ainda sem
+     personagem) deixa de ocupar 100px de nada. Celular em pé não entra: lá `vmin` é a largura
+     e a tela já cabia. */
+  @media (min-aspect-ratio: 1/1) and (max-height: 960px) {
+    .focus-overlay { --focus-ring:clamp(170px, calc(100vh - 400px), 380px); }
+    .focus-timer-wrap { width:var(--focus-ring); height:var(--focus-ring); }
+    .focus-time-big { font-size:calc(var(--focus-ring) * .23); }
+    .focus-scene-stage { display:none; }
+    .focus-scene { padding-top:clamp(10px, 1.6vmin, 16px); margin-top:clamp(8px, 1.4vmin, 14px); margin-bottom:clamp(10px, 1.8vmin, 18px); }
+    .focus-header { margin-bottom:clamp(10px, 1.8vmin, 18px); }
+    .focus-topbar { padding-bottom:clamp(8px, 1.4vmin, 14px); }
+  }
 
   /* BUY CONFIRM */
   .buy-confirm-body { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:18px; }
@@ -985,6 +1020,19 @@
   /* TIMER */
   .timer-bar { position:sticky; top:var(--topbar-h, 57px); z-index:99; background:var(--bg2); border-bottom:1px solid var(--border); padding:10px 20px; display:none; align-items:center; gap:12px; }
   .timer-bar.active { display:flex; }
+  /* No celular a barra não cabia (2026-11-26): o primeiro filho — o rótulo e o nome do bloco —
+     não encolhia, então a 390px o "✕ Parar" saía 3px da tela (18px a 375px) e a página inteira
+     passava a rolar de lado. Agora quem cede é o nome (reticências), e abaixo de 430px o slider
+     de volume sai: o sino do mudo fica, e o volume mora em Configurações → Sons e notificações.
+     Só abaixo de 1100px — no laptop a barra é um cartão em coluna, com outras regras. */
+  @media (max-width:1099px) {
+    .timer-bar > div:first-child { flex:1; min-width:0; }
+    .timer-bar > div:first-child > div:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  }
+  @media (max-width:429px) {
+    .timer-bar { gap:8px; padding:10px 14px; }
+    .timer-bar .vol-slider { display:none; }
+  }
   .timer-block-name { font-size:12px; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .timer-time { font-size:22px; font-weight:600; font-family:var(--font-mono); color:var(--accent); min-width:60px; text-align:right; }
   .timer-time.ending { color:var(--danger-soft); }
@@ -1279,7 +1327,7 @@
   .focus-hc-chip { display:inline-flex; align-items:center; gap:6px; background:var(--danger-bg-2); border:1px solid var(--danger-border-strong); color:var(--danger-soft); border-radius:99px; padding:clamp(4px, .8vmin, 7px) clamp(10px, 1.8vmin, 16px); font-family:var(--font-mono); font-size:clamp(10px, 1.5vmin, 13px); text-transform:uppercase; letter-spacing:.08em; }
   .focus-overlay.hardcore .focus-timer-fill:not(.pausa) { stroke:var(--danger-soft); }
   .focus-overlay.hardcore .focus-chip:not(.pausa) { border-color:var(--danger-border-strong); color:var(--danger-soft); background:var(--danger-bg); }
-  .focus-hc-actions { display:flex; justify-content:center; margin-top:clamp(14px, 2.5vmin, 24px); }
+  .focus-hc-actions { display:flex; justify-content:center; margin-top:clamp(6px, 1.2vmin, 12px); padding:clamp(8px, 1.3vmin, 12px) 0; }
   .empty-day-hint{font-size:12px;opacity:var(--fade-hint);margin-top:8px;line-height:1.5;}
   /* Atalhos do Novo evento e o "Aplicar a" da edição de série: pills como as dos dias da semana */
   .preset-row{display:flex;flex-wrap:wrap;gap:6px;}
