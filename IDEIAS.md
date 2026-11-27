@@ -763,6 +763,26 @@ Antes de virar tarefa, decidir:
   propósito fora da história da config). Com dinheiro pendurado na altura da meta, subir a meta depois de
   um mês bom repagaria o mês inteiro. Ou a meta entra na história, ou o extra é fixo.
 
+## Dividir o desenvolvimento do site por áreas — 2026-11-27 (pra refletir depois)
+
+Do Tomi, ainda cru, e ele mesmo avisou que quer pensar mais: "seria legal ter uma divisão de
+desenvolvimento no site. Tipo: página de login / informativa do projeto, tutorial, Plano, Análise, perfil,
+configurações, loja, design, habilidades, e assim por diante".
+
+Não é pra fazer nada ainda. O que dá pra deixar anotado pra quando ele voltar:
+
+- **A lista dele já é quase o mapa do código.** `src/features/` tem `auth` (login), `tutorial`, `plan`,
+  `analytics`, `profile`, `settings`, `pets` (a loja mora aqui); "design" são os temas em `src/styles/`, e
+  "habilidades" são as skills (`domain/progression.ts`, mais o bestiário). O que não existe em lugar nenhum
+  é a **página informativa do projeto**: hoje quem não tem conta só vê a tela de entrada.
+- **O que a divisão organizaria é a pergunta em aberto.** Pode ser o *trabalho* (pendências, ideias e
+  conversas separadas por área, em vez de um `PENDENCIAS.md` e um `IDEIAS.md` únicos), pode ser o *app*
+  (cada área evoluindo e sendo revisada como uma peça própria), ou as duas coisas. Perguntar antes de
+  desenhar qualquer coisa.
+- **O que atravessa as áreas não cabe numa só**: o gerador do plano, o XP e as moedas, o timer e o foco
+  aparecem no Plano, na Análise e no Perfil ao mesmo tempo. Uma divisão por tela precisa de um lugar pro que
+  é de todas (hoje é o CLAUDE.md).
+
 Pendências menores do B7 que ficaram pra depois, pra não perder (as três viraram os itens 1, 2 e 3 do
 `PENDENCIAS.md` em 2026-09-08, cada uma com a pergunta que falta responder):
 - as abas do laptop continuam "Plano · Análise · Perfil"; o pacote dizia "Meu plano · Meus pets · Progresso"
