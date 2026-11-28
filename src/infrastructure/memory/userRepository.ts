@@ -4,6 +4,12 @@
 // primeiro dia, primeira compra de pet.
 //
 // Sem `sessionStorage` (Node, testes), cai num Map em memória.
+//
+// No SITE DE TESTE (a prévia publicada de cada PR) quem entra é o `localStorage`
+// (`browserStorage('local')`, escolhido em infrastructure/index.ts): ali a conta de
+// mentira fica no navegador, por endereço — ou seja, por PR. Quem abre o link de um PR
+// no celular abre uma aba nova a cada vez, e conta nova por aba seria refazer o
+// onboarding inteiro em toda visita.
 
 import type { UserDoc } from '../../domain/persistence';
 import type { UserRepository } from '../ports';
@@ -15,11 +21,15 @@ export interface KeyValueStorage {
   removeItem(key: string): void;
 }
 
-const PREFIX = 'study-pets:teste:';
+/** A chave do documento é este prefixo + o uid. Exportado pro site de teste, que semeia a conta. */
+export const MEMORY_DOC_PREFIX = 'study-pets:teste:';
+const PREFIX = MEMORY_DOC_PREFIX;
 
-function defaultStorage(): KeyValueStorage | null {
+/** O `sessionStorage` (uma conta por aba) ou o `localStorage` (uma por navegador). */
+export function browserStorage(kind: 'session' | 'local'): KeyValueStorage | null {
   try {
-    const s = (globalThis as { sessionStorage?: KeyValueStorage }).sessionStorage;
+    const g = globalThis as { sessionStorage?: KeyValueStorage; localStorage?: KeyValueStorage };
+    const s = kind === 'local' ? g.localStorage : g.sessionStorage;
     if (!s) return null;
     // Alguns contextos expõem o objeto mas estouram ao usar (modo privado, iframe…).
     s.getItem(PREFIX + 'ping');
@@ -30,7 +40,7 @@ function defaultStorage(): KeyValueStorage | null {
 }
 
 export function createMemoryUserRepository(
-  storage: KeyValueStorage | null = defaultStorage(),
+  storage: KeyValueStorage | null = browserStorage('session'),
 ): UserRepository {
   const fallback = new Map<string, UserDoc>();
 
