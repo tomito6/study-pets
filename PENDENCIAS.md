@@ -187,6 +187,42 @@ deixa de ser um botão —, mas o check manual hoje é a rede de sete coisas, e 
 Os checks que já existem ficam como estão — nada retroativo. Quando as respostas vierem, isto é plan grande
 (mexe em Princípios do CLAUDE.md, em skills e na suíte inteira): vai pra `plans/`.
 
+## 7. Mudar os horários do dia apaga o estudo que já foi feito
+
+O Tomi, em 2026-11-28: "às vezes você marca que fez o estudo, mas depois muda os horários, e aí deleta o
+estudo que você fez".
+
+**O que acontece** (lido no código, ainda não reproduzido na tela): o check é guardado pelo horário de
+início do bloco (`"09:25"`), e o plano do dia é gerado de novo a cada mudança. Se o bloco marcado deixa de
+começar naquele minuto, o check continua no documento mas não bate com bloco nenhum: some da lista, e o XP
+pendente, a meta e a sequência do dia caem junto, sem aviso. Três portas fazem isso hoje, em hoje com
+checks:
+
+1. **As janelas do dia** (🕘 Estrutura do dia → Salvar): `setDayWindows` troca as janelas inteiras. Começar
+   às 09:10 em vez de 09:00 desloca a manhã toda.
+2. **Evento novo, editado ou arrastado** pra antes ou pra cima de um bloco marcado: o resto do plano se
+   rearruma em volta (`updateEvent` já diz isso num comentário: "o check gravado no horário antigo fica
+   órfão").
+3. **Apagar um evento** que segurava o plano no lugar.
+
+Quem **já** protege o que foi vivido, e serve de modelo: o ritmo do dia (com fato no dia, vale só do próximo
+bloco em diante), as Configurações (com fato, "vale a partir de amanhã"), a pausa do timer (o check
+acompanha o bloco que deslizou, `remapChecksForPause`) e a troca pro ao vivo (a manhã marcada vira corrida).
+
+**A decidir antes de mexer:**
+
+1. **Congelar o que foi vivido**, como o ritmo do dia faz: em hoje com checks, a mudança de janelas vale de
+   agora em diante e a parte marcada fica como estava (a janela vivida vira fato, `live` com `whole`). É a
+   leitura que combina com o resto do app.
+2. **Ou levar o check junto** (remapear pro bloco que ficou no lugar)? Mais frágil: nem sempre há um bloco
+   equivalente.
+3. **E o evento?** Um evento posto em cima de um estudo marcado: recusa, avisa, ou o estudo marcado fica e o
+   evento entra depois dele?
+4. **Enquanto não se decide, avisar?** Hoje o toast só diz "Plano reajustado: −1 estudo"; não diz que o que
+   saiu estava feito.
+
+Medir primeiro: reproduzir as três portas em `dev:teste` e escrever o teste que falha.
+
 ---
 
 ## Como esse arquivo deve crescer
