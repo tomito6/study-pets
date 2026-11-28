@@ -16,12 +16,13 @@
 // o que já aconteceu nunca é reescrito.
 
 import { isChecked, isDayClosed } from '../domain/checks';
-import { configForDay, routineAfter, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
+import { configForDay, restDayKind, routineAfter, stopDayAt, validateDayWindows, windowsForDay } from '../domain/dayWindows';
 import type { DayWindowsOverride, RestKind } from '../domain/dayWindows';
 import { rhythmOf } from '../domain/configHistory';
 import { isValidRhythm, rhythmChangeFrom, sameRhythm, wholeDayRhythm, withDayRhythm } from '../domain/dayRhythm';
 import type { DayRhythmEntry } from '../domain/dayRhythm';
 import { modeForDay } from '../domain/dayMode';
+import { blockagesOnly } from '../domain/planner';
 import { isValidWindow } from '../domain/settings';
 import type { DayMode } from '../domain/dayMode';
 import { dk, isWeekendKey, minsToTime, timeToMins } from '../domain/time';
@@ -70,9 +71,28 @@ export const restKindKey = (dateKey: DateKey): RestKind | null => restKindOf(dat
  * `blocksForDay` (a config que valia no dia, os eventos dele, as pausas dele), só com
  * as janelas do rascunho no lugar. Num dia ao vivo o rascunho não manda: o plano é o
  * que aconteceu, e é o `blocksForDay` que diz.
+ *
+ * `mode` é o modo que o modal tem ESCOLHIDO (2026-11-28: o chip deixou de valer no toque e
+ * passou a esperar o Salvar). Diferente do modo salvo, a prévia mostra o dia como ele fica
+ * depois da troca — pela mesma conta do salvar (`overrideForMode`), sem escrever.
  */
-export function previewDayPlan(dateKey: DateKey, draft: StudyWindow[], rhythm: LiveRhythm | null = null, now: Date = new Date()): StudyBlock[] {
-  if (dayModeOf(dateKey) === 'live') return blocksForDay(dateKey);
+export function previewDayPlan(
+  dateKey: DateKey,
+  draft: StudyWindow[],
+  rhythm: LiveRhythm | null = null,
+  now: Date = new Date(),
+  mode: DayMode = dayModeOf(dateKey),
+): StudyBlock[] {
+  if (mode === 'live') {
+    if (dayModeOf(dateKey) === 'live') return blocksForDay(dateKey);
+    // Indo pro ao vivo: fica o que já foi vivido (a manhã marcada vira corrida) e os compromissos.
+    const ov = overrideForMode(dateKey, 'live', now);
+    const rest = restDayKind({ skipWeekends: state.config.skipWeekends === true, isWeekend: isWeekendKey(dateKey), override: ov });
+    if (rest !== null) return [];
+    const events = getEventsForDate(dateKey);
+    if (!ov) return blockagesOnly(events);
+    return generateBlocks(configForDay(configAtDay(dateKey), ov), events, state.pauses?.[dateKey] ?? []);
+  }
   const studyWindows = draft.filter(isValidWindow);
   if (studyWindows.length === 0) return [];
   // O ritmo do rascunho entra do mesmo jeito que entraria ao salvar (`nextDayRhythm`): o dia
@@ -120,46 +140,65 @@ function liveCutFor(dateKey: DateKey, now: Date): Date | null {
   return corte;
 }
 
-export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date()): DayWindowsResult {
-  const can = canEditDayWindows(dateKey, now);
-  if (!can.ok) return can;
-  if (dayModeOf(dateKey) === mode) return { ok: true };
-  const before = blocksForDay(dateKey);
+/**
+ * As janelas só do dia com que ele fica ao trocar pra `mode` — sem escrever nada
+ * (`undefined` = sem override: o dia segue a rotina, ou fica sem plano no ao vivo).
+ * É a conta do `setDayMode`, separada pra prévia do modal poder usá-la antes do Salvar.
+ */
+function overrideForMode(dateKey: DateKey, mode: DayMode, now: Date): DayWindowsOverride | undefined {
   const atual = state.windowOverrides[dateKey];
   const corridas = atual ? atual.studyWindows.filter((w) => w.live) : [];
 
   if (mode === 'rotina') {
     if (corridas.length > 0 && dateKey === dk(now)) {
       const r = routineAfter(corridas, configAtDay(dateKey).studyWindows, now);
-      if (r.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
-      else delete state.windowOverrides[dateKey];
-    } else if (corridas.length > 0) {
-      state.windowOverrides[dateKey] = { studyWindows: corridas };
-    } else {
-      delete state.windowOverrides[dateKey];
+      return r.ok ? { studyWindows: r.windows } : undefined;
     }
-  } else if (corridas.length > 0) {
-    // Ao vivo: o que já foi vivido fica; o resto do dia deixa de vir montado.
-    state.windowOverrides[dateKey] = { studyWindows: corridas };
-  } else {
-    // Sem corrida, mas com uma manhã de ROTINA já marcada: ela vira corrida, aparada no fim do
-    // último bloco marcado (ou em agora, se há um bloco no timer). Apagar o override, como era,
-    // tirava da tela os blocos marcados — checks órfãos, XP pendente a zero, "Plano reajustado:
-    // −N estudos" — pra quem só quis passar a tarde pro ao vivo. É o mesmo `stopDayAt` do
-    // "Parar por aqui": o que aconteceu fica, o que não aconteceu (os blocos sem check) sai.
-    const corte = dateKey === dk(now) ? liveCutFor(dateKey, now) : null;
-    const r = corte ? stopDayAt(effectiveWindows(dateKey), corte, rhythmOf(configAtDay(dateKey))) : null;
-    if (r?.ok) state.windowOverrides[dateKey] = { studyWindows: r.windows };
-    else delete state.windowOverrides[dateKey];
+    return corridas.length > 0 ? { studyWindows: corridas } : undefined;
   }
+  // Ao vivo: o que já foi vivido fica; o resto do dia deixa de vir montado.
+  if (corridas.length > 0) return { studyWindows: corridas };
+  // Sem corrida, mas com uma manhã de ROTINA já marcada: ela vira corrida, aparada no fim do
+  // último bloco marcado (ou em agora, se há um bloco no timer). Apagar o override, como era,
+  // tirava da tela os blocos marcados — checks órfãos, XP pendente a zero, "Plano reajustado:
+  // −N estudos" — pra quem só quis passar a tarde pro ao vivo. É o mesmo `stopDayAt` do
+  // "Parar por aqui": o que aconteceu fica, o que não aconteceu (os blocos sem check) sai.
+  const corte = dateKey === dk(now) ? liveCutFor(dateKey, now) : null;
+  const r = corte ? stopDayAt(effectiveWindows(dateKey), corte, rhythmOf(configAtDay(dateKey))) : null;
+  return r?.ok ? { studyWindows: r.windows } : undefined;
+}
+
+/** Escreve a troca de modo no estado (janelas do dia + a escolha), sem salvar nem notificar. */
+function applyDayMode(dateKey: DateKey, mode: DayMode, now: Date): void {
+  const ov = overrideForMode(dateKey, mode, now);
+  if (ov) state.windowOverrides[dateKey] = ov;
+  else delete state.windowOverrides[dateKey];
   // A escolha do dia só pode ser APAGADA quando o padrão já diz a mesma coisa —
   // apagar é literalmente "siga o padrão". Com um padrão "ao vivo" em vigor, o
   // `delete` devolvia o dia pro ao vivo: o chip dizia "Modo do dia trocado",
   // fechava o modal, e o dia continuava vazio. Dizia que tinha funcionado sem ter.
   if (modeForDay(dateKey, undefined, state.dayModeDefault) === mode) delete state.dayModes[dateKey];
   else state.dayModes[dateKey] = mode;
+}
+
+export function setDayMode(dateKey: DateKey, mode: DayMode, now: Date = new Date()): DayWindowsResult {
+  const can = canEditDayWindows(dateKey, now);
+  if (!can.ok) return can;
+  if (dayModeOf(dateKey) === mode) return { ok: true };
+  const before = blocksForDay(dateKey);
+  applyDayMode(dateKey, mode, now);
   commit(dateKey, before, now);
   return { ok: true };
+}
+
+/**
+ * As janelas que o dia tem (ou teria) em `mode`. No modo em que ele já está, as de sempre;
+ * no outro, as que a troca deixaria. É o que o editor do modal mostra quando a pessoa
+ * escolhe "Pela rotina" num dia ao vivo, antes de salvar.
+ */
+export function windowsInMode(dateKey: DateKey, mode: DayMode, now: Date = new Date()): StudyWindow[] {
+  if (dayModeOf(dateKey) === mode) return effectiveWindows(dateKey);
+  return windowsForDay(configAtDay(dateKey), overrideForMode(dateKey, mode, now) ?? null, isWeekendKey(dateKey));
 }
 
 /**
@@ -249,25 +288,37 @@ export interface DayStructureDraft {
   windows: StudyWindow[];
   /** `null` = o modal não mexeu no ritmo. */
   rhythm: LiveRhythm | null;
+  /** O modo escolhido no modal; ausente = o dia fica no modo em que está. */
+  mode?: DayMode;
 }
 
 export type DayStructureResult =
-  | { ok: true; windows: boolean; rhythm: RhythmApplies }
+  | { ok: true; windows: boolean; rhythm: RhythmApplies; mode: boolean }
   | { ok: false; reason: DayWindowsRefusal };
 
 const sameWindowList = (a: StudyWindow[], b: StudyWindow[]): boolean =>
   a.length === b.length && a.every((w, i) => w.start === b[i]!.start && w.end === b[i]!.end);
 
 /**
- * O "Salvar" do modal 🕘 Estrutura do dia: as janelas e o ritmo SÓ deste dia, numa escrita só
- * (um toast de "Plano reajustado", não dois). Só grava o que mudou: quem mexeu só no ritmo não
- * prende o dia às janelas de hoje da rotina, e vice-versa. Valida tudo antes de mudar qualquer
- * coisa; devolve o que aconteceu com o ritmo pra tela contar (`whole-day` / `from-now`).
+ * O "Salvar" do modal 🕘 Estrutura do dia: o modo, as janelas e o ritmo SÓ deste dia, numa
+ * escrita só (um toast de "Plano reajustado", não três). Só grava o que mudou: quem mexeu só
+ * no ritmo não prende o dia às janelas de hoje da rotina, e vice-versa. Valida tudo antes de
+ * mudar qualquer coisa; devolve o que aconteceu com o ritmo pra tela contar (`whole-day` /
+ * `from-now`).
+ *
+ * **O modo entra aqui desde 2026-11-28** (pedido do Tomi: "se a gente bota ao vivo, pelo menos
+ * dê a opção de marcar quanto de estudo pomodoro o user quer — ele tem que apertar salvar"):
+ * o chip "⏱ Ao vivo" trocava o modo no toque e fechava o modal, sem deixar escolher o ritmo.
+ * Agora o chip só escolhe, e a troca acontece no Salvar, junto com o ritmo. Num dia ao vivo
+ * as janelas do rascunho não valem (o modo não tem janelas: tem corridas); voltando pra
+ * rotina, elas são comparadas com as que a troca deixaria (`windowsInMode`).
  */
 export function saveDayStructure(dateKey: DateKey, draft: DayStructureDraft, now: Date = new Date()): DayStructureResult {
   const can = canEditDayWindows(dateKey, now);
   if (!can.ok) return can;
-  const janelasMudaram = !sameWindowList(draft.windows, effectiveWindows(dateKey));
+  const modo = draft.mode ?? dayModeOf(dateKey);
+  const modoMudou = modo !== dayModeOf(dateKey);
+  const janelasMudaram = modo === 'rotina' && !sameWindowList(draft.windows, windowsInMode(dateKey, 'rotina', now));
   if (janelasMudaram) {
     const v = validateDayWindows(draft.windows);
     if (!v.ok) return v;
@@ -275,13 +326,16 @@ export function saveDayStructure(dateKey: DateKey, draft: DayStructureDraft, now
   if (draft.rhythm && !isValidRhythm(draft.rhythm)) return { ok: false, reason: 'invalid-rhythm' };
   const ritmo = draft.rhythm ? nextDayRhythm(dateKey, draft.rhythm, now) : null;
   const ritmoMudou = !!ritmo && ritmo.applies !== 'unchanged';
-  if (!janelasMudaram && !ritmoMudou) return { ok: true, windows: false, rhythm: 'unchanged' };
+  if (!modoMudou && !janelasMudaram && !ritmoMudou) return { ok: true, windows: false, rhythm: 'unchanged', mode: false };
 
   const before = blocksForDay(dateKey);
+  // O modo vem ANTES do ritmo: indo pro ao vivo com a manhã marcada, ela vira corrida
+  // carimbada com o ritmo em que foi vivida — o de antes desta escrita.
+  if (modoMudou) applyDayMode(dateKey, modo, now);
   if (janelasMudaram) state.windowOverrides[dateKey] = { studyWindows: draft.windows.map((w) => ({ start: w.start, end: w.end })) };
   if (ritmo && ritmoMudou) writeDayRhythm(dateKey, ritmo.entries);
   commit(dateKey, before, now);
-  return { ok: true, windows: janelasMudaram, rhythm: ritmo ? ritmo.applies : 'unchanged' };
+  return { ok: true, windows: janelasMudaram, rhythm: ritmo ? ritmo.applies : 'unchanged', mode: modoMudou };
 }
 
 /** Só o ritmo deste dia (o modal salva pelo `saveDayStructure`; isto é o mesmo caminho, sem as janelas). */

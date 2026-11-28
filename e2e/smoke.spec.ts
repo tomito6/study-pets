@@ -90,12 +90,12 @@ test.describe('Plano aprovado no Sites', () => {
   test('Ao vivo começa pelo cartão da agenda e mantém eventos e ritmo do dia', async ({ page }) => {
     await abrirApp(page, '10:10');
     await page.locator('#tour-skip').click();
+    // Modo e ritmo na mesma visita ao modal: o chip só escolhe, e os dois valem no Salvar.
     await page.locator('#day-windows-btn').click();
+    await page.locator('#day-mode-live').click();
     await page.locator('#day-rhythm-pomo').fill('35');
     await page.screenshot({ path: test.info().outputPath('estrutura-do-dia.png') });
     await page.locator('#day-windows-save').click();
-    await page.locator('#day-windows-btn').click();
-    await page.locator('#day-mode-live').click();
     await expect(page.locator('.main #live-start.plan-live')).toBeVisible();
     await expect(page.locator('#agora-start')).toHaveCount(0);
     await expect(page.locator('#live-start')).toContainText('35 min');
@@ -2722,6 +2722,7 @@ test.describe('Study Pets — smoke', () => {
 
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-live').click();
+    await page.locator('#day-windows-save').click(); // o chip só escolhe; quem troca o modo é o Salvar
 
     // O dia ao vivo nasce SEM plano — e não pode dizer "Dia livre", que é folga.
     // Mas os compromissos ficam: a refeição das 13h existe mesmo sem plano nenhum, e
@@ -2760,6 +2761,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-live').click();
+    await page.locator('#day-windows-save').click(); // o chip só escolhe; quem troca o modo é o Salvar
     // O tour do modo ao vivo acende (área própria) e o balão, ancorado na faixa, cobre a
     // barra do dia — como um dia que não começou é onde ele nasce, ele volta depois da
     // parada no primeiro minuto (que desfaz a corrida). Pula, como os outros testes do modo.
@@ -2774,6 +2776,7 @@ test.describe('Study Pets — smoke', () => {
 
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-rotina').click();
+    await page.locator('#day-windows-save').click(); // o chip só escolhe; quem troca o modo é o Salvar
     // O dia volta a ter plano, e o começo continua sendo o da corrida.
     await expect(page.locator('#day-windows-btn')).not.toContainText('Ao vivo');
     expect(await page.locator('.block-row').count()).toBeGreaterThan(1);
@@ -2786,6 +2789,7 @@ test.describe('Study Pets — smoke', () => {
 
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-live').click();
+    await page.locator('#day-windows-save').click(); // o chip só escolhe; quem troca o modo é o Salvar
 
     // O tour do ao vivo acende sozinho, porque é OUTRA área — se fosse balão empilhado no
     // Plano, ele nasceria invisível pra quem já pulou aquele.
@@ -3066,6 +3070,7 @@ test.describe('Study Pets — smoke', () => {
     await expect(page.locator('#settings-panel')).not.toHaveClass(/open/);
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-live').click();
+    await page.locator('#day-windows-save').click(); // o chip só escolhe; quem troca o modo é o Salvar
     await page.locator('#tour-skip').click(); // o tour do modo ao vivo
 
     await page.locator('#live-start-btn').click();
@@ -3099,6 +3104,7 @@ test.describe('Study Pets — smoke', () => {
     await page.locator('#tour-skip').click();
     await page.locator('#day-windows-btn').click();
     await page.locator('#day-mode-live').click();
+    await page.locator('#day-windows-save').click(); // o chip só escolhe; quem troca o modo é o Salvar
     await page.locator('#tour-skip').click(); // o tour do modo ao vivo
     await page.locator('#live-start-btn').click();
     await expect(page.locator('#focus-overlay')).toBeVisible();
@@ -3663,6 +3669,73 @@ test.describe('a Estrutura do dia cabe na tela', () => {
       expect(rola.corpo).toBeGreaterThan(1);
       await page.locator('#day-windows-off').click();
       await dentroDaJanela(page, '#day-windows-off-confirm', 'na confirmação do dia livre, com cinco janelas');
+      expect(erros).toEqual([]);
+    });
+
+    // 2026-11-28, pedido do Tomi: "se a gente bota ao vivo, pelo menos dê a opção de marcar
+    // quanto de estudo pomodoro o user quer — ele tem que apertar salvar". Tocar em "⏱ Ao vivo"
+    // trocava o modo na hora e fechava o modal; o ritmo só reabrindo. Agora o chip só escolhe.
+    test('87. escolher Ao vivo não fecha o modal: dá pra dizer os minutos, e só vale no Salvar', async ({ page }) => {
+      const erros = vigiarErros(page);
+      await abrirApp(page, '10:10');
+      await page.locator('#tour-skip').click();
+      await abrirModal(page);
+      await page.locator('#day-mode-live').click();
+
+      // O modal continua aberto, com o chip escolhido; as janelas somem (ao vivo não tem
+      // janela) e fica o ritmo. Nada rola, e o Salvar está na tela.
+      await expect(page.locator('#day-windows-panel')).toBeVisible();
+      await expect(page.locator('#day-mode-live')).toHaveClass(/on/);
+      await expect(page.locator('#day-mode-rotina')).not.toHaveClass(/on/);
+      await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(0);
+      await expect(page.locator('#day-windows-add')).toHaveCount(0);
+      for (const sel of ['#day-mode', '#day-rhythm-pomo', '#day-rhythm-long', '#day-preview-note', '#day-windows-save']) {
+        await dentroDaJanela(page, sel, 'com Ao vivo escolhido em 375×667');
+      }
+      const corpo = await page.evaluate(() => {
+        const c = document.querySelector('#day-windows-panel .dw-body')!;
+        return c.scrollHeight - c.clientHeight;
+      });
+      expect(corpo, 'o corpo do modal rola com Ao vivo escolhido').toBeLessThanOrEqual(1);
+
+      // Cancelar: nada mudou. O dia continua pela rotina, com o plano inteiro.
+      await page.locator('#day-rhythm-pomo').fill('40');
+      await page.locator('#day-windows-panel').getByRole('button', { name: 'Cancelar' }).click();
+      await expect(page.locator('#day-windows-panel')).toBeHidden();
+      await expect(page.locator('#live-start')).toHaveCount(0);
+      await expect(page.locator('#day-windows-btn')).not.toContainText('Ao vivo');
+      expect(await page.locator('.block-row').count()).toBeGreaterThan(10);
+
+      // De novo, agora salvando: o dia vira ao vivo e o Começar já nasce com 40 min.
+      await abrirModal(page);
+      await expect(page.locator('#day-mode-rotina')).toHaveClass(/on/); // o rascunho de antes não ficou
+      await page.locator('#day-mode-live').click();
+      await page.locator('#day-rhythm-pomo').fill('40');
+      await page.locator('#day-windows-save').click();
+      await expect(page.locator('#day-windows-panel')).toBeHidden();
+      await expect(page.locator('#live-start')).toBeVisible();
+      await expect(page.locator('#live-rhythm')).toHaveText('40 min');
+      await expect(page.locator('.block-row', { hasText: 'Estudo' })).toHaveCount(0);
+      await page.locator('#tour-skip').click(); // o tour do modo ao vivo
+
+      // No dia ao vivo o modal abre no ritmo, sem janelas, e dá pra mudar os minutos de novo.
+      await abrirModal(page);
+      await expect(page.locator('#day-mode-live')).toHaveClass(/on/);
+      await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(0);
+      await expect(page.locator('#day-rhythm-pomo')).toHaveValue('40');
+      await page.locator('#day-rhythm-pomo').fill('50');
+      await page.locator('#day-windows-save').click();
+      await expect(page.locator('#live-rhythm')).toHaveText('50 min');
+
+      // E a volta pela rotina é pelo mesmo Salvar: as janelas reaparecem com a prévia do plano.
+      await abrirModal(page);
+      await page.locator('#day-mode-rotina').click();
+      await expect(page.locator('#day-windows-panel .sw-row')).toHaveCount(1);
+      await expect(page.locator('#day-preview .st-summary')).toBeVisible();
+      await expect(page.locator('#live-start')).toBeVisible(); // ainda não salvou: o dia segue ao vivo
+      await page.locator('#day-windows-save').click();
+      await expect(page.locator('#live-start')).toHaveCount(0);
+      expect(await page.locator('.block-row').count()).toBeGreaterThan(5);
       expect(erros).toEqual([]);
     });
   });

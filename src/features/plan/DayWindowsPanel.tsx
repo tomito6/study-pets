@@ -12,17 +12,17 @@ import {
   clearDayWindows,
   dayEdited,
   dayRhythmNow,
-  effectiveWindows,
   previewDayPlan,
   restKindKey,
   routineRhythmOf,
   saveDayStructure,
-  setDayMode,
   setDayOff,
+  windowsInMode,
 } from '../../application/dayWindows';
 import type { DayStructureResult, DayWindowsRefusal } from '../../application/dayWindows';
 import { dayModeOf } from '../../application/plan';
 import { state, useAppState } from '../../store/store';
+import type { DayMode } from '../../domain/dayMode';
 import { parseRhythmDraft, rhythmDraftOf, sameRhythm } from '../../domain/dayRhythm';
 import type { RhythmDraft } from '../../domain/dayRhythm';
 import { dk } from '../../domain/time';
@@ -47,10 +47,27 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   // O ritmo SÓ deste dia, como a pessoa digita (texto, pra permitir campo vazio no meio da edição).
   const [rhythm, setRhythm] = useState<RhythmDraft>({ pomo: '', shortBreak: '', longBreak: '' });
   const [confirmOff, setConfirmOff] = useState(false);
+  // O modo ESCOLHIDO no modal (2026-11-28, pedido do Tomi: "se a gente bota ao vivo, pelo
+  // menos dê a opção de marcar quanto de estudo pomodoro o user quer — ele tem que apertar
+  // salvar"). Até aqui tocar em "⏱ Ao vivo" trocava o modo na hora e FECHAVA o modal: não
+  // dava pra dizer o ritmo antes, só reabrindo. Agora o chip só escolhe; quem troca é o Salvar.
+  const [modoRascunho, setModoRascunho] = useState<DayMode>('rotina');
+  // A pessoa mexeu nas janelas? Num dia ao vivo com corrida, as janelas "pela rotina" que o
+  // editor mostra dependem do MINUTO (a rotina volta de agora em diante): sem esta marca, abrir
+  // às 10:23 e salvar às 10:25 parecia uma edição, e a corrida era regravada sem o carimbo dela.
+  const [janelasMexidas, setJanelasMexidas] = useState(false);
+  const mexerJanelas = (w: StudyWindow[]) => {
+    setWindows(w);
+    setJanelasMexidas(true);
+  };
 
   useEffect(() => {
     if (!dateKey) return;
-    setWindows(effectiveWindows(dateKey).map((w) => ({ ...w })));
+    // As janelas do editor são sempre as do dia PELA ROTINA: num dia ao vivo ele fica
+    // escondido, e escolher "Pela rotina" mostra as janelas que a troca deixaria.
+    setWindows(windowsInMode(dateKey, 'rotina').map((w) => ({ ...w })));
+    setModoRascunho(dayModeOf(dateKey));
+    setJanelasMexidas(false);
     setRhythm(rhythmDraftOf(dayRhythmNow(dateKey)));
     setConfirmOff(false);
   }, [dateKey]);
@@ -65,15 +82,20 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   const ritmoDaRotina = key ? routineRhythmOf(key) : null;
   const ritmoRascunho = parseRhythmDraft(rhythm); // null = campo vazio ou fora da faixa
 
-  /** Janelas e ritmo numa escrita só (`saveDayStructure` grava apenas o que mudou). */
+  /** Modo, janelas e ritmo numa escrita só (`saveDayStructure` grava apenas o que mudou). */
   const save = () => {
-    const r: DayStructureResult = ritmoRascunho ? saveDayStructure(key, { windows, rhythm: ritmoRascunho }) : { ok: false, reason: 'invalid-rhythm' };
+    const quando = new Date();
+    const janelas = janelasMexidas ? windows : windowsInMode(key, 'rotina', quando);
+    const r: DayStructureResult = ritmoRascunho
+      ? saveDayStructure(key, { windows: janelas, rhythm: ritmoRascunho, mode: modoRascunho }, quando)
+      : { ok: false, reason: 'invalid-rhythm' };
     if (!r.ok) {
       refuse(r.reason);
       return;
     }
     // O ritmo que só vale do próximo bloco em diante é o que mais precisa ser dito.
     if (r.rhythm === 'from-now') showToast(t.rhythm.savedFromNow);
+    else if (r.mode) showToast(t.mode.changed);
     else if (r.rhythm === 'whole-day') showToast(r.windows ? t.savedBoth : t.rhythm.savedWhole);
     else showToast(t.saved);
     onClose();
@@ -88,7 +110,8 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
     showToast(t.dayOffSet);
     onClose();
   };
-  const modo = key ? dayModeOf(key) : 'rotina';
+  const modo = key ? dayModeOf(key) : 'rotina'; // o modo SALVO; o escolhido é `modoRascunho`
+  const aoVivo = modoRascunho === 'live';
   // "Como fica o dia": o plano deste dia com as janelas que o editor tem AGORA — a
   // prévia reage antes de salvar (mudar o início pra 10:00 já mostra os pomos que cabem).
   // O "agora" só existe se o dia é hoje, e o tique do minuto o move pela régua.
@@ -97,20 +120,10 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
   const hoje = key !== '' && key === dk(agora);
   // A prévia reage também ao ritmo do rascunho: 50 · 10 nos campos já mostra os pomos que
   // cabem — o dia inteiro se ele não começou, do próximo bloco em diante se já começou.
-  const previewBlocks = key ? previewDayPlan(key, windows, ritmoRascunho, agora) : [];
+  const previewBlocks = key ? previewDayPlan(key, windows, ritmoRascunho, agora, modoRascunho) : [];
   // Num dia que já tem corrida, a primeira delas diz desde quando o dia é ao vivo — é a
   // linha que uma barra de dois botões nunca poderia carregar.
   const desde = key ? (state.windowOverrides[key]?.studyWindows.find((w) => w.live && !w.live.whole)?.start ?? null) : null;
-  const trocarModo = (m: 'rotina' | 'live') => {
-    if (!key || m === modo) return;
-    const r = setDayMode(key, m);
-    if (!r.ok) {
-      refuse(r.reason);
-      return;
-    }
-    showToast(t.mode.changed);
-    onClose();
-  };
   const restore = () => {
     const r = clearDayWindows(key);
     if (!r.ok) {
@@ -137,28 +150,30 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
               decide as outras coisas de um dia só, e num dia misto a pergunta "e a manhã?"
               cabe numa linha de texto — numa barra de dois botões, não caberia. */}
           <div className="dw-mode" id="day-mode">
-            <button type="button" className={'dm-btn' + (modo === 'rotina' ? ' on' : '')} id="day-mode-rotina" onClick={() => trocarModo('rotina')}>
+            <button type="button" className={'dm-btn' + (!aoVivo ? ' on' : '')} id="day-mode-rotina" aria-pressed={!aoVivo} onClick={() => setModoRascunho('rotina')}>
               {t.mode.rotina}
             </button>
-            <button type="button" className={'dm-btn' + (modo === 'live' ? ' on' : '')} id="day-mode-live" onClick={() => trocarModo('live')}>
+            <button type="button" className={'dm-btn' + (aoVivo ? ' on' : '')} id="day-mode-live" aria-pressed={aoVivo} onClick={() => setModoRascunho('live')}>
               {t.mode.live}
             </button>
           </div>
-          {modo === 'live' && desde && (
+          {aoVivo && modo === 'live' && desde && (
             <p className="dw-mode-sub" id="day-mode-sub">{t.mode.liveSince(desde)}</p>
           )}
-          {windows.length > 0 ? (
+          {/* Ao vivo não tem janelas — o dia começa quando a pessoa aperta Começar —, então o
+              editor delas some e sobra o que o modo tem pra decidir: o ritmo. */}
+          {aoVivo ? null : windows.length > 0 ? (
             <div className="field-group">
               <div className="dw-head">
                 <label>{t.windowsLabel}</label>
-                <button type="button" className="add-block-btn" id="day-windows-add" onClick={() => setWindows(appendWindow(windows))}>{t.add}</button>
+                <button type="button" className="add-block-btn" id="day-windows-add" onClick={() => mexerJanelas(appendWindow(windows))}>{t.add}</button>
               </div>
-              <StudyWindowsEditor windows={windows} onChange={setWindows} />
+              <StudyWindowsEditor windows={windows} onChange={mexerJanelas} />
             </div>
           ) : (
             <div className="field-group">
               <div className="dw-off-note" id="day-windows-off-note">{rest === 'weekend' ? t.weekendNote : t.offNote}</div>
-              <button type="button" className="ghost-btn" id="day-windows-add" onClick={() => setWindows(appendWindow([]))}>{t.add}</button>
+              <button type="button" className="ghost-btn" id="day-windows-add" onClick={() => mexerJanelas(appendWindow([]))}>{t.add}</button>
             </div>
           )}
           {/* O ritmo SÓ DESTE DIA (2026-10-01, pedido do Tomi: "deveria ser 2 coisas separadas —
@@ -197,7 +212,7 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
             </div>
           </div>
         </div>
-        <DayPreview blocks={previewBlocks} nowMins={hoje ? agora.getHours() * 60 + agora.getMinutes() : null} live={modo === 'live'} />
+        <DayPreview blocks={previewBlocks} nowMins={hoje ? agora.getHours() * 60 + agora.getMinutes() : null} live={aoVivo} />
       </div>
       {/* O pé. A confirmação do dia livre OCUPA o pé inteiro enquanto está aberta (antes ela
           crescia em cima dos botões e empurrava o Salvar pra fora): é uma pergunta, e a
@@ -225,7 +240,7 @@ export function DayWindowsPanel({ dateKey, onClose }: Props) {
             )}
             <div className="btn-row">
               <button type="button" className="reset-btn" onClick={onClose}>{t.cancel}</button>
-              <button type="button" className="save-btn" id="day-windows-save" onClick={save} disabled={windows.length === 0}>{t.save}</button>
+              <button type="button" className="save-btn" id="day-windows-save" onClick={save} disabled={!aoVivo && windows.length === 0 && modoRascunho === modo}>{t.save}</button>
             </div>
           </>
         )}
