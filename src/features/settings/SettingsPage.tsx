@@ -24,6 +24,7 @@ import { ConfigPreview } from './ConfigPreview';
 import { WeekPreview } from './WeekPreview';
 import { CancelSessionModal, DeleteAccountModal } from './DangerModals';
 import { FitStudyModal } from './FitStudyModal';
+import { FocusCheckSection } from './FocusCheckSection';
 import { CalendarImportSection } from './CalendarImportSection';
 import { SiteBlockSection } from './SiteBlockSection';
 import { StudyWindowsEditor, appendWindow } from './StudyWindowsEditor';
@@ -384,6 +385,8 @@ export function SettingsPage() {
                   <div className="st-hint" id="hardcore-site-note">{th.siteNote}</div>
                 </div>
               </div>
+
+              <FocusCheckSection />
 
               <AvatarPicker active={open && stab === 'general'} />
 

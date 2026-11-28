@@ -141,7 +141,18 @@ vividos). É o terceiro portão da mesma fila — o bloco que não começou (202
 (2026-09-15) — e o que fecha de vez o "plano como auto-declaração": XP, moedas, meta, sequência e o XP do
 pet passam a sair só de tempo que o relógio do app viu. O modo ao vivo já vive assim.
 
-**Nada foi implementado.** A direção está tomada; o contorno não (o próprio Tomi disse "sipa"). O caminho no
+**Existe uma versão de teste (2026-11-28), desligada por padrão** — o Tomi pediu "só um teste por enquanto,
+sem o botãozinho de check". É um interruptor deste dispositivo (Configurações → Geral → "Em teste", ou abrir
+o app com `?check=foco`; `?check=manual` desliga): ver "Check só pelo foco (versão de teste)" no CLAUDE.md.
+Ela **escolheu uma leitura provisória** pra quatro das perguntas abaixo, só pra dar pra experimentar — nenhuma
+está decidida: (1) o evento que conta como estudo **continua com o check à mão**; (3) "pelo foco" = o relógio
+do app fechou o bloco, com o foco aberto ou fechado; (5) desmarcar some junto; (6) a pausa só pela emenda. A
+(2) ficou como está (dia passado não se marca) e a (4) só pela metade: a pausa que atravessa a parede já
+entra marcada com os minutos vividos, mas o timer ainda se perde num reload — dá pra tocar em "▶ Iniciar" de
+novo enquanto o bloco é o de agora (e aí ele fecha **cheio**, mesmo iniciado no minuto 24: furo conhecido), e
+quem fecha o app e só volta depois do fim perde o bloco. A rede enquanto é teste: desligar o interruptor.
+
+**O resto não foi implementado.** A direção está tomada; o contorno não (o próprio Tomi disse "sipa"). O caminho no
 código é curto — `toggleBlockCheck` (`application/checks.ts`) deixa de marcar, e o `.check` da `BlockList`
 deixa de ser um botão —, mas o check manual hoje é a rede de sete coisas, e cada uma pede resposta antes:
 

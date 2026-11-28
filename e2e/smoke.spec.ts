@@ -3492,6 +3492,68 @@ test.describe('Study Pets — smoke', () => {
     await page.keyboard.press('Escape');
     await expect(pop).toHaveCount(0);
   });
+
+  // 2026-11-28, pedido do Tomi: uma versão de TESTE da decisão "o check só existe pelo foco"
+  // (PENDENCIAS 6) — "aí seria sem o botãozinho de check". É um interruptor deste dispositivo,
+  // desligado por padrão: todos os outros testes daqui rodam com ele desligado, e é por isso
+  // que continuam clicando no check.
+  test('86. check só pelo foco (teste): ligado, estudo e pausa não têm botão de check e o relógio marca; desligado, o botão volta', async ({ page }) => {
+    const erros = vigiarErros(page);
+    await abrirApp(page, '10:10');
+    await page.locator('#tour-skip').click();
+    const estudo = page.locator('.block-row', { hasText: '10:00–10:25' });
+    const pausa = page.locator('.block-row', { hasText: '10:25–10:30' });
+    await expect(estudo.locator('[role="checkbox"]'), 'o padrão continua sendo o check à mão').toHaveCount(1);
+
+    // Uma aula que conta como estudo: o timer não roda evento, então o check dela fica.
+    await page.locator('#add-event-btn').click();
+    await page.locator('#ev-name').fill('Aula');
+    await page.locator('#ev-start').fill('14:00');
+    await page.locator('#ev-end').fill('15:00');
+    await page.locator('#ev-save').click();
+    const aula = page.locator('.block-row', { hasText: 'Aula' });
+    await expect(aula).toBeVisible();
+
+    // Liga em Configurações → Geral. É do dispositivo: aplica na hora, sem Salvar.
+    await page.locator('#fab-config').click();
+    await page.locator('.st-switch', { has: page.locator('#cfg-focus-check') }).click(); // o input do switch é invisível: clica no trilho
+    await expect(page.locator('#cfg-focus-check')).toBeChecked();
+    await page.locator('#settings-panel .st-back').click();
+
+    // Sem botão de check em estudo e pausa — só a marca de estado, que não é botão. A aula mantém o dela.
+    await expect(estudo.locator('[role="checkbox"]')).toHaveCount(0);
+    await expect(pausa.locator('[role="checkbox"]')).toHaveCount(0);
+    await expect(estudo.locator('.check-state')).toHaveCount(1);
+    await expect(aula.locator('[role="checkbox"]')).toHaveCount(1);
+
+    // Tocar onde o check ficava é tocar na linha: abre o foco. Nada é marcado.
+    await estudo.locator('.check-state').click();
+    await expect(page.locator('#focus-overlay')).toBeVisible();
+    await expect(estudo.locator('.check-state')).not.toHaveClass(/checked/);
+
+    // Sair do foco não custa o check: o relógio do app fecha o bloco e ele aparece marcado.
+    await page.locator('.focus-exit').click();
+    await page.clock.setFixedTime(new Date(`${DIA}T10:25:01`));
+    await expect(page.locator('#focus-done')).toContainText('✓ Estudo 3 concluído');
+    await expect(estudo.locator('.check-state')).toHaveClass(/checked/);
+    await expect(estudo).toHaveAttribute('aria-label', /concluído/);
+
+    // O que o relógio marcou não se desmarca à mão: tocar na marca não muda nada.
+    await page.locator('#focus-stop').click();
+    await page.locator('#stop-here-btn').click();
+    await expect(page.locator('#focus-overlay')).toBeHidden();
+    await estudo.locator('.check-state').click();
+    await expect(estudo.locator('.check-state')).toHaveClass(/checked/);
+
+    // Recarregar lembra (a preferência é do dispositivo) e `?check=manual` desliga: o botão volta.
+    await page.reload();
+    await expect(estudo.locator('.check-state')).toHaveCount(1);
+    await page.goto('/?check=manual');
+    await expect(estudo.locator('[role="checkbox"]')).toHaveCount(1);
+    await expect(estudo.locator('.check-state')).toHaveCount(0);
+    await expect(estudo.locator('.check')).toHaveClass(/checked/);
+    expect(erros).toEqual([]);
+  });
 });
 
 // A "🕘 Estrutura do dia" cabe na tela (2026-11-27, pedido do Tomi: "a gente precisa dar

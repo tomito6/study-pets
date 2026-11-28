@@ -10,6 +10,7 @@ import type { CheckRecord, DateKey, StudyBlock, TimeString } from '../domain/typ
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, state } from '../store/store';
+import { checkOnlyByTimer } from './checkMode';
 import { isRestDayKey } from './dayWindows';
 import { activePet } from './pets';
 import { blocksForDay, isBonusDayKey, rhythmAtDay } from './plan';
@@ -131,6 +132,10 @@ const emAndamento = (dateKey: DateKey, block: StudyBlock, now: Date): boolean =>
 };
 
 export function toggleBlockCheck(dateKey: DateKey, block: StudyBlock, now: Date = new Date()): CheckResult | null {
+  // O teste do "check só pelo foco": estudo e pausa não se marcam nem se desmarcam à mão.
+  // A linha nem mostra o botão; esta guarda é o cinto. `checkBlock` (o fim do bloco pelo
+  // relógio e o "Parar por aqui") não passa por aqui, de propósito.
+  if (checkOnlyByTimer(block)) return null;
   if (!canCheckBlock(dateKey, block.time, { closedDays: state.closedDays, penalties: state.penalties, now })) return null;
 
   const day = state.checks[dateKey] ?? (state.checks[dateKey] = {});

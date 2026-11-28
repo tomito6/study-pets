@@ -2,6 +2,7 @@
 // Mesmas classes do markup antigo — o CSS e o smoke test dependem delas.
 
 import type { KeyboardEvent, MouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import { checkOnlyByTimer } from '../../application/checkMode';
 import { toggleBlockCheck } from '../../application/checks';
 import { blockNote } from '../../application/notes';
 import { playSound } from '../../application/alerts';
@@ -100,6 +101,9 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   const forfeited = (isE || isP) && isForfeited(state.penalties, dateKey, b.time);
   // A nota no bloco: a frase que a pessoa prendeu a esta linha ("lavar roupa"). Por horário, como o check.
   const nota = blockNote(dateKey, b);
+  // O teste do "check só pelo foco": estudo e pausa não têm botão de check — só a marca
+  // de que o relógio do app já fechou o bloco. O evento continua com o check à mão.
+  const soPeloFoco = checkOnlyByTimer(b);
   // Botão direito ou dedo segurado: a folha do bloco — estudo e pausa; o evento tem o modal dele no toque.
   const gesture = useBlockGesture(() => onOpenSheet(dateKey, b), isE || isP);
 
@@ -124,7 +128,8 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
     if (gesture.consumeClick()) return; // o rastro do toque longo que acabou de abrir a folha
     if (drag?.consumeClick()) return; // o clique que fecha um arrasto não abre o modal
     if (selection.handleClick(idx)) return;
-    if ((e.target as HTMLElement).closest('.check')) return;
+    // A marca do "check só pelo foco" não é botão: o toque nela é o toque na linha.
+    if ((e.target as HTMLElement).closest('.check:not(.check-state)')) return;
     const why = refusal(dateKey, now);
     if (why) {
       showToast(why);
@@ -202,7 +207,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   // um bloco pelo teclado, nem saber pelo leitor de tela o que cada linha é. O
   // `#active-pet-card` já fazia certo (role=button, Enter/Espaço) — é o mesmo padrão.
   const acionavel = clickable || isE || isP;
-  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}` + (nota ? `, ${nota}` : '') + (acao ? `, ${strings.timer.actionLabel[acao]}` : '');
+  const rotulo = `${b.time} às ${b.endTime}, ${cleanName(b.name)}` + (nota ? `, ${nota}` : '') + (soPeloFoco && done ? `, ${t.doneLabel}` : '') + (acao ? `, ${strings.timer.actionLabel[acao]}` : '');
   const onRowKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -231,7 +236,14 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
       data-drag-block={clickable ? '' : undefined}
       {...rowProps}
     >
-      {!isI && (
+      {!isI && soPeloFoco && (
+        /* As mesmas medidas do check (a coluna dos horários não anda), sem caixa e sem
+           papel de botão: é estado, não ação. Quem lê tela ouve "concluído" na linha. */
+        <span className={'check check-state' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '')} aria-hidden="true">
+          {forfeited ? <span className="check-x">✕</span> : <CheckIcon />}
+        </span>
+      )}
+      {!isI && !soPeloFoco && (
         <div
           className={'check' + (done ? ' checked' : '') + (forfeited ? ' forfeited' : '') + (!done && !forfeited && !hasBlockStarted(dateKey, b.time, now) ? ' not-yet' : '')}
           onClick={onCheckClick}

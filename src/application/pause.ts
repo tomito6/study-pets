@@ -32,6 +32,7 @@ import { clearPauseSession, readPauseSession } from '../infrastructure/pauseSess
 import { strings } from '../shared/strings';
 import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
+import { checkOnlyByTimer } from './checkMode';
 import { checkBlock } from './checks';
 import { rescheduleEndOfDayPrompt, suspendEndOfDayPrompt } from './dayEnd';
 import { effectiveWindows } from './dayWindows';
@@ -205,8 +206,12 @@ export function resumeTimer(now: Date = new Date()): ResumeOutcome {
     // antes de pausar), ou que ele saiu do plano — aí não há o que marcar.
     derived.timerPausedAt = null;
     if (regenerated) derived.timerBlock = regenerated;
+    // No teste do "check só pelo foco" não existe "marcar à mão": o bloco regenerado tem
+    // exatamente os minutos que o relógio contou antes da pausa, e eles entram marcados —
+    // a mesma conta do "■ Parar por aqui". Sem isso, esses minutos não teriam por onde entrar.
+    const creditado = !!regenerated && outlook.minsAfter > 0 && checkOnlyByTimer(regenerated) && !!checkBlock(todayKey, regenerated, now);
     stopTimer();
-    showToast(strings.timer.pauseEnded(outlook.block, outlook.minsAfter));
+    showToast(creditado ? strings.timer.pauseEndedChecked(outlook.block, outlook.minsAfter) : strings.timer.pauseEnded(outlook.block, outlook.minsAfter));
     return 'ended';
   }
   resumeRuntime(regenerated, now, endsAt);
