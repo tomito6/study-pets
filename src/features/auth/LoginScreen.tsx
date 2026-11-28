@@ -138,6 +138,15 @@ function EmailForm({ autoFocus }: { autoFocus: boolean }) {
           required
         />
         {error && <div className="ls-error" id="login-error" role="alert">{t.errors[error]}</div>}
+        {/* Quem chega pela primeira vez digita e-mail e senha e aperta o botão que está na cara —
+            "Entrar" — e lia só "E-mail ou senha incorretos". "Criar conta" era um link pequeno
+            embaixo. A saída aparece junto do erro, e vale pra qualquer e-mail: não diz se a
+            conta existe (a mesma régua do "Esqueci a senha"). */}
+        {error === 'invalid-credential' && mode === 'signin' && (
+          <button type="button" className="ls-link ls-error-hint" id="login-error-signup" onClick={toggleMode}>
+            {t.firstTime}
+          </button>
+        )}
         {resetSent && <div className="ls-info" id="login-reset-sent" role="status">{t.resetSent(email)}</div>}
         <button type="submit" className="ls-submit-btn" id="login-submit" disabled={busy}>
           {busy ? t.loading : mode === 'signup' ? t.signUp : t.signIn}

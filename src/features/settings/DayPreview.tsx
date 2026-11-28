@@ -40,7 +40,14 @@ export function DayPreview({ blocks, nowMins = null, live = false }: Props) {
 
   return (
     <div className="dw-preview" id="day-preview">
-      <div className="dw-head"><label>{tp.label}</label></div>
+      {/* A frase do fim mora no cabeçalho, ao lado do título ("Como fica o dia · Termina às
+          18:00."): uma linha a menos num modal que tem de caber na tela sem rolar
+          (2026-11-27). Quando é comprida — um compromisso depois, o aviso do ao vivo —, ela
+          quebra pra linha de baixo sozinha. */}
+      <div className="dw-head">
+        <label>{tp.label}</label>
+        <div className="dw-preview-note" id="day-preview-note">{note}</div>
+      </div>
       {hasPlan && (
         <>
           <DayTimeline blocks={blocks} nowMins={nowMins} id="day-preview-timeline" />
@@ -52,7 +59,6 @@ export function DayPreview({ blocks, nowMins = null, live = false }: Props) {
           </div>
         </>
       )}
-      <div className="dw-preview-note" id="day-preview-note">{note}</div>
     </div>
   );
 }

@@ -1,0 +1,81 @@
+/* O POP-UP DA SEQUÊNCIA (features/streak/StreakPop.tsx) — o parabéns quando a meta do dia
+   é batida e a sequência cresce. Um cartão no MEIO da tela, e mesmo assim não é um modal:
+   o véu atrás dele é só luz (não segura clique nenhum) e nada prende o teclado.
+
+   Onde ele fica: centrado na janela, igual no celular, no laptop e dentro do modo foco.
+   Nasceu no topo (encostado à direita no laptop) e o Tomi pediu o meio em 2026-11-26.
+   O preço do meio é cobrir o plano (no foco, o relógio) por alguns segundos — por isso
+   um toque em QUALQUER lugar o tira dali, e o toque fora dele ainda vale pro que estava
+   embaixo.
+
+   z-index 450: acima do foco (300) e da faixa do ciclo (400), abaixo do toast (500).
+   Só tokens: a cena reaproveita o céu, o sol e a grama do habitat do pet (--hb-*), que os
+   dois temas já pintam — de dia no Café de casa, de noite (o sol vira lua) no Loft. */
+
+.streak-slot{position:fixed;inset:0;z-index:450;display:grid;place-items:center;padding:16px;pointer-events:none;}
+/* o véu: escurece um tiquinho pra descolar o cartão da lista. Não recebe clique. */
+.sp-veil{position:absolute;inset:0;background:var(--veil-soft);animation:streak-veil-in .35s ease-out both;}
+.sp-veil.leaving{animation:streak-veil-out .2s ease-in forwards;}
+
+.streak-pop{position:relative;pointer-events:auto;display:flex;flex-direction:column;width:min(304px,100%);padding:10px 10px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-2xl);box-shadow:var(--shadow-float);cursor:pointer;text-align:center;animation:streak-in .5s cubic-bezier(.2,.9,.3,1.2) both;}
+.streak-pop.leaving{animation:streak-out .2s ease-in forwards;}
+
+/* a cena: o pet (ou o personagem) num recorte do habitat */
+.sp-scene{position:relative;flex:none;height:124px;border-radius:var(--radius-lg);background:linear-gradient(var(--hb-sky) 0%,var(--hb-sky-2) 78%);overflow:hidden;}
+.sp-scene i{position:absolute;display:block;}
+.sp-sun{left:28px;top:18px;width:22px;height:22px;border-radius:50%;background:var(--hb-sun);}
+/* dois morros: o da frente é este, o de trás (mais claro pela distância) é o ::before da cena */
+.sp-scene::before{content:'';position:absolute;right:-44px;bottom:22px;width:190px;height:36px;border-radius:50% 50% 0 0/100% 100% 0 0;background:var(--hb-hill);opacity:.55;}
+.sp-hill{left:-40px;bottom:22px;width:220px;height:52px;border-radius:50% 50% 0 0/100% 100% 0 0;background:var(--hb-hill);}
+.sp-ground{left:0;right:0;bottom:0;height:28px;background:var(--hb-grass);border-top:2px solid var(--hb-grass-line);}
+.sp-sprite{position:absolute;left:50%;bottom:12px;width:64px;height:64px;margin-left:-32px;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;z-index:1;animation:streak-hop .55s ease-out .45s 2 both;}
+.streak-pop.no-pet .sp-sprite{width:48px;height:84px;margin-left:-24px;} /* o personagem é 24×42: mais alto que largo */
+
+.sp-body{display:flex;flex-direction:column;align-items:center;padding:16px 10px 0;}
+.sp-kicker{font:600 10px/1 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px;}
+.sp-title{font:600 25px/1.25 var(--font-title);color:var(--text);white-space:nowrap;}
+/* a frase inteira, só pra quem ouve */
+.sp-spoken{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+/* o número "vira": o de ontem sobe e some, o de hoje sobe e fica */
+.sp-roll{display:inline-grid;overflow:hidden;vertical-align:bottom;height:1.25em;color:var(--accent);}
+.sp-roll > span{grid-area:1/1;text-align:center;}
+.sp-old{opacity:0;transform:translateY(-100%);animation:streak-roll-out .45s cubic-bezier(.5,0,.2,1) .5s both;}
+.sp-new{animation:streak-roll-in .45s cubic-bezier(.5,0,.2,1) .5s both;}
+.sp-sub{margin:6px 0 0;font:400 13px/1.45 var(--font-ui);color:var(--muted);text-wrap:balance;}
+
+.sp-foot{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px;}
+/* a trilha: um ponto por dia, ligados por um fio; o de hoje é o maior */
+.sp-trail{position:relative;display:flex;align-items:center;gap:9px;min-height:15px;}
+.sp-trail::before{content:'';position:absolute;left:3px;right:6px;top:50%;height:2px;margin-top:-1px;border-radius:1px;background:var(--accent-border-soft);}
+.sp-trail.more{padding-left:14px;}
+.sp-trail.more::before{left:0;background:linear-gradient(to right,transparent 0,var(--accent-border-soft) 14px);}
+.sp-dot{position:relative;display:block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent2);}
+.sp-dot.head{width:15px;height:15px;background:var(--accent);box-shadow:0 0 0 3px var(--accent-glow-soft);animation:streak-dot .5s cubic-bezier(.34,1.56,.64,1) .75s both;}
+.sp-bonus{flex:none;font:500 12px/1 var(--font-ui);color:var(--gold-muted);white-space:nowrap;}
+
+/* o ✕ mora em cima da cena: precisa de fundo próprio pra se ler contra o céu */
+.sp-close{position:absolute;top:16px;right:16px;z-index:2;width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--bg2);color:var(--muted);cursor:pointer;}
+.sp-close:hover{background:var(--surface-hover-solid);color:var(--text);}
+.sp-close:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+@keyframes streak-in{from{opacity:0;transform:translateY(10px) scale(.92);}}
+@keyframes streak-out{to{opacity:0;transform:scale(.96);}}
+@keyframes streak-veil-in{from{opacity:0;}}
+@keyframes streak-veil-out{to{opacity:0;}}
+@keyframes streak-hop{0%,100%{transform:translateY(0);}45%{transform:translateY(-6px);}}
+@keyframes streak-roll-out{from{opacity:1;transform:translateY(0);}}
+@keyframes streak-roll-in{from{opacity:0;transform:translateY(100%);}}
+@keyframes streak-dot{from{opacity:0;transform:scale(0);}}
+
+/* laptop: a janela é maior e o cartão cresce um pouco com ela, pra não parecer um selo */
+@media (min-width:1100px){
+  .streak-pop{width:340px;}
+  .sp-scene{height:136px;}
+  .sp-title{font-size:27px;}
+}
+
+/* quem pediu menos movimento: aparece e some, sem mola, sem pulo e sem o número virando */
+@media (prefers-reduced-motion:reduce){
+  .streak-pop,.streak-pop.leaving,.sp-veil,.sp-veil.leaving,.sp-sprite,.sp-new,.sp-dot.head{animation:none;}
+  .sp-old{display:none;}
+}

@@ -56,6 +56,8 @@ export const strings = {
     signUp: 'Criar conta',
     loading: 'Aguarde…',
     needAccount: 'Criar conta',
+    /** Junto do erro de e-mail ou senha: a saída de quem ainda não tem conta. Não revela se a conta existe. */
+    firstTime: 'Primeira vez por aqui? Criar conta com este e-mail',
     haveAccount: 'Já tenho conta',
     forgotPassword: 'Esqueci a senha',
     resetSent: (email: string) => `Enviamos um e-mail pra ${email}.`,
@@ -143,6 +145,13 @@ export const strings = {
         : r === 'closed' ? 'Dia encerrado 🔒'
         : r === 'no-room' ? 'Tem um compromisso bem agora 📅'
         : 'Só dá pra começar hoje 📅',
+    },
+    /** "▶ Estudar agora": hoje está pela rotina e o plano não tem mais nada que dê pra iniciar (ver `StudyNowCard`). */
+    studyNow: {
+      start: '▶ Estudar agora',
+      resumeRoutine: '↺ Voltar à rotina',
+      /** Só se a prévia do bloco não sair (um compromisso em cima de agora): o cartão ainda precisa de um nome. */
+      fallbackName: 'Estudo',
     },
     dayWindowsEdited: 'Estrutura do dia · editado',
     freeDay: '🌴 Dia livre',
@@ -337,10 +346,8 @@ export const strings = {
     mode: {
       rotina: '📋 Pela rotina',
       live: '⏱ Ao vivo',
-      /** Uma linha por modo — curtas de propósito. */
-      rotinaSub: 'O dia vem montado pelas suas janelas.',
-      liveSub: 'O dia começa quando você começa.',
-      /** Num dia que já tem corrida, o modal conta desde quando. */
+      /** Num dia que já tem corrida, o modal conta desde quando — a única linha do seletor
+       *  (as duas genéricas, uma por modo, saíram em 2026-11-27: o modal tem que caber na tela). */
       liveSince: (at: string) => `Ao vivo desde as ${at}. Antes disso, pela rotina.`,
       changed: 'Modo do dia trocado',
     },
@@ -360,7 +367,6 @@ export const strings = {
       savedFromNow: 'Ritmo novo a partir do próximo bloco — o que já passou fica como está ✓',
     },
     title: '🕘 Estrutura do dia',
-    intro: 'Só pra este dia. A rotina em Configurações continua igual.',
     /** "Como fica o dia" DESTE dia, dentro do modal: a régua com os eventos de verdade e a frase do fim. */
     preview: {
       label: 'Como fica o dia',
@@ -633,7 +639,7 @@ export const strings = {
     /** A régua é a meta do período; o plano vem na linha de baixo, como contexto. */
     adhVal: (done: number, goal: number) => `${done} / ${goal} min`,
     adhValNone: '— / — min',
-    adhSub: (doneH: number, plannedH: number) => `${doneH}h de estudo · ${plannedH}h no plano`,
+    adhSub: (done: string, planned: string) => `${done} de estudo · ${planned} no plano`,
     adhPct: (pct: number, met: boolean) => `${pct}%${met ? ' ✓' : ''}`,
     noData: 'nenhum dia cobra meta aqui',
     goalHeadline: ['Você bateu a meta de ', ' min em ', ' esta semana'],
@@ -1148,6 +1154,36 @@ export const strings = {
       abandonedIdle: (name: string, cost: { userXp: number; petXp: number }, pet: string | null) =>
         `🔥 O timer ficou rodando sozinho no meio de ${name.replace(/📖|🧘|☕/g, '').trim()} · −${cost.userXp} XP` + (pet && cost.petXp > 0 ? ` · ${pet} −${cost.petXp} XP` : ''),
     },
+  },
+  /**
+   * O pop-up de parabéns pela sequência (features/streak/StreakPop.tsx). Tom: comemora o
+   * que acabou de acontecer e para aí — nenhuma frase daqui fala de amanhã, de "não perca"
+   * ou do que acontece se a pessoa faltar.
+   */
+  streak: {
+    kicker: 'Parabéns!',
+    /** O número vai separado porque é ele que "vira" na animação: `antes` + n + `depois`. */
+    title: (n: number) => (n === 1 ? { antes: 'Dia ', depois: '' } : { antes: '', depois: ' dias seguidos' }),
+    /** A frase inteira, pra quem ouve em vez de ver. */
+    spoken: (n: number) =>
+      n === 1 ? 'Parabéns! Sua sequência começou: dia 1.' : `Parabéns! Sua sequência chegou a ${n} dias seguidos.`,
+    /**
+     * A frase fala da SEQUÊNCIA, nunca da meta do dia: o cartão é um parabéns por ela ter crescido
+     * (correção do Tomi em 2026-11-27 — "Meta de hoje batida" lia como aviso de meta, não como parabéns).
+     */
+    sub: (c: { n: number; record: boolean; milestone: boolean }, pet: string | null) => {
+      if (c.n === 1) return pet ? `Sua sequência começou hoje. ${pet} comemora com você.` : 'Sua sequência começou hoje.';
+      if (c.record) return 'É a sua maior sequência até aqui.';
+      if (c.n === 7) return 'Uma semana inteira de sequência.';
+      if (c.n === 14) return 'Duas semanas de sequência.';
+      if (c.n === 30) return 'Um mês de sequência. Isso já é hábito.';
+      if (c.milestone && c.n > 30) return `${c.n} dias de sequência. Isso já é rotina.`;
+      return pet ? `Sua sequência cresceu mais um dia. ${pet} comemora com você.` : 'Sua sequência cresceu mais um dia.';
+    },
+    /** O bônus de moedas do dia — entra quando o dia fecha, como o resto. */
+    bonus: (coins: number) => `+${coins} 🪙 no fim do dia`,
+    more: 'A sequência vem de antes desta semana',
+    close: 'Fechar',
   },
   notifications: {
     open: 'Notificações',

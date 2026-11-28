@@ -71,7 +71,9 @@ describe('stopDayAt — parar no meio do dia', () => {
     const r = stopDayAt([{ start: '09:00', end: '12:00' }, { start: '14:00', end: '18:00' }], em('15:02'), R);
     expect(r).toEqual({
       ok: true,
-      windows: [{ start: '09:00', end: '12:00', live: R }, { start: '14:00', end: '15:02', live: R }],
+      // A da manhã rodou até o fim que a rotina deu a ela: `whole` — fato, mas gerada como
+      // rotina (ver tests/whole-window.test.ts). Só a que o corte atravessa é corrida.
+      windows: [{ start: '09:00', end: '12:00', live: { ...R, whole: true } }, { start: '14:00', end: '15:02', live: R }],
     });
   });
 

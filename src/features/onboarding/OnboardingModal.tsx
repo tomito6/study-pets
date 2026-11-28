@@ -13,7 +13,7 @@
 // documento antes do onboarding terminar, e um reload pularia o pet inicial.
 
 import { useEffect, useState } from 'react';
-import { finishOnboarding } from '../../application/onboarding';
+import { finishOnboarding, starterMeal } from '../../application/onboarding';
 import { legalUrl } from '../../application/platform';
 import { DEFAULT_AVATAR } from '../../domain/avatar';
 import type { AvatarConfig } from '../../domain/avatar';
@@ -147,7 +147,11 @@ export function OnboardingModal() {
   const preview = (() => {
     const valid = windows.filter((w) => w.start && w.end && w.end > w.start);
     if (!valid.length) return null;
-    const blocks = generateBlocks({ ...state.config, studyWindows: valid, start: valid[0]!.start, end: valid[valid.length - 1]!.end }, []);
+    // Com a refeição com que a conta nasce (`starterMeal`): sem ela a prévia prometia um
+    // pomodoro a mais do que a primeira tela do Plano mostra.
+    const refeicao = starterMeal();
+    const eventos = refeicao ? [{ name: refeicao.name, start: refeicao.start, end: refeicao.end, countsAsStudy: false }] : [];
+    const blocks = generateBlocks({ ...state.config, studyWindows: valid, start: valid[0]!.start, end: valid[valid.length - 1]!.end }, eventos);
     const study = blocks.filter((b) => b.type === 'estudo');
     if (!study.length) return null;
     return { pomos: study.length, mins: study.reduce((acc, b) => acc + blockMins(b), 0) };

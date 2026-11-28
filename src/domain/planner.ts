@@ -271,9 +271,11 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
     const winEnd = win.end;
     // O ritmo é da JANELA quando ela é uma corrida do modo ao vivo (ver `StudyWindow.live`);
     // senão é o da config, como sempre. `half` desce pra cá junto, porque depende dele.
-    const live = win.live;
+    // Uma janela `whole` (a de rotina que rodou inteira) guarda o ritmo dela mas é gerada
+    // como rotina: nenhum dos desligamentos da corrida vale pra ela (ver `RunRhythm`).
+    const live = win.live?.whole ? undefined : win.live;
     emCorrida = !!live;
-    const base = live ?? cfg;
+    const base = win.live ?? cfg;
     let pomo = base.pomo;
     let shortBreak = base.shortBreak;
     let longBreak = base.longBreak;
@@ -430,7 +432,8 @@ export function generateBlocks(cfg: PlannerConfig, events: StudyEvent[] = [], pa
   // de uma pausa é um fato, e descartá-la apagaria minutos que aconteceram — além de
   // fazer o plano discordar do que a pessoa viu na tela. A pergunta é sobre a ÚLTIMA
   // janela porque os blocos saem em ordem: o último bloco é dela.
-  const ultimaAoVivo = !!windows[windows.length - 1]!.live;
+  const ultimaJanela = windows[windows.length - 1]!.live;
+  const ultimaAoVivo = !!ultimaJanela && !ultimaJanela.whole;
   while (!ultimaAoVivo && blocks.length > 0 && blocks[blocks.length - 1]!.type === 'pausa') {
     blocks.pop();
   }

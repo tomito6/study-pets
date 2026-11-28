@@ -57,7 +57,7 @@ export function TimerBar({ showIdle = true }: { showIdle?: boolean }) {
   const paused = progress?.phase === 'paused';
   const t = strings.timer;
   // Pausado contra uma parede (um compromisso colado no bloco, o fim da janela): o bloco está
-  // encolhendo, e a barra é o que a pessoa vê quando saiu do foco pausada. Só o caso que custa —
+  // encolhendo, e a barra é o que a pessoa vê quando está fora do foco pausada. Só o caso que custa —
   // "o dia anda" fica pro foco, a barra não tem folga.
   const outlook = paused ? pauseOutlookNow(now) : null;
   // A porta de volta pro foco no laptop: o mesmo peso do "Iniciar" do cartão Agora. No celular
@@ -138,8 +138,8 @@ export function TimerBar({ showIdle = true }: { showIdle?: boolean }) {
       {/* No hardcore o foco cobre tudo, e nem "Pausar" nem "Parar" existem — a saída é "Desistir" lá dentro. */}
       {/* Com o "Continuar" na tela, "Retomar" seria o mesmo botão duas vezes: retomar reabre o
           foco desde 2026-09-12. No celular ele fica — é a saída de quem está olhando outro dia,
-          onde a linha do bloco não existe. "Pausar", porém, fica nos dois: é a barra de uma
-          pausa RODANDO com o foco fechado (a única saída livre, desde 2026-09-16), e ali
+          onde a linha do bloco não existe. "Pausar", porém, fica nos dois: é a barra de um
+          bloco RODANDO com o foco fechado (dá pra sair sem pausar desde 2026-11-03), e ali
           pausar e continuar são atos diferentes. */}
       {!hardcore && progress && !waiting && !(mostraContinuar && paused) && (
         <button className="timer-pause" id="timer-pause" onClick={togglePause}>{paused ? t.resume : t.pause}</button>

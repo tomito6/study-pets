@@ -10,7 +10,9 @@
   #app { grid-template-columns: calc(186 * var(--s) * var(--col-k)) minmax(0, 1fr); }
   .plan-day-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 20px 0 16px; }
   .plan-day-title { margin: 0; font-size: clamp(1.5rem, 2.1vw, 1.875rem); }
-  .plan-day-head .day-events-bar { position: static; padding: 0; gap: 6px; }
+  /* z-index:auto — a barra é item de flex, e o z-index:5 que ela herda do app.css valia mesmo sem
+     position: os botões passavam POR CIMA das abas dos dias (sticky) ao rolar. */
+  .plan-day-head .day-events-bar { position: static; z-index: auto; padding: 0; gap: 6px; }
   .plan-day-head .add-event-btn { min-height: 40px; padding: 8px 12px; font-size: .875rem; }
   :root[data-theme="cafe"] .plan-day-head #add-event-btn { background: var(--accent-bg); color: var(--accent); border-color: var(--sage-line); }
 
@@ -38,6 +40,14 @@
   .main .plan-now .timer-continue { order: 2; }
   .main .plan-now .timer-pause, .main .plan-now .timer-stop { min-height: 40px; font-size: .875rem; }
   .plan-live .lv-tally { flex-basis: 100%; margin: 0; font-size: .875rem; }
+  /* "▶ Estudar agora" na agenda: a volta pela rotina é o botão de contorno ao lado do principal. */
+  .main .plan-live .sn-routine {
+    width: auto; min-height: 40px; margin: 0; padding: 9px 14px; border: 1px solid var(--border-strong);
+    border-radius: 9px; background: var(--bg2); color: var(--text); font: 500 .875rem/1.4 var(--font-ui);
+  }
+  /* Com o relógio correndo, o cartão acompanha a rolagem (logo abaixo das abas dos dias): desde que
+     sair do foco não pausa, é aqui que a pessoa vê o tempo enquanto mexe no plano lá embaixo. */
+  .main #timer-bar.plan-now.active { position: sticky; top: calc(var(--topbar-h) + 44 * var(--s)); z-index: 5; }
 
   .main .blocks-list .block-row { min-height: 43px; padding: 7px 10px; gap: 12px; }
   .main .blocks-list .block-time { min-width: 112px; font: 400 .875rem/1.4 var(--font-ui); color: var(--muted); }
@@ -55,7 +65,7 @@
 #day-windows-panel .panel-sheet { width: min(480px, calc(100vw - 32px)); }
 #day-windows-panel .panel-header h2 { font: 500 1.625rem/1.2 var(--font-title); }
 #day-windows-panel .dw-head label { font-size: 1rem; text-transform: none; letter-spacing: 0; }
-#day-windows-panel .dw-intro, #day-windows-panel .dw-mode-sub { font-size: .875rem; line-height: 1.5; }
+#day-windows-panel .dw-mode-sub { font-size: .875rem; line-height: 1.5; }
 #day-windows-panel input { min-height: 42px; font-size: 1rem; }
 #day-windows-panel .dw-rt { display: flex; flex-direction: column-reverse; gap: 6px; }
 #day-windows-panel .dw-rt span { font-size: .875rem; }
@@ -63,4 +73,69 @@
 #day-windows-panel .dm-btn, #day-windows-panel .btn-row button { min-height: 40px; font-size: .875rem; }
 @media (pointer: coarse) {
   .plan-day-head button, #day-windows-panel input, #day-windows-panel button { min-height: 44px; }
+}
+
+/* A ESTRUTURA DO DIA CABE NA TELA (2026-11-27, pedido do Tomi: "a gente precisa dar scroll
+   pra baixo pra salvar… deveria sempre mostrar tudo"). O modal são três faixas — cabeçalho,
+   corpo (`.dw-body`) e pé (`.dw-foot`, as ações do dia e o Salvar) — e quem rola, quando
+   um dia tem janelas demais pra altura da tela, é só o corpo: o pé nunca sai da vista.
+   No laptop o corpo são duas colunas (editar · "Como fica o dia"); no celular uma só,
+   compacta, com a folha usando a tela quase inteira. Geometria, não tema: vale pros dois.
+   O e2e 82 mede o Salvar, o Dia livre e a prévia dentro da janela em seis tamanhos. */
+#day-windows-panel .panel-sheet {
+  display: flex; flex-direction: column; overflow: hidden;
+  max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px);
+}
+#day-windows-panel .panel-header { flex: none; margin-bottom: 14px; }
+#day-windows-panel .dw-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#day-windows-panel .dw-edit { display: flex; flex-direction: column; gap: 12px; }
+#day-windows-panel .dw-edit > *, #day-windows-panel .dw-rhythm-tiles { margin: 0; }
+#day-windows-panel .dw-head { min-height: 32px; margin-bottom: 6px; flex-wrap: wrap; gap: 2px 12px; }
+#day-windows-panel .dw-head .dw-preview-note, #day-windows-panel .dw-head .dw-rhythm-note { margin: 0; }
+#day-windows-panel .dw-rhythm { padding-top: 10px; }
+#day-windows-panel .dw-rt span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .8125rem; }
+#day-windows-panel .dw-preview { margin-top: 12px; padding-top: 10px; }
+#day-windows-panel .dw-preview .dtl { margin-bottom: 0; }
+#day-windows-panel .dw-preview .st-summary { margin-top: 10px; }
+#day-windows-panel .dw-foot { flex: none; display: grid; gap: 8px; padding-top: 12px; }
+#day-windows-panel .dw-foot .btn-row, #day-windows-panel .dw-actions { margin: 0; }
+#day-windows-panel .dw-actions { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+#day-windows-panel .dw-actions .ghost-btn { min-height: 40px; font-size: .875rem; }
+#day-windows-panel .dw-confirm { font-size: .875rem; }
+
+@media (min-width: 1100px) {
+  #day-windows-panel .panel-sheet { width: 860px; max-width: none; max-height: calc((100vh - 40px) / var(--modal-k)); }
+  #day-windows-panel .dw-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  #day-windows-panel .dw-edit { padding-right: 28px; }
+  #day-windows-panel .dw-preview { margin: 0; padding: 0 0 0 28px; border-top: 0; border-left: 1px solid var(--hairline); align-self: stretch; }
+  #day-windows-panel .dw-foot { grid-template-columns: 1fr auto; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+  #day-windows-panel .dw-actions { display: flex; gap: 8px; }
+  #day-windows-panel .dw-actions .ghost-btn { width: auto; padding: 0 18px; }
+  #day-windows-panel .dw-foot > .btn-row { grid-column: 2; grid-template-columns: repeat(2, minmax(132px, auto)); }
+  #day-windows-panel .dw-confirm { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; }
+  #day-windows-panel .dw-confirm span { flex: 1; }
+  #day-windows-panel .dw-confirm .btn-row { margin: 0; grid-template-columns: repeat(2, minmax(132px, auto)); }
+}
+
+@media (max-width: 520px) {
+  #day-windows-panel.panel-overlay { padding: 8px; }
+  #day-windows-panel .panel-sheet { width: 100%; max-width: none; padding: 12px 14px; max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  #day-windows-panel .panel-header { margin-bottom: 6px; }
+  #day-windows-panel .panel-header h2 { font-size: 1.375rem; }
+  #day-windows-panel .dw-edit { gap: 10px; }
+  #day-windows-panel .dw-head { min-height: 28px; margin-bottom: 4px; }
+  #day-windows-panel .add-block-btn { min-height: 36px; }
+  #day-windows-panel .sw-row { padding: 6px 0; }
+  #day-windows-panel .sw-row:first-child { padding-top: 0; }
+  #day-windows-panel .sw-row:last-child { padding-bottom: 0; }
+  #day-windows-panel .dw-rhythm { padding-top: 8px; }
+  #day-windows-panel .dw-rt { gap: 4px; }
+  #day-windows-panel .dw-rt span { font-size: .6875rem; }
+  #day-windows-panel .dw-preview { margin-top: 10px; padding-top: 8px; }
+  #day-windows-panel .dtl-track { height: 20px; }
+  /* Os quatro números numa linha só: em 2×2 (o que as Configurações fazem em tela estreita) eram 60px a mais. */
+  #day-windows-panel .st-summary { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  #day-windows-panel .sts-tile { padding: 7px 2px; }
+  #day-windows-panel .sts-lbl { margin-top: 2px; }
+  #day-windows-panel .dw-foot { padding-top: 10px; }
 }

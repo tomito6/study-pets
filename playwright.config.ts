@@ -17,6 +17,17 @@ import { defineConfig } from '@playwright/test';
 // PW_CHANNEL existe só como override consciente (ex.: CI com outro browser).
 // PW_PORT idem: pra rodar a suíte com um dev server já ocupando a 5174 (ex.: dois checkouts).
 
+// FUSO — o relógio dos testes é o de Berlim, nos dois lados.
+// O spec monta a hora no Node (`new Date('2026-09-02T10:10:00')`, sem fuso = o fuso
+// da MÁQUINA) e o navegador roda em `timezoneId: 'Europe/Berlin'`. Numa máquina em
+// outro fuso os dois discordam: em São Paulo o app vê 15:10, em UTC vê 12:10, o
+// "bloco de agora" já passou e 35 testes caem por nada. Fixar aqui vale pra este
+// processo e pros workers (que carregam este arquivo antes do spec), em qualquer
+// terminal — no Git Bash do Windows um `TZ=…` na linha de comando nem chega no Node.
+// Os dois nomes andam juntos: mudou um, mude o outro.
+const TIMEZONE = 'Europe/Berlin';
+process.env.TZ = TIMEZONE;
+
 const PORT = Number(process.env.PW_PORT) || 5174;
 const channel = process.env.PW_CHANNEL; // undefined = Chromium do Playwright
 
@@ -40,7 +51,7 @@ export default defineConfig({
     locale: 'pt-BR',
     // startTimer pede permissão de notificação; concedida de antemão pra não ficar prompt pendurado.
     permissions: ['notifications'],
-    timezoneId: 'Europe/Berlin',
+    timezoneId: TIMEZONE,
   },
   webServer: {
     // O mesmo que `npm run dev:teste`, com a porta parametrizada.

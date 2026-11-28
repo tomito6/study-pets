@@ -180,7 +180,7 @@ function BlockRow({ dateKey, block: b, blocks, idx, inGroup, selection, drag, no
   // O botão da linha — a mesma porta pra ir e pra voltar (2026-09-12). "Iniciar" no bloco
   // que está acontecendo agora, enquanto nada roda: sem ele, a única entrada era descobrir
   // sozinho que a linha inteira é clicável. "Continuar" no bloco que É o timer: com o foco
-  // fechado (só se pausa), é como se volta — sem passar por `runBlock`, que reiniciaria.
+  // fechado (rodando ou pausado), é como se volta — sem passar por `runBlock`, que reiniciaria.
   const podeAgir = (isE || isP) && isToday && !closed && !future && !forfeited;
   const acao: 'iniciar' | 'continuar' | null = !podeAgir
     ? null

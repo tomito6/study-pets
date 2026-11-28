@@ -106,7 +106,11 @@ export function stopDayAt(windows: StudyWindow[], now: Date, ritmo: LiveRhythm):
     if (fim <= inicio) continue;
     // Janela que já é corrida guarda o ritmo com que rodou: carimbar o de agora por cima
     // reescreveria os blocos dela (e os checks) se o ritmo mudou entre uma corrida e a outra.
-    out.push({ start: w.start, end: minsToTime(fim), live: w.live ? { ...w.live } : { ...ritmo } });
+    // E a janela de rotina que o corte nem alcança (acabou antes) sai `whole`: congelada como
+    // fato, mas gerada como a rotina que ela foi — o rabo dela não foi rasgado, e tratá-la como
+    // corrida reescreveria o fim dela (ver `RunRhythm`).
+    const inteira = !w.live && timeToMins(w.end) <= corte;
+    out.push({ start: w.start, end: minsToTime(fim), live: w.live ? { ...w.live } : inteira ? { ...ritmo, whole: true } : { ...ritmo } });
   }
   // Nada vivido: parar antes do começo da primeira janela não deixa registro nenhum, e
   // uma lista vazia seria lida como "dia livre" (ver `isDayOff`) — que é outra coisa.
@@ -161,7 +165,7 @@ export function grownRunWindows(
   pauses: PauseRecord[],
 ): StudyWindow[] | null {
   const inicio = timeToMins(blockStart);
-  const idx = windows.findIndex((w) => w.live && timeToMins(w.start) <= inicio && timeToMins(w.end) > inicio);
+  const idx = windows.findIndex((w) => w.live && !w.live.whole && timeToMins(w.start) <= inicio && timeToMins(w.end) > inicio);
   if (idx < 0) return null;
   const meus = pauses.filter((r) => timeToMins(r.at) >= inicio);
   const cresceu = pausedMinutes(meus.reduce((soma, r) => soma + r.secs, 0)) - alreadyPaused;
