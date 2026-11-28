@@ -2,6 +2,7 @@
 
 import { serializeState } from '../domain/persistence';
 import { users } from '../infrastructure';
+import { isTestSite } from '../infrastructure/platform';
 import { derived, notify, state } from '../store/store';
 
 const DEBOUNCE_MS = 800;
@@ -35,6 +36,11 @@ export function hasPendingSave(): boolean {
   return saveTimeout !== null || inFlight;
 }
 
+/** No site de teste a conta de mentira fica no navegador; no `dev:teste`, só na aba. */
+function savedInTestMode(): string {
+  return isTestSite() ? '💾 Modo teste (só neste navegador)' : '💾 Modo teste (só nesta aba)';
+}
+
 function showStatus(text: string, done: boolean): void {
   derived.save = { text, visible: true };
   if (hideTimeout) clearTimeout(hideTimeout);
@@ -53,7 +59,7 @@ async function persist(): Promise<void> {
   inFlight = true;
   try {
     await users.save(state.user.uid, { ...serializeState(state), meta: { writer: CLIENT_ID, writtenAt: Date.now() } });
-    showStatus(users.ephemeral ? '💾 Modo teste (só nesta aba)' : 'Salvo ✓', true);
+    showStatus(users.ephemeral ? savedInTestMode() : 'Salvo ✓', true);
   } catch (e) {
     console.error('Save failed:', e);
     showStatus('⚠️ Erro ao salvar', true);

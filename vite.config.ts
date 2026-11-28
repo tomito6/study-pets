@@ -8,8 +8,14 @@ import { VitePWA } from 'vite-plugin-pwa';
 // service worker — o WebView do iOS serve os arquivos do próprio pacote do app, então
 // não há rede pra cachear, e um SW ali só criaria uma segunda cópia de tudo que podia
 // ficar velha em relação ao app instalado.
+//
+// `--mode previa` é o SITE DE TESTE: o que a Vercel publica na prévia de cada PR (ver
+// vercel.json e "O site de teste" no CLAUDE.md). É o modo memória do `dev:teste`, só que
+// buildado — as variáveis vêm do `.env.previa`. A única diferença aqui é o service worker,
+// que nasce "autodestrutivo" (ver `selfDestroying` abaixo).
 export default defineConfig(({ mode }) => {
   const native = mode === 'native';
+  const previa = mode === 'previa';
   return {
     plugins: [
       react(),
@@ -23,6 +29,13 @@ export default defineConfig(({ mode }) => {
       !native && VitePWA({
         registerType: 'autoUpdate',
         injectRegister: 'auto',
+        // No site de teste o SW se desregistra e apaga os caches em vez de precachear.
+        // Um link de teste tem que mostrar o último push no PRIMEIRO carregamento — o
+        // precache mostraria o deploy anterior até o reload seguinte. E não basta não
+        // gerar SW nenhum: o endereço da prévia de um PR antigo já pode ter um SW do
+        // build com Firebase instalado no navegador, e ele continuaria servindo aquele
+        // build pra sempre. O autodestrutivo é o que tira o antigo de lá.
+        selfDestroying: previa,
         // O manifest é o arquivo estático em public/manifest.webmanifest (index.html aponta pra ele).
         manifest: false,
         includeAssets: ['icons/*.png', 'manifest.webmanifest'],
