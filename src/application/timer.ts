@@ -44,6 +44,7 @@ import { showToast } from '../shared/toast';
 import { derived, notify, state } from '../store/store';
 import { playSound, primeAudio } from './alerts';
 import { alarmDelegated } from './timerAlarm';
+import { focusOnlyCheck } from './checkMode';
 import { checkBlock } from './checks';
 import { abandonHardcore, armHardcoreIfRunning, endHardcoreSession, hardcoreChained } from './hardcoreRuntime';
 import { chainLive } from './live';
@@ -164,13 +165,13 @@ function encerrarSemNinguem(now: Date): void {
   const hc = derived.hardcore;
   if (!hc) {
     stopTimer();
-    showToast(strings.timer.staleStop);
+    showToast(focusOnlyCheck() ? strings.timer.staleStopFocusOnly : strings.timer.staleStop);
     return;
   }
   const cobrado = hc.armed ? abandonHardcore(hc, now, 'ocioso') : null;
   endHardcoreSession(); // antes do stopTimer: com sessão viva ele é no-op (o foco hardcore não tem saída livre)
   stopTimer();
-  if (!cobrado) showToast(strings.timer.staleStop);
+  if (!cobrado) showToast(focusOnlyCheck() ? strings.timer.staleStopFocusOnly : strings.timer.staleStop);
 }
 
 // ---- os ganchos da pausa (application/pause.ts decide; aqui é só o runtime) ----

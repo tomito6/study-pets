@@ -169,6 +169,8 @@ export const strings = {
     free: 'livre',
     eventTitle: 'Toque pra editar ou apagar este evento',
     checkLabel: (name: string) => `Marcar ${name} como concluído`,
+    /** No teste do "check só pelo foco" a linha não tem checkbox: o estado entra no rótulo dela. */
+    doneLabel: 'concluído',
     dragTitle: 'Arraste pra mudar o horário',
     dragGhost: (start: string, end: string) => `${start} – ${end}`,
     freeWeekend: '🌴 Fim de semana livre',
@@ -827,6 +829,12 @@ export const strings = {
       hint: 'Vale só neste dispositivo. Pra comparar rápido, dá pra abrir o app com ?tema=cafe no fim do endereço.',
     },
     /** Configurações → Geral → "Sons e notificações" (features/settings/SoundSection.tsx). */
+    /** O teste do "check só pelo foco" (ver application/checkMode.ts). Uma linha, sem explicação em volta. */
+    focusCheck: {
+      title: 'Em teste',
+      toggle: 'Check só pelo foco',
+      toggleSub: 'Estudo e pausa se marcam sozinhos, pelo relógio. Sem o botão de check.',
+    },
     sound: {
       title: 'Sons e notificações',
       desc: 'O que o app faz quando um bloco termina — no dia de rotina e no modo ao vivo, do mesmo jeito.',
@@ -1006,6 +1014,8 @@ export const strings = {
       mins > 0
         ? `O bloco terminou durante a pausa — ${block} ficou com ${mins} min; marque à mão se quiser ✓`
         : `A pausa cobriu ${block} inteiro: ele saiu do plano`,
+    /** O mesmo fim, no teste do "check só pelo foco": não há check à mão, então os minutos vividos já entram marcados. */
+    pauseEndedChecked: (block: string, mins: number) => `O bloco terminou durante a pausa — ${block} entrou com ${mins} min ✓`,
     /** Na barra, pausado contra uma parede: curto, porque é a linha mais apertada do app. */
     pauseWallShort: (block: string, mins: number, w: PauseWallText) =>
       `⏳ ${w.kind === 'event' ? `${w.name} às ${w.at}` : `janela até ${w.at}`} · ${block} vale ${mins} min`,
@@ -1014,6 +1024,8 @@ export const strings = {
     pauseMidnight: 'A pausa atravessou a meia-noite: o timer foi encerrado 🌙',
     /** O timer ficou rodando sozinho por muito tempo: encerra sem marcar nada. */
     staleStop: 'O timer ficou rodando sozinho — encerrei sem marcar. Marque à mão o que você fez ✓',
+    /** No teste do "check só pelo foco" não há o que marcar à mão. */
+    staleStopFocusOnly: 'O timer ficou rodando sozinho — encerrei sem marcar.',
     pauseRefusal: (r: { reason: 'no-timer' } | { reason: 'hardcore' } | { reason: 'not-running' } | { reason: 'day-closed' }) =>
       r.reason === 'hardcore' ? 'No modo hardcore não tem pausa 🔥'
       : r.reason === 'not-running' ? 'O bloco ainda não começou ⏳'

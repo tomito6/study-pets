@@ -132,6 +132,97 @@ pra trás. O que sobra é decidir ONDE o ritmo mora e como ele entra no gerador:
 - **O passado**: mudar o ritmo de um grupo de hoje que já tem check segue a mesma regra da história (vale só
   pro que ainda não aconteceu) — ou é recusado, como "Dia livre" recusa depois de um check. Decidir.
 
+## 6. O check só existe pelo foco
+
+**Decisão do Tomi em 2026-11-27, a implementar**: "se você não estuda o bloco em modo foco, se não estiver
+ativamente nele, você não pode dar check" — ou seja, **o check à mão deixa de existir**. Quem marca passa a
+ser só o app: o fim do bloco no timer (`checkBlock`) e o "■ Parar por aqui" (o parcial, pelos minutos
+vividos). É o terceiro portão da mesma fila — o bloco que não começou (2026-09-13), o bloco em andamento
+(2026-09-15) — e o que fecha de vez o "plano como auto-declaração": XP, moedas, meta, sequência e o XP do
+pet passam a sair só de tempo que o relógio do app viu. O modo ao vivo já vive assim.
+
+**Existe uma versão de teste (2026-11-28), desligada por padrão** — o Tomi pediu "só um teste por enquanto,
+sem o botãozinho de check". É um interruptor deste dispositivo (Configurações → Geral → "Em teste", ou abrir
+o app com `?check=foco`; `?check=manual` desliga): ver "Check só pelo foco (versão de teste)" no CLAUDE.md.
+Ela **escolheu uma leitura provisória** pra quatro das perguntas abaixo, só pra dar pra experimentar — nenhuma
+está decidida: (1) o evento que conta como estudo **continua com o check à mão**; (3) "pelo foco" = o relógio
+do app fechou o bloco, com o foco aberto ou fechado; (5) desmarcar some junto; (6) a pausa só pela emenda. A
+(2) ficou como está (dia passado não se marca) e a (4) só pela metade: a pausa que atravessa a parede já
+entra marcada com os minutos vividos, mas o timer ainda se perde num reload — dá pra tocar em "▶ Iniciar" de
+novo enquanto o bloco é o de agora (e aí ele fecha **cheio**, mesmo iniciado no minuto 24: furo conhecido), e
+quem fecha o app e só volta depois do fim perde o bloco. A rede enquanto é teste: desligar o interruptor.
+
+**O Tomi experimentou e gostou (2026-11-28): "pode deixar como opção nas configurações então. No futuro a
+gente vê como faz."** Fica assim, opcional e desligada por padrão; virar padrão, e as perguntas abaixo, ficam
+pra quando ele voltar ao assunto.
+
+**O resto não foi implementado.** A direção está tomada; o contorno não (o próprio Tomi disse "sipa"). O caminho no
+código é curto — `toggleBlockCheck` (`application/checks.ts`) deixa de marcar, e o `.check` da `BlockList`
+deixa de ser um botão —, mas o check manual hoje é a rede de sete coisas, e cada uma pede resposta antes:
+
+1. **O evento que conta como estudo** (a aula). O timer só roda estudo e pausa (`tryStartTimer`); evento só
+   ganha check à mão. Ele ganha um foco próprio, fica como a única coisa marcável à mão, ou deixa de dar XP?
+   Vão junto a skill Aula (a base da Pomba), a Retomada e "evento alimenta sequência e XP do pet".
+2. **Quem estuda longe do computador.** O CLAUDE.md promete hoje que "dia passado aceita qualquer horário —
+   quem estuda longe do computador marca à noite", e a skill "concluir no modo foco" foi descartada
+   justamente por punir essa pessoa. A decisão vira as duas frases. Dia passado fica sem jeito nenhum de
+   marcar? (É onde o app de iPhone deixa de ser conforto e vira o caminho.)
+3. **O que é "ativamente".** O foco aberto na tela, ou o relógio do app rodando? Em 2026-11-03 você decidiu
+   que sair do foco não pausa e **não custa o check** (PR #5, ainda aberto). Se "ativamente" for "foco na
+   tela", as duas decisões batem de frente. Leitura provável: relógio do app rodando = vale. Confirmar.
+4. **O timer que se perde.** Um reload perde o timer (só a pausa e o hardcore voltam), a aba descartada
+   idem, a ausência de mais de 30 min (`ATRASO_MAX_MIN`) encerra sem check, e a pausa que atravessa a
+   parede diz "marque à mão se quiser ✓". Em todos, hoje, a saída é marcar à mão. Sem ela, um F5 aos 24
+   minutos custa o bloco inteiro — o que provavelmente pede **persistir o timer no dispositivo** antes ou
+   junto (o próximo passo que "O fim do bloco pela extensão" já deixava anotado).
+5. **Desmarcar.** Continua existindo ("tirar não é ganhar")? Se sim, passa a ser irreversível — não há como
+   remarcar —, e aí pede confirmação. Ou some junto, e o check vira só registro.
+6. **A pausa.** Hoje ela dá XP com check (à mão ou pela emenda do foco). Só pela emenda também?
+7. **O que some na tela e nos testes.** O ripple e o "+X XP" flutuante passam a existir só no fim do bloco;
+   o `.check.not-yet` e a recusa do bloco em andamento perdem a função; a faixa do ciclo da lista
+   (`#cycle-cheer`) deixa de ter quem a dispare fora do foco; os balões do tour e a Fiel ("o primeiro estudo
+   **marcado**") falam de marcar. E o smoke marca check à mão em dezenas de casos: vai precisar de um helper
+   que rode o bloco pelo relógio falso. Medir antes de começar.
+
+Os checks que já existem ficam como estão — nada retroativo. Quando as respostas vierem, isto é plan grande
+(mexe em Princípios do CLAUDE.md, em skills e na suíte inteira): vai pra `plans/`.
+
+## 7. Mudar os horários do dia apaga o estudo que já foi feito
+
+O Tomi, em 2026-11-28: "às vezes você marca que fez o estudo, mas depois muda os horários, e aí deleta o
+estudo que você fez".
+
+**O que acontece** (lido no código, ainda não reproduzido na tela): o check é guardado pelo horário de
+início do bloco (`"09:25"`), e o plano do dia é gerado de novo a cada mudança. Se o bloco marcado deixa de
+começar naquele minuto, o check continua no documento mas não bate com bloco nenhum: some da lista, e o XP
+pendente, a meta e a sequência do dia caem junto, sem aviso. Três portas fazem isso hoje, em hoje com
+checks:
+
+1. **As janelas do dia** (🕘 Estrutura do dia → Salvar): `setDayWindows` troca as janelas inteiras. Começar
+   às 09:10 em vez de 09:00 desloca a manhã toda.
+2. **Evento novo, editado ou arrastado** pra antes ou pra cima de um bloco marcado: o resto do plano se
+   rearruma em volta (`updateEvent` já diz isso num comentário: "o check gravado no horário antigo fica
+   órfão").
+3. **Apagar um evento** que segurava o plano no lugar.
+
+Quem **já** protege o que foi vivido, e serve de modelo: o ritmo do dia (com fato no dia, vale só do próximo
+bloco em diante), as Configurações (com fato, "vale a partir de amanhã"), a pausa do timer (o check
+acompanha o bloco que deslizou, `remapChecksForPause`) e a troca pro ao vivo (a manhã marcada vira corrida).
+
+**A decidir antes de mexer:**
+
+1. **Congelar o que foi vivido**, como o ritmo do dia faz: em hoje com checks, a mudança de janelas vale de
+   agora em diante e a parte marcada fica como estava (a janela vivida vira fato, `live` com `whole`). É a
+   leitura que combina com o resto do app.
+2. **Ou levar o check junto** (remapear pro bloco que ficou no lugar)? Mais frágil: nem sempre há um bloco
+   equivalente.
+3. **E o evento?** Um evento posto em cima de um estudo marcado: recusa, avisa, ou o estudo marcado fica e o
+   evento entra depois dele?
+4. **Enquanto não se decide, avisar?** Hoje o toast só diz "Plano reajustado: −1 estudo"; não diz que o que
+   saiu estava feito.
+
+Medir primeiro: reproduzir as três portas em `dev:teste` e escrever o teste que falha.
+
 ---
 
 ## Como esse arquivo deve crescer

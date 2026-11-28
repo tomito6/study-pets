@@ -114,6 +114,12 @@ export interface Derived {
    */
   setupTour: boolean;
   audio: AudioSettings;
+  /**
+   * "Check só pelo foco" (versão de teste, ver application/checkMode.ts): estudo e pausa
+   * só se marcam pelo relógio do app, e o check à mão some da linha. Preferência deste
+   * dispositivo, desligada por padrão.
+   */
+  focusOnlyCheck: boolean;
   save: SaveStatus;
   authReady: boolean;
   /** O documento não pôde ser lido neste boot. Trava a UI e, com ela, qualquer save. */
@@ -158,6 +164,7 @@ export const derived: Derived = {
   settingsRequest: null,
   setupTour: false,
   audio: { volume: 0.7, muted: false },
+  focusOnlyCheck: false,
   save: { text: '', visible: false },
   authReady: false,
   loadFailed: false,

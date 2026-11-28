@@ -722,6 +722,67 @@ morar na janela (`studyWindows[i].rhythm?`) e/ou no grupo (`StudyGroup.rhythm?`)
 o ritmo da janela em que está. Grupo é anotação por horário, então "ritmo do grupo" seria o gerador reagir a
 uma anotação — muda a regra "grupo nunca entra no generateBlocks" (CLAUDE.md). Pensar antes de implementar.
 
+## Check só pelo foco: o check à mão deixa de existir — 2026-11-27
+
+Decisão do Tomi: bloco que não foi estudado em modo foco, com ele ativamente ali, não pode ser marcado. O
+plano deixa de ser auto-declaração de vez — o que rende XP, moeda, sequência e pet é tempo que o relógio do
+app viu. → virou o **item 6 do `PENDENCIAS.md`**, com as sete perguntas que a decisão abre (a aula, quem
+estuda longe do computador, o reload que perde o timer, desmarcar…).
+
+O que fica aqui é o rabisco em volta: se o check deixa de ser um gesto, o **quadradinho da linha** vira só
+estado (feito / não feito), e talvez nem precise mais parecer um botão — o "▶ Iniciar" da linha de agora
+passa a ser a única ação do plano. E o gesto gostoso de marcar ("o ato de marcar um bloco como feito tem que
+ser gratificante", CLAUDE.md) muda de lugar: o momento passa a ser o fim do bloco no foco, que já tem som e
+faixa — vale olhar se ele carrega sozinho o que o ripple e o "+X XP" carregavam.
+
+## Bônus por aparecer, e bônus extra pra quem escolhe um mínimo por dia — 2026-11-27
+
+Ideia do Tomi, em duas metades: (1) um bônus **só por abrir o app / aparecer de novo**; (2) um bônus
+**extra se você decide botar um mínimo de horas de estudo por dia**.
+
+O que já existe e encosta nisso: a meta diária (`config.dailyStudyMin`, 15–240 min, padrão 60) e o bônus
+diário de moedas por sequência (`DAILY_BONUS_TIERS`: 5/8/12/18/25 nos dias 1/3/7/14/30), que só entra no dia
+em que a meta foi batida. E a skill **Recomeço** (Pássaro de fogo) já paga por voltar depois de um dia em
+branco — mas paga em cima de bloco estudado, não pela visita.
+
+Antes de virar tarefa, decidir:
+
+- **O que o bônus de aparecer paga, e em quê.** Moeda parece o lugar (XP é tempo estudado, e no mesmo dia
+  o Tomi decidiu que check só vale pelo foco — pagar XP por abrir o app iria na direção contrária). Uma vez
+  por dia? Só no dia da volta depois de um sumiço, como a Recomeço?
+- **Onde ele para de ser carinho e vira gancho.** "Recompensa diária de login" é o padrão clássico de
+  retenção, e o CLAUDE.md proíbe o primo dele ("faz N dias que você não aparece"). A versão que cabe no app
+  é a que **nunca escala nem se perde**: um oi fixo, sem contador de dias de visita, sem "volte amanhã pra
+  não perder". Se tiver sequência de visitas, virou streak de login — aí é não.
+- **O que é "decidir botar um mínimo".** Hoje todo mundo já tem meta (60 min de fábrica), então ninguém
+  decide nada. A ideia pede uma de duas coisas: a meta vira **escolha** (conta nova nasce sem, e quem liga
+  ganha o extra), ou o extra **cresce com a meta** que a pessoa escolheu. Na primeira, o bônus por sequência
+  de hoje já é esse extra e só falta dizer isso na tela; na segunda, meta de 15 min não pode render igual à
+  de 4h, senão o caminho barato é baixar a meta.
+- **Mudar a meta recalcula tudo pra trás** (sequência e bônus são retroativos em `dailyStudyMin`, de
+  propósito fora da história da config). Com dinheiro pendurado na altura da meta, subir a meta depois de
+  um mês bom repagaria o mês inteiro. Ou a meta entra na história, ou o extra é fixo.
+
+## Dividir o desenvolvimento do site por áreas — 2026-11-27 (pra refletir depois)
+
+Do Tomi, ainda cru, e ele mesmo avisou que quer pensar mais: "seria legal ter uma divisão de
+desenvolvimento no site. Tipo: página de login / informativa do projeto, tutorial, Plano, Análise, perfil,
+configurações, loja, design, habilidades, e assim por diante".
+
+Não é pra fazer nada ainda. O que dá pra deixar anotado pra quando ele voltar:
+
+- **A lista dele já é quase o mapa do código.** `src/features/` tem `auth` (login), `tutorial`, `plan`,
+  `analytics`, `profile`, `settings`, `pets` (a loja mora aqui); "design" são os temas em `src/styles/`, e
+  "habilidades" são as skills (`domain/progression.ts`, mais o bestiário). O que não existe em lugar nenhum
+  é a **página informativa do projeto**: hoje quem não tem conta só vê a tela de entrada.
+- **O que a divisão organizaria é a pergunta em aberto.** Pode ser o *trabalho* (pendências, ideias e
+  conversas separadas por área, em vez de um `PENDENCIAS.md` e um `IDEIAS.md` únicos), pode ser o *app*
+  (cada área evoluindo e sendo revisada como uma peça própria), ou as duas coisas. Perguntar antes de
+  desenhar qualquer coisa.
+- **O que atravessa as áreas não cabe numa só**: o gerador do plano, o XP e as moedas, o timer e o foco
+  aparecem no Plano, na Análise e no Perfil ao mesmo tempo. Uma divisão por tela precisa de um lugar pro que
+  é de todas (hoje é o CLAUDE.md).
+
 Pendências menores do B7 que ficaram pra depois, pra não perder (as três viraram os itens 1, 2 e 3 do
 `PENDENCIAS.md` em 2026-09-08, cada uma com a pergunta que falta responder):
 - as abas do laptop continuam "Plano · Análise · Perfil"; o pacote dizia "Meu plano · Meus pets · Progresso"
