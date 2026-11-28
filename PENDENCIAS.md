@@ -152,6 +152,10 @@ entra marcada com os minutos vividos, mas o timer ainda se perde num reload — 
 novo enquanto o bloco é o de agora (e aí ele fecha **cheio**, mesmo iniciado no minuto 24: furo conhecido), e
 quem fecha o app e só volta depois do fim perde o bloco. A rede enquanto é teste: desligar o interruptor.
 
+**O Tomi experimentou e gostou (2026-11-28): "pode deixar como opção nas configurações então. No futuro a
+gente vê como faz."** Fica assim, opcional e desligada por padrão; virar padrão, e as perguntas abaixo, ficam
+pra quando ele voltar ao assunto.
+
 **O resto não foi implementado.** A direção está tomada; o contorno não (o próprio Tomi disse "sipa"). O caminho no
 código é curto — `toggleBlockCheck` (`application/checks.ts`) deixa de marcar, e o `.check` da `BlockList`
 deixa de ser um botão —, mas o check manual hoje é a rede de sete coisas, e cada uma pede resposta antes:
