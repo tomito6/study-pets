@@ -62,7 +62,7 @@ afterEach(() => {
 
 describe('o ritmo de um dia que ainda não começou vale o dia inteiro', () => {
   it('amanhã em 50 · 10: só amanhã muda — hoje, depois de amanhã e a rotina ficam como estavam', () => {
-    expect(setDayRhythm(AMANHA, R50, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'whole-day' });
+    expect(setDayRhythm(AMANHA, R50, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'whole-day', mode: false });
     expect(estudos(AMANHA)[0]).toMatchObject({ time: '09:00', endTime: '09:50' });
     expect(estudos(HOJE)[0]).toMatchObject({ endTime: '09:25' });
     expect(estudos('2026-09-04')[0]).toMatchObject({ endTime: '09:25' });
@@ -90,7 +90,7 @@ describe('o ritmo de um dia que ainda não começou vale o dia inteiro', () => {
   });
 
   it('o mesmo ritmo de novo não escreve nada', () => {
-    expect(setDayRhythm(AMANHA, R25, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'unchanged' });
+    expect(setDayRhythm(AMANHA, R25, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'unchanged', mode: false });
     expect(state.dayRhythms).toEqual({});
   });
 
@@ -105,13 +105,13 @@ describe('o ritmo de um dia que ainda não começou vale o dia inteiro', () => {
 
   it('janelas e ritmo no mesmo Salvar; janela inválida recusa os dois', () => {
     const r = saveDayStructure(AMANHA, { windows: [{ start: '10:00', end: '14:00' }], rhythm: R50 }, AGORA);
-    expect(r).toEqual({ ok: true, windows: true, rhythm: 'whole-day' });
+    expect(r).toEqual({ ok: true, windows: true, rhythm: 'whole-day', mode: false });
     expect(estudos(AMANHA)[0]).toMatchObject({ time: '10:00', endTime: '10:50' });
     const ruim = saveDayStructure('2026-09-04', { windows: [{ start: '12:00', end: '10:00' }], rhythm: R50 }, AGORA);
     expect(ruim).toEqual({ ok: false, reason: 'invalid-window' });
     expect(state.dayRhythms['2026-09-04']).toBeUndefined();
     // Nada mudou → nada é escrito (salvar sem mexer não marca o dia como editado).
-    expect(saveDayStructure('2026-09-04', { windows: ROTINA, rhythm: R25 }, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'unchanged' });
+    expect(saveDayStructure('2026-09-04', { windows: ROTINA, rhythm: R25 }, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'unchanged', mode: false });
     expect(state.windowOverrides['2026-09-04']).toBeUndefined();
   });
 });
@@ -128,7 +128,7 @@ describe('hoje com algo já vivido: o ritmo novo vale do próximo bloco em diant
     expect(xpAntes).toBe(100);
     // 14:03: sem refeição neste dia, o bloco em andamento pelo plano é o Estudo 9 (13:55–14:20).
     const emAndamento = antes.find((b) => b.time <= '14:03' && b.endTime > '14:03')!;
-    expect(setDayRhythm(HOJE, R50, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'from-now' });
+    expect(setDayRhythm(HOJE, R50, AGORA)).toEqual({ ok: true, windows: false, rhythm: 'from-now', mode: false });
 
     const depois = blocksForDay(HOJE);
     expect(depois.filter((b) => b.time < '14:03')).toEqual(antes.filter((b) => b.time < '14:03'));
@@ -288,7 +288,7 @@ describe('voltar do ao vivo pra rotina com um ritmo de 13 minutos', () => {
     expect(estudos(AMANHA)[0]).toMatchObject({ endTime: '09:25' });
 
     // No modal do dia: muda HOJE. O bloco das 10:23 (já começou) fica; os seguintes são de 40.
-    expect(setDayRhythm(HOJE, R40, seg('10:25:00'))).toEqual({ ok: true, windows: false, rhythm: 'from-now' });
+    expect(setDayRhythm(HOJE, R40, seg('10:25:00'))).toEqual({ ok: true, windows: false, rhythm: 'from-now', mode: false });
     const depois = estudos(HOJE).filter((b) => b.time > '10:23');
     expect(depois[0]).toMatchObject({ time: '10:41', endTime: '11:21' });
     expect(depois.slice(0, 4).every((b) => timeDiff(b) === 40)).toBe(true);
